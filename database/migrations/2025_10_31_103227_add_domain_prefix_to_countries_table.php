@@ -1,0 +1,30 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('countries', function (Blueprint $table) {
+            $table->string('domain_prefix', 10)->nullable()->after('phonecode')->comment('Subdomain prefix for country (e.g., ae, pk, in)');
+            $table->index('domain_prefix');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('countries', function (Blueprint $table) {
+            $table->dropIndex(['domain_prefix']);
+            $table->dropColumn('domain_prefix');
+        });
+    }
+};

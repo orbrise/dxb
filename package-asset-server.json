@@ -1,0 +1,19 @@
+{
+  "name": "laravel-asset-server",
+  "version": "1.0.0",
+  "description": "Local asset server for Laravel development",
+  "main": "asset-server.js",
+  "scripts": {
+    "start": "node asset-server.js",
+    "dev": "nodemon asset-server.js",
+    "build": "echo 'No build needed for asset server'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["laravel", "assets", "cdn", "development"]
+}
