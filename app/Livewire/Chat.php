@@ -35,8 +35,22 @@ class Chat extends Component
         
         return [
             "echo-private:chat.{$userId},NewChatMessage" => 'handleNewMessage',
+            "echo-private:chat.{$userId},MessageStatusUpdated" => 'handleStatusUpdate',
             'refresh-chat' => 'refreshChat',
         ];
+    }
+
+    /**
+     * Handle message status update (delivered/read receipts)
+     */
+    public function handleStatusUpdate($event)
+    {
+        Log::debug('Message status updated', $event);
+        
+        // Reload messages to show updated tick marks
+        if ($this->selectedConversationId) {
+            $this->loadConversationMessages();
+        }
     }
 
     /**
@@ -176,6 +190,41 @@ class Chat extends Component
         $this->markConversationAsRead();
     }
 
+    /**
+     * Called by polling to refresh messages
+     */
+    public function pollMessages()
+    {
+        if (!$this->selectedConversationId) {
+            return;
+        }
+
+        // Mark any new incoming messages as read since user is actively viewing this conversation
+        $this->markConversationAsRead();
+
+        // Force fresh query from database
+        $messages = Message::where('conversation_id', $this->selectedConversationId)
+            ->with('sender')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Create fresh array to force Livewire to detect changes
+        $freshMessages = [];
+        foreach ($messages as $msg) {
+            $freshMessages[] = [
+                'id' => $msg->id,
+                'message' => $msg->message,
+                'sender_id' => $msg->sender_id,
+                'sender_name' => $msg->sender?->name ?? $msg->sender?->email ?? 'Unknown',
+                'is_mine' => $msg->sender_id === auth()->id(),
+                'status' => $msg->status,
+                'created_at' => $msg->created_at->toISOString(),
+            ];
+        }
+        
+        $this->conversationMessages = $freshMessages;
+    }
+
     public function loadConversationMessages()
     {
         if (!$this->selectedConversationId) {
@@ -227,14 +276,18 @@ class Chat extends Component
                 ->where('sender_id', '!=', $userId)
                 ->update(['status' => 'read']);
             
-            // Notify each sender that their message was read
-            $senderIds = $allMessages->pluck('sender_id')->unique();
-            foreach ($senderIds as $senderId) {
-                broadcast(new MessageStatusUpdated(
-                    $this->selectedConversationId,
-                    'read',
-                    $senderId
-                ))->toOthers();
+            // Notify each sender that their message was read (non-blocking)
+            try {
+                $senderIds = $allMessages->pluck('sender_id')->unique();
+                foreach ($senderIds as $senderId) {
+                    broadcast(new MessageStatusUpdated(
+                        $this->selectedConversationId,
+                        'read',
+                        $senderId
+                    ))->toOthers();
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Broadcast status update failed: ' . $e->getMessage());
             }
         }
     }
@@ -262,17 +315,21 @@ class Chat extends Component
                 ->where('status', 'sent')
                 ->update(['status' => 'delivered']);
             
-            // Notify each sender that their message was delivered
-            $grouped = $messagesToUpdate->groupBy('conversation_id');
-            foreach ($grouped as $convId => $messages) {
-                $senderIds = $messages->pluck('sender_id')->unique();
-                foreach ($senderIds as $senderId) {
-                    broadcast(new MessageStatusUpdated(
-                        $convId,
-                        'delivered',
-                        $senderId
-                    ))->toOthers();
+            // Notify each sender that their message was delivered (non-blocking)
+            try {
+                $grouped = $messagesToUpdate->groupBy('conversation_id');
+                foreach ($grouped as $convId => $messages) {
+                    $senderIds = $messages->pluck('sender_id')->unique();
+                    foreach ($senderIds as $senderId) {
+                        broadcast(new MessageStatusUpdated(
+                            $convId,
+                            'delivered',
+                            $senderId
+                        ))->toOthers();
+                    }
                 }
+            } catch (\Exception $e) {
+                \Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
             }
         }
     }
@@ -305,7 +362,20 @@ class Chat extends Component
 
         // Broadcast to the other user
         $otherUserId = $conversation->getOtherUserId(auth()->id());
-        broadcast(new NewChatMessage($message, $otherUserId))->toOthers();
+        
+        // Use try-catch to handle cases where socket ID is not available
+        try {
+            // Only use toOthers() if we have a valid socket ID
+            if (request()->hasHeader('X-Socket-ID') && request()->header('X-Socket-ID')) {
+                broadcast(new NewChatMessage($message, $otherUserId))->toOthers();
+            } else {
+                // Broadcast to everyone including sender (sender will see via Livewire update anyway)
+                broadcast(new NewChatMessage($message, $otherUserId));
+            }
+        } catch (\Exception $e) {
+            // Log the error but don't fail the message send
+            \Log::warning('Broadcast failed: ' . $e->getMessage());
+        }
 
         $this->reply = '';
         $this->loadConversationMessages();

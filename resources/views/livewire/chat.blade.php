@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.2s="pollMessages">
     @section('headerform')
     <div class="nav-bar navbar-top-nav">
         <div class="container-fluid"> 
@@ -650,11 +650,11 @@
                                         </button>
                                     </div>
                                 </div>
-
+ 
                                 {{-- Chat Messages --}}
-                                <div class="chat-messages" id="chatMessages" wire:poll.2s="loadConversationMessages">
+                                <div class="chat-messages" id="chatMessages">
                                     @foreach($this->conversationMessages as $message)
-                                        <div class="message-wrapper {{ $message['is_mine'] ? 'sent' : 'received' }}">
+                                        <div class="message-wrapper {{ $message['is_mine'] ? 'sent' : 'received' }}" wire:key="msg-{{ $message['id'] }}-{{ $message['status'] }}">
                                             <div class="message-bubble">
                                                 <p class="message-text">{{ $message['message'] }}</p>
                                                 <div class="message-time">
@@ -662,7 +662,7 @@
                                                     @if($message['is_mine'])
                                                         <span class="message-ticks">
                                                             @if($message['status'] === 'read')
-                                                                {{-- Double blue ticks - Read --}}
+                                                                {{-- Double black ticks - Read --}}
                                                                 <span class="tick read double-tick">✓✓</span>
                                                             @elseif($message['status'] === 'delivered')
                                                                 {{-- Double grey ticks - Delivered --}}
@@ -728,39 +728,78 @@
                 if (window.Echo) {
                     clearInterval(checkEcho);
                     console.log('Echo is available, setting up listener...');
+                    console.log('Echo config:', {
+                        host: window.Echo.options?.wsHost,
+                        port: window.Echo.options?.wsPort,
+                        key: window.Echo.options?.key
+                    });
                     
-                    // Update connection status
-                    if (statusIndicator) {
-                        statusIndicator.classList.remove('offline');
-                        statusIndicator.classList.add('online');
-                        statusIndicator.title = 'Connected';
+                    try {
+                        // Check WebSocket connection state
+                        if (window.Echo.connector && window.Echo.connector.pusher) {
+                            const pusher = window.Echo.connector.pusher;
+                            
+                            pusher.connection.bind('connected', () => {
+                                console.log('✅ WebSocket connected!');
+                                if (statusIndicator) {
+                                    statusIndicator.classList.remove('offline');
+                                    statusIndicator.classList.add('online');
+                                    statusIndicator.title = 'Connected';
+                                }
+                            });
+                            
+                            pusher.connection.bind('disconnected', () => {
+                                console.log('❌ WebSocket disconnected');
+                                if (statusIndicator) {
+                                    statusIndicator.classList.remove('online');
+                                    statusIndicator.classList.add('offline');
+                                    statusIndicator.title = 'Disconnected';
+                                }
+                            });
+                            
+                            pusher.connection.bind('error', (err) => {
+                                console.error('❌ WebSocket error:', err);
+                            });
+                            
+                            // Check current state
+                            console.log('Current connection state:', pusher.connection.state);
+                            if (pusher.connection.state === 'connected') {
+                                if (statusIndicator) {
+                                    statusIndicator.classList.remove('offline');
+                                    statusIndicator.classList.add('online');
+                                    statusIndicator.title = 'Connected';
+                                }
+                            }
+                        }
+                        
+                        window.Echo.private(`chat.${userId}`)
+                            .listen('.NewChatMessage', (e) => {
+                                console.log('Received NewChatMessage:', e);
+                                // Find the Livewire component and refresh
+                                const chatComponent = document.querySelector('[wire\\:id]');
+                                if (chatComponent) {
+                                    const wireId = chatComponent.getAttribute('wire:id');
+                                    // Refresh the chat and trigger full component refresh
+                                    Livewire.find(wireId).call('refreshChat');
+                                    Livewire.find(wireId).$refresh();
+                                    scrollToBottom();
+                                }
+                            })
+                            .listen('.MessageStatusUpdated', (e) => {
+                                console.log('Received MessageStatusUpdated:', e);
+                                // Refresh to update tick marks when message status changes
+                                const chatComponent = document.querySelector('[wire\\:id]');
+                                if (chatComponent) {
+                                    const wireId = chatComponent.getAttribute('wire:id');
+                                    // Reload messages to show updated ticks
+                                    Livewire.find(wireId).call('loadConversationMessages');
+                                }
+                            });
+                        
+                        console.log('Echo listener registered for channel: chat.' + userId);
+                    } catch (err) {
+                        console.error('Failed to setup Echo listener:', err);
                     }
-                    
-                    window.Echo.private(`chat.${userId}`)
-                        .listen('.NewChatMessage', (e) => {
-                            console.log('Received NewChatMessage:', e);
-                            // Find the Livewire component and refresh
-                            const chatComponent = document.querySelector('[wire\\:id]');
-                            if (chatComponent) {
-                                const wireId = chatComponent.getAttribute('wire:id');
-                                // Refresh the chat and trigger full component refresh
-                                Livewire.find(wireId).call('refreshChat');
-                                Livewire.find(wireId).$refresh();
-                                scrollToBottom();
-                            }
-                        })
-                        .listen('.MessageStatusUpdated', (e) => {
-                            console.log('Received MessageStatusUpdated:', e);
-                            // Refresh to update tick marks when message status changes
-                            const chatComponent = document.querySelector('[wire\\:id]');
-                            if (chatComponent) {
-                                const wireId = chatComponent.getAttribute('wire:id');
-                                // Reload messages to show updated ticks
-                                Livewire.find(wireId).call('loadConversationMessages');
-                            }
-                        });
-                    
-                    console.log('Echo listener registered for channel: chat.' + userId);
                 }
             }, 100);
             

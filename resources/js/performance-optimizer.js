@@ -110,7 +110,7 @@
         },
 
         // Optimize form submissions
-        optimizeFormSubmissions: function() {
+        optimizeFormSubmissions: function() { 
             document.addEventListener('submit', function(e) {
                 const form = e.target;
                 

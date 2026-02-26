@@ -106,7 +106,7 @@ class LivewireOptimizer {
         // Implementation would depend on your specific list structure
         // This is a simplified example
     }
-
+ 
     initFormOptimization() {
         // Prevent multiple form submissions (skip Livewire forms - they handle this internally)
         document.addEventListener('submit', (e) => {

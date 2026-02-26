@@ -616,7 +616,7 @@ label {color:white !important;}
         {{-- Livewire Scripts - Required for Livewire to work --}}
         @livewireScripts
         @livewireScriptConfig
-
+ 
         {{-- Session Recovery Helper - Auto-reconnect after idle/session expiry --}}
         <script>
         (function() {
