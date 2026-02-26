@@ -37,6 +37,7 @@ class CityController extends Controller
         return [
             'id' => $city->id,
             'name' => $city->name,
+            'slug' => $city->slug,
             'country' => $city->country ?? 'Unknown',
             'profile_count' => $profileCount,
             'currency_id' => $currency ? $currency->id : null,
