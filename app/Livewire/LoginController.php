@@ -8,7 +8,7 @@ use Auth;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
-#[Layout('components.layouts.app')]
+#[Layout('components.layouts.app-evoory')]
 class LoginController extends Component
 {
     public $email;

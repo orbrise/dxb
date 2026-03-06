@@ -3,6 +3,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Layout;
 use Illuminate\Http\Request;
 use App\Models\{Listing, Service, UserService, Gender, Currency, Ethnicity, 
     Bust, HairColor, Language, UserLanguage, UsersProfile, City, Country, Review, Auction};
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Services\CacheService;
 use Illuminate\Support\Facades\Cache;
  
+#[Layout('components.layouts.app-evoory')]
 class HomePage extends Component
 {
     use WithPagination;

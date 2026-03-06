@@ -1,0 +1,712 @@
+/* EVOORY HOMEPAGE LISTINGS OVERRIDES 
+   Converts the legacy structure class names to the new Evoory dark theme.
+*/
+
+/* Fix FA5 icons: Override local font-face with CDN version (local file is FA6, mismatched codepoints) */
+@font-face {
+    font-family: "Font Awesome 5 Free" !important;
+    font-style: normal;
+    font-weight: 900;
+    font-display: block;
+    src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/webfonts/fa-solid-900.woff2") format("woff2"),
+         url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/webfonts/fa-solid-900.woff") format("woff");
+}
+@font-face {
+    font-family: "Font Awesome 5 Free" !important;
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/webfonts/fa-regular-400.woff2") format("woff2"),
+         url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/webfonts/fa-regular-400.woff") format("woff");
+}
+@font-face {
+    font-family: "Font Awesome 5 Brands" !important;
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/webfonts/fa-brands-400.woff2") format("woff2"),
+         url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/webfonts/fa-brands-400.woff") format("woff");
+}
+
+body { background: var(--bg-primary, #0a0a0a) !important; color: white !important; font-family: 'Inter', sans-serif !important; }
+h1, h2, h3, h4, h5, h6, a.page-title, .page-title h1 { color: white !important; }
+a { color: var(--accent, #C1F11D) !important; text-decoration: none !important; }
+a:hover { color: var(--accent-hover, #d4f84d) !important; }
+
+/* Wrapper and Header Fixes */
+.content-wrapper { background: transparent !important; border: none !important; box-shadow: none !important; }
+
+/* Listing Items */
+.listings .listing-li { 
+    background: transparent !important; 
+    border: none !important; 
+    border-bottom: 1px solid #2a2a2a !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+    margin-bottom: 24px !important;
+    padding-bottom: 24px !important;
+    box-shadow: none !important;
+}
+.listings .listing-li.premium {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid #2a2a2a !important;
+    box-shadow: none !important;
+}
+.listing-info, .listing-info-wrapper { background: transparent !important; color: white !important; }
+.listing-li a, .listing-li a:hover { color: white !important; }
+.listing-info h2, .listing-info h2 a { color: white !important; }
+.listing-info .fa { color: white !important; }
+.listing-info .location-price, .location-price span { color: #cccccc !important; }
+.listing-info .services { color: #999999 !important; }
+.listing-info .rate-wrapper { color: white !important; font-weight: bold; }
+
+/* "See more & contact" button */
+.listing-li a.btn.btn-dark {
+    background: #131616 !important;
+    color: #C1F11D !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-weight: 400 !important;
+    padding: 8px 30px !important;
+}
+.listing-li a.btn.btn-dark:hover {
+    background: #1a1f1f !important;
+    color: #d4f84d !important;
+}
+
+/* Auction / Spotlight elements */
+.auction-cover { background: rgba(0,0,0,0.8) !important; color: white !important; border: 1px solid var(--accent); border-radius: 8px; }
+.spot { background: transparent !important; }
+.new-review {  }
+
+/* Text colors & Spacing */
+.page-desc { color: var(--text-secondary, #cccccc) !important; }
+.page-title { margin-top: 20px !important; display: block; }
+.listings { border-top:0px; padding-top: 20px !important; }
+
+/* Fix Top Categories / Tabs */
+.nav-tabs-wrapper .btn-group { border: 1px solid var(--border-color) !important; border-radius: 8px; overflow: hidden; }
+.nav-tabs-wrapper .btn { background: var(--bg-card) !important; color: white !important; border: none !important; }
+.nav-tabs-wrapper .btn.active { background: var(--accent) !important; color: #000 !important; }
+
+/* Dropdowns / Inputs */
+.typeahead-city-wrapper input, .form-control { 
+    background-color: var(--bg-secondary, #111) !important; 
+    color: white !important; 
+    border: 1px solid var(--border-color, #2a2a2a) !important; 
+    border-radius: var(--radius, 8px) !important;
+}
+.typeahead-city-wrapper input:focus, .form-control:focus {
+    border-color: var(--accent, #C1F11D) !important;
+    box-shadow: 0 0 0 3px rgba(193,241,29,0.1) !important;
+}
+
+/* Pagination Customization */
+.pagination > li > a, .pagination > li > span { 
+    background-color: var(--bg-card, #1a1a1a) !important; 
+    color: var(--accent, #C1F11D) !important; 
+    border: 1px solid var(--border-color, #2a2a2a) !important; 
+}
+.pagination > .active > a, .pagination > .active > span { 
+    background-color: var(--accent, #C1F11D) !important; 
+    color: #000 !important; 
+    border-color: var(--accent, #C1F11D) !important; 
+}
+.pagination > li > a:hover {
+    background-color: var(--accent) !important;
+    color: #000 !important;
+}
+
+/* Header Overrides in case it mixes */
+#header { background: #131616 !important; }
+
+/* === EVOORY SEARCH FILTER BAR - SINGLE ROW LAYOUT === */
+
+/* Outer search form wrapper */
+.listings-search-form.search-form {
+    background: transparent !important;
+    border: none !important;
+    padding: 8px 0 !important;
+    margin: 0 !important;
+}
+
+/* The main action-group: single horizontal flex row */
+.listings-primary-search .action-group.hidden-xs {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: nowrap !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* The inner <form> MUST also be flex so its children line up */
+.action-group.hidden-xs > form.listings-search-form {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: nowrap !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    flex-shrink: 0;
+}
+
+/* The secondary fields container (AED + Price + Services) */
+.listings-search-main-fields-secondary {
+    display: flex !important;
+    align-items: center !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.listings-search-main-fields-secondary .form-group {
+    margin: 0 !important;
+    padding: 0 !important;
+    float: none !important;
+}
+
+/* ---- Shared input/button base style ---- */
+.action-group .btn-dark,
+.action-group .form-control,
+.action-group .search-bar--city,
+.action-group select.price-currency,
+.action-group input.price-amount {
+    background-color: transparent !important;
+    background: transparent !important;
+    color: var(--text-primary, #ffffff) !important;
+    border: 1px solid var(--border-color, #2a2a2a) !important;
+    border-radius: 4px !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0 14px !important;
+    font-size: 13px !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    line-height: 38px !important;
+    transition: border-color 0.2s ease !important;
+}
+
+/* Focus state: light gray border, no bright white glow */
+.action-group .btn-dark:focus,
+.action-group .form-control:focus,
+.action-group .search-bar--city:focus,
+.action-group select.price-currency:focus,
+.action-group input.price-amount:focus,
+.action-group .search-bar--gender:focus,
+#services-display-box:focus {
+    border-color: #666 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Gender dropdown button */
+.primary-search-gender {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.primary-search-gender .search-bar--gender {
+    justify-content: space-between !important;
+    gap: 6px !important;
+    min-width: 140px;
+}
+
+/* City input */
+.primary-search-city {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.primary-search-city .typeahead-city-wrapper {
+    margin: 0 !important;
+}
+.primary-search-city .typeahead-city-wrapper input {
+    width: 130px !important;
+    padding-left: 36px !important;
+    border-radius: 4px !important;
+    margin: 0 !important;
+    height: 38px !important;
+    line-height: 38px !important;
+}
+
+/* Price control: AED + Price side-by-side */
+.price-control {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+select.price-currency {
+    width: auto !important;
+    min-width: 65px !important;
+    padding: 0 8px !important;
+    padding-right: 28px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+input.price-amount {
+    width: 80px !important;
+}
+
+/* Services display box */
+#services-display-box {
+    background-color: transparent !important;
+    border: 1px solid var(--border-color, #2a2a2a) !important;
+    border-radius: 4px !important;
+    height: 38px !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 14px !important;
+    min-width: 130px;
+    font-size: 13px !important;
+    cursor: pointer;
+    white-space: nowrap !important;
+}
+
+/* Plus button (+) for advanced filters */
+.action-group #toggle-search-more,
+.action-group .btn-dark[data-target="#search-more"] {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+    border-radius: 4px !important;
+    background-color: transparent !important;
+    background: transparent !important;
+    border: 1px solid var(--border-color, #2a2a2a) !important;
+    color: white !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+    flex-shrink: 0 !important;
+}
+.action-group #toggle-search-more:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+}
+
+/* Lime green Search button (pill shape) */
+.action-group button#submit[type="submit"],
+.action-group .btn-primary#submit,
+button.btn.btn-primary#submit[type="submit"] {
+    background-color: #C1F11D !important;
+    background: #C1F11D !important;
+    color: #000 !important;
+    border: none !important;
+    border-radius: 20px !important;
+    height: 33px !important;
+    padding: 0 24px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+}
+.action-group button#submit[type="submit"]:hover,
+.action-group .btn-primary#submit:hover,
+button.btn.btn-primary#submit[type="submit"]:hover {
+    background-color: #d4f84d !important;
+    background: #d4f84d !important;
+}
+
+/* Gender dropdown menu dark theme */
+.primary-search-gender {
+    position: relative !important;
+}
+.dropdown-gender-menu {
+    display: none;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    background: #1a1a1a !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 4px !important;
+    margin-top: 4px !important;
+    padding: 4px 0 !important;
+    min-width: 180px !important;
+    z-index: 1050 !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    list-style: none !important;
+}
+.dropdown-gender-menu li {
+    list-style: none !important;
+}
+.dropdown-gender-menu li a {
+    color: #fff !important;
+    padding: 10px 16px !important;
+    display: block !important;
+    text-decoration: none !important;
+    transition: all 0.15s ease !important;
+}
+.dropdown-gender-menu li a:hover,
+.dropdown-gender-menu li.active a {
+    background: var(--accent, #C1F11D) !important;
+    color: #000 !important;
+}
+
+/* ── Right sidebar – "What's new?" ─────────────────────── */
+.stream-sidebar {
+    
+    border-radius: 5px;
+    padding: 20px 0;
+}
+
+/* Subscribe button */
+.stream-sidebar .subscribe-btn-wrapper a.btn {
+    background: transparent !important;
+    color: #C1F11D !important;
+    border: 1px solid #fff !important;
+    border-radius: 999px;
+    font-weight: 400;
+    padding: 4px 17px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    width: 100%;
+    justify-content: center;
+    box-shadow: none !important;
+}
+.stream-sidebar .subscribe-btn-wrapper a.btn:hover {
+    opacity: .85;
+}
+.stream-sidebar .subscribe-btn-wrapper {
+    margin-bottom: 18px;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+/* "What's new?" heading */
+.stream-sidebar h3 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 14px;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+.stream-sidebar h3 a {
+    color: #fff !important;
+    text-decoration: none;
+}
+.stream-sidebar h3 a:hover {
+    color: #C1F11D !important;
+}
+
+/* Review list */
+.stream-sidebar .activity-stream {
+    list-style: none;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.stream-sidebar .activity-stream li {
+    border-bottom: 1px solid #2a2a2a;
+    padding: 14px 18px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+.stream-sidebar .activity-stream li:last-child {
+    border-bottom: none;
+}
+
+/* Review card */
+.stream-sidebar .activity-record {
+    background: transparent;
+}
+.stream-sidebar .activity-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.stream-sidebar .headline {
+    width: 100%;
+    font-size: 13px !important;
+    font-weight: 400;
+    color: #ccc;
+    margin: 0;
+    line-height: 1.4;
+}
+.stream-sidebar .headline a {
+    color: #C1F11D !important;
+    text-decoration: none;
+}
+.stream-sidebar .headline a:hover {
+    text-decoration: underline;
+}
+
+/* Photo */
+.stream-sidebar .photo {
+    flex-shrink: 0;
+    float: none !important;
+    margin: 0 !important;
+}
+.stream-sidebar .img-wrapper {
+    display: block;
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.stream-sidebar .img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.stream-sidebar .verified-image {
+    display: none; /* hide badge in mini view */
+}
+
+/* Review text */
+.stream-sidebar .activity-content {
+    flex: 1;
+    min-width: 0;
+    padding-left: 0 !important;
+}
+.stream-sidebar .review-description {
+    color: #999;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.stream-sidebar .review-description p {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+/* "See more" link */
+.stream-sidebar .padding-left {
+    padding: 14px 18px 0;
+}
+.stream-sidebar .padding-left a {
+    color: #C1F11D !important;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+}
+.stream-sidebar .padding-left a:hover {
+    text-decoration: underline;
+}
+
+/* Fix FA icon display inside action-group buttons */
+.action-group .fa,
+.action-group .fas,
+.action-group .far {
+    font-family: 'Font Awesome 5 Free' !important;
+    font-weight: 900 !important;
+    -webkit-font-smoothing: antialiased;
+    display: inline !important;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    line-height: 1;
+}
+
+/* ── Advanced Search Modal ─────────────────────────────── */
+
+/* Backdrop */
+#search-more-backdrop,
+#search-more + .modal-backdrop {
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Modal content container */
+#search-more .modal-dialog .modal-content,
+#search-more.modal .modal-dialog .modal-content,
+.modal#search-more .modal-content {
+    background: #14141A !important;
+    background-color: #14141A !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 12px !important;
+    color: #fff !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+    padding: 0 !important;
+}
+
+/* Header */
+#search-more .modal-header {
+    border-bottom: 1px solid #2a2a2a !important;
+    background: transparent !important;
+    padding: 20px 24px !important;
+}
+#search-more .modal-title {
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 20px !important;
+}
+#search-more .modal-header .close {
+    color: #999 !important;
+    opacity: 1 !important;
+    font-size: 24px !important;
+    text-shadow: none !important;
+    background: transparent !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+#search-more .modal-header .close:hover {
+    color: #fff !important;
+    border-color: #666 !important;
+}
+#search-more .modal-header .close svg {
+    pointer-events: none;
+}
+#search-more .modal-header .close:hover svg {
+    stroke: #fff;
+}
+
+/* Body */
+#search-more .modal-body {
+    padding: 24px !important;
+    background: transparent !important;
+}
+
+/* Labels */
+#search-more label,
+#search-more .control-label {
+    color: #ccc !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+}
+
+/* All inputs & selects inside modal */
+#search-more .form-control,
+#search-more select.adinput,
+#search-more input.adinput,
+#search-more .adinput {
+    background: #111 !important;
+    color: #fff !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 6px !important;
+    height: 40px !important;
+    padding: 0px 12px !important;
+    font-size: 14px !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+#search-more select.adinput,
+#search-more select.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 10px center !important;
+    padding-right: 30px !important;
+}
+#search-more .form-control:focus,
+#search-more .adinput:focus {
+    border-color: #C1F11D !important;
+    box-shadow: 0 0 0 2px rgba(193, 241, 29, 0.15) !important;
+    outline: none !important;
+}
+
+/* Checkboxes – styled as circular radio-like buttons */
+#search-more .advanced-search-checkboxes label {
+    color: #fff !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+    font-style: normal !important;
+    font-family: 'Inter', sans-serif !important;
+}
+#search-more .advanced-search-checkboxes input[type="checkbox"] {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border: 2px solid #666 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    position: relative !important;
+    vertical-align: middle !important;
+}
+/* Verified checkbox - black border/dot on lime green background */
+#search-more .q_verified_true input[type="checkbox"],
+#search-more input#q_verified_true {
+    border-color: #000 !important;
+}
+#search-more .q_verified_true input[type="checkbox"]:checked,
+#search-more input#q_verified_true:checked {
+    border-color: #000 !important;
+}
+#search-more .q_verified_true input[type="checkbox"]:checked::after,
+#search-more input#q_verified_true:checked::after {
+    background: #000 !important;
+}
+#search-more .advanced-search-checkboxes input[type="checkbox"]:checked {
+    border-color: #C1F11D !important;
+    background: transparent !important;
+}
+#search-more .advanced-search-checkboxes input[type="checkbox"]:checked::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    background: #C1F11D !important;
+}
+
+/* Num range (Age, Height) */
+#search-more .num-range {
+    display: flex !important;
+    gap: 6px !important;
+}
+#search-more .num-range-from,
+#search-more .num-range-to {
+    flex: 1 !important;
+}
+
+/* Footer */
+#search-more .modal-footer {
+    border-top: none !important;
+    background: transparent !important;
+    padding: 16px 24px 24px !important;
+    text-align: right !important;
+}
+
+/* Search button in modal */
+#search-more .modal-footer .btn-primary,
+#search-more .modal-footer button#submit1 {
+    background: #C1F11D !important;
+    color: #000 !important;
+    border: none !important;
+    border-radius: 30px !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    padding: 10px 28px !important;
+    height: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: none !important;
+    transition: background 0.2s ease !important;
+}
+#search-more .modal-footer .btn-primary:hover,
+#search-more .modal-footer button#submit1:hover {
+    background: #d4f84d !important;
+}

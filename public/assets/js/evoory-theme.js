@@ -120,6 +120,132 @@ ready(function(){
       });
     });
   });
+
+  // Country cities modal
+  var countryModal=document.querySelector('#ev-country-modal');
+  var countryModalBody=document.querySelector('#ev-country-modal-body');
+  var countryModalSearch=document.querySelector('#ev-country-modal-search');
+  var countryModalIso=document.querySelector('.ev-country-modal-iso');
+  var countryModalName=document.querySelector('.ev-country-modal-name');
+  var countryModalCount=document.querySelector('.ev-country-modal-count');
+  var countryModalCloseButtons=document.querySelectorAll('[data-close-country-modal]');
+  var loadedCities=[];
+
+  function slugifyCityName(value){
+    return (value||'').toLowerCase().replace(/\s+/g,'-').replace(/[^\w-]/g,'');
+  }
+
+  function buildCityRows(cities){
+    var grouped={};
+    cities.forEach(function(city){
+      var first=(city.name||'').trim().charAt(0).toUpperCase()||'#';
+      if(!grouped[first])grouped[first]=[];
+      grouped[first].push(city);
+    });
+
+    var letters=Object.keys(grouped).sort();
+    if(!letters.length){
+      return '<div class="ev-country-empty">No cities found</div>';
+    }
+
+    var html='';
+    letters.forEach(function(letter){
+      html+='<div class="ev-city-group">';
+      html+='<div class="ev-city-group-head"><span class="ev-city-letter">'+letter+'</span><span class="ev-city-line"></span></div>';
+      html+='<div class="ev-city-list">';
+      grouped[letter].forEach(function(city){
+        var slug=city.slug||slugifyCityName(city.name);
+        html+='<a href="female-escorts-in-'+slug+'" class="ev-city-chip">'+city.name+'</a>';
+      });
+      html+='</div></div>';
+    });
+    return html;
+  }
+
+  function renderCountryCities(list){
+    if(!countryModalBody)return;
+    countryModalBody.innerHTML=buildCityRows(list||[]);
+  }
+
+  function openCountryModal(){
+    if(!countryModal)return;
+    countryModal.classList.add('show');
+    countryModal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    if(countryModalSearch)countryModalSearch.focus();
+  }
+
+  function closeCountryModal(){
+    if(!countryModal)return;
+    countryModal.classList.remove('show');
+    countryModal.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+    if(countryModalSearch)countryModalSearch.value='';
+  }
+
+  function loadCountryCities(code, fallbackName, fallbackCount){
+    if(!countryModalBody)return;
+    countryModalBody.innerHTML='<div class="ev-country-empty">Loading cities...</div>';
+    fetch('/countries/'+encodeURIComponent(code)+'/cities',{headers:{'Accept':'application/json'}})
+      .then(function(r){
+        if(!r.ok)throw new Error('Request failed');
+        return r.json();
+      })
+      .then(function(data){
+        var country=data&&data.country?data.country:{};
+        loadedCities=Array.isArray(data&&data.cities)?data.cities:[];
+        if(countryModalIso)countryModalIso.textContent=(country.iso||String(code||'').toUpperCase());
+        if(countryModalName)countryModalName.textContent=(country.name||fallbackName||'Country');
+        if(countryModalCount)countryModalCount.textContent=((country.count!=null?country.count:fallbackCount)||loadedCities.length)+' Cities';
+        renderCountryCities(loadedCities);
+      })
+      .catch(function(){
+        loadedCities=[];
+        if(countryModalIso)countryModalIso.textContent=String(code||'').toUpperCase();
+        if(countryModalName)countryModalName.textContent=fallbackName||'Country';
+        if(countryModalCount)countryModalCount.textContent=(fallbackCount||0)+' Cities';
+        countryModalBody.innerHTML='<div class="ev-country-empty">Unable to load cities</div>';
+      });
+  }
+
+  countryCards.forEach(function(card){
+    card.addEventListener('click',function(e){
+      e.preventDefault();
+      var code=card.dataset.countryCode||'';
+      var name=card.dataset.country||'';
+      var count=card.dataset.countryCount||'';
+      if(countryModalSearch)countryModalSearch.value='';
+      if(countryModalIso)countryModalIso.textContent=String(code).toUpperCase();
+      if(countryModalName)countryModalName.textContent=name;
+      if(countryModalCount)countryModalCount.textContent=(count||0)+' Cities';
+      openCountryModal();
+      loadCountryCities(code,name,count);
+    });
+  });
+
+  if(countryModalSearch){
+    countryModalSearch.addEventListener('input',function(){
+      var query=this.value.trim().toLowerCase();
+      if(!query){
+        renderCountryCities(loadedCities);
+        return;
+      }
+      var filtered=loadedCities.filter(function(city){
+        return (city.name||'').toLowerCase().indexOf(query)!==-1;
+      });
+      renderCountryCities(filtered);
+    });
+  }
+
+  countryModalCloseButtons.forEach(function(btn){
+    btn.addEventListener('click',closeCountryModal);
+  });
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&countryModal&&countryModal.classList.contains('show')){
+      closeCountryModal();
+    }
+  });
   
   // Mobile menu toggle
   var mobileMenuBtn=document.querySelector('.ev-mobile-menu-btn');

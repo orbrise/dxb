@@ -69,6 +69,34 @@ Route::get('/search-{gender}-escorts', App\Livewire\MobileSearch::class)
 
 Route::post('/cities/search', 'App\Http\Controllers\Api\CityController@search')->name('cities.search');
 
+Route::get('/countries/{code}/cities', function (string $code) {
+    $country = \App\Models\Country::query()
+        ->whereRaw('LOWER(iso) = ?', [strtolower($code)])
+        ->first();
+
+    if (!$country) {
+        return response()->json([
+            'country' => null,
+            'cities' => [],
+        ], 404);
+    }
+
+    $cities = \App\Models\City::query()
+        ->whereRaw('LOWER(country) = ?', [strtolower((string) $country->nicename)])
+        ->orderBy('name')
+        ->get(['id', 'name', 'slug']);
+
+    return response()->json([
+        'country' => [
+            'id' => $country->id,
+            'iso' => strtoupper((string) $country->iso),
+            'name' => $country->nicename,
+            'count' => $cities->count(),
+        ],
+        'cities' => $cities,
+    ]);
+})->name('countries.cities');
+
 // CSRF Token Refresh Route - For automatic session recovery after idle
 Route::get('/csrf-refresh', function () {
     return response()->json([

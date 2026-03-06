@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 use Hash;
 use Illuminate\Support\Str;
 use App\Mail\NewUser;
@@ -13,6 +14,7 @@ use App\Services\NotificationService;
 use App\Models\MailSettings;
 use App\Models\Country;
 
+#[Layout('components.layouts.app-evoory')]
 class RegisterController extends Component
 {
     public $name, $email, $password;

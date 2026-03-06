@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 use App\Models\UsersProfile;
 use App\Models\City;
 use App\Models\ProfileImage;
@@ -19,6 +20,7 @@ use App\Services\CacheService;
 use App\Events\NewChatMessage;
 use Illuminate\Support\Facades\Cache;
  
+#[Layout('components.layouts.app-evoory')]
 class ProfileDetails extends Component
 {
     public  $city,$gender, $user, $images, $star, $review, $profileid, $question, $email, $msg, $code, $phone, $cityname;

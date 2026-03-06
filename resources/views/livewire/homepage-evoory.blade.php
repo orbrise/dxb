@@ -1,6 +1,15 @@
 {{-- Evoory Theme Homepage - Optimized for <0.6s load time --}}
 {{-- Single root element for Livewire compatibility --}}
 <div class="ev-homepage">
+    {{-- Hero Tagline --}}
+    <div class="ev-hero">
+        <div class="ev-container">
+            <p class="ev-hero-tagline">
+                evoory – where escorts from Dubai and the rest of the world await
+            </p>
+        </div>
+    </div>
+
     {{-- Search Section --}}
     <section class="ev-search-section">
         <div class="ev-container">
@@ -11,15 +20,26 @@
                     <form class="ev-search-form" action="" method="get">
                         <div class="ev-relative">
                             <div class="ev-input-group">
-                                <input 
-                                    type="text" 
-                                    class="ev-input ev-city-search" 
-                                    name="location" 
-                                    placeholder="Your City" 
-                                    autocomplete="off"
-                                    data-slug=""
-                                >
-                                <button type="submit" class="ev-btn ev-btn-primary">Go</button>
+                                <div class="ev-input-wrap">
+                                    <svg class="ev-input-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 10c0 6-9 13-9 13s-9-7-9-13a9 9 0 0 1 18 0z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                    <input 
+                                        type="text" 
+                                        class="ev-input ev-city-search" 
+                                        name="location" 
+                                        placeholder="Your city" 
+                                        autocomplete="off"
+                                        data-slug=""
+                                    >
+                                </div>
+                                <button type="submit" class="ev-btn ev-btn-primary">
+                                    Go
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18l6-6-6-6"/>
+                                    </svg>
+                                </button>
                             </div>
                             <input type="hidden" name="city_id" id="city_id" value="">
                             <div class="ev-dropdown"></div>
@@ -37,10 +57,10 @@
                     <p style="color:var(--text-secondary);margin:0 0 16px;font-size:14px">
                         A basic listing on the website is free! Don't worry if you don't see your city on the left or below – it will appear when you list!
                     </p>
-                    <a href="action/listings/new" class="ev-btn ev-btn-outline">
+                    <a href="action/listings/new" class="ev-btn ev-btn-primary">
                         List now
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
                         </svg>
                     </a>
                 </div>
@@ -54,17 +74,26 @@
             <div class="ev-popular">
                 <p class="ev-popular-title">Interested in other popular locations?</p>
                 <div class="ev-popular-tags">
-                    @if($featuredCities && $featuredCities->count() > 0)
-                        @foreach($featuredCities as $city)
-                            <a href="female-escorts-in-{{ $city->slug }}" class="ev-tag">{{ $city->name }}</a>
-                        @endforeach
-                    @else
+                    <div class="ev-popular-row">
                         <a href="female-escorts-in-abu-dhabi" class="ev-tag">Abu Dhabi</a>
-                        <a href="female-escorts-in-al-fujayrah" class="ev-tag">Al Fujayrah</a>
+                        <a href="female-escorts-in-al-manama" class="ev-tag">Al Manama</a>
+                        <a href="female-escorts-in-bangalore" class="ev-tag">Bangalore</a>
+                        <a href="female-escorts-in-bangkok" class="ev-tag">Bangkok</a>
+                        <a href="female-escorts-in-chennai" class="ev-tag">Chennai</a>
+                        <a href="female-escorts-in-doha" class="ev-tag">Doha</a>
+                    </div>
+                    <div class="ev-popular-row">
                         <a href="female-escorts-in-dubai" class="ev-tag">Dubai</a>
-                        <a href="female-escorts-in-sharjah" class="ev-tag">Sharjah</a>
-                        <a href="female-escorts-in-ajman" class="ev-tag">Ajman</a>
-                    @endif
+                        <a href="female-escorts-in-hyderabad" class="ev-tag">Hyderabad</a>
+                        <a href="female-escorts-in-manila" class="ev-tag">Manila</a>
+                        <a href="female-escorts-in-mumbai" class="ev-tag">Mumbai</a>
+                        <a href="female-escorts-in-muscat" class="ev-tag">Muscat</a>
+                    </div>
+                    <div class="ev-popular-row">
+                        <a href="female-escorts-in-new-delhi" class="ev-tag">New Delhi</a>
+                        <a href="female-escorts-in-pune" class="ev-tag">Pune</a>
+                        <a href="female-escorts-in-riyadh" class="ev-tag">Riyadh</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,7 +110,7 @@
                 These captivating companions embody the luxurious lifestyle of this vibrant city, providing unforgettable experiences that blend allure and excitement.
                 Explore profiles, read reviews, and connect with escorts who can make your time in Dubai truly exceptional.
                 Use our search feature to find a companion in Dubai (or any other city) that has all of your favourite physical characteristics or offering the service you would like to enjoy.
-                <br><br>
+                <br>
                 <strong>Join us at Evoory and discover the world of companionship at your fingertips, with a special emphasis on the enchanting Dubai escorts ready to elevate your experience.</strong>
             </p>
         </div>
@@ -90,8 +119,11 @@
     {{-- Browse by Country Section --}}
     <section class="ev-browse">
         <div class="ev-container">
-            <h2 class="ev-section-title">Browse by Country</h2>
-            <p class="ev-section-subtitle">Explore our global directory of services across 50+ countries worldwide</p>
+            <h2 class="ev-section-title">
+                <img src="https://assets.massagerepublic.com.co/assets/newtheme/globe.svg" alt="" class="ev-section-icon" aria-hidden="true">
+                Browse by Country
+            </h2>
+            <p class="ev-section-subtitle">Explore our global directory of services across {{ count($countriesWithCities) }}+ countries worldwide</p>
             
             {{-- Alphabet Filter --}}
             <div class="ev-alpha-filter">
@@ -103,83 +135,37 @@
             
             {{-- Country Grid --}}
             <div class="ev-country-grid">
-                @php
-                $countries = [
-                    ['code' => 'AR', 'name' => 'Argentina', 'cities' => 12],
-                    ['code' => 'AU', 'name' => 'Australia', 'cities' => 10],
-                    ['code' => 'AT', 'name' => 'Austria', 'cities' => 7],
-                    ['code' => 'BH', 'name' => 'Bahrain', 'cities' => 7],
-                    ['code' => 'BE', 'name' => 'Belgium', 'cities' => 7],
-                    ['code' => 'BR', 'name' => 'Brazil', 'cities' => 14],
-                    ['code' => 'CA', 'name' => 'Canada', 'cities' => 71],
-                    ['code' => 'CL', 'name' => 'Chile', 'cities' => 5],
-                    ['code' => 'CN', 'name' => 'China', 'cities' => 19],
-                    ['code' => 'CO', 'name' => 'Colombia', 'cities' => 11],
-                    ['code' => 'HR', 'name' => 'Croatia', 'cities' => 6],
-                    ['code' => 'CY', 'name' => 'Cyprus', 'cities' => 5],
-                    ['code' => 'CZ', 'name' => 'Czechia', 'cities' => 3],
-                    ['code' => 'DK', 'name' => 'Denmark', 'cities' => 3],
-                    ['code' => 'EG', 'name' => 'Egypt', 'cities' => 4],
-                    ['code' => 'FI', 'name' => 'Finland', 'cities' => 4],
-                    ['code' => 'FR', 'name' => 'France', 'cities' => 56],
-                    ['code' => 'DE', 'name' => 'Germany', 'cities' => 32],
-                    ['code' => 'GR', 'name' => 'Greece', 'cities' => 6],
-                    ['code' => 'HK', 'name' => 'Hong Kong', 'cities' => 1],
-                    ['code' => 'HU', 'name' => 'Hungary', 'cities' => 3],
-                    ['code' => 'IN', 'name' => 'India', 'cities' => 108],
-                    ['code' => 'ID', 'name' => 'Indonesia', 'cities' => 6],
-                    ['code' => 'IE', 'name' => 'Ireland', 'cities' => 2],
-                    ['code' => 'IL', 'name' => 'Israel', 'cities' => 5],
-                    ['code' => 'IT', 'name' => 'Italy', 'cities' => 9],
-                    ['code' => 'JP', 'name' => 'Japan', 'cities' => 27],
-                    ['code' => 'KE', 'name' => 'Kenya', 'cities' => 15],
-                    ['code' => 'KW', 'name' => 'Kuwait', 'cities' => 1],
-                    ['code' => 'MY', 'name' => 'Malaysia', 'cities' => 5],
-                    ['code' => 'MX', 'name' => 'Mexico', 'cities' => 10],
-                    ['code' => 'NL', 'name' => 'Netherlands', 'cities' => 10],
-                    ['code' => 'NZ', 'name' => 'New Zealand', 'cities' => 4],
-                    ['code' => 'NG', 'name' => 'Nigeria', 'cities' => 15],
-                    ['code' => 'NO', 'name' => 'Norway', 'cities' => 5],
-                    ['code' => 'OM', 'name' => 'Oman', 'cities' => 9],
-                    ['code' => 'PK', 'name' => 'Pakistan', 'cities' => 6],
-                    ['code' => 'PH', 'name' => 'Philippines', 'cities' => 16],
-                    ['code' => 'PL', 'name' => 'Poland', 'cities' => 8],
-                    ['code' => 'PT', 'name' => 'Portugal', 'cities' => 17],
-                    ['code' => 'QA', 'name' => 'Qatar', 'cities' => 6],
-                    ['code' => 'RO', 'name' => 'Romania', 'cities' => 2],
-                    ['code' => 'SA', 'name' => 'Saudi Arabia', 'cities' => 20],
-                    ['code' => 'SG', 'name' => 'Singapore', 'cities' => 1],
-                    ['code' => 'ZA', 'name' => 'South Africa', 'cities' => 24],
-                    ['code' => 'KR', 'name' => 'South Korea', 'cities' => 7],
-                    ['code' => 'ES', 'name' => 'Spain', 'cities' => 18],
-                    ['code' => 'LK', 'name' => 'Sri Lanka', 'cities' => 4],
-                    ['code' => 'SE', 'name' => 'Sweden', 'cities' => 9],
-                    ['code' => 'CH', 'name' => 'Switzerland', 'cities' => 11],
-                    ['code' => 'TW', 'name' => 'Taiwan', 'cities' => 5],
-                    ['code' => 'TH', 'name' => 'Thailand', 'cities' => 18],
-                    ['code' => 'TR', 'name' => 'Turkey', 'cities' => 9],
-                    ['code' => 'AE', 'name' => 'UAE', 'cities' => 9],
-                    ['code' => 'GB', 'name' => 'United Kingdom', 'cities' => 82],
-                    ['code' => 'VN', 'name' => 'Vietnam', 'cities' => 5],
-                ];
-                @endphp
-                
-                @foreach($countries as $country)
-                    <a href="country/{{ strtolower($country['code']) }}" class="ev-country-card" data-country="{{ $country['name'] }}">
+                @foreach($countriesWithCities as $country)
+                    <button type="button" class="ev-country-card" data-country="{{ $country['name'] }}" data-country-code="{{ strtolower($country['code']) }}" data-country-count="{{ $country['cities'] }}">
                         <p class="ev-country-code">{{ $country['code'] }}</p>
                         <p class="ev-country-name">{{ $country['name'] }}</p>
-                        <p class="ev-country-cities">{{ $country['cities'] }} Cities</p>
-                    </a>
+                        <p class="ev-country-cities">{{ $country['cities'] }} {{ $country['cities'] == 1 ? 'City' : 'Cities' }}</p>
+                    </button>
                 @endforeach
+            </div>
+
+            <div class="ev-country-modal" id="ev-country-modal" aria-hidden="true">
+                <div class="ev-country-modal-overlay" data-close-country-modal></div>
+                <div class="ev-country-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="ev-country-modal-title">
+                    <div class="ev-country-modal-head">
+                        <div class="ev-country-meta">
+                            <div class="ev-country-modal-title" id="ev-country-modal-title">
+                                <span class="ev-country-modal-iso">--</span>
+                                <span class="ev-country-modal-name">Country</span>
+                            </div>
+                            <div class="ev-country-modal-count">0 Cities</div>
+                        </div>
+                        <div class="ev-country-modal-search-wrap">
+                            <input type="text" class="ev-country-modal-search" id="ev-country-modal-search" placeholder="Search cities..." autocomplete="off">
+                        </div>
+                        <button type="button" class="ev-country-modal-close" aria-label="Close" data-close-country-modal>
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="ev-country-modal-body" id="ev-country-modal-body"></div>
+                </div>
             </div>
         </div>
     </section>
 </div>
 
-@push('css')
-<link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}">
-@endpush
-
-@push('js')
-<script src="{{ asset('assets/js/evoory-theme.js') }}" defer></script>
-@endpush

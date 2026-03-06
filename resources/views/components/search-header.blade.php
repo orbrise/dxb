@@ -19,12 +19,12 @@
       <div class="listings-primary-search">
         <div class="visible-xs-inline">
           <a class="btn btn-dark btn-block" href="{{ route('mobile.search', ['gender' => $gender ?? 'female', 'city' => $selectedcity ?? 'Dubai']) }}" tabindex="3">
-              <i class="fa fa-search fa-fw"></i>Search for {{ ucfirst($gender ?? 'female') }} escorts 
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Search for {{ ucfirst($gender ?? 'female') }} escorts 
           </a>
       </div>
         <div class="action-group hidden-xs">
           <div class="form-group dropdown primary-search-gender">
-            <button class="btn btn-dark search-bar--gender" data-toggle="dropdown" tabindex="2" type="button">{{ucfirst($gender)?? "Female"}} escorts <i class="fa fa-caret-down"></i>
+            <button class="btn btn-dark search-bar--gender" data-toggle="dropdown" tabindex="2" type="button">{{ucfirst($gender)?? "Female"}} escorts <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px;vertical-align:middle;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
             <ul class="dropdown-menu nav nav-pills nav-stacked nav-dark dropdown-gender-menu">
               <li class="@if(empty($gender) or $gender=='female') active @endif">
@@ -76,11 +76,14 @@
           <div class="listings-search-main-fields-secondary">
             <div class="form-group">
               <div class="price-control" title="Price / hour">
-                <select wire:model='currency' data-currency-combobox="true"  class="price-currency form-control" >
+                <div class="custom-select-wrapper" style="position:relative;display:inline-block;">
+                <select wire:model='currency' data-currency-combobox="true"  class="price-currency form-control" style="-webkit-appearance:none;-moz-appearance:none;appearance:none;padding-right:28px;">
                   @foreach($currencies as $cur)
                   <option value="{{$cur->id}}" @if($cur->id == $currency) selected @endif>{{$cur->code}}</option>
                   @endforeach
                 </select>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
              
                 <input tabindex="7" 
                 wire:model.live="rate" 
@@ -100,7 +103,7 @@
                     <div id="services-display-box" 
                          style="background-color: #2c2c2c; color: white; border: 1px solid rgb(68 68 68); cursor: pointer; font-size: 13px; height: 32px; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; font-weight: bold; border-radius: 4px; width: 100%; min-width: 200px; box-sizing: border-box;">
                         <span id="services-display-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: calc(100% - 20px);">All Services</span>
-                        <span style="color: #999; flex-shrink: 0;">▼</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                     
                     <!-- The dropdown list -->
@@ -130,7 +133,7 @@
           </div>
           <button class="btn btn-dark" data-target="#search-more" data-toggle="modal" id="toggle-search-more" tabindex="8" type="button">
             <span class="sr-only">Advanced search options</span>
-            <i class="fas fa-plus fa-lg"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
          
           {{-- advance search --}}
@@ -141,7 +144,7 @@
                
                   <div class="modal-header">
                     <button aria-hidden="true" class="close" data-dismiss="modal" type="button">
-                      <i class="fa fa-times"></i>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                     <h4 class="modal-title">Advanced Search</h4>
                   </div>
@@ -190,7 +193,7 @@
                         <div class="col-sm-12">
                           <div class="advanced-search-checkboxes" style="display: flex; gap: 15px; align-items: center; padding-top: 0;">
                             <div title="Verified profiles" data-toggle="tooltip" data-placement="top" class="form-group boolean optional q_verified_true" style="margin-bottom: 0;">
-                              <label for="q_verified_true" style="background-color: #f4b827; color: #000; padding: 8px 16px; border-radius: 4px; margin: 0; font-weight: bold; display: inline-flex; align-items: center; cursor: pointer; font-size: 14px;">
+                              <label for="q_verified_true" style="background-color: #C1F11D; color: #000000 !important; padding: 8px 16px; border-radius: 999px; margin: 0; font-weight: 600; display: inline-flex; align-items: center; cursor: pointer; font-size: 14px; border: 1px solid #C1F11D;">
                                 <input style="margin-top: 0px;margin-right: 4px" wire:model.defer='verified' autocomplete="off" type="checkbox" value="1" name="q[verified_true]" id="q_verified_true" style="margin-right: 8px;" />VERIFIED</label>
                             </div>
                             <div title="At their place" data-toggle="tooltip" data-placement="top" class="form-group boolean optional q_incalls_true" style="margin-bottom: 0;">
@@ -361,7 +364,7 @@
                   </div>
                   <div class="modal-footer">
                     <button class="btn btn-primary btn-lg" wire:loading.attr="disabled" id="submit1" type="submit" wire:click="search" style="height:43px">
-                      <i class="fa fa-search"></i> <span wire:loading.remove wire:target="search">Search</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> <span wire:loading.remove wire:target="search">Search</span>
                       <span wire:loading wire:target="search">Searching...</span> </button>
                   </div>
            
@@ -370,7 +373,7 @@
           </div>
 
           <button class="btn btn-primary" id="submit" type="submit" wire:loading.attr="disabled">
-            <i class="fa fa-search"></i>  <span wire:loading.remove wire.target="search">Search</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>  <span wire:loading.remove wire.target="search">Search</span>
             <span wire:loading wire.target="search">Searching...</span>
           </button>
         </form>

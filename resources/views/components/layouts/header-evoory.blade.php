@@ -76,12 +76,3 @@
         </div>
     </div>
 </header>
-
-{{-- Hero Tagline --}}
-<div class="ev-hero">
-    <div class="ev-container">
-        <p class="ev-hero-tagline">
-            <span class="ev-hero-accent">evoory</span> – where escorts from Dubai and the rest of the world await
-        </p>
-    </div>
-</div>

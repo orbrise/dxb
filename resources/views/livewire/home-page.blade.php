@@ -4,6 +4,14 @@
  
 @push('css')
 
+<!-- Font Awesome 5 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+
+<!-- Base Evoory Theme & Custom Single File for Homepage Layout -->
+<link rel="stylesheet" href="{{ asset('assets/css/app.css') }}" />
+<link rel="stylesheet" href="{{ asset('assets/css/site-inline.min.css') }}" />
+<link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}" />
+
 <!-- Preload first profile images for faster LCP -->
 @if(isset($profiles) && $profiles->count() > 0)
     @foreach($profiles->take(3) as $preloadProfile)
@@ -210,23 +218,23 @@
 }
 
 #search-more .modal-content {
-    background-color: #2d2d2d !important;
+    background-color: #14141A !important;
     color: white !important;
-    border: 1px solid #444;
-    border-radius: 4px;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
     z-index: 1057 !important;
     position: relative;
 }
 
 #search-more .modal-header {
-    background-color: #2d2d2d !important;
-    border-bottom: 1px solid #444;
+    background-color: #14141A !important;
+    border-bottom: 1px solid #2a2a2a;
     padding: 20px;
 }
 
 #search-more .modal-title {
-    color: #f5a623 !important;
-    font-weight: 600;
+    color: #fff !important;
+    font-weight: 700;
 }
 
 #search-more .close {
@@ -240,7 +248,7 @@
 }
 
 #search-more .modal-body {
-    background-color: #2d2d2d !important;
+    background-color: #14141A !important;
     padding: 30px 20px;
 }
 
@@ -250,27 +258,28 @@
 }
 
 #search-more .modal-footer {
-    background-color: #2d2d2d !important;
-    border-top: 1px solid #444;
+    background-color: #14141A !important;
+    border-top: none;
     padding: 20px;
 }
 
 #search-more .btn-primary {
-    background-color: #f5a623 !important;
-    border-color: #f5a623 !important;
+    background-color: #C1F11D !important;
+    border-color: #C1F11D !important;
     color: #000 !important;
+    border-radius: 8px;
 }
 
 #search-more .btn-primary:hover {
-    background-color: #f4b827 !important;
-    border-color: #f4b827 !important;
+    background-color: #d4f84d !important;
+    border-color: #d4f84d !important;
 }
 
 .typeahead-city-wrapper .twitter-typeahead {
     z-index: 0;
 }
-.adinput {background: white !important;
-    color: black !important;
+.adinput {background: #111 !important;
+    color: white !important;
     width: 100% !important}
 
     .num-range-to {
@@ -2287,7 +2296,7 @@ overflow: hidden;
         @endif
 
         @empty
-        <div class="col-md-12 mb-2"><h2>No Escorts in {{$selectedcity}} yet</h2><p>Register today and we will send you updates with new listings in {{$selectedcity}}</p><p></p><div class="subscribe-btn-wrapper"><a class="btn btn-primary btn-lg btn-lg" data-btn-link="" href="/register"><i class="fa fa-newspaper"></i> Subscribe</a></div><p></p></div>
+        <div class="col-md-12 mb-2"><h2>No Escorts in {{$selectedcity}} yet</h2><p>Register today and we will send you updates with new listings in {{$selectedcity}}</p><p></p><div class="subscribe-btn-wrapper"><a class="btn btn-primary btn-lg btn-lg" data-btn-link="" href="/register">Subscribe</a></div><p></p></div>
         @endforelse
         
         
@@ -2318,10 +2327,11 @@ overflow: hidden;
       <div class="stream-sidebar">
         <div class="subscribe-btn-wrapper subscribe-btn-wrapper--small-right">
           <a class="btn btn-primary btn-lg" data-btn-link="" href="/register">
-            <i class="fa fa-newspaper"></i> Subscribe </a>
+            Subscribe </a>
         </div>
         <h3>
           <a href="/female-escort-news-in-dubai">What&#39;s new?</a>
+          <a href="/female-escort-news-in-dubai" style="font-size:12px;color:#C1F11D !important">See more</a>
         </h3>
         @if($reviews->count() > 0)
         <ul class="activity-stream activity-records-mini">
@@ -2357,9 +2367,7 @@ overflow: hidden;
           @endforeach
         </ul>
         @endif
-        <div class="padding-left">
-          <a href="/female-escort-news-in-dubai">See more</a>
-        </div>
+        
       </div>
     </div>
   </div>
@@ -2370,10 +2378,84 @@ overflow: hidden;
 
 
   @push('js')
+  <!-- jQuery (needed for chosen, select2, etc.) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
   <!-- Optimized JavaScript Loading -->
   <script src="{{ smart_asset('chosen/chosen.jquery.js')}}" defer></script>
   <script src="{{ smart_asset('chosen/docsupport/init.js')}}" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+  
+  <!-- Custom dropdown & modal handler (replaces Bootstrap JS dependency) -->
+  <script>
+  (function() {
+    // ===== GENDER DROPDOWN =====
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.search-bar--gender');
+      var allMenus = document.querySelectorAll('.dropdown-gender-menu');
+      
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        var menu = btn.parentElement.querySelector('.dropdown-gender-menu');
+        if (menu) {
+          var isVisible = menu.style.display === 'block';
+          // Close all first
+          allMenus.forEach(function(m) { m.style.display = 'none'; });
+          if (!isVisible) {
+            menu.style.display = 'block';
+          }
+        }
+        return;
+      }
+      
+      // Click outside — close all gender menus
+      if (!e.target.closest('.dropdown-gender-menu')) {
+        allMenus.forEach(function(m) { m.style.display = 'none'; });
+      }
+    });
+
+    // ===== ADVANCED SEARCH MODAL (+ button) =====
+    document.addEventListener('click', function(e) {
+      var toggleBtn = e.target.closest('#toggle-search-more, [data-target="#search-more"]');
+      if (toggleBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        var modal = document.getElementById('search-more');
+        if (modal) {
+          modal.style.display = 'block';
+          modal.classList.add('in');
+          document.body.classList.add('modal-open');
+          // Create backdrop
+          var existingBackdrop = document.querySelector('.modal-backdrop');
+          if (!existingBackdrop) {
+            var backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade in';
+            backdrop.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1040;';
+            document.body.appendChild(backdrop);
+            backdrop.addEventListener('click', function() { closeModal(modal); });
+          }
+        }
+      }
+      
+      // Close modal on X button or close button
+      var closeBtn = e.target.closest('#search-more .close, #search-more [data-dismiss="modal"]');
+      if (closeBtn) {
+        e.preventDefault();
+        var modal = document.getElementById('search-more');
+        if (modal) closeModal(modal);
+      }
+    });
+    
+    function closeModal(modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('in');
+      document.body.classList.remove('modal-open');
+      var backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) backdrop.remove();
+    }
+  })();
+  </script>
   
   <!-- Remove prism.js as it's not needed for functionality -->
   

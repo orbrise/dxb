@@ -1,4 +1,5 @@
 @push('css')
+<link rel="stylesheet" href="{{ asset('assets/css/evoory-profile.css') }}?v={{ filemtime(public_path('assets/css/evoory-profile.css')) }}">
 <style>
   /* Lightbox Play Button - exact pbAutoplayBtn style */
   #lightboxPlay {
@@ -5878,7 +5879,7 @@ span.verified-image:hover span {
     right: 4px;
     bottom: 4px;
     font-size: 22px;
-    color: rgba(250,186,33,.9);
+    color: rgba(255, 255, 255, 0.9);
     text-shadow: 0 0 3px #333;
     background: rgba(0,0,0,.6)
 }
@@ -22228,7 +22229,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
     font-weight: 400;
 }
 #revsAndQs .no-reviews a {
-    color: #d4af37;
+    color: #fff;
 }
 </style>
 @endpush
@@ -22238,25 +22239,24 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
   <div class="nav-bar navbar-top-nav" itemscope="" itemtype="https://schema.org/BreadcrumbList">
     <div class="container-fluid" itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem">
       <a class="back-link btn btn-dark" href="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}" itemprop="item" title="Back">
-        <i class="fa fa-angle-left fa-fw"></i>
-        <span itemprop="name">{{ ucfirst($gender) }} escorts in {{$user->gcity->name}}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span itemprop="name">{{ ucfirst($gender) }} Escorts in {{$user->gcity->name}}</span>
       </a>
 
       <meta content="1" itemprop="position" />
-      <a wire:click='nextescort' class="next btn btn-dark" href="javascript:void(0)">
-        <span class="visible-xs-inline">Next</span>
-        <span class="hidden-xs">Next escort</span>
-        <i class="fa fa-angle-right fa-fw"></i>
-      </a>
       <div class="listing-title title hidden-xs">
 
         @livewire('favorite-profile', ['profileId' => $profile->id])
 
         <a href="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}/{{ $profile->slug }}">
-          <h1 style="    font-size: 20px;
-    margin-top: 7px;">{{ ucfirst($profile->name)}} – {{$user->getcountry->nationality ?? ''}} escort in {{$user->gcity->name}}</h1>
+          <h1 style="font-size: 18px; margin-top: 7px; font-weight: 500;">{{ ucfirst($profile->name)}} – {{$user->getcountry->nationality ?? ''}} escort in {{$user->gcity->name}}</h1>
         </a>
       </div>
+      <a wire:click='nextescort' class="next btn btn-dark" href="javascript:void(0)">
+        <span class="hidden-xs">Next Escort</span>
+        <span class="visible-xs-inline">Next</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
     </div>
   </div>
 
@@ -22267,47 +22267,28 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
         class="fa fa-angle-right fa-fw"></i>
     </a>
     <div class="list-group list-group-dark">
-      <a class="list-group-item  contact-phone1" data-modal-dialog-class="modal-md"
-        data-track="contact/phone-reveal/UAE free-listing-contact/phone-reveal/UAE"
-        data-url="/action/listings/freya-models/show_phone" 
-        href="javascript:void(0)">
-        <span class="action-wrapper" style="color: #d4af37;    background: rgba(0, 0, 0, .3);
-    padding: 8px;
-    border-radius: 6px">
-          <i class="fa fa-phone fa-fw" style="color: #d4af37;"></i>
-          <span class="sr-only-xxs" style="color: #d4af37; font-weight:bold">Phone</span>
-        </span>
+      <a class="list-group-item contact-phone1" href="javascript:void(0)" style="background-color: #131616 !important;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span>Phone</span>
       </a>
-      <a class="list-group-item  send-message1" data-modal-dialog-class="modal-md"
-        data-overlay-class="user-action-modal" href="javascript:void(0)">
-        <span class="action-wrapper" style="color: #d4af37;    background: rgba(0, 0, 0, .3);
-    padding: 8px;
-    border-radius: 6px">
-          <i class="fa fa-envelope2 fa-fw" style="color: #d4af37;"></i>
-          <span class="sr-only-xxs" style="color: #d4af37;font-weight:bold">Message</span>
-        </span>
+      <a class="list-group-item send-message1" href="javascript:void(0)" style="background-color: #131616 !important;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Message</span>
       </a>
       @if(!empty($user->website))
-      <a class="list-group-item contact-website track-event" data-click-stat="/action/listings/freya-models/click_stat"
-        data-track="contact/website-click/UAE free-listing-contact/website-click/UAE"
-        href="https://t.me/FreyaagencyEscort?utm_campaign=MassageRepublic&amp;utm_medium=MassageRepublicProfile&amp;utm_source=MassageRepublic"
-        rel="external noopener nofollow" target="_blank">
-        <span>
-          <i class="fa fa-globe-asia fa-fw"></i>
-          <span class="sr-only-xxs">Website</span>
-        </span>
+      <a class="list-group-item contact-website track-event" 
+        href="{{ $user->website }}" rel="external noopener nofollow" target="_blank">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span>Website</span>
       </a>
       @endif
-      <a class="list-group-item ask-question1" data-modal-dialog-class="modal-md" data-overlay-class="user-action-modal"
-        href="javascript:void(0)">
-        <i class="fa fa-question-circle fa-fw"></i>
-        <span class="sr-only-xxs">Ask a question</span>
+      <a class="list-group-item ask-question1" href="javascript:void(0)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Ask Question</span>
       </a>
-      <a class="list-group-item add-review1" data-modal-dialog-class="modal-md" data-overlay-class="user-action-modal"
-        href="javascript:void(0)">
-        <i class="fa fa-heart2 fa-fw"></i>
-        
-        <span class="sr-only-xxs">Add a review</span>
+      <a class="list-group-item add-review1" href="javascript:void(0)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Add Review</span>
       </a>
     </div>
   </div>
@@ -23100,6 +23081,23 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
 </div>
 
 @push('js')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+<script>
+/* Inject SVG close icons into all modal close buttons */
+document.querySelectorAll('.modal .close').forEach(function(btn) {
+    if (!btn.querySelector('svg')) {
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    }
+});
+/* Inject report flag SVG */
+document.querySelectorAll('.report-link').forEach(function(link) {
+    if (!link.querySelector('svg')) {
+        link.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Report this Profile';
+    }
+});
+</script>
 <script>
   // Flag to prevent multiple initializations
   window.profileDetailsInitialized = false;

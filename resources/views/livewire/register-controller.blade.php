@@ -1,159 +1,192 @@
-@section('headerform')
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid"> 
-        <a class="back-link" href="{{url('/')}}" wire:navigate>
-            <i class="fa fa-angle-left fa-fw"></i><span class="hidden-xs">Back</span></a>
-        <div class="title">
-            <h1><a href="/register">Register</a></h1></div>
-    </div>
-</div>
-@endsection
-
-@section("registertype")
-@include('components.layouts.registertype')
-@endsection
-
 <div>
-    @if (session()->has('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+    <div class="ev-auth-topbar">
+        <div class="ev-auth-topbar-inner">
+            <a class="ev-auth-back-link" href="{{ url('/') }}" wire:navigate>
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                <span>Back</span>
+            </a>
+            <div class="ev-auth-topbar-title">Register</div>
         </div>
-    @endif
+    </div>
 
-    @if (session()->has('error'))
-        <div class="alert alert-danger">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    @if ($errorMessage)
-        <div class="alert alert-danger">
-            {{ $errorMessage }}
-        </div>
-    @endif
-
-    <div class="row container mt-3">
-        <div class="col-sm-6 col-lg-5 col-lg-offset-1">
-            <div class="auth-form sign-in-form">
-                <h1 class="margin-bottom hidden-xs">Register</h1>
-                <form class="simple_form" wire:submit.prevent="submitForm">
-
-                    <div class="form-group text-center">
-                        <a href="{{ route('google.redirect') }}" class="btn btn-lg btn-xs-block" style="color: #e9ad1e;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 20px;
-    border: 2px solid white;">
-                            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
-                                <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.184L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9.003 18z" fill="#34A853"/>
-                                <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-                                <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.428 0 9.002 0 5.48 0 2.438 2.017.957 4.958L3.964 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335"/>
-                            </svg>
-                            <span>Continue with Google</span>
-                        </a>
-                    </div>
-
-                    <div class="divider"> <span style="margin-inline: 9px;font-size: 15px;color: #e9ad1e;">or register with email</span> </div>
-
-                    <div class="form-group string required account_name">
-                        <label class="string required control-label" for="account_name">Username <abbr title="required">*</abbr></label>
-                        <input wire:model="name" class="string required form-control input-lg validate" placeholder="Username" type="text" id="account_name"/>
-                        @error('name')
-                            <span class="validation-error">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="form-group email required account_email">
-                        <label class="email required control-label" for="account_email">Email <abbr title="required">*</abbr></label>
-                        <input wire:model="email" class="string email required form-control input-lg validate" placeholder="Email" type="email" id="account_email"/>
-                        @error('email')
-                            <span class="validation-error">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="form-group password required account_password">
-                        <label class="password required control-label" for="account_password">Password <abbr title="required">*</abbr></label>
-                        <input wire:model="password" class="password required form-control input-lg validate" placeholder="Password (min. 6 characters)" type="password" id="account_password"/>
-                        @error('password')
-                            <span class="validation-error">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="form-group phone required">
-                        <label class="control-label" for="account_phone">Phone Number <abbr title="required">*</abbr></label>
-                        <div class="d-flex" style="display: flex; gap: 10px;">
-                            <div class="country-code-wrapper" style="position: relative; width: 160px; flex-shrink: 0;">
-                                <div class="country-code-display form-control input-lg" id="countryCodeDisplay" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <img id="selectedFlag" src="https://flagcdn.com/w40/ae.png" style="width: 24px; height: 16px; object-fit: cover; border-radius: 2px; display: none;">
-                                        <span id="selectedCode">Select</span>
-                                    </div>
-                                    <i class="fa fa-chevron-down" style="font-size: 10px;"></i>
-                                </div>
-                                <div class="country-dropdown" id="countryDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 250px; overflow-y: auto; background: #fff; border: 1px solid #ccc; border-radius: 4px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                                    <input type="text" class="form-control" id="countrySearch" placeholder="Search country..." style="border: none; border-bottom: 1px solid #eee; border-radius: 0;">
-                                    <div id="countryList">
-                                        @foreach($countries as $country)
-                                            <div class="country-option" data-code="{{ $country->phonecode }}" data-iso="{{ strtolower($country->iso) }}" data-name="{{ $country->nicename }}" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
-                                                <img src="https://flagcdn.com/w40/{{ strtolower($country->iso) }}.png" style="width: 24px; height: 16px; object-fit: cover; border-radius: 2px;">
-                                                <span style="color: #333;">{{ $country->nicename }}</span>
-                                                <span style="color: #888; margin-left: auto;">+{{ $country->phonecode }}</span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <input type="hidden" wire:model="countrycode" id="account_countrycode">
-                            </div>
-                            <input wire:model="phone" class="form-control input-lg" placeholder="Phone number" type="text" id="account_phone" style="flex: 1;"/>
-                        </div>
-                        @error('countrycode')
-                            <span class="validation-error">{{ $message }}</span>
-                        @enderror
-                        @error('phone')
-                            <span class="validation-error">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <button class="btn btn-primary btn-lg btn-xs-block" type="submit" wire:loading.attr="disabled" wire:target="submitForm">
-                            <span wire:loading.remove wire:target="submitForm">Register</span>
-                            <span wire:loading wire:target="submitForm">
-                                <i class="fa fa-spinner fa-spin"></i> Registering...
-                            </span>
-                        </button>
-                    </div>
-
-                </form>
-
-                <div class="auth-other-links padding-bottom">
-                    <div class="list-group list-group-dark">
-                        <a class="list-group-item" href="{{route('sign-in')}}">Already have an account? Sign in</a>
-                    </div>
-                </div>
+    <div class="ev-register-page">
+        @if (session()->has('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
             </div>
-        </div>
+        @endif
 
-        <div class="col-sm-6 col-lg-5">
-            <div id="user-register-incentive"><p class="h1">We know you want to!</p><div class="register-graphic" id="user-incentive"></div></div>
+        @if (session()->has('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if ($errorMessage)
+            <div class="alert alert-danger">
+                {{ $errorMessage }}
+            </div>
+        @endif
+
+        <div class="ev-register-card">
+            <h1 class="ev-register-title">Register</h1>
+
+            <form class="simple_form" wire:submit.prevent="submitForm">
+                <a href="{{ route('google.redirect') }}" class="ev-google-btn">
+                    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                        <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.184L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9.003 18z" fill="#34A853"/>
+                        <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                        <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.428 0 9.002 0 5.48 0 2.438 2.017.957 4.958L3.964 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335"/>
+                    </svg>
+                    <span>Continue with Google</span>
+                </a>
+
+                <div class="ev-register-divider"><span>or register with email</span></div>
+
+                <div class="ev-form-group">
+                    <label for="account_name">Username <span class="ev-required">*</span></label>
+                    <input wire:model="name" class="ev-auth-input" placeholder="Username" type="text" id="account_name" />
+                    @error('name')
+                        <span class="validation-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="ev-form-group">
+                    <label for="account_email">Email <span class="ev-required">*</span></label>
+                    <input wire:model="email" class="ev-auth-input" placeholder="Email" type="email" id="account_email" />
+                    @error('email')
+                        <span class="validation-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="ev-form-group">
+                    <label for="account_password">Password <span class="ev-required">*</span></label>
+                    <input wire:model="password" class="ev-auth-input" placeholder="Password" type="password" id="account_password" />
+                    @error('password')
+                        <span class="validation-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="ev-form-group">
+                    <label for="account_phone">Phone Number <span class="ev-required">*</span></label>
+                    <div class="ev-phone-row">
+                        <div class="ev-country-code-wrapper">
+                            <button class="ev-country-code-display ev-auth-input" id="countryCodeDisplay" type="button">
+                                <span class="ev-country-selected">
+                                    <img id="selectedFlag" src="https://flagcdn.com/w40/ae.png" alt="Flag" />
+                                    <span id="selectedCode">Select</span>
+                                </span>
+                                <svg class="ev-country-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+
+                            <div class="country-dropdown ev-country-dropdown" id="countryDropdown" style="display: none;">
+                                <input type="text" class="ev-country-search" id="countrySearch" placeholder="Search country..." />
+                                <div id="countryList">
+                                    @foreach($countries as $country)
+                                        <div class="country-option ev-country-option" data-code="{{ $country->phonecode }}" data-iso="{{ strtolower($country->iso) }}" data-name="{{ $country->nicename }}">
+                                            <img src="https://flagcdn.com/w40/{{ strtolower($country->iso) }}.png" alt="{{ $country->nicename }} flag" />
+                                            <span class="ev-country-name">{{ $country->nicename }}</span>
+                                            <span class="ev-country-code">+{{ $country->phonecode }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <input type="hidden" wire:model="countrycode" id="account_countrycode">
+                        </div>
+
+                        <input wire:model="phone" class="ev-auth-input" placeholder="Phone number" type="text" id="account_phone" />
+                    </div>
+                    @error('countrycode')
+                        <span class="validation-error">{{ $message }}</span>
+                    @enderror
+                    @error('phone')
+                        <span class="validation-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="ev-register-actions">
+                    <button class="ev-btn-register-submit" type="submit" wire:loading.attr="disabled" wire:target="submitForm">
+                        <span class="ev-btn-register-label" wire:loading.remove wire:target="submitForm">
+                            <span>Register</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </span>
+                        <span wire:loading wire:target="submitForm">
+                            <svg class="ev-spinner" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                            Registering...
+                        </span>
+                    </button>
+                </div>
+            </form>
+
+            <a class="ev-register-signin" href="{{ route('sign-in') }}" wire:navigate>Already have an account? Sign in</a>
         </div>
     </div>
 </div>
 
 @push('css')
 <style>
-    .country-option:hover {
-        background-color: #f5f5f5 !important;
-    }
-    .country-dropdown::-webkit-scrollbar {
-        width: 6px;
-    }
-    .country-dropdown::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 3px;
-    }
+.ev-auth-topbar{background:#12191c;border-top:1px solid #1f262f;border-bottom:1px solid #1f262f}
+.ev-auth-topbar-inner{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:center;position:relative}
+.ev-auth-back-link{display:inline-flex;align-items:center;gap:4px;color:#b5df19;text-decoration:none;font-size:15px;position:absolute;left:16px}
+.ev-auth-topbar-title{color:#d6dbe6;font-size:22px;font-weight:400;line-height:1}
+
+.ev-register-page .alert{max-width:420px;margin:16px auto;padding:12px 16px;border-radius:8px;font-size:15px}
+.ev-register-page .alert-success{background:rgba(193,241,29,.12);border:1px solid rgba(193,241,29,.3);color:#c1f11d}
+.ev-register-page .alert-danger{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171}
+.validation-error{color:#f87171;font-size:13px;margin-top:4px;display:block}
+
+.ev-register-page{max-width:1180px;margin:0 auto;padding:36px 16px 60px}
+.ev-register-card{max-width:420px;margin:0 auto}
+.ev-register-title{margin:0 0 18px;color:#fff;font-size:30px;font-weight:500;line-height:1.1}
+
+.ev-google-btn{height:46px;border:1px solid #31384a;border-radius:6px;color:#d8deea;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px}
+.ev-register-divider{margin:16px 0 14px;display:flex;align-items:center;color:#dce1ec;font-size:32px;font-weight:400}
+.ev-register-divider::before,.ev-register-divider::after{content:'';height:1px;background:#2a3241;flex:1}
+.ev-register-divider span{padding:0 10px;font-size:16px;color:#d8deea}
+
+.ev-form-group{margin-bottom:30px}
+.ev-form-group label{display:block;color:#dce1ec;font-size:16px;margin:0 0 6px;font-weight:400}
+.ev-required{color:#f87171}
+.ev-auth-input{width:100%;height:46px;border-radius:4px;border:1px solid #2e3646;background:#0e121a;color:#fff;padding:0 12px;font-size:18px}
+.ev-auth-input:focus{outline:none;border-color:#3d475d}
+
+.ev-phone-row{display:flex;gap:10px}
+.ev-country-code-wrapper{position:relative;width:160px;flex-shrink:0}
+.ev-country-code-display{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.ev-country-selected{display:inline-flex;align-items:center;gap:8px;overflow:hidden;white-space:nowrap;color:#d8deea}
+#selectedFlag{width:24px;height:16px;object-fit:cover;border-radius:2px;display:none}
+.ev-country-chevron{color:#9ca3af;flex-shrink:0}
+
+.ev-country-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:250px;overflow-y:auto;background:#0e121a;border:1px solid #2e3646;border-radius:6px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.35)}
+.ev-country-search{width:100%;height:40px;background:#0e121a;color:#fff;border:0;border-bottom:1px solid #2e3646;padding:0 12px;outline:none}
+.ev-country-option{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid #1f2937}
+.ev-country-option:last-child{border-bottom:none}
+.ev-country-option img{width:24px;height:16px;object-fit:cover;border-radius:2px}
+.ev-country-name{color:#d8deea}
+.ev-country-code{color:#9ca3af;margin-left:auto}
+.ev-country-option:hover{background:#151c28}
+
+.ev-register-actions{display:flex;align-items:center;margin-top:3rem}
+.ev-btn-register-submit{height:34px;min-width:126px;border-radius:999px;border:none;background:#c1f11d;color:#111;font-size:20px;font-weight:500;padding:0 20px;cursor:pointer}
+.ev-btn-register-submit[disabled]{opacity:.7;cursor:not-allowed}
+.ev-btn-register-label{display:inline-flex;align-items:center;gap:2px}
+
+.ev-register-signin{display:inline-block;margin-top:25px;color:#b5df19;text-decoration:none;font-size:14px}
+
+.ev-spinner{animation:ev-spin 1s linear infinite;vertical-align:middle}
+@keyframes ev-spin{to{transform:rotate(360deg)}}
+
+.ev-country-dropdown::-webkit-scrollbar{width:6px}
+.ev-country-dropdown::-webkit-scrollbar-thumb{background:#364152;border-radius:3px}
+.ev-country-name {font-size: 12px;}
+@media(max-width:768px){
+  .ev-auth-topbar-title{font-size:26px}
+  .ev-register-title{font-size:36px}
+  .ev-google-btn{font-size:18px}
+  .ev-btn-register-submit{font-size:24px}
+}
 </style>
 @endpush
 

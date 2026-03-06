@@ -5,6 +5,8 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use App\Models\City;
+use App\Models\Country;
+use Illuminate\Support\Facades\DB;
 
 class NewHomepage extends Component
 {
@@ -27,9 +29,25 @@ class NewHomepage extends Component
             ->orderBy('name', 'asc')
             ->get();
         
+        // Get countries with city counts from database
+        $countriesWithCities = Country::select('countries.id', 'countries.iso', 'countries.nicename')
+            ->join('cities', 'countries.iso', '=', 'cities.iso')
+            ->groupBy('countries.id', 'countries.iso', 'countries.nicename')
+            ->selectRaw('COUNT(cities.id) as cities_count')
+            ->having('cities_count', '>', 0)
+            ->orderBy('countries.nicename', 'asc')
+            ->get()
+            ->map(function ($country) {
+                return [
+                    'code' => $country->iso,
+                    'name' => $country->nicename,
+                    'cities' => $country->cities_count,
+                ];
+            });
+        
         // Use new Evoory theme or legacy template
         if ($this->useEvooryTheme) {
-            return view('livewire.homepage-evoory', compact('featuredCities'))
+            return view('livewire.homepage-evoory', compact('featuredCities', 'countriesWithCities'))
                 ->layout('components.layouts.app-evoory');
         }
             

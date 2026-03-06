@@ -10,12 +10,14 @@
     
     {{-- Preconnect for performance --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     {{-- Critical CSS inline for faster FCP --}}
     <style>
         :root{--bg-primary:#0a0a0a;--bg-secondary:#111111;--accent:#C1F11D;--text-primary:#ffffff}
-        body{margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+        body{margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:300}
         .ev-header{background:var(--bg-secondary);padding:12px 0;position:sticky;top:0;z-index:1000}
         .ev-container{max-width:1200px;margin:0 auto;padding:0 16px}
         .ev-logo{font-size:24px;font-weight:700;color:var(--accent);text-decoration:none}
@@ -23,7 +25,7 @@
     </style>
     
     {{-- Main theme CSS --}}
-    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260227-1">
     
     {{-- Additional page-specific CSS --}}
     @stack('css')
@@ -42,7 +44,7 @@
     @include('components.layouts.footer-evoory')
     
     {{-- Theme JS - Deferred for performance --}}
-    <script src="{{ asset('assets/js/evoory-theme.js') }}" defer></script>
+    <script src="{{ asset('assets/js/evoory-theme.js') }}?v=20260227-1" defer></script>
     
     {{-- Additional page-specific JS --}}
     @stack('js')
