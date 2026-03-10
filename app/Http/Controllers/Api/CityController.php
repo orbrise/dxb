@@ -15,8 +15,13 @@ class CityController extends Controller
         return response()->json([]);
     }
     
-    // Search all cities matching the query (no featured filter)
+    // Search all cities matching the query, prioritizing exact and prefix matches
     $cities = \App\Models\City::where('name', 'like', "%{$query}%")
+        ->orderByRaw("CASE
+            WHEN LOWER(name) = LOWER(?) THEN 0
+            WHEN LOWER(name) LIKE LOWER(?) THEN 1
+            ELSE 2
+        END", [$query, $query . '%'])
         ->limit(15)
         ->get();
     
