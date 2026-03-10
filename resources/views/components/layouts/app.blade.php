@@ -185,6 +185,10 @@ i.fa::before, i.fas::before, i.far::before, i.fab::before {
 .fa-spinner:before { content: "\f110" !important; }
 .fa-arrow-left:before { content: "\f060" !important; }
 .fa-arrow-right:before { content: "\f061" !important; }
+.fa-chevron-right:before { content: "\f054" !important; }
+.fa-chevron-left:before { content: "\f053" !important; }
+.fa-chevron-up:before { content: "\f077" !important; }
+.fa-chevron-down:before { content: "\f078" !important; }
 .fa-sync-alt:before { content: "\f2f1" !important; }
 .fa-edit:before { content: "\f044" !important; }
 .fa-pen:before { content: "\f304" !important; }

@@ -424,6 +424,6 @@ class Chat extends Component
             'searchResults',
             'totalConversations',
             'unreadCount'
-        ))->layout('components.layouts.app');
+        ))->layout('components.layouts.app-evoory');
     }
 }

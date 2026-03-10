@@ -30,16 +30,24 @@
                 
                 {{-- Sign In --}}
                 @auth
-                    <a href="/action/my-listings" class="ev-nav-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        My Account
-                    </a>
-                    <a href="/logout" class="ev-nav-link">Sign Out</a>
+                    @if(Auth::user()->type != 1)
+                        @php
+                            $userProfile = auth()->user()->profiles->first();
+                        @endphp
+                        <a href="{{ $userProfile ? route('user.dashboard', ['name' => $userProfile->name, 'id' => $userProfile->id]) : route('new.profile') }}" class="ev-nav-link" wire:navigate>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            My Account
+                        </a>
+                    @endif
+                    <form method="post" action="{{ url('sign_out') }}" style="display:inline">
+                        {{ csrf_field() }}
+                        <button type="submit" class="ev-nav-link" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:inherit;">Sign Out</button>
+                    </form>
                 @else
-                    <a href="/login" class="ev-nav-link">
+                    <a href="{{ route('sign-in') }}" class="ev-nav-link">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
@@ -65,12 +73,20 @@
         <div class="ev-container">
             <nav class="ev-flex ev-flex-col ev-gap-2" style="padding:16px 0">
                 <a href="/" class="ev-nav-link">Home</a>
-                <a href="/action/listings/new" class="ev-nav-link">List Now</a>
+                <a href="{{ route('new.profile') }}" class="ev-nav-link">List Now</a>
                 @auth
-                    <a href="/action/my-listings" class="ev-nav-link">My Account</a>
-                    <a href="/logout" class="ev-nav-link">Sign Out</a>
+                    @if(Auth::user()->type != 1)
+                        @php
+                            $mobileUserProfile = auth()->user()->profiles->first();
+                        @endphp
+                        <a href="{{ $mobileUserProfile ? route('user.dashboard', ['name' => $mobileUserProfile->name, 'id' => $mobileUserProfile->id]) : route('new.profile') }}" class="ev-nav-link" wire:navigate>My Account</a>
+                    @endif
+                    <form method="post" action="{{ url('sign_out') }}">
+                        {{ csrf_field() }}
+                        <button type="submit" class="ev-nav-link" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:inherit;text-align:left;width:100%;">Sign Out</button>
+                    </form>
                 @else
-                    <a href="/login" class="ev-nav-link">Sign In</a>
+                    <a href="{{ route('sign-in') }}" class="ev-nav-link">Sign In</a>
                 @endauth
             </nav>
         </div>

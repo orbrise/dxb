@@ -2,12 +2,14 @@
 
 namespace App\Livewire;
 
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use App\Models\NewsletterSubscription;
 use App\Models\NewsletterGender;
 use App\Models\City;
 use Illuminate\Support\Facades\Auth;
 
+#[Layout('components.layouts.app-evoory')]
 class UserAccount extends Component
 {
     public $showModal = false;

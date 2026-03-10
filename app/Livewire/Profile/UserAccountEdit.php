@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Profile;
 
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\User;
 use App\Models\Country;
 use Illuminate\Support\Facades\Auth;
 
+#[Layout('components.layouts.app-evoory')]
 class UserAccountEdit extends Component
 {
     use WithFileUploads;

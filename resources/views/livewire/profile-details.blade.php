@@ -13969,7 +13969,7 @@ aside.onebox.stackexchange .onebox-body img {
     border: 1px solid rgba(255,255,255,.1);
     -webkit-box-shadow: rgba(51,51,51,.3) 0 1px 1px;
     box-shadow: rgba(51,51,51,.3) 0 1px 1px;
-    padding: 15px;
+    padding: 10px 0px;
     border-radius: 4px
 }
 
@@ -22231,6 +22231,26 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
 #revsAndQs .no-reviews a {
     color: #fff;
 }
+
+/* Force heart icons in all star-ratings */
+.star-rating .star:before {
+    content: "\f08a" !important;
+    font-family: FontAwesome !important;
+}
+.star-rating .star.selected:before {
+    content: "\f004" !important;
+    font-family: FontAwesome !important;
+}
+.star-rating.editable .star.hover:before {
+    content: "\f004" !important;
+    font-family: FontAwesome !important;
+    color: rgba(244,184,39,.7) !important;
+}
+.star-rating.editable .star.hover.selected:before {
+    content: "\f004" !important;
+    font-family: FontAwesome !important;
+    color: rgba(244,184,39,.7) !important;
+}
 </style>
 @endpush
 
@@ -22272,7 +22292,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
         <span>Phone</span>
       </a>
       <a class="list-group-item send-message1" href="javascript:void(0)" style="background-color: #131616 !important;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <img src="https://assets.massagerepublic.com.co/assets/newtheme/msg.svg" width="16" height="16" alt="Message">
         <span>Message</span>
       </a>
       @if(!empty($user->website))
@@ -22283,11 +22303,11 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
       </a>
       @endif
       <a class="list-group-item ask-question1" href="javascript:void(0)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <img src="https://assets.massagerepublic.com.co/assets/newtheme/question.svg" width="16" height="16" alt="Message">
         <span>Ask Question</span>
       </a>
       <a class="list-group-item add-review1" href="javascript:void(0)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <img src="https://assets.massagerepublic.com.co/assets/newtheme/review.svg" width="16" height="16" alt="Message">
         <span>Add Review</span>
       </a>
     </div>
@@ -22425,7 +22445,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="You can come to my place">
                   <div class="pull-left text-muted">
                     <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #c2c2c2; border-radius: 50%; margin-right: 5px;padding: 7px;">
-                     <svg style="transform: rotate(217deg);fill: #383838;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free v5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M34.9 289.5l-22.2-22.2c-9.4-9.4-9.4-24.6 0-33.9L207 39c9.4-9.4 24.6-9.4 33.9 0l194.3 194.3c9.4 9.4 9.4 24.6 0 33.9L413 289.4c-9.5 9.5-25 9.3-34.3-.4L264 168.6V456c0 13.3-10.7 24-24 24h-32c-13.3 0-24-10.7-24-24V168.6L69.2 289.1c-9.3 9.8-24.8 10-34.3.4z"/></svg>
+                      <img src="https://assets.massagerepublic.com.co/assets/newtheme/incall.svg" width="12" height="16" alt="Message">
                     </span>
                   </div>
                   <div class="pull-left margin-right">
@@ -22438,8 +22458,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="I can come to your place">
                   <div class="pull-left text-muted">
                     <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #c2c2c2; border-radius: 50%; margin-right: 5px;padding: 7px;">
-                     <svg style="transform: rotate(40deg);fill: #383838;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free v5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M34.9 289.5l-22.2-22.2c-9.4-9.4-9.4-24.6 0-33.9L207 39c9.4-9.4 24.6-9.4 33.9 0l194.3 194.3c9.4 9.4 9.4 24.6 0 33.9L413 289.4c-9.5 9.5-25 9.3-34.3-.4L264 168.6V456c0 13.3-10.7 24-24 24h-32c-13.3 0-24-10.7-24-24V168.6L69.2 289.1c-9.3 9.8-24.8 10-34.3.4z"/></svg>
-                    </span>
+                      <img src="https://assets.massagerepublic.com.co/assets/newtheme/outcall.svg" width="12" height="16" alt="Message">
                   </div>
                   <div class="pull-left margin-right">
                     <div class="listing-price-label">Outcalls per hour from</div>{{ number_format($user->outcallprice) }}
@@ -22718,13 +22737,35 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
             @endif
 
             @else
-            <p>Please Login first </p>
-            <br>
-            <p><button class="btn btn-lg btn-primary" data-dismiss="modal"
-                data-modal-notice-response-btn="true">OK</button></p>
             @endif
 
           </div>
+          @if(!auth()->check())
+          <div style="padding:24px 24px 20px;background:#111213;">
+            <p style="color:#fff;font-size:20px;font-weight:400;margin:0 0 24px;padding-right:40px;line-height:1.4;">To add a review you need to <br> be a member.</p>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+              <input type="text" placeholder="Username" wire:model='reg_username'
+                style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:5px;color:#fff;padding:5px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+              <input type="email" placeholder="Email" wire:model='reg_email'
+                style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:5px;color:#fff;padding:5px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+              <input type="password" placeholder="Password" wire:model='reg_password'
+                style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:5px;color:#fff;padding:5px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+              <input type="checkbox" id="rev_terms" wire:model='reg_terms'
+                style="width:20px;height:20px;accent-color:#c8ff00;cursor:pointer;flex-shrink:0;border-radius:50%;-webkit-appearance:none;appearance:none;border:2px solid #5E6365;background:transparent;position:relative;"
+                onclick="this.style.background=this.checked?'#c8ff00':'transparent';this.style.borderColor=this.checked?'#c8ff00':'#5E6365';">
+              <label for="rev_terms" style="color:#ccc;font-size:14px;cursor:pointer;margin:0;margin-top:4px;">
+                I accept the <a href="/terms" style="color:#c8ff00;text-decoration:none;">Terms and Conditions</a> of use
+              </label>
+            </div>
+            <button type="button"
+              style="background:#c8ff00;color:#000;font-weight:400;font-size:15px;border:none;border-radius:50px;padding:4px 30px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+              Send <span style="font-family:'Font Awesome 5 Free',sans-serif;font-weight:900;font-size:12px;display:inline-block;">&#xf054;</span>
+            </button>
+            <p style="margin-top:20px;color:#888;font-size:14px;margin-bottom:0;">Already have an account? <a href="/login" style="color:#c8ff00;text-decoration:none;">Sign in</a></p>
+          </div>
+          @endif
           @if(auth()->check())
           @if ($rev)
           <div class="alert alert-success">
@@ -22791,91 +22832,131 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
     </div>
 
     <div class="user-action-modal modal askq" wire:ignore.self data-backdrop="static">
-      <div class="modal-md  modal-dialog">
-        <div class="modal-content">
-          @if(auth()->check())
-          <div class="modal-header">
-            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-              <i class="fa fa-times" aria-hidden="true"></i>
-            </button>
-            @if (session()->has('questionmsg'))
-            Your question has been sent
+      <div class="modal-md modal-dialog" style="max-width:580px;">
+        <div class="modal-content" style="background:#111213;border:1px solid #2a2a2a;border-radius:12px;color:#fff;">
 
+          @if(auth()->check())
+          {{-- LOGGED IN: Ask question --}}
+          <div style="padding:10px 24px 0;display:flex;align-items:center;gap:10px;border-bottom:1px solid #2a2a2a;padding-bottom:16px;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:#1c1c1e;border:1px solid #3a3a3a;border-radius:50%;color:#fff;font-weight:700;font-size:16px;">?</span>
+            @if(session()->has('questionmsg'))
+            <p style="margin:0;color:#fff;font-size:16px;flex:1;">Your question has been sent</p>
             @else
-            <h2 class="modal-title">
-              <i class="fa fa-question-circle fa-fw"></i> Ask question
-            </h2>
+            <h2 style="margin:0;font-size:17px;font-weight:600;color:#fff;flex:1;">Ask question</h2>
+            @endif
+            <button class="close" type="button" data-dismiss="modal" aria-label="Close"
+              style="background:transparent;border:1px solid #3a3a3a;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#aaa;opacity:1;padding:0;flex-shrink:0;">
+              <i class="fa fa-times" style="font-size:13px;" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div style="padding:24px;">
+            @if(session()->has('questionmsg'))
+            <div style="background:#1a2e1a;border:1px solid #2d5a2d;color:#7ecb7e;border-radius:8px;padding:12px 16px;margin-bottom:16px;">{{ session('questionmsg') }}</div>
+            <button data-dismiss="modal" data-modal-notice-response-btn="true"
+              style="background:#c8ff00;color:#000;font-weight:700;font-size:15px;border:none;border-radius:50px;padding:12px 32px;cursor:pointer;">OK</button>
+            @else
+            <ul style="list-style:none;padding:0;margin:0 0 20px;color:#aaa;font-size:14px;display:flex;flex-direction:column;gap:8px;">
+              <li>If your question is private, send a
+                <a class="ajax-overlay" href="/action/listings/alisha-gorgeous-hottie-tecom/listing_messages/new"
+                  data-dismiss="modal" data-modal-dialog-class="modal-md" data-overlay-class="user-action-modal"
+                  style="color:#c8ff00;text-decoration:none;font-weight:500;">
+                  <i class="fa fa-envelope"></i> Message</a>.
+              </li>
+              <li>If it's a review,
+                <a class="ajax-overlay" href="/action/listings/alisha-gorgeous-hottie-tecom/reviews/new"
+                  data-dismiss="modal" data-modal-dialog-class="modal-md" data-overlay-class="user-action-modal"
+                  style="color:#c8ff00;text-decoration:none;font-weight:500;">
+                  <i class="fa fa-pencil-alt"></i> write it here</a>, otherwise it will be deleted.
+              </li>
+              <li>Your question will be visible if the advertiser replies publicly.</li>
+            </ul>
+            <form wire:submit.prevent='askquestion' id="new_listing_question" novalidate="novalidate" accept-charset="UTF-8">
+              <div style="margin-bottom:20px;">
+                <textarea wire:model='question' rows="5"
+                  data-validations-wait-for-submit="true" data-validations="presence length(10,240)"
+                  data-validations-minlength-message="Your question needs to be at least 10 characters long"
+                  maxlength="240" name="listing_question[question]" id="listing_question_question"
+                  placeholder="Type your question here..."
+                  style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:5px;color:#fff;padding:12px 14px;font-size:14px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+              </div>
+              <div style="text-align:center;">
+                <button data-btn-submit="" type="submit"
+                  style="background:#c8ff00;color:#000;font-weight:500;font-size:16px;border:none;border-radius:50px;padding:5px 40px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+                  Ask <span style="font-family:'Font Awesome 5 Free',sans-serif;font-weight:900;font-size:12px;display:inline-block;">&#xf054;</span>
+                </button>
+              </div>
+            </form>
             @endif
           </div>
 
           @else
-          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-            <i class="fa fa-times" aria-hidden="true"></i>
-          </button>
-          <p>Login first to ask a question</p>
-          <br>
-          <button class="btn btn-lg btn-primary" data-dismiss="modal" data-modal-notice-response-btn="true">OK</button>
-          @endif
-          <div class="modal-body">
-            @if(auth()->check())
-            @if (session()->has('questionmsg'))
-            <div class="alert alert-success">
-              {{ session('questionmsg') }}
-            </div>
-            <button class="btn btn-lg btn-primary" data-dismiss="modal"
-              data-modal-notice-response-btn="true">OK</button>
-            @else
+          {{-- NOT LOGGED IN: registration form --}}
+          <div style="padding:24px;position:relative;">
+            <button class="close" type="button" data-dismiss="modal" aria-label="Close"
+              style="position:absolute;top:16px;right:16px;background:transparent;border:1px solid #3a3a3a;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#aaa;opacity:1;padding:0;">
+              <i class="fa fa-times" style="font-size:13px;" aria-hidden="true"></i>
+            </button>
+            <p style="color:#fff;font-size:20px;font-weight:400;margin:0 0 24px;padding-right:40px;line-height:1.4;">To ask a question you need to <br> be a member.</p>
 
-            <ul class="list-unstyled">
-              <li>If your question is private, send a <a class="ajax-overlay"
-                  href="/action/listings/alisha-gorgeous-hottie-tecom/listing_messages/new" data-dismiss="modal"
-                  data-modal-dialog-class="modal-md" data-overlay-class="user-action-modal">
-                  <i class="fa fa-envelope fa-inline"></i>Message </a>. </li>
-              <li>If it's a review, <a class="ajax-overlay"
-                  href="/action/listings/alisha-gorgeous-hottie-tecom/reviews/new" data-dismiss="modal"
-                  data-modal-dialog-class="modal-md" data-overlay-class="user-action-modal">
-                  <i class="fa fa-pencil-alt"></i> write it here </a>, otherwise it will be deleted. </li>
-              <li>Your question will be visible if the advertiser replies publicly.</li>
-            </ul>
-            <form wire:submit.prevent='askquestion' class="simple_form validate" id="new_listing_question"
-              novalidate="novalidate" accept-charset="UTF-8">
-              <div class="form-group text required listing_question_question">
-                <textarea wire:model='question' class="text required form-control validate" rows="3"
-                  data-validations-wait-for-submit="true" data-validations="presence length(10,240)"
-                  data-validations-minlength-message="Your question needs to be at least 10 characters long"
-                  maxlength="240" name="listing_question[question]" id="listing_question_question"></textarea>
-              </div>
-              <button class="btn btn-primary btn-lg btn-xs-block" data-btn-submit="" type="submit">Ask</button>
-            </form>
-            @endif
-            @endif
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+              <input type="text" placeholder="Username" wire:model='reg_username'
+                style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:5px;color:#fff;padding:5px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+              <input type="email" placeholder="Email" wire:model='reg_email'
+                style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:5px;color:#fff;padding:5px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+              <input type="password" placeholder="Password" wire:model='reg_password'
+                style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:5px;color:#fff;padding:5px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+              <input type="checkbox" id="askq_terms" wire:model='reg_terms'
+                style="width:20px;height:20px;accent-color:#c8ff00;cursor:pointer;flex-shrink:0;border-radius:50%;-webkit-appearance:none;appearance:none;border:2px solid #5E6365;background:transparent;position:relative;"
+                onclick="this.style.background=this.checked?'#c8ff00':'transparent';this.style.borderColor=this.checked?'#c8ff00':'#5E6365';">
+              <label for="askq_terms" style="color:#ccc;font-size:14px;cursor:pointer;margin:0; margin-top:4px">
+                I accept the <a href="/terms" style="color:#c8ff00;text-decoration:none;">Terms and Conditions</a> of use
+              </label>
+            </div>
+
+            <button type="button"
+              style="background:#c8ff00;color:#000;font-weight:400;font-size:15px;border:none;border-radius:50px;padding:4px 30px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+              Send <span style="font-family:'Font Awesome 5 Free',sans-serif;font-weight:900;font-size:12px;display:inline-block;">&#xf054;</span>
+            </button>
+            <p style="margin-top:20px;color:#888;font-size:14px;margin-bottom:0;">Already have an account? <a href="/login" style="color:#c8ff00;text-decoration:none;">Sign in</a></p>
           </div>
+          @endif
+
         </div>
       </div>
     </div>
 
     <div class="user-action-modal modal msgmodal" data-backdrop="static">
-      <div class="modal-md  modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-              <i class="fa fa-times" aria-hidden="true"></i>
-            </button>
+      <div class="modal-md modal-dialog" style="max-width:580px;">
+        <div class="modal-content" style="background:#111213;border:1px solid #2a2a2a;border-radius:12px;color:#fff;">
+
+          @if(auth()->check())
+          {{-- LOGGED IN: Send message form --}}
+          <div class="modal-header" style="border-bottom:1px solid #2a2a2a;padding:20px 24px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;">
+               <img src="https://assets.massagerepublic.com.co/assets/newtheme/msg.svg" width="18" height="18" alt="Message">
+            </span>
             @if (session()->has('sendmsg'))
-            <p>Your message has been sent</p>
+            <p style="margin:0;color:#fff;font-size:16px;">Your message has been sent</p>
             @else
-            <h1 class="modal-title">
-              <i class="fa fa-envelope2 fa-fw"></i> Message for {{$user->name}}
+            <h1 class="modal-title" style="margin:0;font-size:17px;font-weight:600;color:#fff;flex:1;">
+              Message for {{$user->name}}
             </h1>
             @endif
+            <button class="close" type="button" data-dismiss="modal" aria-label="Close"
+              style="margin-left:auto;background:transparent;border:1px solid #3a3a3a;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#aaa;opacity:1;padding:0;">
+              <i class="fa fa-times" style="font-size:13px;" aria-hidden="true"></i>
+            </button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body" style="padding:24px;">
 
             @if (session()->has('sendmsg'))
-            <div class="alert alert-success">{{session('sendmsg')}}</div>
+            <div class="alert alert-success" style="background:#1a2e1a;border:1px solid #2d5a2d;color:#7ecb7e;border-radius:8px;">{{session('sendmsg')}}</div>
             <br>
-            <button class="btn btn-lg btn-primary" data-dismiss="modal"
-              data-modal-notice-response-btn="true">OK</button>
+            <button class="btn btn-lg" data-dismiss="modal" data-modal-notice-response-btn="true"
+              style="background:#c8ff00;color:#000;font-weight:700;border-radius:50px;border:none;padding:10px 32px;">OK</button>
             @else
             <form wire:submit.prevent='sendmsg' class="simple_form validate track-event" id="new_listing_message"
               data-track="contact/message/UAE premium-listing-contact/message/UAE" novalidate="novalidate"
@@ -22884,48 +22965,88 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
               <input name="utf8" type="hidden" value="✓">
               <input type="hidden" name="authenticity_token"
                 value="+LM7/8YR7Sn0qCawhfPlPNDAoom5Dtq32T3SvdRjJ+XUPyA8gl9HLrxn8XNmjkslyCYvio627JOJvCRYqOCj3w==">
-              <div class="form-group email required listing_message_sender_email_address">
-                <label class="email required control-label" for="listing_message_sender_email_address">
-                  <abbr title="required"></abbr> Email </label>
-                <input wire:model='email' class="string email required form-control validate form-control"
-                  data-validations="presence emailFormat" type="email" value="orbrise@gmail.com"
-                  name="listing_message[sender_email_address]" id="listing_message_sender_email_address">
+
+              <div class="form-group" style="margin-bottom:18px;">
+                <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_sender_email_address">Email</label>
+                <input wire:model='email' type="email"
+                  data-validations="presence emailFormat"
+                  name="listing_message[sender_email_address]" id="listing_message_sender_email_address"
+                  style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+                <small style="color:#888;font-size:10px;margin-top:4px;display:block;">Please enter a valid email address</small>
               </div>
-              <div class="form-group text required listing_message_content">
-                <label class="text required control-label" for="listing_message_content">
-                  <abbr title="required"></abbr> Message </label>
-                <textarea wire:model='msg' rows="4" class="text required form-control validate error"
+
+              <div class="form-group" style="margin-bottom:18px;">
+                <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_content">Message</label>
+                <textarea wire:model='msg' rows="5"
                   data-validations="presence minlength(10)" data-validations-presence-message="Add a message"
-                  maxlength="500" name="listing_message[content]" id="listing_message_content"></textarea>
-                <div class="validation-error" style="">
-                  <span class="tooltip"></span>Add a message
-                </div>
+                  maxlength="500" name="listing_message[content]" id="listing_message_content"
+                  style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
               </div>
-              <div class="form-group phone_number optional listing_message_phone_number_phone_number">
-                <label class="phone_number optional control-label"
-                  for="listing_message_phone_number_attributes_phone_number">Telephone</label>
-                <div class="phone-number-input" style="display: flex; gap: 5px;">
-                  <select wire:model='code' style="width: 120px;"
-                    class="apply-custom-select2 calling-code-combobox1 form-control"
+
+              <div class="form-group" style="margin-bottom:24px;">
+                <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_phone_number_attributes_phone_digits">Telephone</label>
+                <div style="display:flex;gap:8px;">
+                  <select wire:model='code'
                     name="listing_message[phone_number_attributes][calling_code]"
-                    id="message_phone_code" tabindex="-1" title=""
-                    data-placeholder="Code">
-                    <option value="">Intl. code</option>
+                    id="message_phone_code"
+                    style="background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 12px;font-size:14px;outline:none;width:110px;appearance:none;-webkit-appearance:none;cursor:pointer;">
+                    <option value="">+971 ▾</option>
                     @foreach($countries as $country)
                     <option value="{{$country->phonecode}}">+{{$country->phonecode}} - {{$country->nicename}}</option>
                     @endforeach
                   </select>
-                  <input wire:model='phone' class="phone_number_input--digits form-control" type="text"
-                    style="flex: 1;"
+                  <input wire:model='phone' type="text"
                     placeholder="Phone number"
                     name="listing_message[phone_number_attributes][phone_digits]"
-                    id="listing_message_phone_number_attributes_phone_digits">
+                    id="listing_message_phone_number_attributes_phone_digits"
+                    style="flex:1;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;box-sizing:border-box;">
                 </div>
               </div>
-              <button class="btn btn-primary btn-lg" data-btn-submit="" type="submit">Send</button>
+
+              <div style="text-align:center;">
+                <button data-btn-submit="" type="submit"
+                  style="background:#c8ff00;color:#000;font-weight:500;font-size:15px;border:none;border-radius:50px;padding:5px 30px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+                  Send <i class="fa fa-chevron-right" style="font-size:12px;"></i>
+                </button>
+              </div>
             </form>
             @endif
           </div>
+
+          @else
+          {{-- NOT LOGGED IN: registration form --}}
+          <div style="padding:24px;position:relative;">
+            <button class="close" type="button" data-dismiss="modal" aria-label="Close"
+              style="position:absolute;top:16px;right:16px;background:transparent;border:1px solid #3a3a3a;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#aaa;opacity:1;padding:0;">
+              <i class="fa fa-times" style="font-size:13px;" aria-hidden="true"></i>
+            </button>
+            <p style="color:#fff;font-size:20px;font-weight:600;margin:0 0 24px;padding-right:40px;line-height:1.4;">To send a message you need to be a member.</p>
+
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+              <input type="text" placeholder="Username" wire:model='msg_reg_username'
+                style="width:100%;background:#1c1c1e;border:1px solid #2e2e30;border-radius:8px;color:#fff;padding:12px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+              <input type="email" placeholder="Email" wire:model='msg_reg_email'
+                style="width:100%;background:#1c1c1e;border:1px solid #2e2e30;border-radius:8px;color:#fff;padding:12px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+              <input type="password" placeholder="Password" wire:model='msg_reg_password'
+                style="width:100%;background:#1c1c1e;border:1px solid #2e2e30;border-radius:8px;color:#fff;padding:12px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+              <input type="checkbox" id="msg_terms" wire:model='msg_reg_terms'
+                style="width:18px;height:18px;accent-color:#c8ff00;cursor:pointer;flex-shrink:0;">
+              <label for="msg_terms" style="color:#ccc;font-size:14px;cursor:pointer;margin:0;">
+                I accept the <a href="/terms" style="color:#c8ff00;text-decoration:none;">Terms and Conditions</a> of use
+              </label>
+            </div>
+
+            <button type="button"
+              style="background:#c8ff00;color:#000;font-weight:700;font-size:15px;border:none;border-radius:50px;padding:12px 32px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+              Send <i class="fa fa-chevron-right" style="font-size:12px;"></i>
+            </button>
+            <p style="margin-top:20px;color:#888;font-size:14px;margin-bottom:0;">Already have an account? <a href="/login" style="color:#c8ff00;text-decoration:none;">Sign in</a></p>
+          </div>
+          @endif
+
         </div>
       </div>
     </div>

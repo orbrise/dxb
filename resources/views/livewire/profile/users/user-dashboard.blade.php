@@ -1,1025 +1,1046 @@
 <div>
-@section('headerform')
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid">
-      <a class="back-link" href="/female-escorts-in-dubai">
-        <i class="fa fa-angle-left fa-fw"></i>
-        <span class="hidden-xs">Escorts in Dubai</span>
-      </a>
-      <div class="title">
-        <h1>
-          <a href="/my-profile/umer-329cee24-363b-4b1c-bf8f-a846d3b78c2e">{{Auth::user()->name}}'s Dubai profile</a>
-        </h1>
-      </div>
-    </div>
-  </div>
-@endsection
-
-<!-- Success Message Alert -->
-<div id="success-alert" class="alert alert-success alert-dismissible" style="display: none; position: fixed; top: 80px; right: 20px; z-index: 99999; min-width: 300px; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-    <button type="button" class="close" onclick="this.parentElement.style.display='none'">&times;</button>
-    <strong><i class="fa fa-check-circle"></i> Success!</strong>
-    <span id="success-message-text"></span>
-</div>
-
+@push('css')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 <style>
-
-
-/* Simple Clean Pagination - Theme Colors */
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 30px 0;
-    gap: 5px;
-}
-
-.pagination li {
-    list-style: none;
-}
-
-.pagination li a,
-.pagination li span {
-    display: block;
-    padding: 10px 16px;
-    min-width: 45px;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 600;
-    color: #555;
-    background-color: #fff;
-    border: 2px solid #ddd;
-    text-decoration: none;
-    transition: all 0.2s;
-    border-radius: 4px;
-}
-
-.pagination li a:hover {
-    background-color: #333;
-    color: #dca623;
-    border-color: #333;
-}
-
-.pagination li.active span {
-    background-color: #333;
-    color: #dca623;
-    border-color: #333;
-}
-
-.pagination li.disabled span {
-    color: #646464;
-    cursor: not-allowed;
-    background-color: #8f8f8f;
-    border-color: #8f8f8f;
-}
-
-/* Previous/Next buttons */
-.pagination li:first-child a:hover,
-.pagination li:last-child a:hover {
-    background-color: #333;
-    color: #dca623;
-}
-
-@media (max-width: 576px) {
-    .pagination li a,
-    .pagination li span {
-        padding: 8px 12px;
-        min-width: 40px;
-        font-size: 14px;
+    .ev-back-bar {
+        background: #131616;
+        padding: 12px 0;
     }
-}
+    .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }
+    .ev-back-bar h1 { color: #fff; font-size: 18px; font-weight: 600; margin: 0; }
+    .ev-back-bar h1 a { color: #fff; text-decoration: none; }
 
+    .ev-container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
-
-.pagination>li>a, .pagination>li>button, .pagination>li>span {
-    font-size: 18px;
-    height: 48px;
-    line-height: 26px;
-    padding: 11px 16px;
-    background: #535353;
-    border: 1px solid #535353;
-}
-
-.pagination>li:last-child>a, .pagination>li:last-child>button {
-    border-radius: 4px;
-    padding: 0px 19px;
-}
-
-/* Profile Views Badge */
-.profile-views-badge {
-    display: inline-block;
-    font-size: 14px;
-    font-weight: normal;
-    color: #dca623;
-    padding: 4px 10px;
-    background-color: rgba(220, 166, 35, 0.1);
-    border-radius: 4px;
-    border: 1px solid rgba(220, 166, 35, 0.3);
-    white-space: nowrap;
-}
-
-.profile-views-badge i {
-    margin-right: 4px;
-    color: #dca623;
-}
-
-@media (max-width: 576px) {
-    .profile-views-badge {
-        font-size: 12px;
-        padding: 3px 8px;
-    }
-}
-
-/* Custom Tooltip Styles */
-.help-tooltip {
-    position: relative;
-    cursor: help;
-}
-
-.help-tooltip:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 10px;
-    padding: 10px 15px;
-    background-color: #333;
-    color: #fff;
-    font-size: 13px;
-    line-height: 1.4;
-    border-radius: 4px;
-    white-space: normal;
-    width: 280px;
-    max-width: 280px;
-    text-align: center;
-    z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-
-.help-tooltip:hover::before {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 2px;
-    border: 8px solid transparent;
-    border-top-color: #333;
-    z-index: 1001;
-}
-
-@media (max-width: 768px) {
-    .help-tooltip {
-        display: none !important;
-    }
-}
-
-.margin-right {
-    margin-right: 8px !important;
-}
-
-/* Modal backdrop transparent */
-.modal-backdrop {
-    background-color: rgba(0, 0, 0, 0.3) !important;
-}
-
-.modal-backdrop.show {
-    opacity: 1 !important;
-}
-
-.nbtn {
-  background: transparent;
-    color: #aaaaaa;
-    border-radius: 30px;
-    border: 1px solid #4e4e4e;
-    padding: 2px 10px;
-}
-
-.nbtn:hover {
-    color:white;
-}
-
-/* Package Info Box Styles - Yellow/Golden Theme */
-.package-info-box {
-    background: rgba(0, 0, 0, 0.85);
-    border: 2px solid #d4a017;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-top: 12px;
-    box-shadow: 0 0 10px rgba(212, 160, 23, 0.3);
-    max-width: 300px;
-}
-
-.package-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-
-.package-header i {
-    color: #d4a017;
-    font-size: 16px;
-}
-
-.package-header strong {
-    color: #d4a017;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-
-.package-expiry {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 14px;
-    color: #e0e0e0;
-    line-height: 32px;
-    clear: both;
-}
-
-.package-expiry i {
-    color: #d4a017;
-    font-size: 15px;
-}
-
-.days-remaining {
-    color: #ffffff;
-    font-weight: 500;
-}
-
-/* Ensure thumbs container contains all child elements */
-.thumbs {
-    display: flex;
-    flex-direction: column;
-    float: left;
-    margin-right: 15px;
-}
-
-/* Hide mobile-only about text on desktop */
-.mobile-only-about {
-    display: none;
-}
-
-/* Mobile Optimization for Filter Buttons */
-@media (max-width: 768px) {
-    .btn-group {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        width: 100%;
-        gap: 8px;
-    }
-    
-    .btn-group .btn {
-        text-align: center;
-        padding: 12px 8px !important;
-        border-radius: 6px !important;
-        font-size: 13px;
+    /* Dashboard Tabs */
+    .ev-dashboard-tabs {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .btn-group .btn i {
-        margin-right: 6px;
-        flex-shrink: 0;
-    }
-    
-    .btn-group .btn-primary {
-        background: linear-gradient(135deg, #f4b827 0%, #d3980b 100%);
-        border-color: #c9910a;
-        color: #333;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(244, 184, 39, 0.3);
-    }
-    
-    .btn-group .nbtn {
-        background: #2b2b2b;
-        border: 1px solid #444;
-        color: #aaa;
-    }
-    
-    .btn-group .nbtn:active {
-        background: #333;
-        color: #fff;
-    }
-    
-    .mb-4 {
-        margin-bottom: 1.5rem !important;
-    }
-    
-    .my-listing-new-link {
-        width: 100%;
-        margin-top: 12px;
-        padding: 12px 16px !important;
-        font-size: 16px;
-        font-weight: 600;
-        border-radius: 6px !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         gap: 8px;
+        padding: 20px 0;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
     }
-
-    .listing-li .img-wrapper.basic img {
-        width: 350px;
-        height: 300px;
-        object-fit: contain;
+    .ev-dashboard-nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
     }
-
-    .nostyle-link, .nostyle-link:hover {
+    .ev-dashboard-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        border-radius: 20px;
         color: #fff;
         text-decoration: none;
-        display: flex;
+        font-size: 14px;
+        font-weight: 500;
+        background: #1D2224;
+        transition: all 0.2s;
     }
-    
-    .visible-xxs .profile-views-badge {
-        display: inline-block !important;
-        margin-top: 0 !important;
-        margin-right: 3px !important;
+    .ev-dashboard-nav a:hover { color: #C1F11D; }
+    .ev-dashboard-nav a.active {
+        background: #C1F11D;
+        color: #000;
+        font-weight: 600;
     }
-    
-    .visible-xxs {
+    .ev-dashboard-tabs .ev-add-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        border-radius: 20px;
+        background: #C1F11D;
+        color: #000;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .ev-dashboard-tabs .ev-add-btn:hover { opacity: 0.9; color: #000; }
+
+    /* Pending Alert */
+    .ev-pending-alert {
+        background: rgba(193, 241, 29, 0.08);
+        border: 1px solid rgba(193, 241, 29, 0.3);
+        border-radius: 8px;
+        padding: 14px 20px;
+        margin-bottom: 20px;
+        color: #C1F11D;
         display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+    }
+    .ev-pending-alert .ev-close {
+        background: none;
+        border: none;
+        color: #C1F11D;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0 0 0 16px;
+    }
+
+    /* More Photos Alert */
+    .ev-suggestion-alert {
+        background: rgba(193, 241, 29, 0.06);
+        border: 1px solid rgba(193, 241, 29, 0.25);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        position: relative;
+    }
+    .ev-suggestion-alert h3 {
+        color: #C1F11D;
+        font-size: 16px;
+        margin: 0 0 6px 0;
+    }
+    .ev-suggestion-alert p { color: #ccc; margin: 0; font-size: 14px; }
+    .ev-suggestion-alert a { color: #C1F11D; text-decoration: underline; }
+    .ev-suggestion-alert .ev-close {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        background: none;
+        border: none;
+        color: #C1F11D;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    /* Profile Card */
+    .ev-profile-card {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 20px;
+    }
+    .ev-profile-card .ev-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 12px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .ev-profile-card .ev-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .ev-profile-card .ev-profile-info { flex: 1; min-width: 0; }
+    .ev-profile-card .ev-profile-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #fff;
+        margin: 0 0 4px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .ev-profile-card .ev-profile-name a { color: #fff; text-decoration: none; }
+    .ev-profile-card .ev-pending-text {
+        color: #C1F11D;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+    .ev-profile-card .ev-about {
+        color: #999;
+        font-size: 14px;
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .ev-profile-card .ev-location {
+        color: #777;
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    .ev-profile-card .ev-location i { margin-right: 4px; }
+
+    /* Action Buttons */
+    .ev-actions {
+        display: flex;
+        gap: 8px;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: flex-start;
+        margin-bottom: 12px;
     }
-    
-    .visible-xxs .nostyle-link {
-        width: 100%;
-        margin-bottom: 10px;
-        margin-left: 11px;
+    .ev-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
     }
-    
-    .package-expiry {
-        display: none !important;
+    .ev-btn-accent {
+        background: #C1F11D;
+        color: #000;
     }
-    
-    /* Fix pagination visibility on mobile */
-    .pagination {
-        display: flex !important;
-        flex-wrap: wrap;
-        overflow-x: auto;
+    .ev-btn-accent:hover { opacity: 0.9; color: #000; text-decoration: none; }
+    .ev-btn-dark {
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #3a3a3a;
     }
-    
-    .pagination li {
-        display: inline-block !important;
+    .ev-btn-dark:hover { background: #333; color: #fff; text-decoration: none; }
+    .ev-btn-outline {
+        background: transparent;
+        color: #aaa;
+        border: 1px solid #3a3a3a;
     }
-    
-    .pagination li a,
-    .pagination li span {
-        display: block !important;
-        visibility: visible !important;
+    .ev-btn-outline:hover { color: #C1F11D; border-color: #C1F11D; text-decoration: none; }
+    .ev-btn-danger {
+        background: rgba(220, 53, 69, 0.15);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
     }
-    
-        .my-profile .my-listing-actions {
-        margin-top: 5px;
-    }
+    .ev-btn-danger:hover { background: rgba(220, 53, 69, 0.25); color: #ff4444; text-decoration: none; }
 
-    .my-profile {
-      margin-top: 30px;
-    }
-
-    .my-profile-primary-block {
-    position: relative;
-    margin-top: 0rem;
-    padding-top: 0px;
-}
-
-    .my-profile .my-listing-actions {
-        margin-bottom: 8px;
-    }
-
-    .mobile-only-about {
-        display: block !important;
-    }
-    
-
-    .listing-info-wrapper {
-          border-bottom: 1px solid #717171;
-    }
-}
-
-/* Tablet optimization */
-
-
-/* Tablet optimization */
-@media (min-width: 769px) and (max-width: 992px) {
-    .btn-group {
+    /* Share + Help row */
+    .ev-share-row {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
     }
-    
-    .btn-group .btn {
-        flex: 1 1 calc(50% - 4px);
-        min-width: calc(50% - 4px);
+    .ev-share-row span { color: #777; font-size: 13px; }
+    .ev-share-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #2a2a2a;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .ev-share-icon:hover { background: #333; color: #fff; text-decoration: none; }
+    .ev-need-help {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: #2a2a2a;
+        color: #aaa;
+        font-size: 13px;
+        text-decoration: none;
+        border: 1px solid #3a3a3a;
+    }
+    .ev-need-help:hover { color: #fff; text-decoration: none; }
+
+    /* Badges */
+    .ev-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+    }
+    .ev-badge-accent {
+        color: #C1F11D;
+        background: rgba(193, 241, 29, 0.1);
+        border: 1px solid rgba(193, 241, 29, 0.3);
+    }
+    .ev-badge-green {
+        color: #28a745;
+        background: rgba(40, 167, 69, 0.1);
+        border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    .ev-badge-yellow {
+        color: #ffc107;
+        background: rgba(255, 193, 7, 0.15);
+        border: 1px solid rgba(255, 193, 7, 0.5);
     }
 
-    
-
-}
-
-.days-remaining.text-danger {
-    color: #ff4444 !important;
-}
-
-
-
-/* Profile Filter Buttons */
-.btn-group .btn {
-    margin-right: 5px;
-    border-radius: 4px !important;
-}
-
-.btn-group .btn:last-child {
-    margin-right: 0;
-}
-
-.btn-group .btn i {
-    margin-right: 5px;
-}
-
-@media (min-width: 568px) {
-    .listing-li .listing-info {
-        height: 138px;
+    /* Sidebar Cards */
+    .ev-sidebar-card {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
     }
-}
-@media (min-width: 768px) {
-    .activity-record.mini .img-wrapper.basic img, .listing-li .img-wrapper.basic img, .listings-grid .img-wrapper.basic img {
-        width: 89px;
-        height: 95px;
+    .ev-sidebar-card h3 {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #2a2a2a;
+    }
+    .ev-sidebar-card p { color: #999; font-size: 14px; margin: 8px 0 16px; }
+    .ev-sidebar-card .ev-sub-text { color: #777; font-size: 13px; text-align: center; margin: 8px 0 4px; }
+    .ev-sidebar-card .ev-unavailable {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        background: #333;
+        color: #888;
+        font-size: 13px;
+        text-align: center;
+        border: none;
+        cursor: default;
+    }
+
+    /* Accent sidebar card (lime-green bg) */
+    .ev-sidebar-accent {
+        background: #C1F11D !important;
+        border-color: #a8d416 !important;
+    }
+    .ev-sidebar-accent h3 {
+        color: #000 !important;
+        border-bottom-color: rgba(0,0,0,0.15) !important;
+    }
+    .ev-sidebar-accent p { color: #333 !important; }
+    .ev-sidebar-accent .ev-sub-text { color: #444 !important; }
+    .ev-btn-dark-solid {
+        background: #1a1a1a;
+        color: #fff;
+        border: 1px solid #1a1a1a;
+    }
+    .ev-btn-dark-solid:hover { background: #000; color: #fff; text-decoration: none; }
+
+    /* Delete link */
+    .ev-delete-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #ff6b6b;
+        font-size: 13px;
+        text-decoration: none;
+        margin-top: 8px;
+    }
+    .ev-delete-link:hover { color: #ff4444; text-decoration: none; }
+
+    /* Bottom Stats Cards */
+    .ev-stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+        margin-top: 24px;
+    }
+    .ev-stats-card {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    .ev-stats-card h3 {
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 8px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #2a2a2a;
+    }
+    .ev-stats-card h3 small { color: #777; font-weight: 400; font-size: 12px; }
+    .ev-stats-card p { color: #999; font-size: 14px; margin: 8px 0; }
+    .ev-stat-value {
+        color: #C1F11D;
+        font-size: 14px;
+        font-weight: 500;
+        margin-right: 12px;
+    }
+    .ev-stat-value i { margin-right: 4px; }
+
+    /* Verify photo preview */
+    .ev-verify-preview {
+        float: right;
+        text-align: center;
+        margin-left: 12px;
+    }
+    .ev-verify-preview img {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+    .ev-verify-preview .ev-label { color: #666; font-size: 12px; display: block; margin-top: 4px; }
+    .ev-verified-badge {
+        color: #C1F11D;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 4px;
+    }
+
+    /* Link preview box */
+    .ev-link-preview {
+        float: right;
+        margin-left: 12px;
+        width: 140px;
+        height: 120px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #2a2a2a;
+    }
+    .ev-link-preview img {
+        width: 100%;
+        height: 100%;
         object-fit: cover;
     }
 
-   
-}
+    /* Share link */
+    .ev-share-link {
+        color: #C1F11D;
+        font-size: 13px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 8px;
+    }
+    .ev-share-link:hover { text-decoration: underline; color: #C1F11D; }
 
-@media (max-width: 768px) {
-     .nbtn {
-    padding: 2px 7px !important;
-}
+    /* Rejected alert */
+    .ev-alert-danger {
+        background: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .ev-alert-danger h4 { color: #ff6b6b; font-size: 15px; margin: 0 0 6px; }
+    .ev-alert-danger p { color: #ccc; font-size: 14px; margin: 0 0 10px; }
+    .ev-alert-danger .ev-close {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        background: none;
+        border: none;
+        color: #ff6b6b;
+        font-size: 18px;
+        cursor: pointer;
+    }
+    .ev-alert-danger .ev-btn-sm {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        background: rgba(220, 53, 69, 0.2);
+        color: #ff6b6b;
+        font-size: 13px;
+        text-decoration: none;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+    }
 
-.my-profile .listing-li {
-  border-bottom:0px !important;
-}
+    /* Success alert */
+    .ev-alert-success {
+        background: rgba(193, 241, 29, 0.1);
+        border: 1px solid rgba(193, 241, 29, 0.3);
+        border-radius: 8px;
+        padding: 14px 20px;
+        margin-bottom: 16px;
+        color: #C1F11D;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .ev-alert-success .ev-close {
+        background: none;
+        border: none;
+        color: #C1F11D;
+        font-size: 18px;
+        cursor: pointer;
+    }
 
-.my-profile .listing-li {
-    padding-bottom: 10px !important;
-}
+    /* Modal */
+    .ev-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .ev-modal-overlay.active { display: flex; }
+    .ev-modal {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 520px;
+        width: 90%;
+        text-align: center;
+    }
+    .ev-modal h2 { color: #fff; font-size: 20px; margin: 0 0 16px; }
+    .ev-modal p { color: #ccc; font-size: 15px; margin-bottom: 12px; }
+    .ev-modal .ev-highlight { color: #C1F11D; }
+    .ev-modal .ev-modal-actions { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
 
-.margin-right {
-    margin-right: 5px !important;
-}
+    /* Pagination */
+    .ev-pagination {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin: 30px 0;
+    }
+    .ev-pagination nav { width: 100%; }
+    .ev-pagination div { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    /* Hide Livewire "Showing X to Y of Z results" text or style it */
+    .ev-pagination p { color: #999; font-size: 13px; margin: 0; }
+    /* Previous/Next buttons row */
+    .ev-pagination nav > div > div:first-child { display: flex; justify-content: center; gap: 8px; }
+    .ev-pagination span[aria-disabled],
+    .ev-pagination a[rel] {
+        display: inline-block;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .ev-pagination a[rel]:hover {
+        background: #2a2a2a;
+        color: #C1F11D;
+        border-color: #C1F11D;
+    }
+    .ev-pagination span[aria-disabled] {
+        color: #444;
+        background: #111;
+        border-color: #222;
+        cursor: not-allowed;
+    }
+    /* Numbered pagination */
+    .ev-pagination .pagination { display: flex; gap: 5px; list-style: none; padding: 0; margin: 0; }
+    .ev-pagination .pagination li a,
+    .ev-pagination .pagination li span {
+        display: block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .ev-pagination .pagination li a:hover {
+        background: #2a2a2a;
+        color: #C1F11D;
+        border-color: #C1F11D;
+    }
+    .ev-pagination .pagination li.active span {
+        background: #C1F11D;
+        color: #000;
+        border-color: #C1F11D;
+    }
+    .ev-pagination .pagination li.disabled span {
+        color: #444;
+        background: #111;
+        border-color: #222;
+        cursor: not-allowed;
+    }
+    /* Livewire tailwind/default pagination overrides */
+    .ev-pagination span[aria-current="page"] span {
+        display: block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        background: #C1F11D !important;
+        color: #000 !important;
+        border: 1px solid #C1F11D !important;
+        border-radius: 4px;
+    }
+    .ev-pagination button {
+        display: inline-block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .ev-pagination button:hover { background: #2a2a2a; color: #C1F11D; border-color: #C1F11D; }
+    .ev-pagination button:disabled { color: #444; background: #111; border-color: #222; cursor: not-allowed; }
+    .ev-pagination button:disabled:hover { color: #444; background: #111; border-color: #222; }
 
-}
+    /* Floating success alert */
+    #ev-success-float {
+        display: none;
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 99999;
+        min-width: 300px;
+        max-width: 500px;
+        background: rgba(193, 241, 29, 0.15);
+        border: 1px solid rgba(193, 241, 29, 0.4);
+        border-radius: 8px;
+        padding: 14px 20px;
+        color: #C1F11D;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
 
-
-.btn-primary.active, .btn-primary:active, .btn-primary:hover, .my-listings-nav.open>.dropdown-toggle.my-listing-new-link, .my-listings-nav>.active.my-listing-new-link, .my-listings-nav>.my-listing-new-link:active, .my-listings-nav>.my-listing-new-link:hover, .open>.btn-primary.dropdown-toggle {
-    color: #333 !important;
-    background-color: transparent;
-    border-color: #747474ff;
-}
+    /* Responsive */
+    @media (max-width: 991px) {
+        .ev-main-grid { grid-template-columns: 1fr !important; }
+        .ev-stats-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+        .ev-dashboard-tabs { flex-direction: column; align-items: stretch; }
+        .ev-dashboard-nav { flex-direction: column; }
+        .ev-dashboard-nav a { width: 100%; justify-content: center; }
+        .ev-dashboard-tabs .ev-add-btn { width: 100%; justify-content: center; }
+        .ev-profile-card { flex-direction: column; align-items: center; text-align: center; }
+        .ev-actions { justify-content: center; }
+        .ev-share-row { justify-content: center; flex-wrap: wrap; }
+        .ev-need-help { margin-left: 0; }
+        .ev-profile-card .ev-avatar { width: 120px; height: 120px; }
+    }
 </style>
+@endpush
 
-<div class="container-fluid">
-
-<div class="content-wrapper no-sidebar">
-        <div id="content">
-          <div class="col-12">
-            @if(session('success'))
-            <div class="alert alert-success" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">×</span>
-              </button>
-                <i class="fa fa-check-circle"></i>
-                <span class="sr-only">Success:</span>
-                {{ session('success') }}
-                  </div>
-                  @endif
-                 
-
-          </div>
-@include('components.profile-dashboard-nav')
-          {{-- <div class="mb-4">
-                    <div class="btn-group" role="group">
-                      <a style="    padding: 6px 12px;" href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}" 
-                         class="btn {{ !request()->has('filter') ? 'btn-primary' : 'nbtn' }}">
-                        <i class="fa fa-check-circle"></i> Active Profiles ({{ $activeCount ?? 0 }})
-                      </a>
-                      <a style="    padding: 6px 12px;" href="{{ route('rejected.verifications') }}" 
-                         class="btn {{ request()->routeIs('rejected.verifications') ? 'btn-primary' : 'nbtn' }}">
-                        <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount ?? 0 }})
-                      </a>
-                      <a style="    padding: 6px 12px;" href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id, 'filter' => 'pending']) }}" 
-                         class="btn {{ request()->get('filter') == 'pending' ? 'btn-primary' : 'nbtn' }}">
-                        <i class="fa fa-clock"></i> Pending Approval ({{ $pendingCount ?? 0 }})
-                      </a>
-                      <a style="    padding: 6px 12px;" href="{{ route('profile.archived') }}" 
-                         class="btn {{ request()->routeIs('profile.archived') ? 'btn-primary' : 'nbtn' }}">
-                        <i class="fa fa-clock"></i> Archived ({{ $archivedCount ?? 0 }})
-                      </a>
-
-                     
-          
-                    </div>
-                     <a style="color: #333; float:right; background: #f4b827 linear-gradient(#f4b827, #d3980b) repeat-x;
-    border-color: #c9910a;" class="btn my-listing-new-link " href="{{ route('new.profile') }}" data-turbolinks="false">
-              Add Profile <i class="fa fa-plus fa-text-default"></i>
-          </a>
-
-
-                  </div> --}}
-         
-
-
-
-          
-          <div class="block my-profile-primary-block">
-            <div class="row">
-              <div class="col-md-8">
-                <div class="my-profile">
-                  
-                  
-                  <!-- Profile Filter Links -->
-                  
-                  
-                  {{-- Check if user has any rejected verifications --}}
-                  @php
-                    $hasRejections = false;
-                    foreach($allProfiles as $p) {
-                        if($p->rejectedVerification) {
-                            $hasRejections = true;
-                            break;
-                        }
-                    }
-                  @endphp
-                  
-                  @if($hasRejections)
-                  <div class="alert alert-danger alert-dismissible" role="alert">
-                    <button class="close" data-dismiss="alert" type="button">
-                      <i class="fa fa-times"></i>
-                      <span class="sr-only">Close</span>
-                    </button>
-                    <h4><i class="fa fa-exclamation-triangle"></i> Photo Verification Rejected</h4>
-                    <p>One or more of your photo verifications have been rejected. Please review the reasons and re-submit.</p>
-                    <a href="{{ route('rejected.verifications') }}" class="btn btn-danger btn-sm">
-                      <i class="fa fa-eye"></i> View Rejected Verifications
-                    </a>
-                  </div>
-                  @endif
-                  
-                  @if(isset($allProfiles) && $allProfiles->total() > 0)
-                    @foreach($allProfiles as $profile)
-                    @if($profile->package_id && $profile->getpackage)
-                    @php
-                              // Get package tiers
-                              $priceTiers = $profile->getpackage->price_tiers ? json_decode($profile->getpackage->price_tiers, true) : null;
-                              $expiresAt = null;
-                              $daysRemaining = null;
-                              
-                              // Check if promoted_until is set
-                              if ($profile->promoted_until) {
-                                  $expiresAt = \Carbon\Carbon::parse($profile->promoted_until);
-                                  $now = \Carbon\Carbon::now();
-                                  $daysRemaining = $now->diffInDays($expiresAt, false);
-                                  $daysRemaining = max(0, ceil($daysRemaining));
-                              } 
-                              // Otherwise use the longest tier (30 days) from updated_at
-                              elseif ($priceTiers && count($priceTiers) > 0) {
-                                  // Get the last tier which has the most days
-                                  $longestTier = end($priceTiers);
-                                  $days = (int)$longestTier['days'];
-                                  
-                                  $packageStartDate = $profile->updated_at ?? $profile->created_at;
-                                  $expiresAt = \Carbon\Carbon::parse($packageStartDate)->addDays($days);
-                                  $now = \Carbon\Carbon::now();
-                                  $daysRemaining = $now->diffInDays($expiresAt, false);
-                                  $daysRemaining = max(0, ceil($daysRemaining));
-                              }
-                            @endphp
-                          @endif
-
-
-                    {{-- Normal Profile Layout --}}
-                    <div class="listing-li free thumbs-0 thumbs-free mb-3 {{$profile->id}}">
-                      <h2 class="visible-xxs">
-                        <a class="nostyle-link" href="{{ url(strtolower($profile->ggender->name).'-escorts-in-'.strtolower($profile->getcity->name).'/'.$profile->id.'/'.$profile->slug) }}" wire:navigate title="{{$profile->name}}, escort in {{$profile->getcity->name}}">
-                          {{$profile->name}}
-                          
-                        </a>
-                        <span class="profile-views-badge ml-2" title="Profile Views">
-                          <i class="fa fa-eye"></i> {{ $profile->profile_views ?? 0 }}
-                        </span>
-                        <span class="profile-views-badge ml-2" title="Phone Clicks" style="border-color: rgba(40, 167, 69, 0.3); background-color: rgba(40, 167, 69, 0.1);">
-                          <i class="fa fa-phone" style="color: #28a745;"></i> <span style="color: #28a745;">{{ $profile->phone_clicks ?? 0 }}</span>
-                        </span>
-                        @if($profile->package_id && $profile->getpackage)
-                        <span class="profile-views-badge ml-2" style="border-color: rgba(220, 166, 35, 0.3); background-color: rgba(220, 166, 35, 0.1);">
-                          <i class="fa fa-star" style="color: #dca623;"></i> <span style="color: #dca623;">{{ strtoupper($profile->getpackage->name ?? 'PACKAGE') }}</span>
-                        </span>
-                        @if($daysRemaining !== null && $daysRemaining > 0)
-                        <span class="profile-views-badge ml-2" style="border-color: rgba(220, 166, 35, 0.3); background-color: rgba(220, 166, 35, 0.1);">
-                          <i class="fa fa-clock" style="color: #dca623;"></i> <span style="color: #dca623;">{{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }} left</span>
-                        </span>
-                        @endif
-                        @endif
-                        @if($profile->activeAuction)
-                        <span class="profile-views-badge ml-2" style="border-color: rgba(255, 193, 7, 0.5); background-color: rgba(255, 193, 7, 0.15);">
-                          <i class="fa fa-gavel" style="color: #ffc107;"></i> <span style="color: #ffc107;">AUCTION SPOT #{{ $profile->activeAuction->spot_number }}</span>
-                        </span>
-                        <span class="profile-views-badge ml-2" style="border-color: rgba(40, 167, 69, 0.3); background-color: rgba(40, 167, 69, 0.1);">
-                          <i class="fa fa-clock" style="color: #28a745;"></i> <span style="color: #28a745;">{{ $profile->auction_days_remaining }} {{ $profile->auction_days_remaining == 1 ? 'day' : 'days' }} left</span>
-                        </span>
-                        @endif
-                      </h2>
-                      <div class="thumbs">
-                        <div class="main-thumbs">
-                          <a class="img pb-photo-link" href="{{ url(strtolower($profile->ggender->name).'-escorts-in-'.strtolower($profile->getcity->name).'/'.$profile->id.'/'.$profile->slug) }}" wire:navigate>
-                            <span class="img-wrapper basic">
-                              <div class="image-wrapper" style="position: relative; overflow: hidden;">
-                                @if(!empty($profile->coverimg->image))
-                                <!-- Blurred background -->
-                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image)}}'); background-size: cover; background-position: center; filter: blur(10px); transform: scale(1.1);"></div>
-                                <!-- Actual image on top -->
-                                <img alt="{{$profile->name}}" class="img-responsive" style="position: relative; z-index: 1; object-fit: contain;" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image)}}" />
-                                @elseif(!empty($profile->singleimg->image))
-                                <!-- Blurred background -->
-                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image)}}'); background-size: cover; background-position: center; filter: blur(10px); transform: scale(1.1);"></div>
-                                <!-- Actual image on top -->
-                                <img alt="{{$profile->name}}" class="img-responsive" style="position: relative; z-index: 1; object-fit: contain;" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image)}}" />
-                                @else
-                                <img alt="{{$profile->name}}" class="img-responsive" height="95" src="{{smart_asset('assets/images/default-avatar.png')}}" width="89" />
-                                @endif 
-                              </div>
-                            </span>
-                             
-                          </a>
-
-                         
-                        </div>
-                        @if($profile->package_id && $profile->getpackage && $daysRemaining !== null)
-                        <div style="margin-top: 5px; font-size: 12px; color: {{ $daysRemaining <= 3 ? '#ff4444' : '#dca623' }};">
-                          <i class="fa fa-clock"></i> {{ $daysRemaining > 0 ? $daysRemaining . ' ' . ($daysRemaining == 1 ? 'day' : 'days') . ' left' : 'Expired' }}
-                        </div>
-                        @endif
-                      </div>
-                      <div class="listing-info-wrapper" style="height:160px; ">
-                        <div class="listing-info">
-                          <h2>
-                            <a class="nostyle-link" href="{{ url(strtolower($profile->ggender->name).'-escorts-in-'.strtolower($profile->getcity->name).'/'.$profile->id.'/'.$profile->slug) }}" wire:navigate title="{{$profile->name}}, escort in {{$profile->getcity->name}}">
-                              {{$profile->name}}
-                              
-                            </a>
-                            <span class="profile-views-badge ml-2" title="Profile Views">
-                              <i class="fa fa-eye"></i> {{ $profile->profile_views ?? 0 }}
-                            </span>
-                            <span class="profile-views-badge ml-2" title="Phone Clicks" style="border-color: rgba(40, 167, 69, 0.3); background-color: rgba(40, 167, 69, 0.1);">
-                              <i class="fa fa-phone" style="color: #28a745;"></i> <span style="color: #28a745;">{{ $profile->phone_clicks ?? 0 }}</span>
-                            </span>
-                            @if($profile->package_id && $profile->getpackage)
-                          <span class="profile-views-badge ml-2" style="font-size:13px">
-                              
-                              {{ strtoupper($profile->getpackage->name ?? 'PACKAGE') }}
-                            
-                            </span>
-                            @endif
-                            @if($profile->activeAuction)
-                          <span class="profile-views-badge ml-2" style="font-size:13px; border-color: rgba(255, 193, 7, 0.5); background-color: rgba(255, 193, 7, 0.15);">
-                              <i class="fa fa-gavel" style="color: #ffc107;"></i> <span style="color: #ffc107;">AUCTION #{{ $profile->activeAuction->spot_number }} - {{ $profile->auction_days_remaining }} {{ $profile->auction_days_remaining == 1 ? 'day' : 'days' }}</span>
-                            </span>
-                            @endif
-                          </h2>
-                           
-                          <a class="nostyle-link" href="{{ url(strtolower($profile->ggender->name).'-escorts-in-'.strtolower($profile->getcity->name).'/'.$profile->id.'/'.$profile->slug) }}" wire:navigate>
-                            <p class="text-muted">
-                              <i class="fa fa-map-marker-alt fa-inline"></i> {{$profile->getcity->name}}
-                              <span class="mx-2">|</span>
-                              <i class="fa fa-venus fa-inline"></i> {{$profile->ggender->name}}
-                            </p>
-
-                           
-                            @if(!empty($profile->about))
-                            <p>{{\Str::limit($profile->about, $limit=130, $end='...')}}</p>
-                            @endif
-                          </a>
-                          
-                         
-                        </div>
-                        <div class="my-listing-actions">
-                          <a class="btn nbtn margin-right" href="{{url('edit-profile/'.$profile->slug.'/'.$profile->id)}}" wire:navigate>
-                            <i class="fa fa-pencil-alt fa-inline"></i>Edit
-                          </a>
-                          <a class="btn nbtn margin-right" href="{{ url(strtolower($profile->ggender->name).'-escorts-in-'.strtolower($profile->getcity->name).'/'.$profile->id.'/'.$profile->slug) }}">
-                            <i class="fa fa-eye fa-inline"></i>View
-                          </a>
-                          <a  class="btn nbtn margin-right" href="/my-profile/{{$profile->slug}}/{{$profile->id}}/upgrade" wire:navigate>
-                            <i class="fa fa-arrow-up fa-inline"></i>Upgrade
-                          </a>
-                          @if($profile->is_active == 1)
-                            <button type="button" class="btn nbtn profile-status-btn" 
-                                    data-profile-id="{{ $profile->id }}" 
-                                    data-action="0">
-                              <i class="fa fa-pause fa-inline"></i>Pause
-                            </button>
-                          @else
-                            <button type="button" class="btn nbtn profile-status-btn" 
-                                    data-profile-id="{{ $profile->id }}" 
-                                    data-action="1">
-                              <i class="fa fa-play fa-inline"></i>Resume
-                            </button>
-
-                          @endif
-                          <div class="help-tooltip d-inline-block" 
-                               data-tooltip="Pausing advertising will mean your listing does not appear in search. If you have a paid listing, the remaining days will stay on your account. Your listing will remain active on the site for users who have bookmarked you.">
-                            <i class="fa fa-info-circle fa-2x fa-fw text-muted"></i>
-                          </div>
-
-                         
-                        </div>
-                            @if(!empty($profile->about))
-                            <p class="mobile-only-about" style="text-align: left;margin-left: 11px;">{{\Str::limit($profile->about, $limit=130, $end='...')}}</p>
-                            @endif
-                      </div>
-                    </div>
-                    @endforeach
-                    
-                    <!-- Pagination -->
-                    @if($allProfiles->hasPages())
-                    <div class="mt-4">
-                      {{ $allProfiles->links() }}
-                    </div>
-                    @endif
-                  @endif
-                  
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <div class="row">
-              <div class="col-md-12">
-                <div class="block block--goto-spots">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
-                      <h3 class="mt-0 border-bottom mb-2 d-flex align-items-center">
-                        <img alt="Rocket launch icon" class="mr-2" height="28" src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/rocket-2ad5d1c251dc15cf5ed832f505451edd4ae7ddef39b0c44a877a97baa34a84a8.svg" width="28" />
-                        <span>Get to the top!</span>
-                      </h3>
-                      <p>Have you tried placing your profile at the top? </p>
-                    </div>
-                    
-                  </div>
-                  <a class="btn btn-black btn-lg d-inline-flex align-items-center" href="/auctions/female-escorts-in-dubai">
-                        <span class="pr-2">See auctions</span>
-                        <i class="fa fa-arrow-right"></i>
-                      </a>
-                </div>
-                </div>
-                <div class="col-md-12">
-                <div class="own-listing-actions block">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
-                      <h3 class="no-margin-top border-bottom" >Free Listing</h3>
-                      <p class="emphasized">Upgrade to VIP and get more enquiries!</p>
-                    </div>
-                  </div>
-                  {{-- <a class="btn btn-lg btn-primary mt-3" wire:navigate href="/my-profile/{{$user->name}}/{{$user->id}}/upgrade">Upgrade now <i class="fa fa-arrow-right"></i>
-                      </a> --}}
-                </div>
-             </div>
-          </div>
-              </div>
-              
-            </div>
-
-              
-          <div class="alert alert-warning alert-dismissible my-listing-suggestion-alert" role="alert">
-            <button class="close" data-dismiss="alert" type="button">
-              <i class="fa fa-times"></i>
-              <span class="sr-only">Close</span>
-            </button>
-            <div class="my-listing-suggestion">
-              <h2 class="my-listing-suggestion-title">More photos = More leads</h2>
-              <p>Increasing the number of photos on your listing will produce more enquires - you can add up to 30 - <a href="https://massagerepublic.com/action/listings/umer-329cee24-363b-4b1c-bf8f-a846d3b78c2e/edit#photos">Add more photos</a>. </p>
-            </div>
-          </div>
-
-            <div class="delete-listing">
-              <a class="small text-muted" data-confirm-delete="Are you sure you want to DELETE this profile? This cannot be reversed.
-
-" data-delete-item="profile" data-turbolinks="false" href="/action/listings/1486672" rel="nofollow">
-                <i class="fa fa-times fa-inline"></i>Delete profile </a>
-            </div>
-          </div>
-          <div class="row profile-secondary-blocks">
-            <div class="col-sm-4">
-              <div class="block" id="contacts-block">
-                <h3 class="no-margin-top border-bottom padding-bottom">Contacts <small>(last 30 days) </small>
-                </h3>
-                <p>
-                  <span class="my-stat margin-right" title="Total profile views across all your profiles">
-                    <i class="fa fa-eye fa-inline"></i>{{ $totalViews ?? 0 }} </span>
-                  <span class="my-stat margin-right" title="Total phone clicks across all your profiles">
-                    <i class="fa fa-phone fa-inline"></i>{{ $totalPhoneClicks ?? 0 }} </span>
-                </p>
-                <p>
-                  <a class="btn btn-primary" href="{{ route('user.statistics') }}">View statistics</a>
-                </p>
-              </div>
-            </div>
-
-          
-            <div class="col-sm-8">
-              <div class="row">
-                <div class="col-sm-6">
-                  <div class="block" id="verify-block">
-                    <div class="photo pull-right text-center">
-                      <a class=" pb-photo-link" href="/my-profile/umer-329cee24-363b-4b1c-bf8f-a846d3b78c2e/verification_request">
-                        <span class="img-wrapper basic">
-                          <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
-                            <i class="fa fa-check"></i>
-                            <span>Verified photos</span>
-                          </span>
-                          <div class="image-wrapper">
-                            @if(!empty($user->coverimg->image))
-                            <img alt="{{$user->name}} - escort in Dubai Photo 1 of 1" class="img-responsive" height="95" src="{{smart_asset("/userimages/".$user->user_id."/".$user->id.'/'.$user->coverimg->image)}}" width="89" />
-                            @else
-                            <img alt="{{$user->name}} - escort in Dubai Photo 1 of 1" class="img-responsive" height="95" src="{{smart_asset("userimages/".$user->user_id."/".$user->id.'/'.$user->singleimg->image)}}" width="89" />
-                            @endif   
-                          </div>
-                        </span>
-                      </a>
-                      <br />
-                      <span class="text-muted">Preview</span>
-                    </div>
-                    <h3 class="no-margin-top border-bottom padding-bottom">Verify photos</h3>
-                    <p>Verified profiles get more enquiries.</p>
-<a class="btn btn-primary" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo')}}" wire:navigate>Verify now</a>
-
-
-                    
-                    <button class="px-0 btn-link d-flex align-items-center mt-3" data-copy-btn="#verifLink">
-                      <svg class="mr-1" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20">
-                        <path fill="currentColor" d="M696-96q-50 0-85-35t-35-85q0-8 1-14.5t3-14.5L342-390q-15 16-35.354 23T264-360q-50 0-85-35t-35-85q0-50 35-85t85-35q22 0 42.5 7.5T342-570l238-145q-2-8-3-14.5t-1-14.5q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-22.292 0-42.646-7T618-654L380-509q2 8 3 14.5t1 14.5q0 8-1 14.5t-3 14.5l238 145q15-17 35.354-23.5T696-336q50 0 85 35t35 85q0 50-35 85t-85 35Zm0-600q20.4 0 34.2-13.8Q744-723.6 744-744q0-20.4-13.8-34.2Q716.4-792 696-792q-20.4 0-34.2 13.8Q648-764.4 648-744q0 20.4 13.8 34.2Q675.6-696 696-696ZM264-432q20.4 0 34.2-13.8Q312-459.6 312-480q0-20.4-13.8-34.2Q284.4-528 264-528q-20.4 0-34.2 13.8Q216-500.4 216-480q0 20.4 13.8 34.2Q243.6-432 264-432Zm432 264q20.4 0 34.2-13.8Q744-195.6 744-216q0-20.4-13.8-34.2Q716.4-264 696-264q-20.4 0-34.2 13.8Q648-236.4 648-216q0 20.4 13.8 34.2Q675.6-168 696-168Zm0-576ZM264-480Zm432 264Z" />
-                      </svg>
-                      <span data-text="link copied to clipboard">share verification link</span>
-                    </button>
-                    <div class="clearfix"></div>
-                  </div>
-                </div>
-                <div class="col-sm-6">
-                  <div class="share-block block">
-                    <div class="pull-right hidden-sm">
-                      <div class="inbound-link-preview">
-                        <div style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;text-shadow:0 1px 1px rgba(255,255,255,0.6);width:180px;height:150px;display:block;position:relative;color:black!important;background-color:black!important">
-                          <a target="_blank" href="javascript:void(0)" title="{{Auth::user()->name}}" style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
-                            <img src="{{smart_asset('assets/images/mr-square.jpg') }}" alt="Dubai Escorts - Massage Republic" style="padding:0;margin:0;overflow:hidden;display:block;position:relative;width:180px;height:150px;background-color:black!important">
-                            <span style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;text-shadow:0 1px 1px rgba(255,255,255,0.6);display:block;position:absolute;top:0;left:0;width:180px;color:black!important">
-                              <span style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;text-shadow:0 1px 1px rgba(255,255,255,0.6);display:block;text-align:center;color:black!important;font-size:21px!important">Featured Escort</span>
-                              <span style="padding:0;margin:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;text-shadow:0 1px 1px rgba(255,255,255,0.6);display:block;text-align:center;line-height:1;height:44px;overflow:hidden;color:black!important;font-size:21px!important">{{Auth::user()->name}}</span>
-                            </span>
-                          </a>
-                          <a target="_blank" href="javascript:void(0)" title="Dubai Escort Service" style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;position:absolute;width:178px;text-align:center;text-shadow:0 1px 1px rgba(255,255,255,0.6);display:block;text-transform:uppercase;text-decoration:underline;line-height:1.1;top:78px;color:black!important;font-size:13px!important">Dubai Escort</a>
-                        </div>
-                      </div>
-                    </div>
-                    <h3 class="no-margin-top border-bottom padding-bottom">Link to us</h3>
-                    <p>Link to us from your site and get free credits.</p>
-                    <a class="btn btn-primary" href="javascript:void(0)">Coming Soon</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-lg-6"></div>
-          </div>
-          @if(session('show_upgrade_modal'))
-          <div aria-hidden="true" aria-labelledby="upgradeCallLabel" class="modal" id="upgradeCall" role="dialog" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-              <div class="modal-content m-3 m-sm-0">
-                <div class="modal-header">
-                  <h2 class="modal-title text-center pb-2" id="upgradeCallLabel">
-                    <i class="fa fa-bullhorn fa-inline"></i> Get more attention!
-                  </h2>
-                </div>
-                <div class="modal-body py-5">
-                  <p class="lead">There are <span class="text-primary">6566 female escorts</span> listings in Dubai. </p>
-                  <p class="lead mb-0">Increase your chance to be noticed. Upgrade your listing to&nbsp;a&nbsp;VIP profile for <span class="text-primary">less than $ 10 a day!</span>
-                  </p>
-                </div>
-                <div class="modal-footer p-0">
-                  <div class="d-flex justify-content-center">
-                    <a class="btn btn-lg btn-primary px-5 mb-5" href="/my-profile/umer-329cee24-363b-4b1c-bf8f-a846d3b78c2e/upgrade/new?upgrade=premium" type="button">
-                      <span class="pr-2">Upgrade Profile <i class="fa fa-arrow-right fa-inline"></i>
-                      </span>
-                    </a>
-                  </div>
-                  <div class="d-flex justify-content-end">
-                    <button class="btn btn-sm btn-danger" data-dismiss="modal" type="button">Close</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          @endif
-        </div>
-      </div>
+<!-- Back Bar -->
+<div class="ev-back-bar">
+    <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
+        <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
+            <i class="fa fa-angle-left"></i> Escorts in Dubai
+        </a>
+        <h1><a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}">{{Auth::user()->name}}'s Dubai profile</a></h1>
     </div>
-      @push('js')
-        
-        <script>
-        $(document).ready(function() {
-            // Initialize Bootstrap tooltips
-            $('[data-toggle="tooltip"]').tooltip({
-                trigger: 'hover',
-                html: true
-            });
-            
-            // Check for verification success from URL parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('verification_success') === '1') {
-                $('#success-message-text').text(' Verification photo uploaded successfully! Your photo is pending review.');
-                $('#success-alert').show().fadeIn();
-                
-                // Remove the URL parameter without reloading
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, document.title, newUrl);
-                
-                // Auto-hide after 5 seconds
-                setTimeout(function() {
-                    $('#success-alert').fadeOut();
-                }, 5000);
-            }
-            
-            // Check for success message from session storage
-            const successMessage = sessionStorage.getItem('successMessage');
-            console.log('Success message from storage:', successMessage);
-            
-            if (successMessage) {
-                $('#success-message-text').text(successMessage);
-                $('#success-alert').show().fadeIn();
-                
-                console.log('Alert should be visible now');
-                
-                // Clear the message from session storage
-                sessionStorage.removeItem('successMessage');
-                
-                // Auto-hide after 5 seconds
-                setTimeout(function() {
-                    $('#success-alert').fadeOut();
-                }, 5000);
-            }
-            
-            // Show upgrade modal ONLY if session flag exists (after new profile creation)
-            
-            $('#upgradeCall').modal('show');
-          
-        });
+</div>
 
-        $(".my-listings-nav1").click(function(){
-          $(".my-listings-nav").toggleClass("open");
-        });
+<!-- Floating Success Alert -->
+<div id="ev-success-float">
+    <strong><i class="fa fa-check-circle"></i> Success!</strong>
+    <span id="ev-success-text"></span>
+    <button onclick="this.parentElement.style.display='none'" style="float:right; background:none; border:none; color:#C1F11D; font-size:18px; cursor:pointer;">&times;</button>
+</div>
 
-        // Handle Profile Status Toggle (Pause/Resume)
-        $(document).on('click', '.profile-status-btn', function(e) {
-            e.preventDefault();
-            
-            var $btn = $(this);
-            var profileId = $btn.data('profile-id');
-            var action = $btn.data('action');
-            var originalHtml = $btn.html();
-            
-            // Disable button and show loading
-            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin fa-inline"></i> Processing...');
-            
-            // Make AJAX request
-            $.ajax({
-                url: '/profile-status/' + profileId,
-                method: 'POST',
-                data: {
-                    action: action,
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
-                    // Reload the page to show updated status
-                    location.reload();
-                },
-                error: function(xhr) {
-                    // Re-enable button and restore original text
-                    $btn.prop('disabled', false).html(originalHtml);
-                    alert('Error updating profile status. Please try again.');
-                    console.error('Error:', xhr);
+<div class="ev-container" style="padding-top: 8px; padding-bottom: 40px;">
+
+    <!-- Success Flash -->
+    @if(session('success'))
+    <div class="ev-alert-success" style="margin-top: 16px;">
+        <span><i class="fa fa-check-circle"></i> {{ session('success') }}</span>
+        <button class="ev-close" onclick="this.parentElement.style.display='none'">&times;</button>
+    </div>
+    @endif
+
+    @php
+        $activeCount = \App\Models\UsersProfile::where('user_id', auth()->id())->whereNull('archived_at')->where('is_active', 1)->count();
+        $pendingCount = \App\Models\UsersProfile::where('user_id', auth()->id())->whereNull('archived_at')->where('is_verified', 0)->count();
+        $rejectedCount = \App\Models\UsersProfile::where('user_id', auth()->id())->whereHas('rejectedVerification')->count();
+        $archivedCount = \App\Models\UsersProfile::where('user_id', auth()->id())->whereNotNull('archived_at')->count();
+    @endphp
+
+    <!-- Dashboard Tabs -->
+    <div class="ev-dashboard-tabs">
+        <div class="ev-dashboard-nav">
+            <a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}" 
+               class="{{ !request()->has('filter') && request()->routeIs('user.dashboard') && !request()->has('filter') ? 'active' : '' }}">
+                <i class="fa fa-check-circle"></i> Active ({{ $activeCount }})
+            </a>
+            <a href="{{ route('rejected.verifications') }}" 
+               class="{{ request()->routeIs('rejected.verifications') ? 'active' : '' }}">
+                <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount }})
+            </a>
+            <a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id, 'filter' => 'pending']) }}" 
+               class="{{ request()->get('filter') == 'pending' ? 'active' : '' }}">
+                <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
+            </a>
+            <a href="{{ route('profile.archived') }}" 
+               class="{{ request()->routeIs('profile.archived') ? 'active' : '' }}">
+                <i class="fa fa-archive"></i> Archived ({{ $archivedCount }})
+            </a>
+        </div>
+        <a href="{{ route('new.profile') }}" class="ev-add-btn">
+            <i class="fa fa-plus"></i> Add Profile
+        </a>
+    </div>
+
+    <!-- Pending Moderation Alert -->
+   {{-- @if(isset($allProfiles) && $allProfiles->total() > 0)
+        @foreach($allProfiles as $checkProfile)
+            @if($checkProfile->is_verified == 0)
+            <div class="ev-pending-alert">
+                <span><i class="fa fa-info-circle"></i> Thanks for listing your profile! Once we review the profile we will send you an email when it is live on the site</span>
+                <button class="ev-close" onclick="this.parentElement.style.display='none'">&times;</button>
+            </div>
+            @break
+            @endif
+        @endforeach
+    @endif --}}
+
+    <!-- More Photos Suggestion -->
+    <div class="ev-suggestion-alert">
+        <button class="ev-close" onclick="this.parentElement.style.display='none'">&times;</button>
+        <h3>More photos = More leads</h3>
+        <p>Increasing the number of photos on your listing will produce more enquiries - you can add up to 30 - <a href="{{url('edit-profile/'.$user->slug.'/'.$user->id)}}#photos">Add more photos</a>.</p>
+    </div>
+
+    {{-- Check if user has any rejected verifications --}}
+    @php
+        $hasRejections = false;
+        if(isset($allProfiles)) {
+            foreach($allProfiles as $p) {
+                if($p->rejectedVerification) {
+                    $hasRejections = true;
+                    break;
                 }
-            });
-        });
-        </script>
-      @endpush
+            }
+        }
+    @endphp
+
+    @if($hasRejections)
+    <div class="ev-alert-danger">
+        <button class="ev-close" onclick="this.parentElement.style.display='none'">&times;</button>
+        <h4><i class="fa fa-exclamation-triangle"></i> Photo Verification Rejected</h4>
+        <p>One or more of your photo verifications have been rejected. Please review the reasons and re-submit.</p>
+        <a href="{{ route('rejected.verifications') }}" class="ev-btn-sm">
+            <i class="fa fa-eye"></i> View Rejected Verifications
+        </a>
+    </div>
+    @endif
+
+    <!-- Main Content Grid -->
+    <div class="ev-main-grid" style="display: grid; grid-template-columns: 1fr 340px; gap: 24px;">
+        <!-- Left Column: Profile Cards -->
+        <div>
+            @if(isset($allProfiles) && $allProfiles->total() > 0)
+                @foreach($allProfiles as $profile)
+                    @php
+                        $daysRemaining = null;
+                        if($profile->package_id && $profile->getpackage) {
+                            $priceTiers = $profile->getpackage->price_tiers ? json_decode($profile->getpackage->price_tiers, true) : null;
+                            if ($profile->promoted_until) {
+                                $expiresAt = \Carbon\Carbon::parse($profile->promoted_until);
+                                $daysRemaining = max(0, ceil(\Carbon\Carbon::now()->diffInDays($expiresAt, false)));
+                            } elseif ($priceTiers && count($priceTiers) > 0) {
+                                $longestTier = end($priceTiers);
+                                $days = (int)$longestTier['days'];
+                                $packageStartDate = $profile->updated_at ?? $profile->created_at;
+                                $expiresAt = \Carbon\Carbon::parse($packageStartDate)->addDays($days);
+                                $daysRemaining = max(0, ceil(\Carbon\Carbon::now()->diffInDays($expiresAt, false)));
+                            }
+                        }
+                        $profileUrl = url(strtolower($profile->ggender->name).'-escorts-in-'.strtolower($profile->getcity->name).'/'.$profile->id.'/'.$profile->slug);
+                    @endphp
+
+                    <div class="ev-profile-card">
+                        <!-- Avatar -->
+                        <div class="ev-avatar">
+                            <a href="{{ $profileUrl }}" wire:navigate>
+                                @if(!empty($profile->coverimg->image))
+                                    <img alt="{{$profile->name}}" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image)}}" />
+                                @elseif(!empty($profile->singleimg->image))
+                                    <img alt="{{$profile->name}}" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image)}}" />
+                                @else
+                                    <img alt="{{$profile->name}}" src="{{smart_asset('assets/images/default-avatar.png')}}" />
+                                @endif
+                            </a>
+                        </div>
+
+                        <!-- Profile Info -->
+                        <div class="ev-profile-info">
+                            <h2 class="ev-profile-name">
+                                <a href="{{ $profileUrl }}" wire:navigate>{{$profile->name}}</a>
+                                <span class="ev-badge ev-badge-accent" title="Profile Views">
+                                    <i class="fa fa-eye"></i> {{ $profile->profile_views ?? 0 }}
+                                </span>
+                                <span class="ev-badge ev-badge-green" title="Phone Clicks">
+                                    <i class="fa fa-phone"></i> {{ $profile->phone_clicks ?? 0 }}
+                                </span>
+                                @if($profile->package_id && $profile->getpackage)
+                                <span class="ev-badge ev-badge-accent">
+                                    <i class="fa fa-star"></i> {{ strtoupper($profile->getpackage->name ?? 'PACKAGE') }}
+                                </span>
+                                    @if($daysRemaining !== null && $daysRemaining > 0)
+                                    <span class="ev-badge ev-badge-accent">
+                                        <i class="fa fa-clock"></i> {{ $daysRemaining }} {{ $daysRemaining == 1 ? 'day' : 'days' }} left
+                                    </span>
+                                    @endif
+                                @endif
+                                @if($profile->activeAuction)
+                                <span class="ev-badge ev-badge-yellow">
+                                    <i class="fa fa-gavel"></i> AUCTION #{{ $profile->activeAuction->spot_number }}
+                                </span>
+                                <span class="ev-badge ev-badge-green">
+                                    <i class="fa fa-clock"></i> {{ $profile->auction_days_remaining }} {{ $profile->auction_days_remaining == 1 ? 'day' : 'days' }} left
+                                </span>
+                                @endif
+                            </h2>
+
+                           {{--  @if($profile->is_verified == 0)
+                            <div class="ev-pending-text">
+                                <i class="fa fa-info-circle"></i> Your profile is pending moderation - this can take 48 hours.
+                            </div>
+                            @endif --}}
+
+                            <div class="ev-location">
+                                <i class="fa fa-map-marker-alt"></i> {{$profile->getcity->name}}
+                                <span style="margin: 0 6px;">|</span>
+                                <i class="fa fa-venus"></i> {{$profile->ggender->name}}
+                            </div>
+
+                            @if(!empty($profile->about))
+                            <div class="ev-about">{{\Str::limit($profile->about, 130, '...')}}</div>
+                            @endif
+
+                            <!-- Action Buttons -->
+                            <div class="ev-actions">
+                                <a class="ev-btn ev-btn-accent" href="{{url('edit-profile/'.$profile->slug.'/'.$profile->id)}}">
+                                    <i class="fa fa-pencil-alt"></i> Edit
+                                </a>
+                                <a class="ev-btn ev-btn-dark" href="{{ $profileUrl }}">
+                                    <i class="fa fa-eye"></i> View
+                                </a>
+                                <a class="ev-btn ev-btn-dark" href="/my-profile/{{$profile->slug}}/{{$profile->id}}/upgrade" wire:navigate>
+                                    <i class="fa fa-arrow-up"></i> Upgrade
+                                </a>
+                                @if($profile->is_active == 1)
+                                <button type="button" class="ev-btn ev-btn-dark profile-status-btn" 
+                                        data-profile-id="{{ $profile->id }}" data-action="0">
+                                    <i class="fa fa-pause"></i> Pause
+                                </button>
+                                @else
+                                <button type="button" class="ev-btn ev-btn-dark profile-status-btn" 
+                                        data-profile-id="{{ $profile->id }}" data-action="1">
+                                    <i class="fa fa-play"></i> Resume
+                                </button>
+                                @endif
+                                <a class="ev-btn ev-btn-danger" href="javascript:void(0)" onclick="if(confirm('Are you sure you want to DELETE this profile? This cannot be reversed.')) window.location='/action/listings/{{ $profile->id }}'">
+                                    <i class="fa fa-trash"></i> Delete
+                                </a>
+                            </div>
+
+                            <!-- Share Row -->
+                            {{-- <div class="ev-share-row">
+                                <span>Share profile on:</span>
+                                <a class="ev-share-icon" href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($profileUrl) }}" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook-f"></i></a>
+                                <a class="ev-share-icon" href="https://x.com/intent/tweet?url={{ urlencode($profileUrl) }}" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter"></i></a>
+                                <a class="ev-need-help" href="javascript:void(0)">
+                                    <i class="fa fa-info-circle"></i> Need Help
+                                </a>
+                            </div> --}}
+                        </div>
+                    </div>
+                @endforeach
+
+                <!-- Pagination -->
+                @if($allProfiles->hasPages())
+                <div class="ev-pagination">
+                    {{ $allProfiles->links() }}
+                </div>
+                @endif
+            @endif
+        </div>
+
+        <!-- Right Sidebar -->
+        <div>
+            <!-- Get to the Top -->
+            <div class="ev-sidebar-card ev-sidebar-accent">
+                <h3>Get to the top!</h3>
+                <p>Move to a Top Spot for a week:</p>
+                <a class="ev-btn ev-btn-dark-solid" href="/auctions/female-escorts-in-dubai" style="width: 100%; justify-content: space-between;">
+                    See Auctions <i class="fa fa-arrow-right"></i>
+                </a>
+                <p class="ev-sub-text">or</p>
+                <p style="color: #333; font-size: 13px; margin: 0 0 6px;">Reach the top for 1 hour, below the Top Spots:</p>
+                <span class="ev-unavailable" style="background: rgba(0,0,0,0.1); color: #555; border: 1px solid rgba(0,0,0,0.15);">Not available - Profile not visible</span>
+            </div>
+
+            <!-- Free Listing / Upgrade -->
+            <div class="ev-sidebar-card">
+                <h3>Free Listing</h3>
+                <p>Upgrade to VIP and get more enquiries!</p>
+                <a class="ev-btn ev-btn-accent" href="/my-profile/{{$user->slug}}/{{$user->id}}/upgrade" wire:navigate>
+                    Upgrade now <i class="fa fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Delete Profile -->
+            <div style="text-align: right; padding: 0 4px;">
+                <a class="ev-delete-link" href="javascript:void(0)" onclick="if(confirm('Are you sure you want to DELETE this profile? This cannot be reversed.')) window.location='/action/listings/{{ $user->id }}'">
+                    <i class="fa fa-times"></i> Delete Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Stats Row -->
+    <div class="ev-stats-row">
+        <!-- Contacts -->
+        <div class="ev-stats-card">
+            <h3>Contacts <small>(last 30 days)</small></h3>
+            <p>
+                <span class="ev-stat-value"><i class="fa fa-eye"></i> {{ $totalViews ?? 0 }}</span>
+                <span class="ev-stat-value"><i class="fa fa-phone"></i> {{ $totalPhoneClicks ?? 0 }}</span>
+            </p>
+            <a class="ev-btn ev-btn-accent" href="{{ route('user.statistics') }}" style="margin-top: 8px;">View Statistic</a>
+        </div>
+
+        <!-- Verify Photos -->
+        <div class="ev-stats-card">
+            <div class="ev-verify-preview">
+                <a href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>
+                    <div class="ev-verified-badge"><i class="fa fa-check"></i> Verified photos</div>
+                    @if(!empty($user->coverimg->image))
+                    <img alt="{{$user->name}}" src="{{smart_asset('/userimages/'.$user->user_id.'/'.$user->id.'/'.$user->coverimg->image)}}" />
+                    @elseif(!empty($user->singleimg->image))
+                    <img alt="{{$user->name}}" src="{{smart_asset('userimages/'.$user->user_id.'/'.$user->id.'/'.$user->singleimg->image)}}" />
+                    @endif
+                </a>
+                <span class="ev-label">Preview</span>
+            </div>
+            <h3>Verify photos</h3>
+            <p>Verified profiles get more enquiries.</p>
+            <a class="ev-btn ev-btn-accent" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Verify now</a>
+            <br>
+            <a class="ev-share-link" href="javascript:void(0)" data-copy-btn="#verifLink">
+                <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16">
+                    <path fill="currentColor" d="M696-96q-50 0-85-35t-35-85q0-8 1-14.5t3-14.5L342-390q-15 16-35.354 23T264-360q-50 0-85-35t-35-85q0-50 35-85t85-35q22 0 42.5 7.5T342-570l238-145q-2-8-3-14.5t-1-14.5q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-22.292 0-42.646-7T618-654L380-509q2 8 3 14.5t1 14.5q0 8-1 14.5t-3 14.5l238 145q15-17 35.354-23.5T696-336q50 0 85 35t35 85q0 50-35 85t-85 35Z" />
+                </svg>
+                share verification link
+            </a>
+        </div>
+
+        <!-- Link to Us -->
+        <div class="ev-stats-card">
+            <div class="ev-link-preview" style="float: right;">
+                <img src="{{smart_asset('assets/images/mr-square.jpg')}}" alt="Dubai Escorts">
+            </div>
+            <h3>Link to us</h3>
+            <p>Link to us from your site and get free credits.</p>
+            <a class="ev-btn ev-btn-accent" href="javascript:void(0)">Learn more</a>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    @if(session('show_upgrade_modal'))
+    <div class="ev-modal-overlay active" id="upgradeModal">
+        <div class="ev-modal">
+            <h2><i class="fa fa-bullhorn"></i> Get more attention!</h2>
+            <p>There are <span class="ev-highlight">6566 female escorts</span> listings in Dubai.</p>
+            <p>Increase your chance to be noticed. Upgrade your listing to a VIP profile for <span class="ev-highlight">less than $10 a day!</span></p>
+            <div class="ev-modal-actions">
+                <a class="ev-btn ev-btn-accent" href="/my-profile/{{$user->slug}}/{{$user->id}}/upgrade" style="padding: 12px 32px; font-size: 15px;">
+                    Upgrade Profile <i class="fa fa-arrow-right"></i>
+                </a>
+                <button class="ev-btn ev-btn-outline" onclick="document.getElementById('upgradeModal').classList.remove('active')" style="padding: 8px 24px;">Close</button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+</div>
+
+@push('js')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check for verification success from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('verification_success') === '1') {
+        const floatAlert = document.getElementById('ev-success-float');
+        const floatText = document.getElementById('ev-success-text');
+        if (floatAlert && floatText) {
+            floatText.textContent = ' Verification photo uploaded successfully! Your photo is pending review.';
+            floatAlert.style.display = 'block';
+        }
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setTimeout(function() {
+            if (floatAlert) floatAlert.style.display = 'none';
+        }, 5000);
+    }
+
+    // Check for success message from session storage
+    const successMessage = sessionStorage.getItem('successMessage');
+    if (successMessage) {
+        const floatAlert = document.getElementById('ev-success-float');
+        const floatText = document.getElementById('ev-success-text');
+        if (floatAlert && floatText) {
+            floatText.textContent = successMessage;
+            floatAlert.style.display = 'block';
+        }
+        sessionStorage.removeItem('successMessage');
+        setTimeout(function() {
+            if (floatAlert) floatAlert.style.display = 'none';
+        }, 5000);
+    }
+});
+
+// Handle Profile Status Toggle (Pause/Resume)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.profile-status-btn');
+    if (!btn) return;
+
+    e.preventDefault();
+    const profileId = btn.dataset.profileId;
+    const action = btn.dataset.action;
+    const originalHtml = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+
+    fetch('/profile-status/' + profileId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ action: action })
+    })
+    .then(function(response) {
+        if (response.ok) {
+            location.reload();
+        } else {
+            throw new Error('Request failed');
+        }
+    })
+    .catch(function(error) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        alert('Error updating profile status. Please try again.');
+    });
+});
+</script>
+@endpush
 </div>

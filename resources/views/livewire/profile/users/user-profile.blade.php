@@ -1,51 +1,379 @@
-@section('headerform')
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid">
+﻿@section('headerform')
+<div class="nav-bar navbar-top-nav" style="background:#111213;border-bottom:1px solid #2e3033;">
+    <div class="container-fluid" style="text-align:center;">
       <div class="title">
-        <h1>Add your profile</h1>
+        <h1 style="color:#fff;font-size:16px;font-weight:500;margin:10px 0;">Edit your profile</h1>
       </div>
     </div>
   </div>
 @endsection
 
-@push('css')
-    <style>
-      <style>
+<style>
+        /* ===== EVOORY DARK THEME FOR EDIT PROFILE ===== */
+        body, .container, .container-fluid, .content-wrapper, #content {
+            background-color: #0a0b0d !important;
+        }
+        .row.container, .col-lg-offset-1.col-lg-10 {
+            background-color: #0a0b0d !important;
+        }
+
+        /* Section title blocks with left accent border */
+        .h3.title-block, h2.h3.title-block {
+            color: #fff !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            background: #1a1b1e;
+            border-left: 4px solid #c8ff00;
+            padding: 12px 18px !important;
+            margin: 30px 0 20px !important;
+            border-radius: 0 6px 6px 0;
+        }
+
+        /* Labels */
+        label, .control-label, .label-block {
+            color: #ccc !important;
+            font-weight: 400 !important;
+        }
+        .required-star {
+            color: #ff4444 !important;
+        }
+
+        /* Text inputs & textareas */
+        .form-control,
+        input[type="text"].form-control,
+        input[type="email"].form-control,
+        input[type="number"].form-control,
+        input[type="tel"].form-control,
+        textarea.form-control,
+        select.form-control {
+            background-color: transparent !important;
+            border: 1px solid #2e3033 !important;
+            color: #fff !important;
+            border-radius: 4px !important;
+        }
+        .form-control:focus {
+            border-color: #c8ff00 !important;
+            box-shadow: 0 0 0 2px rgba(200,255,0,0.1) !important;
+            outline: none !important;
+        }
+        .form-control::placeholder {
+            color: #666 !important;
+        }
+
+        /* Big-one-line overrides */
+        form.listing .big-one-line input#listing_name,
+        form.listing .big-one-line .typeahead-city-wrapper input,
+        form.listing .big-one-line .listinga {
+            background: #1a1b1e !important;
+            color: #fff !important;
+            border: 1px solid #2e3033 !important;
+            border-bottom: 3px dashed #A6B4B8 !important;
+            border-radius: 6px !important;
+            height: 48px !important;
+            font-size: 16px !important;
+            padding: 10px 14px !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        form.listing .big-one-line .listinga {
+            padding-right: 32px !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 12px center !important;
+        }
+        form.listing .big-one-line .typeahead-city-wrapper input {
+            padding-left: 37px !important;
+        }
+        form.listing .big-one-line .listing_city_url label.city {
+            line-height: 48px !important;
+            color: #fff !important;
+        }
+
+        /* City search input */
+        input#citysearch {
+            background-color: #1a1b1e !important;
+            border: 1px solid #2e3033 !important;
+            color: #fff !important;
+            border-bottom: 3px dashed #A6B4B8 !important;
+            width: 285px !important;
+        }
+
+        /* City dropdown */
+        .citys {
+            background: #1a1b1e !important;
+            border: 1px solid #2e3033 !important;
+        }
+        .opt.optc-item:hover, .opt.optc-item.highlighted {
+            background-color: #2e3033 !important;
+        }
+
+        /* Custom Select2 - Dark Theme Overrides */
+        .custom-select2-selection {
+            background: #1a1b1e !important;
+            border: 1px solid #2e3033 !important;
+            color: #fff !important;
+        }
+        .custom-select2-selection:hover {
+            border-color: #444 !important;
+        }
+        .custom-select2-selection:focus,
+        .custom-select2-selection.open {
+            border-color: #c8ff00 !important;
+            box-shadow: 0 0 0 2px rgba(200,255,0,0.1) !important;
+        }
+        .custom-select2-selection::after {
+            color: #888 !important;
+        }
+        .custom-select2-dropdown {
+            background: #1a1b1e !important;
+            border: 1px solid #2e3033 !important;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important;
+        }
+        .custom-select2-search {
+            border-bottom-color: #2e3033 !important;
+            background: #1a1b1e !important;
+        }
+        .custom-select2-search input {
+            background-color: #111 !important;
+            border-color: #2e3033 !important;
+            color: #fff !important;
+        }
+        .custom-select2-search input:focus {
+            border-color: #c8ff00 !important;
+            box-shadow: 0 0 0 2px rgba(200,255,0,0.1) !important;
+        }
+        .custom-select2-option {
+            color: #ccc !important;
+            border-bottom-color: #222 !important;
+        }
+        .custom-select2-option:hover,
+        .custom-select2-option:active {
+            background: #2e3033 !important;
+            color: #fff !important;
+        }
+        .custom-select2-option.selected {
+            background: #c8ff00 !important;
+            color: #000 !important;
+        }
+        .custom-select2-option.selected:hover {
+            background: #b5e600 !important;
+        }
+        .custom-select2-placeholder {
+            color: #666 !important;
+        }
+        .custom-select2-results::-webkit-scrollbar-track {
+            background: #111 !important;
+        }
+        .custom-select2-results::-webkit-scrollbar-thumb {
+            background: #444 !important;
+        }
+
+        /* Price input */
+        .price-amount {
+            background-color: #1a1b1e !important;
+            border: 1px solid #2e3033 !important;
+            color: #fff !important;
+        }
+
+        /* Input group addon */
+        .input-group-addon {
+            background-color: #1a1b1e !important;
+            border: 1px solid #2e3033 !important;
+            color: #999 !important;
+        }
+
+        /* Upload area */
+        .drag-drop {
+            border: 3px dashed #2e3033 !important;
+            background: #111213 !important;
+            border-radius: 8px !important;
+        }
+        .drag-drop.dragover {
+            border-color: #c8ff00 !important;
+            background: rgba(200,255,0,0.03) !important;
+        }
+        .drag-drop-text-main {
+            color: #fff !important;
+        }
+        .drag-drop-text {
+            color: #888 !important;
+        }
+        .drag-drop .icon-image {
+            background-color: transparent !important;
+            box-shadow: none !important;
+            color: #888 !important;
+        }
+        .drag-drop .btn-primary,
+        .drag-drop button.btn-primary {
+            background: #c8ff00 !important;
+            color: #000 !important;
+            border: none !important;
+            border-radius: 50px !important;
+            font-weight: 500 !important;
+            padding: 8px 30px !important;
+            font-size: 20px !important;
+        }
+
+        /* Radio buttons & checkboxes */
+        input[type="radio"],
+        input[type="checkbox"] {
+            accent-color: #c8ff00;
+        }
+        .radio-inline label, .checkbox label {
+            color: #ccc !important;
+        }
+
+        /* Buttons */
+        .btn-dark, .add-language-btn, .add-second-phone {
+            background: #1a1b1e !important;
+            border: 1px solid #2e3033 !important;
+            color: #ccc !important;
+        }
+        .btn-dark:hover, .add-language-btn:hover, .add-second-phone:hover {
+            border-color: #c8ff00 !important;
+            color: #fff !important;
+        }
+        .btn-primary.btn-lg#submit {
+            background: #c8ff00 !important;
+            color: #000 !important;
+            border: none !important;
+            border-radius: 50px !important;
+            font-weight: 600 !important;
+            padding: 10px 40px !important;
+        }
+        .btn-primary.btn-lg#submit:hover {
+            background: #b5e600 !important;
+        }
+
+        /* Hints and small text */
+        .hint, .hint a, .small, p.text-right.small a {
+            color: #888 !important;
+        }
+        p.text-right.small a {
+            color: #c8ff00 !important;
+        }
+        .char-count-container span#char-count {
+            color: #888 !important;
+        }
+
+        /* Text colors */
+        p, .ad-images p, .multi-image-uploader1 p {
+            color: #ffffff !important;
+        }
+        a {
+            color: #c8ff00;
+        }
+        a:hover {
+            color: #b5e600;
+        }
+
+        /* HR line */
+        hr {
+            border-color: #2e3033 !important;
+        }
+
+        /* Alert messages */
+        .alert-danger {
+            background: #2a1a1a !important;
+            border-color: #4a2020 !important;
+            color: #ff6b6b !important;
+        }
+        .alert-warning {
+            background: rgba(200,255,0,0.05) !important;
+            border-color: rgba(200,255,0,0.2) !important;
+            color: #c8ff00 !important;
+        }
+
+        /* Image records */
+        .record.image {
+            background: #1a1b1e !important;
+            border: 1px solid #2e3033 !important;
+            border-radius: 6px !important;
+        }
+        .record.image:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+        }
+        .record.image.drag-over {
+            border-color: #c8ff00 !important;
+            background-color: rgba(200,255,0,0.05) !important;
+        }
+
+        /* Services section checkbox styling */
+        .overflow-list-xs label {
+            color: #ccc !important;
+        }
+
+        /* Language remove icon */
+        .rm-lang-field {
+            color: #888 !important;
+            cursor: pointer;
+        }
+        .rm-lang-field:hover {
+            color: #ff4444 !important;
+        }
+
+        /* OnlyFans label */
+        label.new {
+            color: #ccc !important;
+        }
+        label.new::after {
+            color: #ff4444 !important;
+        }
+
+        /* Nav bar styling */
+        .nav-bar.navbar-top-nav {
+            background: #111213 !important;
+            border-bottom: 1px solid #2e3033 !important;
+        }
+        .nav-bar.navbar-top-nav .title h1 {
+            color: #fff !important;
+        }
+
+        /* X/Twitter icon */
+        #social svg {
+            color: #fff !important;
+        }
+
+        /* Validation errors */
+        .validation-error {
+            color: #ff4444 !important;
+        }
+
         /* Custom Select2 Styles */
         .custom-select2 {
-            position: relative !important;
+            position: relative;
             width: 100%;
-            display: inline-block;
+            z-index: 100;
         }
         
-        /* Country code specific width */
-        .select2-country + .custom-select2 {
-            width: 100% !important;
-            display: inline-block !important;
+        .custom-select2.open {
+            z-index: 10000;
         }
         
         .custom-select2-selection {
             position: relative;
-            background: #fff;
-            border: 1px solid #ddd;
-            padding: 2px 24px 1px 8px;
+            background: #1a1b1e;
+            border: 1px solid #2e3033;
+            padding: 0px 24px 0px 8px;
             cursor: pointer;
             min-height: 34px;
             display: flex;
             align-items: center;
             transition: all 0.2s ease;
-            font-size: 14px;
-            color: #333;
+            font-size: 12px;
+            color: #fff;
+            border-radius: 5px;
         }
         
         .custom-select2-selection:hover {
-            border-color: #aaa;
+            border-color: #444;
         }
         
         .custom-select2-selection:focus,
         .custom-select2-selection.open {
-            border-color: #66afe9;
-            box-shadow: 0 0 0 3px rgba(102, 175, 233, 0.1);
+            border-color: #c8ff00;
+            box-shadow: 0 0 0 2px rgba(200,255,0,0.1);
             outline: none;
         }
         
@@ -73,14 +401,14 @@
             min-width: 100%;
             width: max-content;
             max-width: 400px;
-            background: #fff;
-            border: 1px solid #ddd;
+            background: #1a1b1e;
+            border: 1px solid #2e3033;
             border-radius: 4px;
             max-height: 320px;
             overflow: hidden;
             z-index: 99999;
             display: none;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.175);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
             margin-top: 2px;
             flex-direction: column;
             pointer-events: auto;
@@ -105,33 +433,28 @@
         
         .custom-select2-search {
             padding: 10px;
-            border-bottom: 1px solid #eee;
-            background: #fff;
+            border-bottom: 1px solid #2e3033;
+            background: #1a1b1e;
             flex-shrink: 0;
         }
         
         .custom-select2-search input {
             width: 100%;
             padding: 8px 12px;
-            border: 1px solid #ddd;
+            border: 1px solid #2e3033;
             border-radius: 4px;
             font-size: 14px;
+            color: #fff;
+            background-color: #111;
             transition: border-color 0.2s ease;
-            color: #333 !important;
-            background-color: #fff !important;
             position: relative;
             z-index: 11;
         }
         
         .custom-select2-search input:focus {
             outline: none;
-            border-color: #66afe9;
-            box-shadow: 0 0 0 3px rgba(102, 175, 233, 0.1);
-            color: #333 !important;
-        }
-        
-        .custom-select2-search input::placeholder {
-            color: #999 !important;
+            border-color: #c8ff00;
+            box-shadow: 0 0 0 2px rgba(200,255,0,0.1);
         }
         
         .custom-select2-results {
@@ -147,9 +470,9 @@
             padding: 10px 15px;
             cursor: pointer;
             font-size: 14px;
-            color: #333;
+            color: #ccc;
             transition: background-color 0.15s ease;
-            border-bottom: 1px solid #f5f5f5;
+            border-bottom: 1px solid #222;
             pointer-events: auto;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
@@ -161,17 +484,18 @@
         
         .custom-select2-option:hover,
         .custom-select2-option:active {
-            background: #f5f5f5;
+            background: #2e3033;
+            color: #fff;
         }
         
         .custom-select2-option.selected {
-            background: #337ab7;
-            color: #fff;
+            background: #c8ff00;
+            color: #000;
             font-weight: 500;
         }
         
         .custom-select2-option.selected:hover {
-            background: #286090;
+            background: #b5e600;
         }
         
         .custom-select2-option.hidden {
@@ -179,48 +503,14 @@
         }
         
         .custom-select2-placeholder {
-            color: #999;
-            font-style: italic;
+            color: #666;
         }
         
-        /* Border Radius Variants for Custom Select2 */
-        /* Left side rounded only */
-        .custom-select2.radius-left .custom-select2-selection {
-            border-radius: 4px 0 0 4px;
-        }
-        
-        /* Right side rounded only */
-        .custom-select2.radius-right .custom-select2-selection {
-            border-radius: 0 4px 4px 0;
-        }
-        
-        /* Top side rounded only */
-        .custom-select2.radius-top .custom-select2-selection {
-            border-radius: 4px 4px 0 0;
-        }
-        
-        /* Bottom side rounded only */
-        .custom-select2.radius-bottom .custom-select2-selection {
-            border-radius: 0 0 4px 4px;
-        }
-        
-        /* No radius at all */
-        .custom-select2.radius-none .custom-select2-selection {
-            border-radius: 0;
-        }
-        
-        /* All corners rounded (default) */
-        .custom-select2.radius-all .custom-select2-selection {
-            border-radius: 4px;
-        }
-        
-        /* Custom radius sizes */
-        .custom-select2.radius-small .custom-select2-selection {
-            border-radius: 2px;
-        }
-        
-        .custom-select2.radius-large .custom-select2-selection {
-            border-radius: 8px;
+        /* Required field asterisk */
+        .required-star {
+            color: #ff4444;
+            margin-right: 3px;
+            font-weight: bold;
         }
         
         /* Scrollbar styling for dropdown results */
@@ -229,17 +519,84 @@
         }
         
         .custom-select2-results::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #111;
             border-radius: 4px;
         }
         
         .custom-select2-results::-webkit-scrollbar-thumb {
-            background: #ccc;
+            background: #444;
             border-radius: 4px;
         }
         
         .custom-select2-results::-webkit-scrollbar-thumb:hover {
-            background: #999;
+            background: #666;
+        }
+
+        /* Border Radius Variants for Custom Select2 */
+        .custom-select2.radius-left .custom-select2-selection {
+            border-radius: 4px 0 0 4px;
+        }
+        .custom-select2.radius-right .custom-select2-selection {
+            border-radius: 0 4px 4px 0;
+        }
+        .custom-select2.radius-top .custom-select2-selection {
+            border-radius: 4px 4px 0 0;
+        }
+        .custom-select2.radius-bottom .custom-select2-selection {
+            border-radius: 0 0 4px 4px;
+        }
+        .custom-select2.radius-none .custom-select2-selection {
+            border-radius: 0;
+        }
+        .custom-select2.radius-all .custom-select2-selection {
+            border-radius: 4px;
+        }
+        .custom-select2.radius-small .custom-select2-selection {
+            border-radius: 2px;
+        }
+        .custom-select2.radius-large .custom-select2-selection {
+            border-radius: 8px;
+        }
+
+        /* Price control layout fix */
+        .price-control {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            position: relative;
+        }
+
+        .price-control .price-amount {
+            flex: 1;
+            min-width: 0;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            border-right: none;
+            z-index: 1;
+        }
+
+        .price-control .price-currency {
+            flex: 0 0 120px;
+            width: 120px;
+        }
+
+        .price-control .custom-select2 {
+            width: 120px !important;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+        
+        .price-control .custom-select2.open {
+            z-index: 10001 !important;
+        }
+
+        .price-control .custom-select2 .custom-select2-selection {
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+        }
+
+        .price-control .custom-select2 .custom-select2-dropdown.open {
+            z-index: 10002 !important;
         }
 
        .citys {
@@ -247,14 +604,15 @@
             min-width: 200px;
             max-height: 250px;
             position: absolute;
-            background: #474747;
+            background: #1a1b1e;
+            border: 1px solid #2e3033;
             overflow-y: auto;
             overflow-x: hidden;
             display: none;
             z-index: 9999;
             border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            -webkit-overflow-scrolling: touch;
         }
 
         .opt {
@@ -278,7 +636,7 @@
         
         .opt.optc-item:hover,
         .opt.optc-item.highlighted {
-            background-color: #5a5a5a;
+            background-color: #2e3033;
         }
         
         .opt.optc-item:active,
@@ -305,21 +663,22 @@
     position: absolute;
     z-index: 1;
     top: 7px;
-    font-family: FontAwesome !important;
-    content: "";
+    font-family: "Font Awesome 5 Free" !important;
+    font-weight: 900;
+    content: "\f3c5";
     font-size: 1.2em;
     margin-inline: 10px;
-
+    color: #888;
 }
 
 .listinga {
-  background: #565656;
-    color: white;
-    border: none;
-    border-radius: 0px;
-    height: 52px;
-    font-size: 24px;
-    border-bottom: 2px dashed #aaa;
+  background: #1a1b1e;
+    color: #fff;
+    border: 1px solid #2e3033;
+    border-radius: 4px;
+    height: 48px;
+    font-size: 16px;
+    border-bottom: 3px dashed #A6B4B8;
 }
 
 .mi-new-image-input {display:none;}
@@ -372,29 +731,7 @@ form.listing .image {
 
 .insidewrapper {
   width: 40%;
-}
-
-/* Price Control Layout */
-.price-control {
-  display: flex;
-  gap: 0px;
-  align-items: flex-start;
-  position: relative;
-}
-
-.price-control .price-amount {
-  flex: 1;
-  min-width: 0;
-}
-
-.price-control .price-currency {
-  flex: 0 0 120px;
-  width: 120px;
-}
-
-.price-control .custom-select2 {
-  flex: 0 0 120px;
-  width: 120px !important;
+  margin-right:5px;
 }
 
 /* Modern Upload Area Styles */
@@ -405,10 +742,10 @@ form.listing .image {
 }
 
 .drag-drop {
-    border: 3px dashed #dee2e6;
-    border-radius: 12px;
+    border: 3px dashed #2e3033;
+    border-radius: 8px;
     padding: 40px 20px;
-    background: #fff;
+    background: #111213;
     transition: all 0.3s ease;
     position: relative;
 }
@@ -416,33 +753,47 @@ form.listing .image {
 
 
 .drag-drop .icon-image {
-    transition: all 0.3s ease;
+    color: #888;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: transparent;
+    box-shadow: none;
+    -webkit-transition: all .3s;
+    transition: all .3s;
+    padding: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 
 
 
 .drag-drop-text-main {
-    font-size: 18px !important;
-    color: #333 !important;
-    font-weight: 600 !important;
+    font-size: 25px !important;
+    color: #fff !important;
+    font-weight: 400 !important;
 }
 
 .drag-drop-text {
-    color: #6c757d !important;
+    color: #ffffff !important;
     font-size: 14px !important;
 }
 
 .drag-drop .btn-warning {
-    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    background: #c8ff00;
+    color: #000;
     border: none;
     transition: all 0.3s ease;
     font-weight: 600;
+    border-radius: 50px;
 }
 
 .drag-drop .btn-warning:hover {
-    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    background: #b5e600;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+    box-shadow: 0 4px 12px rgba(200,255,0,0.3);
 }
 
 .drag-drop .btn-warning .fa-upload {
@@ -455,8 +806,8 @@ form.listing .image {
 
 /* Dragover effect */
 .drag-drop.dragover {
-    border-color: #28a745;
-    background: #f0f8f0;
+    border-color: #c8ff00;
+    background: rgba(200,255,0,0.03);
 }
 
 @media (max-width:768px){
@@ -473,11 +824,17 @@ form.listing .image {
  width: 100%;
 }
 
+.citys
+ {
+    width: 50%;
+ }
 
 }
 div#basic {
      margin-top: 0px; 
 }
+
+.btn ,.btn-dark, #add-phone {box-shadow: none !important;}
 
 @media (max-width: 767px) {
     #header {
@@ -500,12 +857,6 @@ div#basic {
         
         .record.image:hover {
             transform: scale(1.02);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        
-        .record.image.drag-over {
-            border: 2px dashed #007bff;
-            background-color: rgba(0, 123, 255, 0.1);
         }
         
         .record.image[draggable="true"] {
@@ -517,17 +868,18 @@ div#basic {
         }
         
         .badge-success {
-            background-color: #28a745;
-            color: white;
+            background-color: #c8ff00;
+            color: #000;
             padding: 4px 8px;
             border-radius: 4px;
-            font-size: 12px;
-            display: inline-block;
+            font-size: 11px;
+            font-weight: bold;
         }
         
         #image-container {
-            display: block;
-            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .record.image img {
@@ -564,8 +916,11 @@ div#basic {
     border-radius: 50%;
     padding: 5px 7px;
 }
+
+form.listing .form-group.listing_description {
+    max-width: 900px;
+}
         </style>
-@endpush
 
 <div class="row container">
             <div class="col-lg-offset-1 col-lg-10">
@@ -578,7 +933,7 @@ div#basic {
                         <input class="string required form-control medium validate" value="{{$user->name}}" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(3,40)" data-error-position-my="center bottom" data-error-position-offset="0 0" data-error-position-at="center top" data-tooltip-class="tooltip tooltip-s" maxlength="40" placeholder="Name" size="40" type="text" wire:model='name' name="listing[name]" id="listing_name" />
                       </div>
                       <div class="form-group  listing_listed_as_id">
-                        <select  class=" form-control listinga" wire:model="listing"  id="listing_listed_as_id">
+                        <select style="width: 250px;"  class=" form-control listinga" wire:model="listing"  id="listing_listed_as_id">
                           @foreach($listings as $listingOption)
                             <option value="{{$listingOption->id}}">{{$listingOption->name}}</option>
                           @endforeach
@@ -591,14 +946,15 @@ div#basic {
                           <input type="hidden" wire:model.lazy='city' value="{{$user->city}}" id="selectedcity">
                           
                         <div id="cityappend" class="citys"></div>
+                        <span class="hint city-hint left">
+                      <div class="clearfix"></div>
+                      <p class="text-right small" style="font-size:11px;padding-top:5px">Your city not available? <a href="/contact-us" tabindex="-1" target="_blank">Ask for it</a>
+                      </p>
+                    </span>
                         </div>
                       </div>
                     </div>
-                    <span class="hint city-hint left">
-                      <div class="clearfix"></div>
-                      <p class="text-right small">Your city not available? <a href="/contact-us" tabindex="-1" target="_blank">Ask for it</a>
-                      </p>
-                    </span>
+                    
                     <div class="form-group text required listing_description">
                       <label class="text required control-label" for="listing_description">
                         <abbr title="required"></abbr> About me </label>
@@ -687,11 +1043,11 @@ div#basic {
                           <div class="file optional add-img">
                             <label class="modern-upload-label" for="mphoto" style="cursor: pointer;">
                               <div class="text-center mb-4 drag-drop" id="drag-drop-area">
-                                <img style="    width: 55px; margin-bottom: 10px;" src="{{smart_asset('assets/images/imgicon.png')}}" alt="Upload Icon" class="">
+                                <img style="    width: 55px; margin-bottom: 20px;" src="{{smart_asset('assets/newtheme/upload.svg')}}" alt="Upload Icon" class="">
 
                                 <div class="upload-available">
                                   <p class="m-0 font-weight-bold drag-drop-text-main" style="font-size: 18px; color: #333;">Drop files here</p>
-                                  <p class="m-1 drag-drop-text" style="color: #6c757d;">or</p>
+                                  <p class="m-1 drag-drop-text" style="color: #6c757d;padding-top:10px; padding-bottom:15px">or</p>
                                   <button class="m-1 mb-3 btn btn-primary" type="button" onclick="document.getElementById('mphoto').click(); return false;">Choose Files</button>
                                   <p class="m-0 mt-3 drag-drop-text" style="font-size: 13px; color: #6c757d;">Supports: JPG, PNG, GIF (Max 5MB)</p>
                                 </div>
@@ -711,7 +1067,7 @@ div#basic {
                       <div class="form-group phone_number">
                         <div style="margin-bottom:15px" class="d-flex align-items-center wrappper">
                           <div class="insidewrapper" wire:ignore>
-                          <select class="select2-country apply-custom-select2 form-control" wire:model='countrycode' id="first_phone_code" data-radius="left" style="border-top-left-radius:4px">
+                          <select class="select2-country apply-custom-select2 form-control" wire:model='countrycode' id="first_phone_code" >
                             <option value="">Select code</option>
                             @foreach($countries as $code)
                             <option value="{{$code->phonecode}}">+{{$code->phonecode}} - {{$code->nicename}}</option>
@@ -986,8 +1342,8 @@ div#basic {
                         <div class="form-group price optional listing_incalls_price_per_hour">
                           <label class="price optional control-label" for="listing_incalls_price_per_hour">Per hour from:</label>
                           <div class="price-control"  wire:ignore>
-                            <input wire:model='incallprice' data-validations="numericality" class="string optional form-control validate price-amount form-control" type="text" name="listing[incalls_price_per_hour_amount]" id="listing_incalls_price_per_hour_amount" />
-                            <select data-radius="right" wire:model='incallcurr' class="apply-custom-select2 price-currency form-control" name="listing[incalls_price_per_hour_currency]" id="listing_incalls_price_per_hour_currency">
+                            <input style="margin-right:5px"  wire:model='incallprice' data-validations="numericality" class="string optional form-control validate price-amount form-control" type="text" name="listing[incalls_price_per_hour_amount]" id="listing_incalls_price_per_hour_amount" />
+                            <select wire:model='incallcurr' class="apply-custom-select2 price-currency form-control" name="listing[incalls_price_per_hour_currency]" id="listing_incalls_price_per_hour_currency">
                               @foreach($currencies as $curr)
                               <option value="{{$curr->code}}" @if($curr->code == 'AED') selected @endif>{{$curr->code}} </option>
                               @endforeach
@@ -1012,8 +1368,8 @@ div#basic {
                         <div class="form-group price optional listing_outcalls_price_per_hour">
                           <label class="price optional control-label" for="listing_outcalls_price_per_hour">Per hour from:</label>
                           <div class="price-control"  wire:ignore>
-                            <input wire:model='outcallprice' data-validations="numericality" class="string optional form-control validate price-amount form-control" type="text" name="listing[outcalls_price_per_hour_amount]" id="listing_outcalls_price_per_hour_amount" />
-                            <select data-radius="right" wire:model='outcallcurr'  class="apply-custom-select2 price-currency form-control" name="listing[outcalls_price_per_hour_currency]" id="listing_outcalls_price_per_hour_currency">
+                            <input style="margin-right:5px" wire:model='outcallprice' data-validations="numericality" class="string optional form-control validate price-amount form-control" type="text" name="listing[outcalls_price_per_hour_amount]" id="listing_outcalls_price_per_hour_amount" />
+                            <select  wire:model='outcallcurr'  class="apply-custom-select2 price-currency form-control" name="listing[outcalls_price_per_hour_currency]" id="listing_outcalls_price_per_hour_currency">
                               @foreach($currencies as $curr)
                               <option value="{{$curr->code}}" @if($curr->code == 'AED') selected @endif>{{$curr->code}} </option>
                               @endforeach
@@ -1295,10 +1651,7 @@ div#basic {
             <input type="hidden" wire:model='num'>
           </div>
           
-          @push('js')
-
-                    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-
+          @script
           <script>
 
 // ============================================
@@ -2213,7 +2566,7 @@ class CustomSelect2 {
         
         // For country code selects, set specific width
         if (this.select.classList.contains('select2-country')) {
-            this.wrapper.style.width = '34%';
+            this.wrapper.style.width = '100%';
             this.wrapper.style.display = 'inline-block';
         } else {
             this.wrapper.style.width = '100%';
@@ -3109,4 +3462,4 @@ $(document).ready(function() {
 });
 
             </script>
-          @endpush
+          @endscript

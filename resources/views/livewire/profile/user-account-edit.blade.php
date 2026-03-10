@@ -1,226 +1,558 @@
-@section('headerform')
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid"> 
-        <a class="back-link" href="/my-account">
-            <i class="fa fa-angle-left fa-fw"></i>
-            <span class="hidden-xs">My Account</span>
-          </a>
-        <div class="title">
-            <h1> <a href="/my-account/edit">My Account - Edit</a></h1>
+@push('css')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+<style>
+    .ev-header {
+        background: #0D1011;
+    }
+    .ev-back-bar {
+        background: #131616;
+        padding: 12px 0;
+    }
+    .ev-back-bar a {
+        color: var(--accent, #C1F11D);
+        text-decoration: none;
+        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 400;
+    }
+    .ev-back-bar h1 {
+        color: #fff;
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        text-align: center;
+    }
+    .ev-back-bar h1 a {
+        color: #fff;
+        text-decoration: none;
+    }
+    .ev-account-tabs {
+        display: flex;
+        gap: 8px;
+        padding: 20px 0;
+        flex-wrap: wrap;
+    }
+    .ev-account-tabs a {
+        display: inline-flex;
+        align-items: center;
+        width: 170px;
+        gap: 8px;
+        padding: 6px 0px;
+        border-radius: 5px;
+        color: #fff;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        background: #1D2224;
+        justify-content: center;
+    }
+    .ev-account-tabs a:hover {
+        border-color: var(--accent, #C1F11D);
+        color: var(--accent, #C1F11D);
+    }
+    .ev-account-tabs a.active {
+        color: #C1F11D;
+    }
+    .ev-alert-success {
+        background: rgba(193, 241, 29, 0.1);
+        border: 1px solid var(--accent, #C1F11D);
+        color: var(--accent, #C1F11D);
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 14px;
+    }
+    /* Profile completion card */
+    .ev-completion-card {
+        background: rgba(193, 241, 29, 0.06);
+        border: 1px solid rgba(193, 241, 29, 0.25);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        color: var(--accent, #C1F11D);
+    }
+    .ev-completion-card h4 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--accent, #C1F11D);
+        font-size: 16px;
+    }
+    .ev-completion-card p {
+        margin: 0 0 10px 0;
+        opacity: 0.9;
+        font-size: 14px;
+        color: var(--accent, #C1F11D);
+    }
+    .ev-completion-card .ev-missing {
+        font-size: 13px;
+        color: var(--accent, #C1F11D);
+    }
+    .ev-completion-card .ev-missing span {
+        color: var(--accent, #C1F11D);
+    }
+    .ev-progress-bar-bg {
+        background: rgba(193, 241, 29, 0.15);
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 15px;
+    }
+    .ev-progress-bar-fill {
+        background: var(--accent, #C1F11D);
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+    /* Form styles */
+    .ev-edit-form {
+        color: #fff;
+    }
+    .ev-form-row {
+        display: flex;
+        gap: 40px;
+        flex-wrap: wrap;
+    }
+    .ev-form-col {
+        flex: 1 1 400px;
+        min-width: 0;
+    }
+    .ev-form-group {
+        margin-bottom: 20px;
+    }
+    .ev-form-group label {
+        display: block;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    .ev-form-group .ev-input {
+        width: 100%;
+        padding: 10px 14px;
+        background: var(--bg-secondary, #111111);
+        border: 1px solid var(--border-color, #2a2a2a);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+    .ev-form-group .ev-input:focus {
+        border-color: var(--accent, #C1F11D);
+    }
+    .ev-form-group .ev-input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .ev-form-group .ev-input::placeholder {
+        color: var(--text-muted, #666);
+    }
+    .ev-form-group textarea.ev-input {
+        resize: vertical;
+        min-height: 120px;
+    }
+    .ev-radio-group {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .ev-radio-group label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-weight: 400;
+        margin-bottom: 0;
+    }
+    .ev-radio-group input[type="radio"] {
+        accent-color: var(--accent, #C1F11D);
+        width: 16px;
+        height: 16px;
+    }
+    .ev-text-danger {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 4px;
+        display: block;
+    }
+    /* Phone input */
+    .ev-phone-row {
+        display: flex;
+        gap: 10px;
+    }
+    .ev-country-select {
+        position: relative;
+        width: 160px;
+        flex-shrink: 0;
+    }
+    .ev-country-display {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        background: var(--bg-secondary, #111111);
+        border: 1px solid var(--border-color, #2a2a2a);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+    .ev-country-display:hover {
+        border-color: var(--accent, #C1F11D);
+    }
+    .ev-country-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 250px;
+        overflow-y: auto;
+        background: var(--bg-card, #1a1a1a);
+        border: 1px solid var(--border-color, #2a2a2a);
+        border-radius: 8px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        margin-top: 4px;
+    }
+    .ev-country-dropdown input {
+        width: 100%;
+        padding: 10px 12px;
+        background: var(--bg-secondary, #111);
+        border: none;
+        border-bottom: 1px solid var(--border-color, #2a2a2a);
+        color: #fff;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        box-sizing: border-box;
+    }
+    .ev-country-dropdown input::placeholder {
+        color: var(--text-muted, #666);
+    }
+    .country-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border-color, #2a2a2a);
+        transition: background 0.15s;
+    }
+    .country-option:hover {
+        background: var(--bg-card-hover, #222) !important;
+    }
+    .country-option span {
+        color: #fff !important;
+    }
+    .country-option span:last-child {
+        color: var(--text-muted, #666) !important;
+        margin-left: auto;
+    }
+    .ev-country-dropdown::-webkit-scrollbar {
+        width: 6px;
+    }
+    .ev-country-dropdown::-webkit-scrollbar-thumb {
+        background: #444;
+        border-radius: 3px;
+    }
+    /* Profile photo section */
+    .ev-avatar-section {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    .ev-avatar-preview {
+        width: 128px;
+        height: 128px;
+        overflow: hidden;
+        border-radius: 8px;
+        flex-shrink: 0;
+        border: 1px solid var(--border-color, #2a2a2a);
+    }
+    .ev-avatar-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .ev-avatar-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        margin-top: 15px;
+    }
+    .ev-remove-photo {
+        background: none;
+        border: none;
+        color: var(--accent, #C1F11D);
+        cursor: pointer;
+        padding: 0;
+        font-size: 14px;
+        text-align: left;
+        font-family: inherit;
+    }
+    .ev-remove-photo:hover {
+        opacity: 0.8;
+    }
+    .ev-file-input {
+        font-size: 14px;
+        color: #fff;
+    }
+    .ev-file-input::file-selector-button {
+        padding: 8px 16px;
+        background: var(--accent, #C1F11D);
+        color: #000;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        margin-right: 12px;
+        transition: background 0.2s;
+    }
+    .ev-file-input::file-selector-button:hover {
+        background: var(--accent-hover, #d4f84d);
+    }
+    .ev-hint {
+        color: var(--text-muted, #666);
+        font-size: 13px;
+        margin-top: 10px;
+    }
+    /* Save button */
+    .ev-save-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 28px;
+        background: var(--accent, #C1F11D);
+        color: #000;
+        border: none;
+        border-radius: 21.5px;
+        font-size: 15px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 10px;
+    }
+    .ev-save-btn:hover {
+        background: var(--accent-hover, #d4f84d);
+        transform: translateY(-1px);
+    }
+    @media (max-width: 768px) {
+        .ev-form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+        .ev-form-col {
+            flex-basis: auto;
+        }
+        .ev-avatar-section {
+            flex-direction: column;
+            gap: 10px;
+        }
+        .ev-avatar-controls {
+            margin-top: 0;
+        }
+        .ev-account-tabs a {
+            width: auto;
+            flex: 1;
+            min-width: 100px;
+        }
+    }
+</style>
+@endpush
+
+<div>
+    {{-- Back bar --}}
+    <div class="ev-back-bar">
+        <div class="ev-container" style="display: flex; align-items: center; justify-content: center; position: relative;">
+            <a href="/my-account" style="position: absolute; left: 16px;">
+                <i class="fa fa-angle-left"></i> My account
+            </a>
+            <h1><a href="/my-account/edit">My Account - Edit</a></h1>
         </div>
     </div>
-</div>
-@endsection
 
-<div class="container-fluid">
-    <div class="content-wrapper no-sidebar">
-     @if(session()->has('message'))
-              <div class="alert alert-success mt-3" style="margin:4px 2px;">
-                  {{ session('message') }}
-              </div>
-          @endif
-          
-        <!-- Profile Completion Progress -->
+    <div class="ev-container" style="padding-top: 8px; padding-bottom: 40px;">
+
+        @if(session()->has('message'))
+            <div class="ev-alert-success" style="margin-top: 16px;">
+                {{ session('message') }}
+            </div>
+        @endif
+
+        {{-- Profile Completion Progress --}}
         @php $profileCompletion = $this->profileCompletion; @endphp
-        <div class="profile-completion-card" style="background: rgba(220, 166, 35, 0.1); border: 1px solid rgba(220, 166, 35, 0.3); border-radius: 12px; padding: 20px; margin: 0px 0; color: #dca623; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+        <div class="ev-completion-card" style="margin-top: 16px;">
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
                 <div style="flex: 1; min-width: 200px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                         @if($profileCompletion['percentage'] >= 100)
                             <i class="fa fa-check-circle" style="font-size: 24px;"></i>
-                            <h4 style="margin: 0; font-weight: 600; color: #dca623;">Profile Complete!</h4>
+                            <h4>Profile Complete!</h4>
                         @else
                             <i class="fa fa-user-circle" style="font-size: 24px;"></i>
-                            <h4 style="margin: 0; font-weight: 600; color: #dca623;">Complete Your Profile</h4>
+                            <h4>Complete Your Profile</h4>
                         @endif
                     </div>
-                    
+
                     @if(!$profileCompletion['isComplete'])
-                        <p style="margin: 0 0 10px 0; opacity: 0.9; font-size: 14px; color: #dca623;">
-                            Complete your profile to attract more visitors and build trust
-                        </p>
+                        <p>Complete your profile to attract more visitors and build trust</p>
                         @if(count($profileCompletion['incomplete']) > 0)
-                            <div style="font-size: 13px; color: #dca623;">
-                                <i class="fa fa-lightbulb-o"></i> 
-                                Missing: @foreach($profileCompletion['incomplete'] as $index => $field)<span style="color: #dca623;">{{ $field }} <span style="color: #ff0000; font-weight: bold;">*</span></span>{{ $index < count($profileCompletion['incomplete']) - 1 ? ', ' : '' }}@endforeach
+                            <div class="ev-missing">
+                                <i class="fa fa-lightbulb"></i>
+                                Missing: @foreach($profileCompletion['incomplete'] as $index => $field)<span>{{ $field }} <span style="color: #ff0000; font-weight: bold;">*</span></span>{{ $index < count($profileCompletion['incomplete']) - 1 ? ', ' : '' }}@endforeach
                             </div>
                         @endif
                     @else
-                        <p style="margin: 0; opacity: 0.9; font-size: 14px; color: #dca623;">
-                            Great job! Your profile is fully complete and ready to attract visitors.
-                        </p>
+                        <p>Great job! Your profile is fully complete and ready to attract visitors.</p>
                     @endif
                 </div>
-                
+
                 <div style="text-align: center; min-width: 100px;">
                     <div style="position: relative; display: inline-block;">
                         <svg width="80" height="80" viewBox="0 0 80 80">
-                            <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(220, 166, 35, 0.3)" stroke-width="6"/>
-                            <circle cx="40" cy="40" r="35" fill="none" stroke="#dca623" stroke-width="6" 
-                                stroke-dasharray="{{ 2 * 3.14159 * 35 }}" 
+                            <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(193,241,29,0.2)" stroke-width="6"/>
+                            <circle cx="40" cy="40" r="35" fill="none" stroke="#C1F11D" stroke-width="6"
+                                stroke-dasharray="{{ 2 * 3.14159 * 35 }}"
                                 stroke-dashoffset="{{ 2 * 3.14159 * 35 * (1 - $profileCompletion['percentage'] / 100) }}"
                                 transform="rotate(-90 40 40)"
                                 style="transition: stroke-dashoffset 0.5s ease;"/>
                         </svg>
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; font-weight: 700; color: #dca623;">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; font-weight: 700; color: var(--accent, #C1F11D);">
                             {{ $profileCompletion['percentage'] }}%
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Progress bar -->
-            <div style="margin-top: 15px;">
-                <div style="background: rgba(220, 166, 35, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">
-                    <div style="background: #dca623; height: 100%; width: {{ $profileCompletion['percentage'] }}%; border-radius: 4px; transition: width 0.5s ease;"></div>
-                </div>
+
+            <div class="ev-progress-bar-bg">
+                <div class="ev-progress-bar-fill" style="width: {{ $profileCompletion['percentage'] }}%;"></div>
             </div>
         </div>
 
-        <div id="content">
-            @include('components.account-nav')
-        <form wire:submit.prevent="save" class="simple_form validate bright-form edit-account" id="edit_my_account" novalidate="novalidate" enctype="multipart/form-data" action="/my-account" accept-charset="UTF-8" method="post">
-          <input name="utf8" type="hidden" value="&#x2713;" />
-          <input type="hidden" name="_method" value="patch" />
-          <input type="hidden" name="authenticity_token" value="CZfbClvVIgKzCm18prPm1IbohnD8cVtJQnO/q7LSnCtnnJYIn7zefulMCEtJWAI9vMY9NmYsesPgmjh6bSs8zA==" />
-          <div class="row">
-            <div class="col-sm-10">
-              <fieldset class="row">
-                <div class="col-sm-6">
-                  <div class="form-group radio_buttons required my_account_account_type">
-                    <label class="radio_buttons required control-label">
-                      <abbr title="required"></abbr> Account type </label>
-                    <input type="hidden" name="my_account[account_type]" value="" />
-                    <span class="radio-inline">
-                      <label for="my_account_account_type_individual_escort">
-                        <input wire:model.live="account_type" class="radio_buttons required" type="radio" value="2"  name="my_account[account_type]" id="my_account_account_type_individual_escort" />Individual advertiser </label>
-                    </span>
-                    <span class="radio-inline">
-                      <label for="my_account_account_type_escort_agency">
-                        <input wire:model.live="account_type" class="radio_buttons required" type="radio" value="3" name="my_account[account_type]" id="my_account_account_type_escort_agency" />Escort agency </label>
-                    </span>
-                  </div>
-                  <div class="form-group email optional my_account_email">
-                    <label class="email optional control-label" for="my_account_email">Email</label>
-                    <input disabled wire:model="email" class="string email optional form-control form-control" maxlength="191" type="email" size="191" value="orbrise2@gmail.com" name="my_account[email]" id="my_account_email" />
-                    @error('email') <span class="text-danger">{{ $message }}</span> @enderror
-  
-                </div>
-                  <div class="form-group string required my_account_display_name">
-                    <label class="string required control-label" for="my_account_display_name">
-                      <abbr title="required"></abbr> Display name </label>
-                    <input wire:model.live.debounce.500ms="display_name" class="string required form-control" maxlength="191" size="191" type="text" />
-                    @error('display_name') <span class="text-danger">{{ $message }}</span> @enderror
- 
-                </div>
-                  <div class="form-group text optional my_account_about_me">
-                    <label class="text optional control-label" for="my_account_about_me">About me</label>
-                    <textarea wire:model.live.debounce.500ms="about_me" rows="4" class="text optional form-control" maxlength="4294967295" name="my_account[about_me]" id="my_account_about_me"></textarea>
-                  </div>
-                  
-                  <div class="form-group phone optional">
-                    <label class="control-label" for="my_account_phone">Phone Number</label>
-                    <div class="d-flex" style="display: flex; gap: 10px;">
-                      <div class="country-code-wrapper" style="position: relative; width: 160px; flex-shrink: 0;">
-                        <div class="country-code-display form-control" id="countryCodeDisplay" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; height: 34px;">
-                          <div style="display: flex; align-items: center; gap: 8px;">
-                            <img id="selectedFlag" src="https://flagcdn.com/w40/{{ $countrycode ? strtolower(\App\Models\Country::where('phonecode', $countrycode)->first()?->iso ?? 'ae') : 'ae' }}.png" style="width: 24px; height: 16px; object-fit: cover; border-radius: 2px; {{ $countrycode ? '' : 'display: none;' }}">
-                            <span id="selectedCode">{{ $countrycode ? '+' . $countrycode : 'Select' }}</span>
-                          </div>
-                          <i class="fa fa-chevron-down" style="font-size: 10px;"></i>
+        {{-- Account tabs --}}
+        <div class="ev-account-tabs">
+            <a href="/my-account" wire:navigate class="{{ request()->is('my-account') && !request()->is('my-account/*') ? 'active' : '' }}">
+                <i class="fa fa-user"></i> Account
+            </a>
+            <a href="/my-account/edit" wire:navigate class="{{ request()->is('my-account/edit') ? 'active' : '' }}">
+                <i class="fa fa-pencil-alt"></i> Edit
+            </a>
+            <a href="/my-password/edit" wire:navigate class="{{ request()->is('my-password/edit') ? 'active' : '' }}">
+                <i class="fa fa-key"></i> Password
+            </a>
+        </div>
+
+        {{-- Edit Form --}}
+        <form wire:submit.prevent="save" class="ev-edit-form" id="edit_my_account" novalidate="novalidate" enctype="multipart/form-data">
+            <div class="ev-form-row">
+                {{-- Left column --}}
+                <div class="ev-form-col">
+                    <div class="ev-form-group">
+                        <label>Account type</label>
+                        <div class="ev-radio-group">
+                            <label>
+                                <input wire:model.live="account_type" type="radio" value="2" name="my_account[account_type]" />
+                                Individual advertiser
+                            </label>
+                            <label>
+                                <input wire:model.live="account_type" type="radio" value="3" name="my_account[account_type]" />
+                                Escort agency
+                            </label>
                         </div>
-                        <div class="country-dropdown" id="countryDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 250px; overflow-y: auto; background: #fff; border: 1px solid #ccc; border-radius: 4px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                          <input type="text" class="form-control" id="countrySearch" placeholder="Search country..." style="border: none; border-bottom: 1px solid #eee; border-radius: 0;">
-                          <div id="countryList">
-                            @foreach($countries as $country)
-                              <div class="country-option" data-code="{{ $country->phonecode }}" data-iso="{{ strtolower($country->iso) }}" data-name="{{ $country->nicename }}" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;">
-                                <img src="https://flagcdn.com/w40/{{ strtolower($country->iso) }}.png" style="width: 24px; height: 16px; object-fit: cover; border-radius: 2px;">
-                                <span style="color: #333;">{{ $country->nicename }}</span>
-                                <span style="color: #888; margin-left: auto;">+{{ $country->phonecode }}</span>
-                              </div>
-                            @endforeach
-                          </div>
-                        </div>
-                        <input type="hidden" wire:model.live="countrycode" id="my_account_countrycode">
-                      </div>
-                      <input wire:model.live.debounce.500ms="phone" class="form-control" placeholder="Phone number" type="text" id="my_account_phone" style="flex: 1;"/>
                     </div>
-                    @error('countrycode') <span class="text-danger">{{ $message }}</span> @enderror
-                    @error('phone') <span class="text-danger">{{ $message }}</span> @enderror
-                  </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group file optional my_account_avatar">
-                        <label class="file optional control-label" for="my_account_avatar">Profile photo</label>
-                        <div class="picture-field-container">
-                            <div class="avatar-upload-wrapper">
-                                <div class="preview" style="height: 128px; width: 128px; overflow: hidden; border-radius: 4px; flex-shrink: 0;">
-                                    @if(!empty(auth()->user()->avatar))
-                                    <img src="{{ Storage::url(auth()->user()->avatar) }}" width="128" height="128" style="object-fit: cover;">
-                                    @else
-                                    <img src="https://www.gravatar.com/avatar/28c5175931d8449e6acb2b72d8900455?s=128&amp;d=identicon" width="128" height="128">
-                                    @endif
+
+                    <div class="ev-form-group">
+                        <label for="my_account_email">Email</label>
+                        <input disabled wire:model="email" class="ev-input" maxlength="191" type="email" id="my_account_email" />
+                        @error('email') <span class="ev-text-danger">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="ev-form-group">
+                        <label for="my_account_display_name">Display name</label>
+                        <input wire:model.live.debounce.500ms="display_name" class="ev-input" maxlength="191" type="text" id="my_account_display_name" />
+                        @error('display_name') <span class="ev-text-danger">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="ev-form-group">
+                        <label for="my_account_about_me">About me</label>
+                        <textarea wire:model.live.debounce.500ms="about_me" rows="4" class="ev-input" id="my_account_about_me"></textarea>
+                    </div>
+
+                    <div class="ev-form-group">
+                        <label>Phone Number</label>
+                        <div class="ev-phone-row">
+                            <div class="ev-country-select">
+                                <div class="ev-country-display" id="countryCodeDisplay">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <img id="selectedFlag" src="https://flagcdn.com/w40/{{ $countrycode ? strtolower(\App\Models\Country::where('phonecode', $countrycode)->first()?->iso ?? 'ae') : 'ae' }}.png" style="width: 24px; height: 16px; object-fit: cover; border-radius: 2px; {{ $countrycode ? '' : 'display: none;' }}">
+                                        <span id="selectedCode">{{ $countrycode ? '+' . $countrycode : 'Select' }}</span>
+                                    </div>
+                                    <i class="fa fa-chevron-down" style="font-size: 10px; color: var(--text-muted, #666);"></i>
                                 </div>
-                                <div class="upload-controls">
-                                    @if(!empty(auth()->user()->avatar))
-                                    <button wire:click="removePhoto" class="btn-link remove-picture" type="button" style="text-align: left; padding: 0; color: #f4b827; margin-bottom: 10px; display: block;"><i class="fa fa-times fa-inline"></i> Remove photo</button>
-                                    @endif
-                                    <div>
-                                        <input wire:model="avatar" accept="image/jpeg,image/jpg,image/png,image/gif" class="file optional picture-field" type="file" name="my_account[avatar]" id="my_account_avatar" style="position: relative !important; opacity: 1 !important; z-index: 1 !important;">
-                                        @error('avatar') <span class="text-danger">{{ $message }}</span> @enderror
+                                <div class="ev-country-dropdown" id="countryDropdown">
+                                    <input type="text" id="countrySearch" placeholder="Search country..." autocomplete="off">
+                                    <div id="countryList">
+                                        @foreach($countries as $country)
+                                            <div class="country-option" data-code="{{ $country->phonecode }}" data-iso="{{ strtolower($country->iso) }}" data-name="{{ $country->nicename }}">
+                                                <img src="https://flagcdn.com/w40/{{ strtolower($country->iso) }}.png" style="width: 24px; height: 16px; object-fit: cover; border-radius: 2px;">
+                                                <span>{{ $country->nicename }}</span>
+                                                <span>+{{ $country->phonecode }}</span>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
+                                <input type="hidden" wire:model.live="countrycode" id="my_account_countrycode">
                             </div>
-                            <div style="margin-top: 10px;">
-                                <span class="help-block hint" style="color: #999; font-size: 13px;">JPEG, JPG, GIF, PNG, maximum size of 4MB</span> 
+                            <input wire:model.live.debounce.500ms="phone" class="ev-input" placeholder="Phone number" type="text" id="my_account_phone" style="flex: 1;" />
+                        </div>
+                        @error('countrycode') <span class="ev-text-danger">{{ $message }}</span> @enderror
+                        @error('phone') <span class="ev-text-danger">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+
+                {{-- Right column --}}
+                <div class="ev-form-col">
+                    <div class="ev-form-group">
+                        <label>Profile photo</label>
+                        <div class="ev-avatar-section">
+                            <div class="ev-avatar-preview">
+                                @if(!empty(auth()->user()->avatar))
+                                    <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Profile photo">
+                                @else
+                                    <img src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim(auth()->user()->email))) }}?s=128&d=identicon" alt="Profile photo">
+                                @endif
+                            </div>
+                            <div class="ev-avatar-controls">
+                                @if(!empty(auth()->user()->avatar))
+                                    <button wire:click="removePhoto" class="ev-remove-photo" type="button">
+                                        <i class="fa fa-times"></i> Remove photo
+                                    </button>
+                                @endif
+                                <div>
+                                    <input wire:model="avatar" accept="image/jpeg,image/jpg,image/png,image/gif" class="ev-file-input" type="file" name="my_account[avatar]" id="my_account_avatar">
+                                    @error('avatar') <span class="ev-text-danger">{{ $message }}</span> @enderror
+                                </div>
                             </div>
                         </div>
+                        <p class="ev-hint">JPEG, JPG, GIF, PNG, maximum size of 4MB</p>
                     </div>
-                    
-                    <style>
-                        .avatar-upload-wrapper {
-                            display: flex;
-                            align-items: flex-start;
-                            gap: 15px;
-                        }
-                        
-                        .upload-controls {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 10px;
-                            flex: 1;
-                            margin-top: 15px;
-                        }
-                        
-                        .country-option:hover {
-                            background-color: #f5f5f5 !important;
-                        }
-                        .country-dropdown::-webkit-scrollbar {
-                            width: 6px;
-                        }
-                        .country-dropdown::-webkit-scrollbar-thumb {
-                            background: #ccc;
-                            border-radius: 3px;
-                        }
-                        
-                        @media (max-width: 768px) {
-                            .avatar-upload-wrapper {
-                                flex-direction: column;
-                                gap: 10px;
-                            }
-                            
-                            .upload-controls {
-                                margin-top: 0;
-                            }
-                        }
-                    </style>
-              </fieldset>
-              <button class="btn btn-primary btn-lg btn-xs-block margin-top" data-btn-submit="" type="submit">Save</button>
-             
+                </div>
             </div>
-          </div>
+
+            <button class="ev-save-btn" type="submit">
+                Save <i class="fa fa-chevron-right"></i>
+            </button>
         </form>
-        </div>
     </div>
 </div>
 

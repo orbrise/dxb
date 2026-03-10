@@ -1,349 +1,520 @@
-@section('headerform')
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid">
-      <a class="back-link" href="/my-account">
-        <i class="fa fa-angle-left fa-fw"></i>
-        <span class="hidden-xs">Back to My Account</span>
-      </a>
-      <div class="title">
-        <h1>Rejected Photo Verifications</h1>
-      </div>
-    </div>
-  </div>
-@endsection
-
+<div>
+@push('css')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 <style>
-.my-profile-disapprove {
-    border-radius: 8px;
-}
-
-.block-reason {
-    background-color: transparent;
-    color: #fff;
-    padding: 8px 20px;
-    border-radius: 20px;
-    border: 2px solid #e85d04;
-    font-size: 14px;
-    line-height: 1.5;
-    text-align: center;
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
-}
-
-.badge-disapproved {
-    background-color: #e85d04;
-    color: #fff;
-    font-weight: bold;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 4px;
-    letter-spacing: 0.05ch;
-}
-
-.btn-fix-errors {
-    background-color: #bb4623;
-    color: #fff;
-    border: none;
-    font-weight: bold;
-    padding: 10px 20px;
-    border-radius: 4px;
-    text-transform: none;
-    width: 100%;
-    max-width: 300px;
-}
-
-.btn-fix-errors:hover {
-    color: #fff;
-}
-
-.rejection-aside {
-    border-left: 2px solid #444;
-    padding-left: 30px;
-    width: 30%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-@media (max-width: 768px) {
-    .rejection-aside {
-        border-left: none;
-        border-top: 2px solid #444;
-        padding-left: 0;
-        padding-top: 20px;
-        margin-top: 20px;
+    .ev-back-bar {
+        background: #131616;
+        padding: 12px 0;
     }
-}
+    .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }
+    .ev-back-bar h1 { color: #fff; font-size: 18px; font-weight: 600; margin: 0; }
+    .ev-back-bar h1 a { color: #fff; text-decoration: none; }
 
-.listing-li .listing-info {
-    height: auto;
-    min-height: 130px;
-}
+    .ev-container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
-/* Pagination Styles */
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 30px 0;
-    gap: 5px;
-}
+    /* Dashboard Tabs */
+    .ev-dashboard-tabs {
+        display: flex;
+        gap: 8px;
+        padding: 20px 0;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .ev-dashboard-nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .ev-dashboard-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        border-radius: 20px;
+        color: #fff;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        background: #1D2224;
+        transition: all 0.2s;
+    }
+    .ev-dashboard-nav a:hover { color: #C1F11D; }
+    .ev-dashboard-nav a.active {
+        background: #C1F11D;
+        color: #000;
+        font-weight: 600;
+    }
+    .ev-dashboard-tabs .ev-add-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        border-radius: 20px;
+        background: #C1F11D;
+        color: #000;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .ev-dashboard-tabs .ev-add-btn:hover { opacity: 0.9; color: #000; }
 
-.pagination li {
-    list-style: none;
-}
+    /* Rejected Profile Card */
+    .ev-rejected-card {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+    }
+    .ev-rejected-card .ev-card-body {
+        display: flex;
+        gap: 20px;
+    }
+    .ev-rejected-card .ev-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 12px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .ev-rejected-card .ev-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .ev-rejected-card .ev-profile-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .ev-rejected-card .ev-profile-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #fff;
+        margin: 0 0 6px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .ev-rejected-card .ev-profile-name a { color: #fff; text-decoration: none; }
+    .ev-rejected-card .ev-location {
+        color: #777;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    .ev-rejected-card .ev-location i { margin-right: 4px; }
+    .ev-rejected-card .ev-about {
+        color: #999;
+        font-size: 14px;
+        margin-bottom: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
 
-.pagination li a,
-.pagination li span {
-    display: block;
-    padding: 10px 16px;
-    min-width: 45px;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 600;
-    color: #555;
-    background-color: #fff;
-    border: 2px solid #ddd;
-    text-decoration: none;
-    transition: all 0.2s;
-    border-radius: 4px;
-}
-
-.pagination li a:hover {
-    background-color: #333;
-    color: #dca623;
-    border-color: #333;
-}
-
-.pagination li.active span {
-    background-color: #333;
-    color: #dca623;
-    border-color: #333;
-}
-
-.pagination li.disabled span {
-    color: #646464;
-    cursor: not-allowed;
-    background-color: #8f8f8f;
-    border-color: #8f8f8f;
-}
-
-.pagination>li>a, .pagination>li>button, .pagination>li>span {
-    font-size: 18px;
-    height: 48px;
-    line-height: 26px;
-    padding: 11px 16px;
-    background: #535353;
-    border: 1px solid #535353;
-}
-
-.pagination>li:last-child>a, .pagination>li:last-child>button {
-    border-radius: 4px;
-    padding: 0px 19px;
-}
-
-
-
-.my-profile .listing-li {
-    padding: 20px;
-}
-
-.listing-li h2 .badge {
-    background: #bb4623;
-
-}
-
-/* Profile Filter Buttons */
-.btn-group .btn {
-    margin-right: 5px;
-    border-radius: 4px !important;
-}
-
-.btn-group .btn:last-child {
-    margin-right: 0;
-}
-
-.btn-group .btn i {
-    margin-right: 5px;
-}
-
-.nbtn {
-    background: transparent;
-    color: #aaaaaa;
-    border-radius: 30px;
-    border: 1px solid #4e4e4e;
-    padding: 5px 25px;
-}
-
-.nbtn:hover {
-    color: white;
-}
-
-@media (max-width: 576px) {
-    .btn-group {
+    /* Rejection aside */
+    .ev-rejection-aside {
+        border-left: 2px solid #2a2a2a;
+        padding-left: 24px;
+        min-width: 240px;
         display: flex;
         flex-direction: column;
-        width: 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
     }
-    
-    .btn-group .btn {
-        margin-right: 0;
-        margin-bottom: 8px;
-        width: 100%;
-    }
-    
-    .btn-group .btn:last-child {
-        margin-bottom: 0;
-    }
-}
 
+    /* Badge */
+    .ev-badge-rejected {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        background: rgba(220, 53, 69, 0.15);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+
+    /* Rejection reason */
+    .ev-rejection-reason {
+        background: transparent;
+        color: #e85d04;
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 2px solid #e85d04;
+        font-size: 14px;
+        line-height: 1.5;
+        text-align: center;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    /* Fix errors button */
+    .ev-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+    .ev-btn-accent {
+        background: #C1F11D;
+        color: #000;
+    }
+    .ev-btn-accent:hover { opacity: 0.9; color: #000; text-decoration: none; }
+    .ev-btn-danger-solid {
+        background: #bb4623;
+        color: #fff;
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
+    .ev-btn-danger-solid:hover { background: #a33d1e; color: #fff; text-decoration: none; }
+    .ev-btn-dark {
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #3a3a3a;
+    }
+    .ev-btn-dark:hover { background: #333; color: #fff; text-decoration: none; }
+
+    /* Rejected time */
+    .ev-rejected-time {
+        color: #666;
+        font-size: 12px;
+    }
+
+    /* Card footer */
+    .ev-card-footer {
+        border-top: 1px solid #2a2a2a;
+        padding-top: 14px;
+        margin-top: 16px;
+        display: flex;
+        justify-content: center;
+    }
+    .ev-need-help {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: #2a2a2a;
+        color: #aaa;
+        font-size: 13px;
+        text-decoration: none;
+        border: 1px solid #3a3a3a;
+    }
+    .ev-need-help:hover { color: #fff; text-decoration: none; }
+
+    /* Success alert */
+    .ev-alert-success {
+        background: rgba(193, 241, 29, 0.1);
+        border: 1px solid rgba(193, 241, 29, 0.3);
+        border-radius: 8px;
+        padding: 14px 20px;
+        margin-bottom: 16px;
+        color: #C1F11D;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .ev-alert-success .ev-close {
+        background: none;
+        border: none;
+        color: #C1F11D;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    /* Empty state */
+    .ev-empty-state {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+    }
+    .ev-empty-state i { font-size: 40px; color: #C1F11D; margin-bottom: 16px; }
+    .ev-empty-state h3 { color: #fff; font-size: 18px; margin: 0 0 8px; }
+    .ev-empty-state p { color: #999; font-size: 14px; margin: 0 0 20px; }
+
+    /* Pagination */
+    .ev-pagination {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin: 30px 0;
+    }
+    .ev-pagination nav { width: 100%; }
+    .ev-pagination div { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .ev-pagination p { color: #999; font-size: 13px; margin: 0; }
+    .ev-pagination nav > div > div:first-child { display: flex; justify-content: center; gap: 8px; }
+    .ev-pagination span[aria-disabled],
+    .ev-pagination a[rel] {
+        display: inline-block;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .ev-pagination a[rel]:hover {
+        background: #2a2a2a;
+        color: #C1F11D;
+        border-color: #C1F11D;
+    }
+    .ev-pagination span[aria-disabled] {
+        color: #444;
+        background: #111;
+        border-color: #222;
+        cursor: not-allowed;
+    }
+    .ev-pagination .pagination { display: flex; gap: 5px; list-style: none; padding: 0; margin: 0; }
+    .ev-pagination .pagination li a,
+    .ev-pagination .pagination li span {
+        display: block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .ev-pagination .pagination li a:hover {
+        background: #2a2a2a;
+        color: #C1F11D;
+        border-color: #C1F11D;
+    }
+    .ev-pagination .pagination li.active span {
+        background: #C1F11D;
+        color: #000;
+        border-color: #C1F11D;
+    }
+    .ev-pagination .pagination li.disabled span {
+        color: #444;
+        background: #111;
+        border-color: #222;
+        cursor: not-allowed;
+    }
+    .ev-pagination span[aria-current="page"] span {
+        display: block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        background: #C1F11D !important;
+        color: #000 !important;
+        border: 1px solid #C1F11D !important;
+        border-radius: 4px;
+    }
+    .ev-pagination button {
+        display: inline-block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .ev-pagination button:hover { background: #2a2a2a; color: #C1F11D; border-color: #C1F11D; }
+    .ev-pagination button:disabled { color: #444; background: #111; border-color: #222; cursor: not-allowed; }
+    .ev-pagination button:disabled:hover { color: #444; background: #111; border-color: #222; }
+
+    /* Responsive */
+    @media (max-width: 991px) {
+        .ev-rejection-aside {
+            border-left: none;
+            border-top: 1px solid #2a2a2a;
+            padding-left: 0;
+            padding-top: 16px;
+            margin-top: 16px;
+            min-width: auto;
+        }
+        .ev-rejected-card .ev-card-body { flex-direction: column; }
+    }
+    @media (max-width: 768px) {
+        .ev-dashboard-tabs { flex-direction: column; align-items: stretch; }
+        .ev-dashboard-nav { flex-direction: column; }
+        .ev-dashboard-nav a { width: 100%; justify-content: center; }
+        .ev-dashboard-tabs .ev-add-btn { width: 100%; justify-content: center; }
+        .ev-rejected-card .ev-card-body { flex-direction: column; align-items: center; text-align: center; }
+        .ev-rejected-card .ev-avatar { width: 120px; height: 120px; }
+        .ev-rejected-card .ev-profile-name { justify-content: center; }
+        .ev-rejected-card .ev-location { text-align: center; }
+    }
 </style>
+@endpush
 
-<div class="container-fluid">
-    <div class="content-wrapper no-sidebar">
-        <div id="content">
-            <div class="col-12">
-                @if(session('success'))
-                <div class="alert alert-success" role="alert">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                    <i class="fa fa-check-circle"></i>
-                    <span class="sr-only">Success:</span>
-                    {{ session('success') }}
-                </div>
-                @endif
-            </div>
- @include('components.profile-dashboard-nav')
-{{-- <div class="mb-4">
-                            <div class="btn-group" role="group">
-                                <a style="    padding: 6px 12px;" href="{{ route('user.dashboard', ['name' => $firstProfile->slug, 'id' => $firstProfile->id]) }}" 
-                                   class="btn nbtn">
-                                    <i class="fa fa-check-circle"></i> Active Profiles ({{ $activeCount ?? 0 }})
-                                </a>
-                                <a style="    padding: 6px 12px;" href="{{ route('rejected.verifications') }}" 
-                                   class="btn btn-primary">
-                                    <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount ?? 0 }})
-                                </a>
-                                <a style="    padding: 6px 12px;" href="{{ route('user.dashboard', ['name' => $firstProfile->slug, 'id' => $firstProfile->id, 'filter' => 'pending']) }}" 
-                                   class="btn nbtn">
-                                    <i class="fa fa-clock"></i> Pending Approval ({{ $pendingCount ?? 0 }})
-                                </a>
-                                <a style="    padding: 6px 12px;" href="{{ route('profile.archived') }}" 
-                                   class="btn nbtn">
-                                    <i class="fa fa-archive"></i> Archived ({{ $archivedCount ?? 0 }})
-                                </a>
+<!-- Back Bar -->
+<div class="ev-back-bar">
+    <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
+        <a href="/my-account" style="position:absolute; left:16px;">
+            <i class="fa fa-angle-left"></i> Back to My Account
+        </a>
+        <h1>Rejected Photo Verifications</h1>
+    </div>
+</div>
 
-                     
-                            </div>
-                                          <a style="color: #333; float:right; background: #f4b827 linear-gradient(#f4b827, #d3980b) repeat-x;
-    border-color: #c9910a;" class="btn my-listing-new-link " href="{{ route('new.profile') }}" data-turbolinks="false">
-              Add Profile <i class="fa fa-plus fa-text-default"></i>
-          </a>
+<div class="ev-container" style="padding-top: 8px; padding-bottom: 40px;">
 
-                        </div> --}}
+    <!-- Success Flash -->
+    @if(session('success'))
+    <div class="ev-alert-success" style="margin-top: 16px;">
+        <span><i class="fa fa-check-circle"></i> {{ session('success') }}</span>
+        <button class="ev-close" onclick="this.parentElement.style.display='none'">&times;</button>
+    </div>
+    @endif
 
-            <div class="block my-profile-primary-block">
-                <div class="row">
-                    <div class="col-md-12">
-                        
+    <!-- Dashboard Tabs -->
+    <div class="ev-dashboard-tabs">
+        <div class="ev-dashboard-nav">
+            @if($firstProfile)
+            <a href="{{ route('user.dashboard', ['name' => $firstProfile->slug, 'id' => $firstProfile->id]) }}" 
+               class="{{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
+                <i class="fa fa-check-circle"></i> Active ({{ $activeCount }})
+            </a>
+            @endif
+            <a href="{{ route('rejected.verifications') }}" 
+               class="{{ request()->routeIs('rejected.verifications') ? 'active' : '' }}">
+                <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount }})
+            </a>
+            @if($firstProfile)
+            <a href="{{ route('user.dashboard', ['name' => $firstProfile->slug, 'id' => $firstProfile->id, 'filter' => 'pending']) }}" 
+               class="{{ request()->get('filter') == 'pending' ? 'active' : '' }}">
+                <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
+            </a>
+            @endif
+            <a href="{{ route('profile.archived') }}" 
+               class="{{ request()->routeIs('profile.archived') ? 'active' : '' }}">
+                <i class="fa fa-archive"></i> Archived ({{ $archivedCount }})
+            </a>
+        </div>
+        <a href="{{ route('new.profile') }}" class="ev-add-btn">
+            <i class="fa fa-plus"></i> Add Profile
+        </a>
+    </div>
 
-                        <!-- Profile Filter Links -->
-                        @if($firstProfile)
-                        
-                        @endif
+    <!-- Rejected Profiles -->
+    @if(isset($rejectedProfiles) && $rejectedProfiles->total() > 0)
+        @foreach($rejectedProfiles as $profile)
+            @php
+                $profileUrl = url(strtolower($profile->ggender->name).'-escorts-in-'.strtolower($profile->getcity->name).'/'.$profile->id.'/'.$profile->slug);
+            @endphp
 
-                        @if(isset($rejectedProfiles) && $rejectedProfiles->total() > 0)
-                            @foreach($rejectedProfiles as $profile)
-                            <div class="my-profile my-profile-disapprove mb-4">
-                                <div class="d-md-flex gap-4 pb-3">
-                                    <div class="listing-li pb-3 pr-2 position-relative free thumbs-0 thumbs-free">
-                                        <h2 class="visible-xxs">
-                                            {{$profile->name}} 
-                                            <span class="badge badge-disapproved">disapproved</span>
-                                        </h2>
-                                        <div class="thumbs">
-                                            <div class="main-thumbs">
-                                                <span class="img-wrapper basic">
-                                                    <div class="image-wrapper">
-                                                        @if(!empty($profile->coverimg->image))
-                                                        <img alt="{{$profile->name}}" class="img-responsive" height="95" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image)}}" width="89" />
-                                                        @elseif(!empty($profile->singleimg->image))
-                                                        <img alt="{{$profile->name}}" class="img-responsive" height="95" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image)}}" width="89" />
-                                                        @else
-                                                        <img alt="{{$profile->name}}" class="img-responsive" height="95" src="{{smart_asset('assets/images/default-avatar.png')}}" width="89" />
-                                                        @endif
-                                                    </div>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="listing-info-wrapper">
-                                            <div class="listing-info">
-                                                <h2>
-                                                    {{$profile->name}} 
-                                                    <span class="badge badge-disapproved">disapproved</span>
-                                                </h2>
-                                                <p class="text-muted">
-                                                    <i class="fa fa-map-marker-alt fa-inline"></i> {{$profile->getcity->name}}
-                                                    <span class="mx-2">|</span>
-                                                    <i class="fa fa-venus fa-inline"></i> {{$profile->ggender->name}}
-                                                </p>
-                                                @if(!empty($profile->about))
-                                                <p class="desc">{{\Str::limit($profile->about, $limit=130, $end='...')}}</p>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <aside class="rejection-aside">
-                                        <div class="block-reason my-3">
-                                            {{ $profile->rejectedVerification->rejection_reason ?? 'Use your own photos' }}
-                                        </div>
-                                        @if($profile->rejectedVerification->rejection_link)
-                                            <a class="btn btn-fix-errors fw-bold mb-2" href="{{ $profile->rejectedVerification->rejection_link }}" target="_blank">
-                                                <i class="fa fa-external-link-alt fa-inline"></i> Fix Errors
-                                            </a>
-                                        @else
-                                            <a class="btn btn-fix-errors fw-bold mb-2" href="{{url('my-profile/'.$profile->slug.'/'.$profile->id.'/verify-photo')}}">
-                                                <i class="fa fa-pencil-alt fa-inline"></i> Fix Errors
-                                            </a>
-                                        @endif
-                                        <small class="text-muted text-center">
-                                            Rejected {{ $profile->rejectedVerification->created_at->diffForHumans() }}
-                                        </small>
-                                    </aside>
-                                </div>
-                                <div class="border-top py-3 d-flex justify-content-center justify-content-md-between align-items-center">
-                                    <a class="btn btn-default d-flex align-items-center" href="/support" style="text-shadow:none">
-                                        <span class="mr-2 fw-bold">Need help?</span>
-                                        <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                            <path fill="currentColor" d="M367.2 412.5C335.9 434.9 297.5 448 256 448s-79.9-13.1-111.2-35.5l58-58c15.8 8.6 34 13.5 53.3 13.5s37.4-4.9 53.3-13.5l58 58zm90.7 .8c33.8-43.4 54-98 54-157.3s-20.2-113.9-54-157.3c9-12.5 7.9-30.1-3.4-41.3S425.8 45 413.3 54C369.9 20.2 315.3 0 256 0S142.1 20.2 98.7 54c-12.5-9-30.1-7.9-41.3 3.4S45 86.2 54 98.7C20.2 142.1 0 196.7 0 256s20.2 113.9 54 157.3c-9 12.5-7.9 30.1 3.4 41.3S86.2 467 98.7 458c43.4 33.8 98 54 157.3 54s113.9-20.2 157.3-54c12.5 9 30.1 7.9 41.3-3.4s12.4-28.8 3.4-41.3zm-45.5-46.1l-58-58c8.6-15.8 13.5-34 13.5-53.3s-4.9-37.4-13.5-53.3l58-58C434.9 176.1 448 214.5 448 256s-13.1 79.9-35.5 111.2zM367.2 99.5l-58 58c-15.8-8.6-34-13.5-53.3-13.5s-37.4 4.9-53.3 13.5l-58-58C176.1 77.1 214.5 64 256 64s79.9 13.1 111.2 35.5zM157.5 309.3l-58 58C77.1 335.9 64 297.5 64 256s13.1-79.9 35.5-111.2l58 58c-8.6 15.8-13.5 34-13.5 53.3s4.9 37.4 13.5 53.3zM208 256a48 48 0 1 1 96 0 48 48 0 1 1 -96 0z"></path>
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
-                            @endforeach
-                            
-                            <!-- Pagination -->
-                            @if($rejectedProfiles->hasPages())
-                            <div class="mt-4">
-                                {{ $rejectedProfiles->links() }}
-                            </div>
+            <div class="ev-rejected-card">
+                <div class="ev-card-body">
+                    <!-- Left: Profile Info -->
+                    <div style="display: flex; gap: 20px; flex: 1; min-width: 0;">
+                        <!-- Avatar -->
+                        <div class="ev-avatar">
+                            @if(!empty($profile->coverimg->image))
+                                <img alt="{{$profile->name}}" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image)}}" />
+                            @elseif(!empty($profile->singleimg->image))
+                                <img alt="{{$profile->name}}" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image)}}" />
+                            @else
+                                <img alt="{{$profile->name}}" src="{{smart_asset('assets/images/default-avatar.png')}}" />
                             @endif
-                        @else
-                            <div class="alert alert-info">
-                                <i class="fa fa-info-circle"></i>
-                                <strong>Good news!</strong> You don't have any rejected photo verifications at the moment.
-                                <br><br>
-                                <a href="/my-account" class="btn btn-primary">
-                                    <i class="fa fa-arrow-left"></i> Back to My Account
-                                </a>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="ev-profile-info">
+                            <h2 class="ev-profile-name">
+                                <a href="{{ $profileUrl }}">{{$profile->name}}</a>
+                                <span class="ev-badge-rejected">
+                                    <i class="fa fa-times-circle"></i> Disapproved
+                                </span>
+                            </h2>
+                            <div class="ev-location">
+                                <i class="fa fa-map-marker-alt"></i> {{$profile->getcity->name}}
+                                <span style="margin: 0 6px;">|</span>
+                                <i class="fa fa-venus"></i> {{$profile->ggender->name}}
                             </div>
+                            @if(!empty($profile->about))
+                            <div class="ev-about">{{\Str::limit($profile->about, 130, '...')}}</div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Right: Rejection Details -->
+                    <div class="ev-rejection-aside">
+                        <div class="ev-rejection-reason">
+                            {{ $profile->rejectedVerification->rejection_reason ?? 'Use your own photos' }}
+                        </div>
+                        @if($profile->rejectedVerification->rejection_link)
+                            <a class="ev-btn ev-btn-danger-solid" href="{{ $profile->rejectedVerification->rejection_link }}" target="_blank" rel="noopener noreferrer">
+                                <i class="fa fa-external-link-alt"></i> Fix Errors
+                            </a>
+                        @else
+                            <a class="ev-btn ev-btn-danger-solid" href="{{url('my-profile/'.$profile->slug.'/'.$profile->id.'/verify-photo')}}">
+                                <i class="fa fa-pencil-alt"></i> Fix Errors
+                            </a>
                         @endif
+                        <span class="ev-rejected-time">
+                            Rejected {{ $profile->rejectedVerification->created_at->diffForHumans() }}
+                        </span>
                     </div>
                 </div>
+
+                <!-- Card Footer -->
+                <div class="ev-card-footer">
+                    <a class="ev-need-help" href="/support">
+                        <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                            <path fill="currentColor" d="M367.2 412.5C335.9 434.9 297.5 448 256 448s-79.9-13.1-111.2-35.5l58-58c15.8 8.6 34 13.5 53.3 13.5s37.4-4.9 53.3-13.5l58 58zm90.7 .8c33.8-43.4 54-98 54-157.3s-20.2-113.9-54-157.3c9-12.5 7.9-30.1-3.4-41.3S425.8 45 413.3 54C369.9 20.2 315.3 0 256 0S142.1 20.2 98.7 54c-12.5-9-30.1-7.9-41.3 3.4S45 86.2 54 98.7C20.2 142.1 0 196.7 0 256s20.2 113.9 54 157.3c-9 12.5-7.9 30.1 3.4 41.3S86.2 467 98.7 458c43.4 33.8 98 54 157.3 54s113.9-20.2 157.3-54c12.5 9 30.1 7.9 41.3-3.4s12.4-28.8 3.4-41.3zm-45.5-46.1l-58-58c8.6-15.8 13.5-34 13.5-53.3s-4.9-37.4-13.5-53.3l58-58C434.9 176.1 448 214.5 448 256s-13.1 79.9-35.5 111.2zM367.2 99.5l-58 58c-15.8-8.6-34-13.5-53.3-13.5s-37.4 4.9-53.3 13.5l-58-58C176.1 77.1 214.5 64 256 64s79.9 13.1 111.2 35.5zM157.5 309.3l-58 58C77.1 335.9 64 297.5 64 256s13.1-79.9 35.5-111.2l58 58c-8.6 15.8-13.5 34-13.5 53.3s4.9 37.4 13.5 53.3zM208 256a48 48 0 1 1 96 0 48 48 0 1 1 -96 0z"></path>
+                        </svg>
+                        Need help?
+                    </a>
+                </div>
             </div>
+        @endforeach
+
+        <!-- Pagination -->
+        @if($rejectedProfiles->hasPages())
+        <div class="ev-pagination">
+            {{ $rejectedProfiles->links() }}
         </div>
-    </div>
+        @endif
+    @else
+        <div class="ev-empty-state">
+            <i class="fa fa-check-circle"></i>
+            <h3>Good news!</h3>
+            <p>You don't have any rejected photo verifications at the moment.</p>
+            <a class="ev-btn ev-btn-accent" href="/my-account">
+                <i class="fa fa-arrow-left"></i> Back to My Account
+            </a>
+        </div>
+    @endif
+
+</div>
 </div>

@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Profile;
 
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
+#[Layout('components.layouts.app-evoory')]
 class UserAccountPassword extends Component
 {
     public $current_password;

@@ -196,7 +196,7 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get("select-package", \App\Livewire\Profile\Users\NewProfileUpgrade::class)->name("upgrade.profile.new");
     Route::get('my-profile/{slug}/{id}/verify-photo', [App\Http\Controllers\VerifyPhotoController::class, 'index'])->name('verify.photo');
     Route::get('rejected-verifications', RejectedVerifications::class)->name('rejected.verifications');
-    Route::get('archived-profiles', \App\Livewire\Profile\Users\ArchivedProfiles::class)->name('archived.profiles');
+    Route::get('archived-profiles', \App\Livewire\Profile\Users\ArchivedProfiles::class)->name('profile.archived');
     Route::get("my-account", \App\Livewire\UserAccount::class)->name("user.account");
     Route::get("my-account/edit", \App\Livewire\Profile\UserAccountEdit::class)->name("user.account.edit");
     Route::get("my-password/edit", \App\Livewire\Profile\UserAccountPassword::class)->name("user.account.password");
@@ -236,7 +236,7 @@ Route::group(['middleware'=>'auth'], function(){
     
     // Profile reactivation routes
     Route::get('profile-status', [App\Http\Controllers\ProfileReactivationController::class, 'dashboard'])->name('profile.status');
-    Route::get('archived-profiles', [App\Http\Controllers\ProfileReactivationController::class, 'index'])->name('profile.archived');
+    // Route::get('archived-profiles', [App\Http\Controllers\ProfileReactivationController::class, 'index'])->name('profile.archived'); // Replaced by Livewire component above
     Route::post('profile/{id}/reactivate', [App\Http\Controllers\ProfileReactivationController::class, 'reactivate'])->name('profile.reactivate');
     
     // Exit impersonation route (accessible from frontend)

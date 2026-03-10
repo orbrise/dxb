@@ -8,7 +8,7 @@ use Livewire\Attributes\Layout;
 use App\Models\UsersProfile;
 use Illuminate\Support\Facades\Auth;
 
-#[Layout('components.layouts.app')]
+#[Layout('components.layouts.app-evoory')]
 class RejectedVerifications extends Component
 {
     use WithPagination;

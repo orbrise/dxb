@@ -8,7 +8,7 @@ use Livewire\Attributes\Layout;
 use App\Models\UsersProfile;
 use Illuminate\Support\Facades\Auth;
 
-#[Layout('components.layouts.app')]
+#[Layout('components.layouts.app-evoory')]
 class ArchivedProfiles extends Component
 {
     use WithPagination;
@@ -32,8 +32,14 @@ class ArchivedProfiles extends Component
         
         // Get current user's first profile for header info
         $user = UsersProfile::where('user_id', Auth::id())->first();
+
+        // Get counts for dashboard nav tabs
+        $activeCount = UsersProfile::where('user_id', Auth::id())->whereNull('archived_at')->where('is_verified', 1)->count();
+        $pendingCount = UsersProfile::where('user_id', Auth::id())->whereNull('archived_at')->where('is_verified', 0)->count();
+        $rejectedCount = UsersProfile::where('user_id', Auth::id())->whereHas('rejectedVerification')->count();
+        $archivedCount = $archivedProfiles->total();
         
-        return view('livewire.profile.users.archived-profiles', compact('archivedProfiles', 'user'));
+        return view('livewire.profile.users.archived-profiles', compact('archivedProfiles', 'user', 'activeCount', 'pendingCount', 'rejectedCount', 'archivedCount'));
     }
 
     public function repostProfile($profileId)
