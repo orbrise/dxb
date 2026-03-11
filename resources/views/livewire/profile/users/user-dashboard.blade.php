@@ -112,13 +112,15 @@
 
     /* Profile Card */
     .ev-profile-card {
-        background: #1a1a1a;
-        border: 1px solid #2a2a2a;
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 20px;
+        border-radius: 0;
+        padding: 24px 0;
+        margin-bottom: 0;
         display: flex;
         gap: 20px;
+        border-bottom: 1px solid #2a2a2a;
+    }
+    .ev-profile-card:last-child {
+        border-bottom: none;
     }
     .ev-profile-card .ev-avatar {
         width: 100px;
@@ -132,7 +134,12 @@
         height: 100%;
         object-fit: cover;
     }
-    .ev-profile-card .ev-profile-info { flex: 1; min-width: 0; }
+    .ev-profile-card .ev-profile-info {
+        flex: 1;
+        min-width: 0;
+        padding-left: 20px;
+        border-left: 1px solid #2a2a2a;
+    }
     .ev-profile-card .ev-profile-name {
         font-size: 18px;
         font-weight: 600;
@@ -542,7 +549,7 @@
     .ev-pagination .pagination li a,
     .ev-pagination .pagination li span {
         display: block;
-        padding: 8px 14px;
+        padding: 4px 14px;
         min-width: 42px;
         text-align: center;
         font-size: 14px;

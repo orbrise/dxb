@@ -63,8 +63,8 @@
 
     /* Rejected Profile Card */
     .ev-rejected-card {
-        background: #1a1a1a;
-        border: 1px solid #2a2a2a;
+        
+        border-bottom: 1px solid #2a2a2a;
         border-radius: 12px;
         padding: 24px;
         margin-bottom: 20px;
@@ -88,6 +88,8 @@
     .ev-rejected-card .ev-profile-info {
         flex: 1;
         min-width: 0;
+        padding-left: 20px;
+        border-left: 1px solid #2a2a2a;
     }
     .ev-rejected-card .ev-profile-name {
         font-size: 18px;
@@ -147,10 +149,10 @@
     /* Rejection reason */
     .ev-rejection-reason {
         background: transparent;
-        color: #e85d04;
+        color: #c1f11d;
         padding: 8px 16px;
         border-radius: 20px;
-        border: 2px solid #e85d04;
+        border: 2px solid #c1f11d;
         font-size: 14px;
         line-height: 1.5;
         text-align: center;
@@ -178,13 +180,13 @@
     }
     .ev-btn-accent:hover { opacity: 0.9; color: #000; text-decoration: none; }
     .ev-btn-danger-solid {
-        background: #bb4623;
-        color: #fff;
+        background: #ff6b6b61;
+        color: #ffe7e7;
         width: 100%;
         max-width: 280px;
         justify-content: center;
     }
-    .ev-btn-danger-solid:hover { background: #a33d1e; color: #fff; text-decoration: none; }
+    .ev-btn-danger-solid:hover { background: #ff6b6b85; color: #ffecec; text-decoration: none; }
     .ev-btn-dark {
         background: #2a2a2a;
         color: #fff;
@@ -487,15 +489,7 @@
                     </div>
                 </div>
 
-                <!-- Card Footer -->
-                <div class="ev-card-footer">
-                    <a class="ev-need-help" href="/support">
-                        <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                            <path fill="currentColor" d="M367.2 412.5C335.9 434.9 297.5 448 256 448s-79.9-13.1-111.2-35.5l58-58c15.8 8.6 34 13.5 53.3 13.5s37.4-4.9 53.3-13.5l58 58zm90.7 .8c33.8-43.4 54-98 54-157.3s-20.2-113.9-54-157.3c9-12.5 7.9-30.1-3.4-41.3S425.8 45 413.3 54C369.9 20.2 315.3 0 256 0S142.1 20.2 98.7 54c-12.5-9-30.1-7.9-41.3 3.4S45 86.2 54 98.7C20.2 142.1 0 196.7 0 256s20.2 113.9 54 157.3c-9 12.5-7.9 30.1 3.4 41.3S86.2 467 98.7 458c43.4 33.8 98 54 157.3 54s113.9-20.2 157.3-54c12.5 9 30.1 7.9 41.3-3.4s12.4-28.8 3.4-41.3zm-45.5-46.1l-58-58c8.6-15.8 13.5-34 13.5-53.3s-4.9-37.4-13.5-53.3l58-58C434.9 176.1 448 214.5 448 256s-13.1 79.9-35.5 111.2zM367.2 99.5l-58 58c-15.8-8.6-34-13.5-53.3-13.5s-37.4 4.9-53.3 13.5l-58-58C176.1 77.1 214.5 64 256 64s79.9 13.1 111.2 35.5zM157.5 309.3l-58 58C77.1 335.9 64 297.5 64 256s13.1-79.9 35.5-111.2l58 58c-8.6 15.8-13.5 34-13.5 53.3s4.9 37.4 13.5 53.3zM208 256a48 48 0 1 1 96 0 48 48 0 1 1 -96 0z"></path>
-                        </svg>
-                        Need help?
-                    </a>
-                </div>
+               
             </div>
         @endforeach
 

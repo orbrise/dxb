@@ -1,17 +1,18 @@
 <div>
-    @section('headerform')
-    <div class="nav-bar navbar-top-nav">
-        <div class="container-fluid"> 
-            <a class="back-link" href="{{url('/')}}" wire:navigate>
-                <i class="fa fa-angle-left fa-fw"></i><span class="hidden-xs">Back</span></a>
-            <div class="title">
-                <h1><a href="/my-account">My Questions</a></h1>
-            </div>
-        </div>
-    </div>
-    @endsection
+    @push('css')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    @endpush
 
     <style>
+        .ev-back-bar {
+            background: #131616;
+            padding: 12px 0;
+        }
+        .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }
+        .ev-back-bar h1 { color: #fff; font-size: 18px; font-weight: 600; margin: 0; }
+        .ev-back-bar h1 a { color: #fff; text-decoration: none; }
+        .ev-container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+
         /* Stats Cards */
         .stats-row {
             display: flex;
@@ -34,7 +35,7 @@
             color: #fff;
         }
 
-        .stat-card h3.text-warning { color: #f4b827; }
+        .stat-card h3.text-warning { color: #c1f11d; }
         .stat-card h3.text-success { color: #28a745; }
 
         .stat-card p {
@@ -48,30 +49,31 @@
             display: flex;
             height: calc(100vh - 280px);
             min-height: 400px;
-            background: #1a1a1a;
+            background: transparent;
             border-radius: 8px;
             overflow: hidden;
-            border: 1px solid #333;
+            gap: 12px;
+          
         }
 
         /* Left Panel - Questions List */
         .questions-sidebar {
             width: 400px;
             min-width: 350px;
-            background: #2a2a2a;
-            border-right: 1px solid #333;
+            background: #0D1011;
+            
             display: flex;
             flex-direction: column;
         }
 
         .questions-sidebar-header {
-            padding: 15px;
-            background: #333;
-            border-bottom: 1px solid #444;
+            padding: 15px 0px;
+            background: #0a0a0a;
+            
         }
 
         .questions-sidebar-header h4 {
-            color: #f4b827;
+            color: #c1f11d;
             margin: 0 0 10px 0;
             font-size: 18px;
         }
@@ -86,14 +88,14 @@
             padding: 10px 15px;
             background: #1a1a1a;
             border: 1px solid #444;
-            border-radius: 20px;
+            border-radius: 5px;
             color: #fff;
             font-size: 14px;
         }
 
         .questions-search input:focus {
             outline: none;
-            border-color: #f4b827;
+            border-color: #c1f11d;
         }
 
         .questions-search input::placeholder {
@@ -104,7 +106,7 @@
             padding: 8px 35px 8px 15px;
             background: #1a1a1a;
             border: 1px solid #444;
-            border-radius: 20px;
+            border-radius: 5px;
             color: #fff;
             font-size: 13px;
             cursor: pointer;
@@ -119,7 +121,8 @@
 
         .questions-filter:focus {
             outline: none;
-            border-color: #f4b827;
+            border-color: #c1f11d;
+            padding:0px 10px;
         }
 
         /* Questions List */
@@ -143,14 +146,14 @@
 
         .question-item.active {
             background: #3d3d3d;
-            border-left: 3px solid #f4b827;
+            border-left: 3px solid #c1f11d;
         }
 
         .question-avatar {
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f4b827, #d4a017);
+            background: linear-gradient(135deg, #c1f11d, #d4a017);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -185,7 +188,7 @@
         }
 
         .question-item.unanswered .question-time {
-            color: #f4b827;
+            color: #c1f11d;
         }
 
         .question-preview {
@@ -203,7 +206,7 @@
         }
 
         .unanswered-badge {
-            background: #f4b827;
+            background: #c1f11d;
             color: #1a1a1a;
             font-size: 10px;
             font-weight: bold;
@@ -217,7 +220,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #1a1a1a;
+            background: #0D1011;
         }
 
         .question-detail-header {
@@ -238,7 +241,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f4b827, #d4a017);
+            background: linear-gradient(135deg, #c1f11d, #d4a017);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -272,7 +275,7 @@
         }
 
         .question-detail-actions button:hover {
-            color: #f4b827;
+            color: #c1f11d;
             background: rgba(244, 184, 39, 0.1);
         }
 
@@ -305,7 +308,7 @@
         }
 
         .qa-answer {
-            background: #f4b827;
+            background: #c1f11d;
             color: #1a1a1a;
             margin-left: auto;
             border-bottom-right-radius: 4px;
@@ -355,7 +358,7 @@
 
         .answer-input textarea:focus {
             outline: none;
-            border-color: #f4b827;
+            border-color: #c1f11d;
         }
 
         .answer-input textarea::placeholder {
@@ -366,7 +369,7 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: #f4b827;
+            background: #c1f11d;
             border: none;
             color: #1a1a1a;
             font-size: 18px;
@@ -471,7 +474,7 @@
             display: none;
             background: #333;
             border: none;
-            color: #f4b827;
+            color: #c1f11d;
             font-size: 20px;
             cursor: pointer;
             padding: 5px 10px;
@@ -495,12 +498,20 @@
         }
     </style>
 
-    <div class="container-fluid {{ $selectedQuestion ? 'hide-nav-mobile' : '' }}">
-        <div class="content-wrapper no-sidebar">
-            <div id="content">
+    <!-- Back Bar -->
+    <div class="ev-back-bar">
+        <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
+            <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
+                <i class="fa fa-angle-left"></i> Escorts in Dubai
+            </a>
+            <h1>My Questions</h1>
+        </div>
+    </div>
+
+    <div class="ev-container {{ $selectedQuestion ? 'hide-nav-mobile' : '' }}" style="padding-top: 8px; padding-bottom: 40px;">
                 @include('components.communication-nav')
-                
-                <div class="mb-3" id="my-questions">
+
+                <div class="mb-3 clearfix" style="clear: both;" id="my-questions">
                     {{-- Flash Messages --}}
                     @if (session()->has('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -664,8 +675,6 @@
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
 
     <script>
         function scrollToAnswer() {

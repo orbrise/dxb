@@ -7,7 +7,7 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Auth;
 
-#[Layout('components.layouts.app')]
+#[Layout('components.layouts.app-evoory')]
 class FavoriteProfilesDashboard extends Component
 {
     use WithPagination;

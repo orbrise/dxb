@@ -26,8 +26,8 @@
         .chat-sidebar {
             width: 350px;
             min-width: 300px;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
+           
+            
             border-radius: 8px;
             display: flex;
             flex-direction: column;
@@ -36,7 +36,7 @@
         .chat-sidebar-header {
             padding: 15px;
             background: transparent;
-            border-bottom: 1px solid #444;
+         
         }
 
         .chat-sidebar-header h4 {
@@ -125,6 +125,8 @@
         .conversation-list {
             flex: 1;
             overflow-y: auto;
+            background: #0D1011;
+            padding: 10px;
         }
 
         .conversation-item {
@@ -221,8 +223,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
+            background: #0D1011;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -721,13 +722,7 @@
                             @else
                                 {{-- Empty State --}}
                                 <div class="chat-empty">
-                                    <svg class="chat-empty-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="40" cy="22" r="14" stroke="#555" stroke-width="3" fill="none"/>
-                                        <path d="M20 65 C20 50 30 42 40 42 C50 42 60 50 60 65" stroke="#555" stroke-width="3" stroke-linecap="round" fill="none"/>
-                                        <rect x="42" y="48" rx="8" ry="8" width="28" height="20" stroke="#555" stroke-width="3" fill="none"/>
-                                        <line x1="50" y1="55" x2="62" y2="55" stroke="#555" stroke-width="2" stroke-linecap="round"/>
-                                        <line x1="50" y1="60" x2="58" y2="60" stroke="#555" stroke-width="2" stroke-linecap="round"/>
-                                    </svg>
+                                    <img src="{{ smart_asset('assets/newtheme/chaticon.svg') }}" alt="No conversations" style="width:120px; margin-bottom:20px; opacity:0.7;">
                                     <h3>Select a conversation</h3>
                                     <p>Choose a conversation from the left to start chatting</p>
                                 </div>

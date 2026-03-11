@@ -53,7 +53,7 @@ class Questions extends Component
                 'rejectedCount' => 0,
                 'pendingCount' => 0,
                 'archivedCount' => 0
-            ])->layout('components.layouts.app');
+            ])->layout('components.layouts.app-evoory');
         }
 
         // Build query for questions
@@ -112,7 +112,7 @@ class Questions extends Component
             'rejectedCount',
             'pendingCount',
             'archivedCount'
-        ))->layout('components.layouts.app');
+        ))->layout('components.layouts.app-evoory');
     }
 
     public function selectQuestion($questionId)

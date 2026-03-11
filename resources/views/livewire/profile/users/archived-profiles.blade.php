@@ -169,8 +169,8 @@
     }
     .ev-btn-accent:hover { opacity: 0.9; color: #000; text-decoration: none; }
     .ev-btn-success {
-        background: #28a745;
-        color: #fff;
+        background: #c1f11d;
+        color: #26282d;
         padding: 11px 10px;
     }
     .ev-btn-success:hover { background: #218838; color: #fff; text-decoration: none; }

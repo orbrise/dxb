@@ -34,7 +34,7 @@ class ArchivedProfiles extends Component
         $user = UsersProfile::where('user_id', Auth::id())->first();
 
         // Get counts for dashboard nav tabs
-        $activeCount = UsersProfile::where('user_id', Auth::id())->whereNull('archived_at')->where('is_verified', 1)->count();
+        $activeCount = UsersProfile::where('user_id', Auth::id())->whereNull('archived_at')->where('is_active', 1)->count();
         $pendingCount = UsersProfile::where('user_id', Auth::id())->whereNull('archived_at')->where('is_verified', 0)->count();
         $rejectedCount = UsersProfile::where('user_id', Auth::id())->whereHas('rejectedVerification')->count();
         $archivedCount = $archivedProfiles->total();

@@ -1,34 +1,42 @@
 <div>
     <style>
+        .ev-back-bar {
+            background: #131616;
+            padding: 12px 0;
+        }
+        .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }
+        .ev-back-bar h1 { color: #fff; font-size: 18px; font-weight: 600; margin: 0; }
+        .ev-back-bar h1 a { color: #fff; text-decoration: none; }
+        .ev-container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+
         /* WhatsApp-style Reviews Container */
         .reviews-container {
             display: flex;
             height: calc(100vh - 200px);
             min-height: 500px;
-            background: #1a1a1a;
+            background: transparent;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+            gap: 12px;
         }
 
         /* Left Sidebar - Reviews List */
         .review-sidebar {
             width: 380px;
             min-width: 380px;
-            background: #1a1a1a;
-            border-right: 1px solid #333;
+            background: #0D1011;
             display: flex;
             flex-direction: column;
         }
 
         .review-sidebar-header {
             padding: 15px 20px;
-            background: #2a2a2a;
-            border-bottom: 1px solid #333;
+            background: #0a0a0a;
+            
         }
 
         .review-sidebar-header h4 {
-            color: #f4b827;
+            color: #c1f11d;
             margin: 0 0 10px 0;
             font-size: 18px;
         }
@@ -45,7 +53,7 @@
             padding: 8px 12px;
             background: #333;
             border: 1px solid #444;
-            border-radius: 20px;
+            border-radius: 5px;
             color: #fff;
             font-size: 13px;
         }
@@ -56,7 +64,7 @@
             padding: 8px 35px 8px 12px;
             background: #333;
             border: 1px solid #444;
-            border-radius: 20px;
+            border-radius: 5px;
             color: #fff;
             font-size: 13px;
             cursor: pointer;
@@ -76,7 +84,7 @@
         .review-filters input:focus,
         .review-filters select:focus {
             outline: none;
-            border-color: #f4b827;
+            border-color: #c1f11d;
         }
 
         .review-list {
@@ -105,7 +113,7 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f4b827 0%, #d4a017 100%);
+            background: linear-gradient(135deg, #c1f11d 0%, #d4a017 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -140,7 +148,7 @@
         }
 
         .review-item-stars {
-            color: #f4b827;
+            color: #c1f11d;
             font-size: 12px;
             margin-bottom: 4px;
         }
@@ -166,7 +174,7 @@
         }
 
         .unreplied-badge {
-            background: #f4b827;
+            background: #c1f11d;
             color: #1a1a1a;
             padding: 2px 8px;
             border-radius: 10px;
@@ -179,7 +187,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #1a1a1a;
+            background: #0D1011;
         }
 
         .review-detail-header {
@@ -201,7 +209,7 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f4b827 0%, #d4a017 100%);
+            background: linear-gradient(135deg, #c1f11d 0%, #c1f11d 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -222,7 +230,7 @@
         }
 
         .review-detail-stars {
-            color: #f4b827;
+            color: #c1f11d;
             font-size: 14px;
             margin-top: 2px;
         }
@@ -255,7 +263,7 @@
             display: none;
             background: #333;
             border: none;
-            color: #f4b827;
+            color: #c1f11d;
             font-size: 20px;
             cursor: pointer;
             padding: 5px 10px;
@@ -296,7 +304,7 @@
         }
 
         .review-bubble.review-outgoing {
-            background: linear-gradient(135deg, #f4b827 0%, #d4a017 100%);
+            background: linear-gradient(135deg, #c1f11d 0%, #d4a017 100%);
             color: #1a1a1a;
             align-self: flex-end;
             border-bottom-right-radius: 5px;
@@ -356,7 +364,7 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f4b827 0%, #d4a017 100%);
+            background: linear-gradient(135deg, #c1f11d 0%, #d4a017 100%);
             border: none;
             color: #1a1a1a;
             cursor: pointer;
@@ -420,7 +428,7 @@
         }
 
         .stat-card h3.gold {
-            color: #f4b827;
+            color: #c1f11d;
         }
 
         .stat-card h3.red {
@@ -523,24 +531,24 @@
         }
     </style>
 
-    @section('headerform')
-    <div class="nav-bar navbar-top-nav">
-        <div class="container-fluid"> 
-            <a class="back-link" href="{{url('/')}}" wire:navigate>
-                <i class="fa fa-angle-left fa-fw"></i><span class="hidden-xs">Back</span></a>
-            <div class="title">
-                <h1><a href="/my-account">My Reviews</a></h1>
-            </div>
+    @push('css')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    @endpush
+
+    <!-- Back Bar -->
+    <div class="ev-back-bar">
+        <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
+            <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
+                <i class="fa fa-angle-left"></i> Escorts in Dubai
+            </a>
+            <h1>My Reviews</h1>
         </div>
     </div>
-    @endsection
 
-    <div class="container-fluid {{ $selectedReview ? 'hide-nav-mobile' : '' }}">
-        <div class="content-wrapper no-sidebar">
-            <div id="content">
+    <div class="ev-container {{ $selectedReview ? 'hide-nav-mobile' : '' }}" style="padding-top: 8px; padding-bottom: 40px;">
                 @include('components.communication-nav')
-                
-                <div class="mb-3" id="my-reviews">
+
+                <div class="mb-3 clearfix" style="clear: both;" id="my-reviews">
                     {{-- Flash Messages --}}
                     @if (session()->has('success'))
                         <div class="alert alert-success">
@@ -753,8 +761,6 @@
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
 
     <script>
         function scrollToReply() {
