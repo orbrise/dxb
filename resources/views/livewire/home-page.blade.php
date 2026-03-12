@@ -2699,7 +2699,8 @@ function initCitySearch() {
             'Maldives': 'MV',
             'Afghanistan': 'AF',
             'Iran': 'IR',
-            'Iraq': 'IQ'
+            'Iraq': 'IQ',
+            'Belarus': 'BY'
         };
         
         return countryMap[countryName] || null;
@@ -2944,16 +2945,17 @@ function initMobileCitySearch() {
             'Italy': 'IT',
             'Spain': 'ES',
             'Canada': 'CA',
-            'Australia': 'AU'
+            'Australia': 'AU',
+            'Belarus': 'BY'
         };
-        
+
         return countryMap[countryName] || null;
     }
-    
+
     // Function to search cities from database
     function searchCities(query) {
         clearTimeout(searchTimeout);
-        
+
         if (query.length < 2) {
             mobileCityResults.style.display = 'none';
             mobileCityResults.innerHTML = '';

@@ -12,7 +12,14 @@ class AjaxController extends Controller
 {
     public function citySearch(Request $req){
         $val = $req->val;
-        $cities = City::where('name', 'like', "%$val%")->take(5)->get();
+        $cities = City::where('name', 'like', "%$val%")
+            ->orderByRaw("CASE
+                WHEN LOWER(name) = LOWER(?) THEN 0
+                WHEN LOWER(name) LIKE LOWER(?) THEN 1
+                ELSE 2
+            END", [$val, $val . '%'])
+            ->take(10)
+            ->get();
         
         // Add currency code for each city based on country
         $result = $cities->map(function($city) {
