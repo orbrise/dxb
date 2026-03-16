@@ -3,6 +3,7 @@
 namespace App\Livewire\Profile\Users;
 use Livewire\WithFileUploads;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 use App\Models\Listing;
 use App\Models\Service;
 use App\Models\Country;
@@ -27,6 +28,7 @@ use Storage;
 use DB;
 use Log;
 
+#[Layout('components.layouts.app-evoory')]
 class UserProfile extends Component
 { use WithFileUploads;
    

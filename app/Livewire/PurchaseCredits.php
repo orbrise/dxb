@@ -5,8 +5,10 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 
+#[Layout('components.layouts.app-evoory')]
 class PurchaseCredits extends Component
 {
     public $amount = 100;

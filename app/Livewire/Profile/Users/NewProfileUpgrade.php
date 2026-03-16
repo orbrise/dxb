@@ -108,7 +108,16 @@ class NewProfileUpgrade extends Component
             }
         }
         
-        return view('livewire.profile.users.new-profile-upgrade', compact('packages', 'profileName', 'profileAbout', 'profileImage'));
+        // Get city name for header
+        $cityName = '';
+        if ($sessionData && isset($sessionData['city'])) {
+            $city = \App\Models\City::find($sessionData['city']);
+            if ($city) {
+                $cityName = $city->name;
+            }
+        }
+
+        return view('livewire.profile.users.new-profile-upgrade', compact('packages', 'profileName', 'profileAbout', 'profileImage', 'cityName'));
     }
 
     public function processWalletPayment($packageId = null, $duration = null, $amount = null)

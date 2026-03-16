@@ -2,8 +2,10 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 use App\Models\Page;
 
+#[Layout('components.layouts.app-evoory')]
 class PageDisplay extends Component
 {
     public $page;

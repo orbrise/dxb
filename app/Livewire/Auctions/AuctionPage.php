@@ -3,11 +3,13 @@
 namespace App\Livewire\Auctions;
 
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 use App\Models\Auction;
 use App\Models\City;
 use App\Models\UsersProfile;
 use Carbon\Carbon;
 
+#[Layout('components.layouts.app-evoory')]
 class AuctionPage extends Component
 {
     public $city;

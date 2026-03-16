@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Layout;
 use App\Models\Package;
 use App\Models\UsersProfile;
 use DB;
@@ -14,6 +15,7 @@ use App\Services\NotificationService;
 use App\Models\MailSettings;
 use App\Mail\ProfileUpgraded;
  
+#[Layout('components.layouts.app-evoory')]
 class UpgradeController extends Component
 {
     public $selectedPaymentMethod;
@@ -81,7 +83,16 @@ class UpgradeController extends Component
                 ->get();
         }
         
-        return view('livewire.upgrade-controller', compact('packages', 'profile'));
+        // Get city name for header
+        $cityName = '';
+        if ($profile && $profile->city) {
+            $city = \App\Models\City::find($profile->city);
+            if ($city) {
+                $cityName = $city->name;
+            }
+        }
+
+        return view('livewire.upgrade-controller', compact('packages', 'profile', 'cityName'));
     }
 
 

@@ -1,100 +1,256 @@
-@section('headerform')
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid">
-      <a class="back-link" href="/female-escorts-in-dubai">
-        <i class="fa fa-angle-left fa-fw"></i>
-        <span class="hidden-xs">Escorts in Dubai</span>
-      </a>
-      <div class="title">
-        <h1>
-          <a href="/my-profile/credits/purchase">Purchase Credits</a> 
-        </h1>
-      </div>
-    </div>
-  </div>
-@endsection
-
-@push('css')
 <style>
-    .payment-method-option {
-        padding: 17px;
-        border: 2px solid #3d3d3d;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        cursor: pointer;
-        transition: all 0.3s;
-        background: #2d2d2d;
-    }
-    
-    .payment-method-option:hover {
-        border-color: #555;
-    }
-    
-    .payment-method-option.selected {
-        border-color: #ffc439 !important;
-        background-color: #1a1a1a !important;
-    }
-    
-    .payment-method-option img {
-        height: 30px;
-        margin-right: 10px;
-    }
-    
-    .payment-method-option input[type="radio"] {
-        accent-color: #ffc439;
-        width: 18px;
-        height: 18px;
-        margin-right: 15px;
-    }
-    
-    .payment-method-option label {
-        color: #ffffff !important;
-        cursor: pointer;
-        margin-bottom: 0;
-    }
-    
-    #paypal-button-container {
-        margin-top: 20px;
-        width: 100%;
-    }
-    
-    /* Primary Gateway Iframe */
-    #primary-gateway-iframe {
-        width: 100%;
-        min-height: 450px;
-        border: none;
-        background: #fff;
-        border-radius: 8px;
-    }
-    
-    #primary-gateway-loading {
-        text-align: center;
-        padding: 40px;
-        color: #fff;
-    }
-    
-    .payment-section {
-        display: none;
-    }
-    
-    /* Ensure modal is hidden by default */
-    #paymentResultModal {
-        display: none !important;
-    }
-    
-    #paymentResultModal.show {
-        display: block !important;
-    }
-    
-    .modal-backdrop {
-        display: none !important;
-    }
-</style>
-@endpush
+/* Sub-header bar */
+.purchase-credits-subheader {
+    background: #131616;
+    padding: 12px 0;
+   
+}
+.purchase-credits-subheader .ev-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+.purchase-credits-subheader .back-link {
+    color: #C1F11D;
+    text-decoration: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.purchase-credits-subheader .back-link:hover {
+    color: #d4f84d;
+}
+.purchase-credits-subheader .page-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
 
-<div class="container-fluid">
-    <div class="content-wrapper no-sidebar">
+#header .nav-bar { background: #131616 !important; }
+#header { margin-bottom: 0px !important; }
+.backclass { background: #0a0a0a !important; }
+
+/* Amount input */
+.purchase-credits-page .amount-input-group {
+    display: inline-flex;
+    align-items: center;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.purchase-credits-page .amount-input-group .dollar-sign {
+    padding: 10px 14px;
+    background: #222;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    border-right: 1px solid #2a2a2a;
+}
+
+.purchase-credits-page .amount-input-group input {
+    background: #1a1a1a !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 16px;
+    padding: 10px 14px;
+    width: 100px;
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.purchase-credits-page .amount-input-group input::-webkit-outer-spin-button,
+.purchase-credits-page .amount-input-group input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.purchase-credits-page .choose-amount-label {
+    color: #999;
+    font-size: 15px;
+    margin-left: 15px;
+}
+
+/* Payment Method Card */
+.purchase-credits-page .payment-methods-card {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 24px;
+    margin-bottom: 20px;
+}
+
+.purchase-credits-page .payment-methods-card h2 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.purchase-credits-page .payment-method-option {
+    padding: 16px 20px;
+    border: 2px solid #2a2a2a;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #111;
+}
+
+.purchase-credits-page .payment-method-option:hover {
+    border-color: #444;
+    background: #1a1a1a;
+}
+
+.purchase-credits-page .payment-method-option.selected {
+    border-color: #C1F11D !important;
+    background: #1a1a1a !important;
+}
+
+.purchase-credits-page .payment-method-option img {
+    height: 28px;
+    margin-right: 8px;
+}
+
+.purchase-credits-page .payment-method-option input[type="radio"] {
+    accent-color: #C1F11D;
+    width: 18px;
+    height: 18px;
+    margin-right: 15px;
+}
+
+.purchase-credits-page .payment-method-option label {
+    color: #fff !important;
+    cursor: pointer;
+    margin-bottom: 0;
+    font-size: 15px;
+}
+
+/* Payment Section Card */
+.purchase-credits-page .payment-section-card {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+    color: #fff;
+}
+
+.purchase-credits-page .payment-section-card p {
+    color: #ccc;
+}
+
+.purchase-credits-page .payment-section-card strong {
+    color: #fff;
+}
+
+/* Package display */
+.purchase-credits-page .package-display {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.purchase-credits-page .package-display .package-label {
+    color: #C1F11D;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.purchase-credits-page .package-display .package-amount {
+    color: #fff;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.purchase-credits-page .package-display .package-currency {
+    color: #999;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+#paypal-button-container {
+    margin-top: 20px;
+    width: 100%;
+}
+
+/* Override PayPal button color */
+#paypal-button-container .paypal-button {
+    background-color: #C1F11D !important;
+    border-radius: 22px !important;
+}
+#paypal-button-container .paypal-button-color-gold,
+#paypal-button-container .paypal-button-color-black {
+    background: #C1F11D !important;
+}
+#paypal-button-container .paypal-button:hover {
+    background-color: #d4f84d !important;
+}
+
+/* Primary Gateway Iframe */
+#primary-gateway-iframe {
+    width: 100%;
+    min-height: 450px;
+    border: none;
+    background: #fff;
+    border-radius: 8px;
+}
+
+#primary-gateway-loading {
+    text-align: center;
+    padding: 40px;
+    color: #fff;
+}
+
+.payment-section {
+    display: none;
+}
+
+/* Modal */
+#paymentResultModal {
+    display: none !important;
+}
+
+#paymentResultModal.show {
+    display: block !important;
+}
+
+#paymentResultModal .modal-content {
+    background: #14141A !important;
+    border: 1px solid #222 !important;
+    color: #fff;
+}
+
+.modal-backdrop {
+    display: none !important;
+}
+</style>
+
+<div>
+<div class="purchase-credits-subheader">
+  <div class="ev-container">
+    <a href="/female-escorts-in-dubai" class="back-link">&lsaquo; Escorts in Dubai</a>
+    <span class="page-title">Purchase Credits</span>
+  </div>
+</div>
+
+<div class="purchase-credits-page" style="background: #000; min-height: 100vh; padding: 30px 50px;">
+  <div style="max-width: 560px;">
         <div id="content">
+            <!-- Payment Result Modal -->
             <div aria-labelledby="paymentResultModalLabel" class="modal fade modal__payment-result" id="paymentResultModal" role="dialog" tabindex="-1" style="display: none;">
               <div class="modal-dialog" role="document" style="margin-top:100px">
                 <div class="modal-content p-2 border-0">
@@ -107,7 +263,7 @@
                       </svg>
                     </div>
                   </div>
-                  <button type="button" class="close pale px-3 pt-2 position-absolute" style="top:0" data-dismiss="modal" aria-label="Close">
+                  <button type="button" class="close pale px-3 pt-2 position-absolute" style="top:0; color:#fff;" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                   </button>
                   <div class="modal-body p-4">
@@ -115,88 +271,99 @@
                     <p class="p-0 mb-0 mt-2 fw-bold">Your payment failed: declined <br>Please recheck your card details and try again. </p>
                   </div>
                   <div class="modal-footer pt-0">
-                    <button class="btn btn-default" data-dismiss="modal" style="float: left" type="button">Close</button>
+                    <button class="btn btn-default" data-dismiss="modal" style="float: left; background: #C1F11D; color: #000; border: none; border-radius: 22px; padding: 8px 24px;" type="button">Close</button>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="col-sm-12 mb-2">
-              <h1 class="mt-2">Purchase Credits</h1>
-              <p>Once you have credits in your account, Account Balance will be available as a payment method for upgrading your profiles.</p>
+
+            <!-- Page Header -->
+            <div class="mb-2">
+              <h1 class="mt-2" style="color: #fff; font-size: 28px; font-weight: 700;">Purchase Credits</h1>
+              <p style="color: #999; font-size: 15px;">Once you have credits in your account, Account Balance will be available as a payment method for upgrading your profiles.</p>
             </div>
-            <div class="col-md-6">
-              <div class="simple_form validate margin-bottom" id="credits_purchase_form">
-                <div class="row">
-                  <div class="col-sm-12">
-                    <div class="form-group d-flex align-items-center">
-                      <label class="large-font mb-0 ml-3" for="amount" style="order:1">Choose amount</label>
-                      <div class="input-group">
-                        <div class="input-group-addon">$ </div>
-                        <input type="number" wire:model.live="amount" class="string optional form-control small validate" min="10" max="100" maxlength="5" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" value="100" id="amount" />
-                      </div>
+
+            <div>
+              <div id="credits_purchase_form">
+                <!-- Amount Input -->
+                <div class="d-flex align-items-center">
+                  <div class="amount-input-group">
+                    <span class="dollar-sign">$</span>
+                    <input type="number" wire:model.live="amount" min="10" max="100" maxlength="5" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" value="100" id="amount" />
+                  </div>
+                  <span class="choose-amount-label">Choose amount</span>
+                </div>
+                @error('amount')
+                <div class="mt-2" style="color: #ff4d4d; font-size: 14px;">{{ $message }}</div>
+                @enderror
+
+                <!-- Payment Method -->
+                <div class="payment-methods-card">
+                  <h2>Payment Method</h2>
+                  <div class="payment-method-selector">
+                    <!-- Primary Gateway Option -->
+                    <div class="payment-method-option d-flex align-items-center" data-payment-method="primary">
+                      <input type="radio" name="payment_method" id="payment_method_primary" value="primary">
+                      <label for="payment_method_primary" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
+                        <span style="margin-right: 15px;">Primary Gateway</span>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 40px;">
+                        <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 45px;">
+                      </label>
                     </div>
-                    @error('amount')
-                    <div class="text-danger small  mb-1" style="font-size:14px">{{ $message }}</div>
-                    @enderror
+
+                    <!-- Secondary Gateway Option -->
+                    <div class="payment-method-option d-flex align-items-center" data-payment-method="paypal">
+                      <input type="radio" name="payment_method" id="payment_method_paypal" value="paypal">
+                      <label for="payment_method_paypal" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
+                        <span style="margin-right: 15px;">Secondary Gateway</span>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 40px;">
+                        <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 45px;">
+                      </label>
+                    </div>
                   </div>
                 </div>
-                <div class="row d-flex flex-column">
-                  <div class="col-sm-12 px-0 block mb-3" id="payment-methods-block">
-                    <h2 class="payment-options-box__title d-flex align-items-center p-3 mb-0">
-                      Payment Method
-                    </h2>
-                    <div class="payment-method-selector p-3">
-                      <!-- Primary Gateway Option (Stripe) -->
-                      <div class="payment-method-option d-flex align-items-center" data-payment-method="primary">
-                        <input type="radio" name="payment_method" id="payment_method_primary" value="primary">
-                        <label for="payment_method_primary" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
-                          <span style="font-size: 16px; margin-right: 15px;">Primary Gateway</span>
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 40px;">
-                          <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 45px;">
-                        </label>
+
+                <!-- Primary Gateway Payment Section -->
+                <div id="primary-payment-section" class="payment-section">
+                  <div class="payment-section-card">
+                    <p>You will be charged <strong>$<span class="payment-amount">{{ $amount }}</span></strong> via credit/debit card.</p>
+
+                    <div class="package-display">
+                      <div class="package-label">Package</div>
+                      <div class="package-amount">$<span class="payment-amount">{{ $amount }}</span>.00 <span class="package-currency">USD</span></div>
+                    </div>
+
+                    <div id="primary-gateway-container">
+                      <div id="primary-gateway-loading" style="display: none;">
+                        <i class="fa fa-spinner fa-spin fa-2x"></i>
+                        <p class="mt-2">Loading secure payment form...</p>
                       </div>
-                      
-                      <!-- PayPal Option -->
-                      <div class="payment-method-option d-flex align-items-center" data-payment-method="paypal">
-                        <input type="radio" name="payment_method" id="payment_method_paypal" value="paypal">
-                        <label for="payment_method_paypal" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
-                          <span style="font-size: 16px; margin-right: 15px;">Secondary Gateway</span>
-                           <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 40px;">
-                          <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 45px;">
-                        </label>
-                      </div>
+                      <iframe id="primary-gateway-iframe" style="display: none;"></iframe>
                     </div>
                   </div>
-                  
-                  <!-- Primary Gateway Payment Section (Stripe via iframe) -->
-                  <div id="primary-payment-section" class="block p-0 mb-3 payment-section" style="display: none;">
-                    <div class="p-3">
-                      <p>You will be charged <strong>$<span class="payment-amount">{{ $amount }}</span></strong> via credit/debit card.</p>
-                      <div id="primary-gateway-container">
-                        <div id="primary-gateway-loading" style="display: none;">
-                          <i class="fa fa-spinner fa-spin fa-2x"></i>
-                          <p class="mt-2">Loading secure payment form...</p>
-                        </div>
-                        <iframe id="primary-gateway-iframe" style="display: none;"></iframe>
-                      </div>
+                </div>
+
+                <!-- PayPal Payment Section -->
+                <div id="paypal-payment-section" class="payment-section">
+                  <div class="payment-section-card">
+                    <p>You will be charged <strong>$<span class="payment-amount">{{ $amount }}</span></strong> via PayPal.</p>
+
+                    <div class="package-display">
+                      <div class="package-label">Package</div>
+                      <div class="package-amount">$<span class="payment-amount">{{ $amount }}</span>.00 <span class="package-currency">USD</span></div>
                     </div>
-                  </div>
-                  
-                  <!-- PayPal Payment Section -->
-                  <div id="paypal-payment-section" class="block p-0 mb-3 payment-section" style="display: none; background: #f0f0f0;">
-                    <div class="p-3" style="color:#4e4e4e">
-                      <p>You will be charged <strong>$<span class="payment-amount">{{ $amount }}</span></strong> via PayPal.</p>
-                      <div id="paypal-button-container" class="mt-3"></div>
-                      <p class="small text-muted text-center mt-3" style="color:#4e4e4e">
-                        Secure payment processing by PayPal. You can use your credit/debit card or PayPal balance.
-                      </p>
-                    </div>
+
+                    <div id="paypal-button-container" class="mt-3"></div>
+                    <p class="small text-center mt-3" style="color: #666;">
+                      Secure payment processing by PayPal. You can use your credit/debit card or PayPal balance.
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
         </div>
-    </div>
+  </div>
+</div>
 </div>
 
 @push('js')
@@ -430,7 +597,7 @@
                 style: {
                     layout: 'vertical',
                     color: 'gold',
-                    shape: 'rect',
+                    shape: 'pill',
                     label: 'paypal',
                     height: 40
                 },

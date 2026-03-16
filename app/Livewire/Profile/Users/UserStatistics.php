@@ -11,11 +11,14 @@ use App\Models\Message;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
-#[Layout('components.layouts.app')]
+#[Layout('components.layouts.app-evoory')]
 class UserStatistics extends Component
 {
     // All user's profile IDs
     public $userProfileIds = [];
+
+    // User profiles for nav tabs
+    public $userProfiles = [];
     
     // Stats
     public $last30DaysMessages = 0;
@@ -34,10 +37,11 @@ class UserStatistics extends Component
 
     public function mount()
     {
-        // Get ALL profile IDs belonging to this user
-        $this->userProfileIds = UsersProfile::where('user_id', Auth::id())
-            ->pluck('id')
-            ->toArray();
+        // Get ALL profiles belonging to this user
+        $this->userProfiles = UsersProfile::where('user_id', Auth::id())
+            ->with('getcity')
+            ->get();
+        $this->userProfileIds = $this->userProfiles->pluck('id')->toArray();
         
         if (empty($this->userProfileIds)) {
             return redirect()->route('new.profile');
@@ -138,8 +142,8 @@ class UserStatistics extends Component
                     [
                         'label' => 'Received messages',
                         'data' => $messagesData,
-                        'borderColor' => '#f4b400',
-                        'backgroundColor' => '#f4b400',
+                        'borderColor' => '#C1F11D',
+                        'backgroundColor' => '#C1F11D',
                     ],
                     [
                         'label' => 'Phone requests',
@@ -191,8 +195,8 @@ class UserStatistics extends Component
                     [
                         'label' => 'Views',
                         'data' => $viewsData,
-                        'borderColor' => '#f4b400',
-                        'backgroundColor' => '#f4b400',
+                        'borderColor' => '#C1F11D',
+                        'backgroundColor' => '#C1F11D',
                     ]
                 ]
             ],

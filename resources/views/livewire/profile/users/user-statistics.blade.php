@@ -1,268 +1,266 @@
 <div>
-@section('headerform')
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid">
-        <a class="back-link" href="{{ route('user.account') }}">
-            <i class="fa fa-angle-left fa-fw"></i>
-            <span class="hidden-xs">Back to Account</span>
-        </a>
-        <div class="title">
-            <h1>
-                <a href="{{ route('user.statistics') }}">Statistics</a>
-            </h1>
-        </div>
-    </div>
-</div>
-@endsection
-
+@push('css')
 <style>
-.content-wrapper.no-sidebar {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+/* Sub-header bar */
+.stats-subheader {
+    background: #131616;
+    padding: 12px 0;
+}
+.stats-subheader .ev-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+.stats-subheader .back-link {
+    color: #C1F11D;
+    text-decoration: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.stats-subheader .back-link:hover {
+    color: #d4f84d;
+}
+.stats-subheader .page-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    white-space: nowrap;
 }
 
-.my-nav.my-listings-nav {
+/* Stats page */
+.stats-page {
+    background: #0a0a0a;
+    min-height: 100vh;
+    padding: 30px 0 60px;
+}
+
+/* Profile nav tabs */
+.stats-profile-nav {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 25px;
-    padding: 15px 0;
-    border-bottom: 1px solid #333;
+    margin-bottom: 28px;
 }
-
-.my-listing-nav-link-single {
-    background-color: #333;
-    color: #dca623;
-    border: 1px solid #444;
+.stats-profile-tab {
+    background: #1a1a1a;
+    color: #fff;
+    border: 1px solid #2a2a2a;
     padding: 10px 20px;
-    border-radius: 5px;
+    border-radius: 22px;
     text-decoration: none;
+    font-size: 14px;
     font-weight: 500;
+    transition: all 0.2s ease;
 }
-
-.my-listing-nav-link-single:hover {
-    background-color: #444;
-    color: #dca623;
+.stats-profile-tab:hover {
+    background: #222;
+    border-color: #C1F11D;
+    color: #fff;
     text-decoration: none;
 }
-
-.my-listing-new-link {
-    background-color: #dca623;
+.stats-add-profile {
+    background: #C1F11D;
     color: #000;
     border: none;
     padding: 10px 20px;
-    border-radius: 5px;
+    border-radius: 22px;
     text-decoration: none;
+    font-size: 14px;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
 }
-
-.my-listing-new-link:hover {
-    background-color: #c99520;
+.stats-add-profile:hover {
+    background: #d4f84d;
     color: #000;
     text-decoration: none;
 }
 
-.block {
-    background-color: #1a1a1a61;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
+/* Stats cards */
+.stats-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
 }
-
-.block h2 {
+@media (max-width: 768px) {
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+}
+.stats-card {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 24px;
+}
+.stats-card-title {
     color: #fff;
-    font-size: 30px;
+    font-size: 22px;
     font-weight: 400;
-    margin-top: 0;
-    padding-bottom: 10px;
+    margin: 0 0 16px 0;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #2a2a2a;
 }
-
-.block h2.border-bottom {
-    border-bottom: 1px solid #444;
-    margin-bottom: 15px;
-}
-
-.my-stat-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.stats-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 16px;
+    align-items: center;
 }
-
-.my-stat {
+.stat-item {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     color: #fff;
-    font-size: 22px;
+    font-size: 18px;
 }
-
-.my-stat i.fa-envelope2,
-.my-stat i.fa-envelope {
-    color: #ffffffff;
-}
-
-.my-stat i.fa-phone {
-    color: #ffffffff;
-}
-
-.my-stat i.fa-info-circle {
-    color: #f4b827;
-    font-size: 22px;
-    margin-left: 5px;
-    cursor: help;
-}
-
-.help-tooltip {
-    position: relative;
-    cursor: help;
-}
-
-.help-tooltip[title]:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
+.stat-item svg {
     color: #fff;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    z-index: 1000;
-    margin-bottom: 5px;
+    opacity: 0.8;
+}
+.stat-info-icon {
+    color: #C1F11D;
+    cursor: help;
+    position: relative;
+}
+.stat-info-icon svg {
+    color: #C1F11D;
+    opacity: 1;
 }
 
-.chart-container {
+/* Chart sections */
+.chart-section-title {
+    color: #fff;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 500;
+    margin: 36px 0 16px 0;
+}
+.chart-box {
     position: relative;
     height: 400px;
     width: 100%;
-    max-width: 100%;
-    margin-bottom: 30px;
-    background-color: #0000000f;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 15px;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
 }
-
-.chart-title {
-    color: #fff;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 600;
-    margin: 30px 0 15px 0;
-}
-
 @media (max-width: 768px) {
-    .my-nav.my-listings-nav {
+    .chart-box {
+        height: 300px;
+    }
+    .stats-profile-nav {
         flex-direction: column;
         align-items: flex-start;
     }
-    
-    .my-stat-list {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .chart-container {
-        height: 300px;
-    }
 }
 </style>
+@endpush
 
-<div class="container-fluid">
-    <div class="content-wrapper no-sidebar">
-        <div id="content">
+{{-- Sub-header --}}
+<div class="stats-subheader">
+    <div class="ev-container">
+        <a class="back-link" href="{{ route('user.account') }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            My profile
+        </a>
+        <h1 class="page-title">My Statistics</h1>
+    </div>
+</div>
 
-            {{-- Stats Cards --}}
-            <div class="row">
-                <div class="col-lg-6">
-                    <div class="block">
-                        <h2 class="no-margin-top border-bottom">Last 30 days</h2>
-                        <ul class="list-inline my-stat-list">
-                            <li class="my-stat">
-                                <i class="fa fa-envelope"></i> {{ $last30DaysMessages }}
-                            </li>
-                            <li class="my-stat help-tooltip1" title="Phone number views (not actual phone calls)">
-                                <i class="fa fa-phone"></i> {{ $last30DaysPhoneViews }}<i class="text-primary"><i class="fa fa-info-circle ml-1 fa-x fa-fw"></i></i>
-                            </li>
-                            <li class="my-stat">{{ $last30DaysViews }} views</li>
-                        </ul>
-                    </div>
+{{-- Main content --}}
+<div class="stats-page">
+    <div class="ev-container">
+
+        {{-- Stats Cards --}}
+        <div class="stats-cards">
+            <div class="stats-card">
+                <h2 class="stats-card-title">Last 30 days</h2>
+                <div class="stats-row">
+                    <span class="stat-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        {{ $last30DaysPhoneViews }}
+                    </span>
+                    <span class="stat-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        {{ $last30DaysMessages }}
+                    </span>
+                    <span class="stat-info-icon" title="Phone number views (not actual phone calls)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    </span>
+                    <span class="stat-item">{{ $last30DaysViews }} views</span>
                 </div>
-                <div class="col-lg-6">
-                    <div class="block">
-                        <h2 class="no-margin-top border-bottom">All time</h2>
-                        <ul class="list-inline my-stat-list">
-                            <li class="my-stat">
-                                <i class="fa fa-envelope"></i> {{ $allTimeMessages }}
-                            </li>
-                            <li class="my-stat help-tooltip" title="Phone number views (not actual phone calls)">
-                                <i class="fa fa-phone"></i> {{ $allTimePhoneViews }}<i class="text-primary"><i class="fa fa-info-circle ml-1 fa-x fa-fw"></i></i>
-                            </li>
-                            <li class="my-stat">{{ $allTimeViews }} views</li>
-                        </ul>
-                    </div>
+            </div>
+
+            <div class="stats-card">
+                <h2 class="stats-card-title">All time</h2>
+                <div class="stats-row">
+                    <span class="stat-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        {{ $allTimePhoneViews }}
+                    </span>
+                    <span class="stat-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        {{ $allTimeMessages }}
+                    </span>
+                    <span class="stat-info-icon" title="Phone number views (not actual phone calls)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    </span>
+                    <span class="stat-item">{{ $allTimeViews }} views</span>
                 </div>
             </div>
+        </div>
 
-            {{-- Contacts Chart --}}
-            <h2 class="chart-title">
-                Contacts from {{ $chartStartDate->format('j M Y') }} to {{ $chartEndDate->format('j M Y') }}
-            </h2>
-            <div class="chart-container" wire:ignore>
-                <canvas id="contactsChart"></canvas>
-            </div>
+        {{-- Contacts Chart --}}
+        <h2 class="chart-section-title">
+            Contacts from {{ $chartStartDate->format('d M Y') }} to {{ $chartEndDate->format('d M Y') }}
+        </h2>
+        <div class="chart-box" wire:ignore>
+            <canvas id="contactsChart"></canvas>
+        </div>
 
-            {{-- Views Chart --}}
-            <h2 class="chart-title">Profile views</h2>
-            <div class="chart-container" wire:ignore>
-                <canvas id="viewsChart"></canvas>
-            </div>
+        {{-- Views Chart --}}
+        <h2 class="chart-section-title">Profile views</h2>
+        <div class="chart-box" wire:ignore>
+            <canvas id="viewsChart"></canvas>
         </div>
     </div>
 </div>
 
+@push('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 (function() {
     function initCharts() {
-        console.log('Initializing charts...');
-        
-        // Contacts Chart
         const contactsCtx = document.getElementById('contactsChart');
-        console.log('contactsCtx:', contactsCtx);
-        
         if (contactsCtx) {
             try {
                 const contactsChartData = {!! json_encode($contactsChartData) !!};
-                console.log('Contacts Chart Data:', contactsChartData);
                 if (contactsChartData && contactsChartData.data) {
                     new Chart(contactsCtx.getContext('2d'), contactsChartData);
-                    console.log('Contacts chart created successfully');
                 }
             } catch (e) {
                 console.error('Error creating contacts chart:', e);
             }
         }
 
-        // Views Chart
         const viewsCtx = document.getElementById('viewsChart');
-        console.log('viewsCtx:', viewsCtx);
-        
         if (viewsCtx) {
             try {
                 const viewsChartData = {!! json_encode($viewsChartData) !!};
-                console.log('Views Chart Data:', viewsChartData);
                 if (viewsChartData && viewsChartData.data) {
                     new Chart(viewsCtx.getContext('2d'), viewsChartData);
-                    console.log('Views chart created successfully');
                 }
             } catch (e) {
                 console.error('Error creating views chart:', e);
@@ -270,13 +268,12 @@
         }
     }
 
-    // Initialize on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initCharts);
     } else {
-        // Small delay to ensure canvas is ready
         setTimeout(initCharts, 100);
     }
 })();
 </script>
+@endpush
 </div>

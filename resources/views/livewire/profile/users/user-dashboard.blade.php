@@ -157,7 +157,7 @@
         margin-bottom: 6px;
     }
     .ev-profile-card .ev-about {
-        color: #999;
+        color: #ffffff;
         font-size: 14px;
         margin-bottom: 12px;
         display: -webkit-box;

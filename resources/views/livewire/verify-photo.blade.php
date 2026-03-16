@@ -1,6 +1,12 @@
 @push('css')
 <style>
-   #cap {
+/* Evoory Theme - Verify Photo Page */
+.backclass { background: #000 !important; }
+#header .nav-bar { background: #131616 !important; }
+#header { margin-bottom: 0px !important; }
+.content-wrapper, #content, .container-fluid { background: #0a0a0a !important; }
+
+#cap {
     width: 100%;
     max-width: 100%;
     height: auto;
@@ -15,19 +21,276 @@
     min-height: 300px;
     background: #000;
 }
-    </style>
+
+/* Step list styling */
+.verify-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.verify-steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.step-number {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: #1a1a1a;
+    border: 2px solid #C1F11D;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #C1F11D;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.step-content {
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.5;
+    padding-top: 6px;
+}
+
+.step-content code {
+    background: #1a1a1a;
+    border: 1px solid #C1F11D;
+    color: #C1F11D;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* Profile photo in step 1 */
+.verify-profile-photo {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: inline-block;
+    border: 2px solid #2a2a2a;
+}
+.verify-profile-photo img {
+    display: block;
+    max-width: 115px;
+    height: auto;
+}
+
+/* Open Camera button */
+.btn-open-camera {
+    background: #C1F11D;
+    color: #000;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-open-camera:hover {
+    background: #d4f84d;
+    color: #000;
+}
+
+/* QR code section */
+.qr-section {
+    text-align: center;
+    margin-top: 24px;
+}
+.qr-section p {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+.qr-code-box {
+    display: inline-block;
+    background: #fff;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+/* Info alert */
+.verify-info-alert {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #aaa;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+.verify-info-alert i {
+    color: #C1F11D;
+    font-size: 16px;
+}
+.verify-info-alert .btn-link {
+    color: #C1F11D;
+    text-decoration: none;
+    font-weight: 600;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.verify-info-alert .btn-link:hover {
+    color: #d4f84d;
+}
+
+/* Warning alert */
+.verify-warning {
+    background: rgba(193, 241, 29, 0.08);
+    border: 1px solid rgba(193, 241, 29, 0.3);
+    border-radius: 8px;
+    padding: 16px 20px;
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+.verify-warning b {
+    color: #fff;
+}
+
+/* Why verify section */
+.verify-pitch {
+    padding: 0;
+}
+.verify-pitch h2 {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+.verify-pitch h3 {
+    color: #C1F11D;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.verify-pitch p {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+/* Back link styling */
+.ev-back-link {
+    color: #C1F11D;
+    text-decoration: none;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.ev-back-link:hover {
+    color: #d4f84d;
+    text-decoration: none;
+}
+
+.ev-page-title {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+    margin: 0;
+}
+
+.ev-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #2a2a2a;
+    margin-bottom: 30px;
+}
+
+/* Modal overrides for dark theme */
+#camVerifyModal .modal-content {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    color: #fff;
+}
+#camVerifyModal .modal-header {
+    border-bottom: 1px solid #2a2a2a;
+    background: #111;
+}
+#camVerifyModal .modal-title {
+    color: #fff;
+}
+#camVerifyModal .modal-title code {
+    background: #1a1a1a;
+    border: 1px solid #C1F11D;
+    color: #C1F11D;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+#camVerifyModal .close {
+    color: #fff;
+    opacity: 0.8;
+}
+#camVerifyModal .btn-success {
+    background: #C1F11D;
+    color: #000;
+    border: none;
+    font-weight: 600;
+}
+#camVerifyModal .btn-primary {
+    background: #C1F11D;
+    color: #000;
+    border: none;
+    font-weight: 600;
+}
+#camVerifyModal .btn-primary:disabled {
+    background: #333;
+    color: #666;
+}
+#camVerifyModal .btn-default {
+    background: #2a2a2a;
+    color: #fff;
+    border: 1px solid #444;
+}
+#camVerifyModal p {
+    color: #999;
+}
+
+@media (max-width: 768px) {
+    .ev-page-title {
+        font-size: 16px;
+        text-align: left;
+    }
+    .verify-steps li {
+        margin-bottom: 20px;
+    }
+}
+</style>
 @endpush
 
 @section('headerform')
 <div class="nav-bar navbar-top-nav">
     <div class="container-fluid">
-      <a class="back-link" href="/my-profile/sana-khan-764ef4fa-698d-43e9-8ea9-90690fe782d2">
+      <a class="back-link" href="/my-profile/{{ $user->slug }}/{{ $user->id }}">
         <i class="fa fa-angle-left fa-fw"></i>
-        <span class="hidden-xs">My Profile</span>
+        <span class="hidden-xs">My profile</span>
       </a>
       <div class="title">
         <h1>
-          <a href="">Verification Application for </a>
+          <a href="">Verification Application for {{ $user->name }}</a>
         </h1>
       </div>
     </div>
@@ -38,43 +301,39 @@
     <div class="content-wrapper no-sidebar">
       <div id="content">
         <div class="row">
-         
+
           <div class="col-sm-6">
             <div class="block">
               <div class="verification-instructions">
-                <ol class="step-list">
+                <ol class="verify-steps">
                   <li>
-                    <span class="step-copy">The photos on the listing must be yours: <div class="image-gallery pb-thumbnails">
-                        <a class=" pb-photo-link" href="https://d18fr84zq3fgpm.cloudfront.net/sana-khan-pakistani-escort-in-dubai-9275036_original.jpg">
-                          <span class="img-wrapper featured">
-                            <div class="image-wrapper">
-                                @if(!empty($user->singleimg->image))
-                              <img alt="Sana Khan - escort in Dubai Photo 1 of 1" class="img-responsive" data-original-height="960" data-original-width="768" src="{{smart_asset("userimages/".$user->user_id."/".$user->singleimg->image)}}" width="115" />
-                            @endif
-                            </div>
-                          </span>
-                        </a>
+                    <span class="step-number">1</span>
+                    <span class="step-content">The photos on the listing must be yours:
+                      <div class="verify-profile-photo">
+                        @if(!empty($user->singleimg->image))
+                          <img alt="{{ $user->name }} - profile photo" class="img-responsive" src="{{ smart_asset("userimages/".$user->user_id."/".$user->singleimg->image) }}" width="115" />
+                        @endif
                       </div>
                     </span>
                   </li>
                   <li>
-                    <span class="step-copy">We must be able to match them with the new photo you upload.</span>
+                    <span class="step-number">2</span>
+                    <span class="step-content">We must be able to match them with the new photo you upload.</span>
                   </li>
                   <li>
-                    <span class="step-copy">Write <code>
-                        <b>{{$photo_code}}</b>
-                      </code> on a piece of paper and take a new photo of yourself <i>holding that piece of paper</i>. </span>
+                    <span class="step-number">3</span>
+                    <span class="step-content">Write <code>{{ $photo_code }}</code> on a piece of paper and take a new photo of yourself <i>holding that piece of paper</i>.</span>
                   </li>
                   <li>
-                    <span class="step-copy">Face not shown in profile photos? Take a verification photo showing the same outfit and visible body features.</span>
+                    <span class="step-number">4</span>
+                    <span class="step-content">Face not shown in profile photos? Take a verification photo showing the same outfit and visible body features.</span>
                   </li>
                 </ol>
               </div>
-              <form class="simple_form validate" id="new_verification_request" novalidate="novalidate" action="/my-profile/{{$user->slug}}/{{$user->id}}/verification_request" accept-charset="UTF-8" method="post">
+              <form class="simple_form validate" id="new_verification_request" novalidate="novalidate" action="/my-profile/{{ $user->slug }}/{{ $user->id }}/verification_request" accept-charset="UTF-8" method="post">
                 @csrf
-                <input type="hidden" id="photo_code" name="photo_code" value="{{$photo_code}}" />
+                <input type="hidden" id="photo_code" name="photo_code" value="{{ $photo_code }}" />
                 <input name="utf8" type="hidden" value="&#x2713;" />
-                <input type="hidden" name="authenticity_token" value="+SxeiNrzmjFs8AnKCIotVf/ajvMC6e342poc9ryNJzZw5b0zWsDzGsat9WCOYuDb5Izpr/F55F379zcatlPM9g==" />
                 <div class="photo">
                   <div class="form-group hidden verification_request_verification_request_comments_photo">
                     <input id="img_frame" class="hidden" type="hidden" value="" name="verification_request[verification_request_comments_attributes][0][photo]" />
@@ -88,24 +347,13 @@
                 </div>
                 <div class="video_capture pt-3">
                   <div class="d-flex flex-column align-items-center justify-content-center">
-                    <button class="btn btn-success px-5 fs-large" id="open" type="button">
-                      <i class="fas fa-spinner fa-spin mr-2 d-none" id="cameraSpinner"></i>
-                      <i class="fas fa-video mr-2" id="cameraIcon"></i>Open camera </button>
-                    <div class="d-none d-sm-flex flex-column align-items-center">
-                      <p class="pt-3 px-3 text-center fs-larger">No camera on this device? <br>Scan the QR code with your mobile phone. </p>
-                      <div class="qr-code-wrapper p-2">
-                        
-                      </div>
-                    </div>
-                    <div class="mt-4 mb-0 alert alert-info py-2">
-                      <i class="fa fa-info-circle mr-2"></i>
-                      <span>If you manage this profile on behalf of a model you can share a verification link with them&nbsp;</span>
-                      <span class="hidden" id="verifLink">https://mr.verifajo.io/v/ZJB/rpHWv7roLWyL5OiUdnGgcg==--ar1Krpi+3JdO37o7--4wI041mfwhhqxWKPp0ykiQ==</span>
-                      <button class="px-0 btn-link d-inline-flex align-items-center" data-copy-btn="#verifLink" type="button">
-                        <i class="fa fa-arrow-right mr-1"></i>
-                        <span class="fw-bold" data-text="copied to clipboard">copy verification URL</span>
-                      </button>
-                    </div>
+                    <button class="btn-open-camera" id="open" type="button">
+                      <i class="fas fa-spinner fa-spin d-none" id="cameraSpinner"></i>
+                      <i class="fas fa-video" id="cameraIcon"></i>
+                      Open Camera
+                    </button>
+                    
+                   
                   </div>
                   <div aria-labelledby="camVerifyModalLabel" class="modal fade" id="camVerifyModal" role="dialog" tabindex="-1">
                     <div class="modal-dialog" data-timer="3" role="document">
@@ -114,9 +362,7 @@
                           <button aria-label="Close" class="close" data-dismiss="modal" type="button">
                             <span aria-hidden="true">&times;</span>
                           </button>
-                          <h4 class="modal-title text-center py-0 py-sm-3" id="camVerifyModalLabel">Hold a piece of paper with the following code: <code>
-                              <b>{{$photo_code}}</b>
-                            </code>
+                          <h4 class="modal-title text-center py-0 py-sm-3" id="camVerifyModalLabel">Hold a piece of paper with the following code: <code><b>{{ $photo_code }}</b></code>
                           </h4>
                         </div>
                         <div class="modal-body p-0 position-relative">
@@ -130,7 +376,7 @@
                             <div class="preview hidden position-absolute" id="preview_frame" style="top:0;left:0;right:0;bottom:0"></div>
                           </div>
                         </div>
-                        <div class="d-flex justify-content-between p-2 p-sm-3" style="border-top: 1px solid #474747;">
+                        <div class="d-flex justify-content-between p-2 p-sm-3" style="border-top: 1px solid #2a2a2a;">
                           <button class="btn btn-default hidden" data-reset-frame="" type="button">Try again</button>
                           <button class="align-items-center btn btn-success hidden" id="get_frm" style="display:inline-flex" type="button">
                             <svg class="mr-2" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20">
@@ -142,7 +388,7 @@
                         </div>
                         <p class="px-3 d-flex align-items-center">
                           <i class="fa fa-exclamation-triangle mr-2"></i>
-                          <span>The image you upload will <b>never</b> be published or shared. </span>
+                          <span>The image you upload will <b>never</b> be published or shared.</span>
                         </p>
                       </div>
                     </div>
@@ -156,28 +402,25 @@
             </div>
           </div>
           <div class="col-sm-6">
-            <p class="alert alert-warning">We do <b>not</b> accept passport or ID scans or photos that are not clearly of the same person as on the listing. <br />
+            <div class="verify-warning">
+              We do <b>not</b> accept passport or ID scans or photos that are not clearly of the same person as on the listing.<br />
               <b>Any attempt to use different person's photos after verification will result in a verification ban.</b>
-            </p>
-            <div class="pitch" id="verify-pitch">
+            </div>
+            <div class="verify-pitch">
               <h2>Why verify your photos?</h2>
-              <ul class="list-unstyled">
-                <li>
-                  <h3>Priority</h3>
-                  <p>Listings with verified photos are shown ahead of non-verified ones</p>
-                </li>
-                <li>
-                  <h3>Trust</h3>
-                  <p>Users value real photos, and thus are more likely to contact you</p>
-                </li>
-              </ul>
+              <div>
+                <h3>Priority</h3>
+                <p>Listings with verified photos are shown ahead of non-verified ones</p>
+              </div>
+              <div>
+                <h3>Trust</h3>
+                <p>Users value real photos, and thus are more likely to contact you</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <!-- Camera Modal -->
-
   </div>
 
   @push('js')
@@ -186,16 +429,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const openBtn = document.getElementById('open');
     const spinner = document.getElementById('cameraSpinner');
     const cameraIcon = document.getElementById('cameraIcon');
-    
+
     if (openBtn) {
         openBtn.addEventListener('click', function() {
-            // Show spinner, hide camera icon
             if (spinner) spinner.classList.remove('d-none');
             if (cameraIcon) cameraIcon.classList.add('d-none');
         });
     }
-    
-    // Hide spinner when modal is shown
+
     $('#camVerifyModal').on('shown.bs.modal', function() {
         if (spinner) spinner.classList.add('d-none');
         if (cameraIcon) cameraIcon.classList.remove('d-none');
