@@ -154,7 +154,7 @@ class CacheService
         return Cache::remember("cache:recent_reviews:{$limit}", self::TTL_REVIEWS, function() use ($limit) {
             return Review::select('id', 'review', 'user_id', 'profile_id', 'created_at')
                 ->with([
-                    'getuser:id,name',
+                    'getuser:id,name,slug,user_id',
                     'getpic:id,user_id,profile_id,image'
                 ])
                 ->where('status', 'approved')

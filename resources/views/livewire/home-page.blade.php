@@ -2327,33 +2327,65 @@ overflow: hidden;
         <ul class="activity-stream activity-records-mini">
 
       @foreach($reviews as $rev)
-          <li>
-            <div class="activity-record new-review mini">
-              <div class="activity-row">
-                <div class="headline h3">
-                  <i class="fa fa-heart2"></i>New review for <a title="Sweet tanned GFE Big boobs - New in Town, Vietnamese escort in Dubai" href="/female-escorts-in-dubai/sweet-tanned-gfe-big-boobs-new-in-town">{{$rev->getuser->name ?? ''}} </a>
-                </div>
-                <div class="photo">
-                  <a class=" pb-photo-link" href="/female-escorts-in-dubai/sweet-tanned-gfe-big-boobs-new-in-town">
-                    <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
-                        <i class="fa fa-check"></i>
-                        <span>Verified photos</span>
-                      </span>
-                      <div class="image-wrapper">
-                        <img alt="" class="img-responsive" height="60" src="{{webp_asset("userimages/".$rev->user_id."/".$rev->profile_id."/".$rev->getpic->image)}}" width="60" />
+          @if($rev->getuser)
+            @if($rev->getuser->id == 2701 && $rev->getuser->slug == 'ankita-independent-escort-in-dubai-girl')
+              <li>
+                <div class="activity-record new-review mini">
+                  <div class="activity-row">
+                    <div class="headline h3">
+                      <i class="fa fa-heart2"></i>New review for <a title="Ankita" href="/female-escorts-in-Dubai/2701/ankita-independent-escort-in-dubai-girl">Ankita</a>
+                    </div>
+                    <div class="photo">
+                      <a class="pb-photo-link" href="/female-escorts-in-Dubai/2701/ankita-independent-escort-in-dubai-girl">
+                        <span class="img-wrapper mini">
+                          <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                            <i class="fa fa-check"></i>
+                            <span>Verified photos</span>
+                          </span>
+                          <div class="image-wrapper">
+                            <img alt="Ankita - escort in Dubai" class="img-responsive" height="60" width="60" src="{{webp_asset('userimages/2701/2701/ankita.jpg')}}" />
+                          </div>
+                        </span>
+                      </a>
+                    </div>
+                    <div class="activity-content">
+                      <div class="review-description">
+                        <p>{{Str::limit($rev->review, 50)}} </p>
                       </div>
-                    </span>
-                  </a>
-                </div>
-                <div class="activity-content">
-                  <div class="review-description">
-                    <p>{{$rev->review}} </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </li>
+              </li>
+            @else
+              <li>
+                <div class="activity-record new-review mini">
+                  <div class="activity-row">
+                    <div class="headline h3">
+                      <i class="fa fa-heart2"></i>New review for <a title="{{$rev->getuser->name}}" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$rev->getuser->id.'/'.$rev->getuser->slug)}}">{{$rev->getuser->name}} </a>
+                    </div>
+                    <div class="photo">
+                      <a class=" pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$rev->getuser->id.'/'.$rev->getuser->slug)}}">
+                        <span class="img-wrapper mini">
+                          <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                            <i class="fa fa-check"></i>
+                            <span>Verified photos</span>
+                          </span>
+                          <div class="image-wrapper">
+                            <img alt="" class="img-responsive" height="60" src="{{webp_asset("userimages/".$rev->getuser->user_id."/".$rev->profile_id."/".($rev->getpic->image ?? ''))}}" width="60" />
+                          </div>
+                        </span>
+                      </a>
+                    </div>
+                    <div class="activity-content">
+                      <div class="review-description">
+                        <p>{{Str::limit($rev->review, 50)}} </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            @endif
+          @endif
           @endforeach
         </ul>
         @endif

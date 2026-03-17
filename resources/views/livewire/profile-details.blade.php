@@ -22595,7 +22595,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                             <div class="hidden" itemprop="itemReviewed" itemscope=""
                               itemtype="https://schema.org/AdultEntertainment">
                               <meta
-                                content="{{ $profile->images->first() ? smart_asset('userimages/'.$profile->images->first()->user_id.'/'.$profile->images->first()->profile_id.'/'.$profile->images->first()->image) : '' }}"
+                                content="{{ $images && $images->first() ? webp_asset('userimages/'.$images->first()->user_id.'/'.$images->first()->profile_id.'/'.$images->first()->image) : '' }}"
                                 itemprop="image" />
                               <meta content="{{ $profile->name }} - escort in {{ $user->gcity->name ?? 'Dubai' }}" itemprop="name" />
                               <meta content="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}/{{ $profile->slug }}" itemprop="url" />
