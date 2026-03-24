@@ -410,16 +410,49 @@ public function checkIfFavorited($profileId)
         $genderId = (int) $genderModel->id;
         
         $seoModel = Cache::remember(
-            "cache:seo:{$genderId}:{$cityId}", 
-            CacheService::TTL_LOOKUP, 
+            "cache:seo:{$genderId}:{$cityId}",
+            CacheService::TTL_LOOKUP,
             function() use ($genderId, $cityId) {
                 return \App\Models\SeoKeyword::where('gender_id', $genderId)
                     ->where('city_id', $cityId)
                     ->first();
             }
         );
-        
-        return $seoModel ? $seoModel->content : null;
+
+        if ($seoModel && !empty($seoModel->content)) {
+            return $seoModel->content;
+        }
+
+        // Fallback to default SEO content: try city-pages > escorts > global (by priority)
+        $defaultSeo = Cache::remember(
+            "cache:default_seo:content",
+            CacheService::TTL_LOOKUP,
+            function() {
+                return \App\Models\DefaultSeoSetting::where('is_active', true)
+                    ->whereNotNull('content')
+                    ->orderByDesc('priority')
+                    ->first();
+            }
+        );
+
+        if ($defaultSeo && !empty($defaultSeo->content)) {
+            $content = $defaultSeo->content;
+
+            // Replace placeholders with actual values
+            $genderName = $genderModel ? ucfirst($genderModel->name) : '';
+            $cityName = $currentCity ? $currentCity->name : '';
+            $countryName = $currentCity->country ?? '';
+
+            $content = str_replace(
+                ['{gender}', '{city}', '{country}', '{site_name}'],
+                [$genderName, $cityName, $countryName, config('app.name')],
+                $content
+            );
+
+            return $content;
+        }
+
+        return null;
     }
 
     public function updatedSelectedcity($city)
