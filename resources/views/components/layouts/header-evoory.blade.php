@@ -2,12 +2,30 @@
 <header class="ev-header">
     <div class="ev-container">
         <div class="ev-flex ev-items-center ev-justify-between">
-            {{-- Logo --}}
-            <a href="/" class="ev-logo">evoory</a>
-            
+            {{-- Logo + Tabs grouped together --}}
+            <div class="ev-flex ev-items-center">
+                <a href="/" class="ev-logo">evoory</a>
+
+                {{-- Escorts / What's New Buttons --}}
+                @php
+                    $citySlug = function_exists('getFeaturedCitySlug') ? getFeaturedCitySlug() : 'dubai';
+                    $currentRoute = request()->route() ? request()->route()->getName() : '';
+                    $currentPath = request()->path();
+                    $isHomePage = $currentRoute === 'home' || $currentPath === '/' || str_contains($currentPath, 'female-escorts-in-');
+                    $isNewsPage = in_array($currentRoute, ['news.all', 'news.page']) || str_contains($currentPath, 'female-escort-news-in-');
+                @endphp
+                @if($isHomePage || $isNewsPage)
+                <div class="ev-header-tabs">
+                    <a href="/female-escorts-in-{{ $citySlug }}" class="ev-header-tab {{ $isHomePage ? 'active' : '' }}" wire:navigate>ESCORTS</a>
+                    <a href="/female-escort-news-in-{{ $citySlug }}" class="ev-header-tab {{ $isNewsPage ? 'active' : '' }}" wire:navigate>WHAT'S NEW</a>
+                </div>
+                @endif
+            </div>
+
             {{-- Desktop Navigation --}}
             <nav class="ev-nav">
-                {{-- Language Selector --}}
+                {{-- Language Selector (only for guests) --}}
+                @guest
                 <div class="ev-relative">
                     <button class="ev-nav-link ev-lang-btn" type="button" aria-label="Select Language">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -27,7 +45,8 @@
                         <a href="?lang=zh" class="ev-dropdown-item">中文</a>
                     </div>
                 </div>
-                
+                @endguest
+
                 {{-- Sign In --}}
                 @auth
                     @if(Auth::user()->type != 1)

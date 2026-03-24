@@ -4,12 +4,166 @@
 
 @push('css')
 <style>
-#header {
-    margin-bottom: 0px !important;
+/* === Evoory Dark Theme === */
+body { background: #000 !important; }
+#header { margin-bottom: 0px !important; }
+#footer { background: #0D1011 !important; border-top: 0px !important; }
+#footer .list-inline li { margin-bottom: 0px !important; }
+
+/* Header - Evoory style */
+.navbar.navbar-inverse { background: #0D1011 !important; border: none !important; }
+.logo.navbar-brand, .logo2.navbar-brand { display: none !important; }
+.navbar-header::before {
+    content: "evoory";
+    font-size: 24px;
+    font-weight: 700;
+    color: #C1F11D;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    align-items: center;
+    margin-right: auto;
+    padding: 10px 0;
+}
+.auth-button-group { gap: 10px !important; }
+.auth-button-group .btn-navbar-header,
+.auth-button-group .button_to .btn-navbar-header {
+    border-radius: 8px !important;
+    border: 1px solid #2a2a2a !important;
+    border-right: 1px solid #2a2a2a !important;
+    background: transparent !important;
+    color: #ccc !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    padding: 10px 20px !important;
+    transition: all 0.2s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.auth-button-group .btn-navbar-header:hover,
+.auth-button-group .button_to .btn-navbar-header:hover {
+    color: #fff !important;
+    background: #1a1a1a !important;
+    border-color: #ccc !important;
+}
+.auth-button-group .btn-navbar-header:first-child {
+    border-radius: 8px !important;
 }
 
+/* Guest header buttons (Language, Sign in) */
+.header-nav-buttons--separated {
+    position: static !important;
+    display: flex !important;
+    align-items: center;
+    gap: 10px !important;
+    margin-left: auto !important;
+}
+.header-nav-buttons--separated .btn-navbar-header {
+    border-radius: 8px !important;
+    border: 1px solid #2a2a2a !important;
+    background: transparent !important;
+    color: #ccc !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    padding: 10px 20px !important;
+    transition: all 0.2s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.header-nav-buttons--separated .btn-navbar-header:hover {
+    color: #fff !important;
+    background: #1a1a1a !important;
+    border-color: #ccc !important;
+}
+.dropdown--lang .btn-navbar-header {
+    background: transparent !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 8px !important;
+}
+
+/* Escorts / What's New tabs next to logo */
+#main-nav {
+    display: inline-flex !important;
+    background: #1D2224;
+    border-radius: 5px;
+    padding: 0;
+    margin: 0 !important;
+    margin-left: 16px !important;
+    gap: 0;
+    border: none !important;
+    position: absolute;
+    left: 130px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.navbar-header { position: relative !important; }
+#main-nav .btn,
+#main-nav .btn.lead {
+    color: #C1F11D !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    padding: 10px 20px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #1D2224 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    position: relative;
+    line-height: 1.2 !important;
+}
+#main-nav .btn:first-child { border-radius: 5px 0 0 5px !important; }
+#main-nav .btn:last-child { border-radius: 0 5px 5px 0 !important; }
+#main-nav .btn.selected {
+    background: #262C2F !important;
+    color: #C1F11D !important;
+}
+#main-nav .btn.selected::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #262C2F;
+}
+
+/* News nav bar */
+.nav-bar { padding: 8px 0 !important; background: #111 !important; }
+.nav-bar .form-control { background: #1a1a1a !important; color: #fff !important; }
+.nav-bar .btn-dark { box-shadow: none !important;border: 0px solid #2a2a2a !important;background: #1a1a1a !important; color: #ccc !important; }
+.nav-bar .btn-dark:hover { border-color:none !important; color: #fff !important; }
+.nav-bar .btn-dark.active {     background: #1a1a1a !important; color: #fff !important; border-color: #2a2a2a !important; }
+/* Activity stream nav buttons */
+.activity-stream-nav .btn-dark { background: #1D2224!important border: none !important; color: #C1F11D !important; padding: 8px 15px !important; }
+.activity-stream-nav .btn-dark.active { background: #1D2224 !important; color: #fff !important; border: none !important; }
+.activity-stream-nav .btn-dark:not(.active) { color: #C1F11D !important; }
+/* Content area */
+.body { background: #000 !important; }
+.page-title h1 { color: #fff !important; }
+a { color: #C1F11D !important; }
+
+/* Activity stream items */
+.activity-stream { color: #fff; }
+.activity-stream li { border-color: #2a2a2a !important; }
+.activity-record { background: transparent !important; color: #fff !important; }
+.activity-record .headline { color: #fff !important; }
+.activity-record .headline a { color: #C1F11D !important; }
+.date .day { color: #C1F11D !important; }
+.date .month { color: #999 !important; }
+
+/* Reply/answer boxes */
+.listing-reply, .listing-reply > div { background: #1a1a1a !important; color: #fff !important; border-color: #2a2a2a !important; }
+
+/* Subscribe button */
+.subscribe-btn-wrapper .btn-primary { background: #C1F11D !important; color: #000 !important; border: none !important; border-radius: 8px; }
+.subscribe-btn-wrapper .btn-primary:hover { background: #d4f84d !important; }
+
+/* Text colors */
+p, span, strong, .text-muted { color: #ccc !important; }
+h1, h2, h3, h4, .h3 { color: #fff !important; }
+
 .nav-bar {
-    padding: 5px 0 !important  ;
+    padding: 5px 0 !important;
 }
 
 
@@ -166,20 +320,23 @@ input.tt-hint,
     top: 0;
 }
 
+
+ #main-nav a.selected:before {width: 16px;border-top-color:transparent !important;}
 </style>
 @endpush
+
 <div>
 {{-- ESCORTS / WHAT'S NEW Navigation Tabs - Mobile Only --}}
 <div class="visible-xs" style="padding: 8px 15px 0 15px; margin: 0; width: 100%;">
     <div class="btn-group" role="group" style="display: flex !important; width: 100%; margin: 0; border-radius: 4px; overflow: visible; position: relative;">
         <a class="btn" href="/{{ $gender ?? 'female' }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}" 
-           style="flex: 1; background-color: #4a4a4a !important; color: #fff !important; font-weight: normal; font-size: 13px; text-transform: uppercase; padding: 8px 15px; border: none; border-radius: 4px 0 0 4px; text-align: center;">
+           style="flex: 1; background-color: #1D2224 !important; color: #C1F11D !important; font-weight: normal; font-size: 13px; text-transform: uppercase; padding: 8px 15px; border: none; border-radius: 4px 0 0 4px; text-align: center;">
             ESCORTS
         </a>
-        <a class="btn" href="/{{ $gender ?? 'female' }}-escort-news-in-{{ strtolower($selectedcity ?? 'dubai') }}" 
-           style="flex: 1; background-color: #d4a017 !important; color: #000 !important; font-weight: normal; font-size: 13px; text-transform: uppercase; padding: 8px 15px; border: none; border-radius: 0 4px 4px 0; text-align: center; position: relative;">
+        <a class="btn" href="/{{ $gender ?? 'female' }}-escort-news-in-{{ strtolower($selectedcity ?? 'dubai') }}"
+           style="flex: 1; background-color: #262C2F !important; color: #C1F11D !important; font-weight: normal; font-size: 13px; text-transform: uppercase; padding: 8px 15px; border: none; border-radius: 0 4px 4px 0; text-align: center; position: relative;">
             WHAT'S NEW
-            <span style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid #d4a017;"></span>
+            <span style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid #262C2F;"></span>
         </a>
     </div>
 </div>
@@ -238,16 +395,16 @@ input.tt-hint,
             <div class="activity-stream-nav btn-group">
                 <a href="/{{ $gender }}-escort-news-in-{{ $selectedcity }}" 
                    class="btn btn-dark {{ !isset($type) || $type === 'all' ? 'active' : '' }}" 
-                   style="color:{{ !isset($type) || $type === 'all' ? '#fff' : '#f4b827' }}">All<span class="hidden-xs hidden-sm"> news</span></a>
+                   style="color:{{ !isset($type) || $type === 'all' ? '#fff' : '#C1F11D' }}">All<span class="hidden-xs hidden-sm"> news</span></a>
                 <a href="/{{ $gender }}-escort-news-in-{{ $selectedcity }}/new-escorts" 
                    class="btn btn-dark {{ $type === 'new-escorts' ? 'active' : '' }}" 
-                   style="color:{{ $type === 'new-escorts' ? '#fff' : '#f4b827' }}"><i class="fas fa-certificate"></i> Escorts</a>
+                   style="color:{{ $type === 'new-escorts' ? '#fff' : '#C1F11D' }}"><i class="fas fa-certificate"></i> Escorts</a>
                 <a href="/{{ $gender }}-escort-news-in-{{ $selectedcity }}/new-reviews" 
                    class="btn btn-dark {{ $type === 'new-reviews' ? 'active' : '' }}" 
-                   style="color:{{ $type === 'new-reviews' ? '#fff' : '#f4b827' }}"><i class="fas fa-heart"></i> Reviews</a>
+                   style="color:{{ $type === 'new-reviews' ? '#fff' : '#C1F11D' }}"><i class="fas fa-heart"></i> Reviews</a>
                 <a href="/{{ $gender }}-escort-news-in-{{ $selectedcity }}/new-questions" 
                    class="btn btn-dark {{ $type === 'new-questions' ? 'active' : '' }}" 
-                   style="color:{{ $type === 'new-questions' ? '#fff' : '#f4b827' }}"><i class="fas fa-question-circle"></i> Questions</a>
+                   style="color:{{ $type === 'new-questions' ? '#fff' : '#C1F11D' }}"><i class="fas fa-question-circle"></i> Questions</a>
             </div>
         </div>
     </div>

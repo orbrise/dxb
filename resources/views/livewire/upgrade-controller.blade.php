@@ -1,24 +1,81 @@
-@push('css')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-<style>
-    .ev-back-bar { background: #131616; padding: 12px 0; }
-    .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }
-    .ev-back-bar h1 { color: #fff; font-size: 18px; font-weight: 600; margin: 0; }
-    .ev-back-bar h1 a { color: #fff; text-decoration: none; }
-    .ev-container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-</style>
-<style>
+@section('headerform')
+<div class="nav-bar navbar-top-nav">
+    <div class="container-fluid" style="background:transparent !important;">
+      <a class="back-link" href="/my-profile/{{$profile->slug}}/{{$profile->id}}"     >
+        <i class="fa fa-angle-left fa-fw"></i>
+        <span class="hidden-xs" style="color: #C1F11D !important;">Back to Profile</span>
+      </a>
+      <div class="title">
+        <h1>
+          Upgrade for {{ $profile->name }}</h1>
+      </div>
+    </div>
+  </div>
+@endsection
 
-#header .nav-bar {background: #131616 !important;}
-#header{margin-bottom: 0px !important; }
+<style>
+/* === Evoory Dark Theme === */
+
+/* Page background */
+body { background: #000 !important; }
+#header .nav-bar { background: #131616 !important; }
+#header { margin-bottom: 0px !important; }
+#header .nav-bar .back-link { color: #C1F11D !important; text-decoration: none; }
+#header .nav-bar .title h1 a { color: #fff !important; }
+#footer { background: #0D1011 !important; border-top: 0px !important; }
+#footer .list-inline li { margin-bottom: 0px !important; }
+
+/* Header - Evoory style buttons */
+.navbar.navbar-inverse { background: #0D1011 !important; border: none !important; }
+.logo.navbar-brand, .logo2.navbar-brand { display: none !important; }
+.navbar-header::before {
+    content: "evoory";
+    font-size: 24px;
+    font-weight: 700;
+    color: #C1F11D;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    align-items: center;
+    margin-right: auto;
+    padding: 10px 0;
+}
+.auth-button-group { gap: 10px !important; }
+.auth-button-group .btn-navbar-header,
+.auth-button-group .button_to .btn-navbar-header {
+    border-radius: 8px !important;
+    border: 1px solid #2a2a2a !important;
+    border-right: 1px solid #2a2a2a !important;
+    background: transparent !important;
+    color: #ccc !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    padding: 10px 20px !important;
+    transition: all 0.2s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.auth-button-group .btn-navbar-header:hover,
+.auth-button-group .button_to .btn-navbar-header:hover {
+    color: #fff !important;
+    background: #1a1a1a !important;
+    border-color: #ccc !important;
+}
+.auth-button-group .btn-navbar-header:first-child {
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+}
+#main-nav { display: none !important; }
+
+/* Base functional styles */
 .upgrade-listing-form-init { visibility: visible; }
 #allpackages { display: block; }
 .checkout-fields { display: none; margin-top: 0px; padding-top: 7px; }
 #paypal-button-container { margin-top: 20px; width: 100%; }
 .payment-options li label.selected { border-left: 3px solid #C1F11D; }
+.form-group { margin-bottom: 10px; }
 
-/* Evoory Theme Upgrade Page */
-.backclass{ background: #000 !important; }
+/* Package Cards */
 .upgrade-type-selector { padding: 20px 0; }
 
 .upgrade-type {
@@ -27,7 +84,7 @@
     cursor: pointer;
     background: #1a1a1a;
     border: 1px solid #2a2a2a;
-    border-radius: 12px;
+    border-radius: 5px;
     padding: 20px 15px;
     transition: all 0.3s ease;
     text-align: center;
@@ -38,7 +95,6 @@
     background: #222222;
 }
 
-/* Free package card */
 .upgrade-type.upgrade-type-free {
     min-height: auto;
     display: flex;
@@ -48,51 +104,24 @@
     padding: 30px 15px;
 }
 
-/* Selected Package Styling */
+/* Selected Package */
 .upgrade-type.active {
     border: 2px solid #C1F11D !important;
     box-shadow: 0 0 20px rgba(193, 241, 29, 0.15) !important;
     position: relative;
 }
 
-/* Hide choose button and show selected badge when active */
-.upgrade-type.active .choose-package-btn {
-    display: none !important;
-}
+.upgrade-type.active .choose-package-btn { display: none !important; }
+.upgrade-type.active .selected-badge { display: inline-block !important; }
 
-.upgrade-type.active .selected-badge {
-    display: inline-block !important;
-}
+/* Radio buttons in cards */
+.upgrade-type .form-group { margin-bottom: 5px; }
+.upgrade-type .radio-inline label { font-size: 22px; font-weight: 700; color: #fff; cursor: pointer; }
+.upgrade-type .radio-inline input[type="radio"] { display: none; }
+.upgrade-type .until { color: #999; font-size: 14px; margin-top: 5px; }
+.upgrade-type .profile-preview { border-radius: 8px; background: #000 !important; }
 
-/* Radio buttons - hide default, style labels */
-.upgrade-type .form-group {
-    margin-bottom: 5px;
-}
-
-.upgrade-type .radio-inline label {
-    font-size: 22px;
-    font-weight: 700;
-    color: #fff;
-    cursor: pointer;
-}
-
-.upgrade-type .radio-inline input[type="radio"] {
-    display: none;
-}
-
-.upgrade-type .until {
-    color: #999;
-    font-size: 14px;
-    margin-top: 5px;
-}
-
-/* Profile preview */
-.upgrade-type .profile-preview {
-    border-radius: 8px;
-    background: #000 !important;
-}
-
-/* Package tagline styling */
+/* Package tagline */
 .package-tagline {
     font-weight: 500;
     min-height: 40px;
@@ -103,7 +132,7 @@
     font-size: 14px;
 }
 
-/* Upgrade button - Evoory lime green */
+/* Buttons - Evoory lime green */
 .choose-package-btn {
     background: #C1F11D !important;
     color: #000 !important;
@@ -114,10 +143,22 @@
     font-size: 15px !important;
     transition: all 0.3s ease !important;
 }
+.choose-package-btn:hover { background: #d4f84d !important; color: #000 !important; }
 
-.choose-package-btn:hover {
-    background: #d4f84d !important;
+.btn-warning {
+    background: #C1F11D !important;
     color: #000 !important;
+    border-color: #C1F11D !important;
+}
+.btn-warning:focus, .btn-warning:hover, .btn-warning:active,
+.btn-warning.active, .open>.btn-warning.dropdown-toggle,
+.btn-warning.active.focus, .btn-warning.active:focus, .btn-warning.active:hover,
+.btn-warning:active.focus, .btn-warning:active:focus, .btn-warning:active:hover,
+.open>.btn-warning.dropdown-toggle.focus, .open>.btn-warning.dropdown-toggle:focus,
+.open>.btn-warning.dropdown-toggle:hover {
+    color: #000 !important;
+    background-color: #d4f84d !important;
+    border-color: #d4f84d !important;
 }
 
 .selected-badge {
@@ -131,17 +172,12 @@
     font-weight: 600;
     z-index: 10;
 }
+.selected-badge i { margin-right: 5px; }
 
-.selected-badge i {
-    margin-right: 5px;
-}
+/* Price & text */
+.u-price strong { color: #fff; }
 
-/* Price styling */
-.u-price strong {
-    color: #fff;
-}
-
-/* Checkout button */
+/* Checkout / Proceed button */
 .checkout-button {
     position: relative !important;
     z-index: 100 !important;
@@ -152,11 +188,16 @@
     border-radius: 22px !important;
     font-weight: 600 !important;
 }
+.checkout-button:hover { background: #d4f84d !important; color: #000 !important; }
 
-.checkout-button:hover {
-    background: #d4f84d !important;
+/* btn-primary override */
+.upgrade-listing-form .btn-primary {
+    background: #C1F11D !important;
     color: #000 !important;
+    border: none !important;
+    border-radius: 24px;
 }
+.upgrade-listing-form .btn-primary:hover { background: #d4f84d !important; color: #000 !important; }
 
 /* Payment Method Options */
 .payment-method-option {
@@ -168,108 +209,33 @@
     transition: all 0.3s;
     background: #1a1a1a;
 }
+.payment-method-option:hover { border-color: #444; }
+.payment-method-option.selected { border-color: #C1F11D !important; background-color: #1a1a1a !important; }
+.payment-method-option.disabled { opacity: 0.5; cursor: not-allowed; }
+.payment-method-option.disabled:hover { border-color: #2a2a2a; }
+.payment-method-option input[type="radio"] { accent-color: #C1F11D; width: 18px; height: 18px; margin-right: 15px; margin-top: -1px; }
+.payment-method-option label { cursor: pointer; margin-bottom: 0; }
+.payment-method-option .account-balance-amount { margin-left: auto; color: #28a745; font-weight: bold; }
 
-.payment-method-option:hover {
-    border-color: #444;
-}
+/* Dark theme for sections */
+.alert-info { background: #1a1a1a; border: 1px solid #2a2a2a; color: #ccc; border-radius: 8px; }
+.upgrade-duration { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; }
+.block { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; }
+.border-top { border-color: #2a2a2a !important; }
 
-.payment-method-option.selected {
-    border-color: #C1F11D !important;
-    background-color: #1a1a1a !important;
-}
-
-.payment-method-option.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.payment-method-option.disabled:hover {
-    border-color: #2a2a2a;
-}
-
-.payment-method-option input[type="radio"] {
-    accent-color: #C1F11D;
-    width: 18px;
-    height: 18px;
-    margin-right: 15px;
-    margin-top: -1px;
-}
-
-.payment-method-option label {
-    cursor: pointer;
-    margin-bottom: 0;
-}
-
-.payment-method-option .account-balance-amount {
-    margin-left: auto;
-    color: #28a745;
-    font-weight: bold;
-}
-
-/* Alert info */
-.alert-info {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    color: #ccc;
-    border-radius: 8px;
-}
-
-/* Duration radios */
-.upgrade-duration {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    padding: 20px;
-}
-
-/* Block sections */
-.block {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-}
-
-/* Text warning link - evoory accent */
-a.text-warning:focus, a.text-warning {
-    color: #C1F11D;
-}
+/* Text colors */
+.upgrade-name, .payment-options-box__title, .lead, h2 { color: #fff !important; }
+p, span, label, strong { color: #fff; }
+a.text-warning:focus, a.text-warning { color: #C1F11D; }
 
 /* Bottom text */
-.upgrade-types-bottom-text {
-    margin-top: 40px;
-    text-align: center;
-}
+.upgrade-types-bottom-text { margin-top: 40px; text-align: center; }
+.upgrade-types-bottom-text a { color: #C1F11D !important; }
+.upgrade-types-bottom-text .text-muted { color: #999 !important; }
 
-.upgrade-types-bottom-text a {
-    color: #C1F11D;
-}
-
-.upgrade-types-bottom-text .text-muted {
-    color: #999 !important;
-}
-
-/* btn-primary override for evoory */
-.upgrade-listing-form .btn-primary {
-    background: #C1F11D;
-    color: #000;
-    border: none;
-    border-radius: 8px;
-}
-
-.upgrade-listing-form .btn-primary:hover {
-    background: #d4f84d;
-    color: #000;
-}
-
-.form-group {
-    margin-bottom: 10px;
-}
-
-/* Mobile: Fixed button at bottom of screen */
+/* Mobile */
 @media (max-width: 767px) {
-    .upgrade-type.active .selected-badge {
-        display: block !important;
-    }
+    .upgrade-type.active .selected-badge { display: block !important; }
     .upgrade-button-wrapper.mobile-fixed {
         position: fixed !important;
         bottom: 0 !important;
@@ -283,47 +249,21 @@ a.text-warning:focus, a.text-warning {
         width: 100% !important;
         border-top: 1px solid #2a2a2a;
     }
-    .upgrade-button-wrapper.mobile-fixed .checkout-button {
-        width: 100% !important;
-        margin: 0 !important;
-        position: static !important;
-    }
-    body.has-fixed-button {
-        padding-bottom: 90px !important;
-    }
+    .upgrade-button-wrapper.mobile-fixed .checkout-button { width: 100% !important; margin: 0 !important; position: static !important; }
+    body.has-fixed-button { padding-bottom: 90px !important; }
 }
 
 @media (max-width: 768px) {
-    .upgrade-type {
-        margin: 7px 4px;
-        background: #1a1a1a;
-    }
-
-    .upgrade-modal .upgrade-type.active, .upgrade-type.active:hover {
-        transform: matrix(1, 0, 0, 1, 0, 0);
-        -webkit-transition: auto;
-        transition: auto;
-    }
-
-    .package-text-content {
-        height: auto !important;
-    }
+    .upgrade-type { margin: 7px 4px; background: #1a1a1a; }
+    .upgrade-modal .upgrade-type.active, .upgrade-type.active:hover { transform: matrix(1, 0, 0, 1, 0, 0); -webkit-transition: auto; transition: auto; }
+    .package-text-content { height: auto !important; }
 }
+
+a {color: #C1F11D !important;}
 </style>
-@endpush
 
 <div>
-<!-- Back Bar -->
-<div class="ev-back-bar">
-    <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
-        <a href="/my-profile/{{$profile->slug}}/{{$profile->id}}" style="position:absolute; left:16px;">
-            <i class="fa fa-angle-left"></i> My profile
-        </a>
-        <h1>Upgrade for {{ $profile->name }}@if($cityName) in {{ $cityName }}@endif</h1>
-    </div>
-</div>
-
-  <div class="container-fluid backclass">
+  <div class="container-fluid">
         <div class="content-wrapper no-sidebar">
           <div id="content">
             
@@ -331,6 +271,7 @@ a.text-warning:focus, a.text-warning {
               <div class="upgrade-type-selector">
                 <div class="row">
                   <div class="col-lg-offset-1 col-lg-10">
+                   
                     <div class="row" id="allpackages">
                       <div class="col-sm-3">
                         <div class="free upgrade-type upgrade-type-free current" style="cursor: pointer;" data-package="free">
@@ -447,9 +388,9 @@ a.text-warning:focus, a.text-warning {
                                   <!-- Price -->
                                   <strong style="display: block; font-size: 18px; margin-bottom: 5px;">from ${{$minPrice}}</strong>
                                   
-                                  <!-- Upgrade Button -->
-                                  <button type="button" class="btn btn-sm choose-package-btn">
-                                      Upgrade <i class="fa fa-chevron-right" style="font-size: 12px;"></i>
+                                  <!-- Choose Button -->
+                                  <button type="button" class="btn btn-warning btn-sm choose-package-btn" style="padding: 8px 25px; border-radius:4 px; font-weight: bold;">
+                                      Choose <i class="fa fa-arrow-right"></i>
                                   </button>
                                   
                                   <span class="selected-badge" style="display: none; margin-top: 10px;">
@@ -475,25 +416,25 @@ a.text-warning:focus, a.text-warning {
                       <div class="row">
                         <div class="col-sm-9 col-md-7 col-md-offset-1 col-lg-6 col-lg-offset-3">
                         <div class="block pb-0 mb-3 upgrade-duration">
-                          <div class="upgrade-title d-flex justify-content-between align-items-center mt-0 mb-2">
-                            <h2 class="upgrade-name font-weight-bold my-0 mr-2" style="color: #fff;" data-listing-upgrade-form-selected-upgrade-type-display=""></h2>
-                            <a class="btn d-flex align-items-center justify-content-center" data-listing-upgrade-form-back-to-upgrade-selection-btn="" href="#" style="background: transparent; border: 1px solid #C1F11D; color: #C1F11D; border-radius: 22px; padding: 8px 20px;">
-                              <i class="fa fa-angle-left" style="margin-right: 5px;"></i>
-                              <span>Back to selection</span>
+                          <div class="upgrade-title d-flex justify-content-between align-items-center mt-0 mb-3">
+                            <h2 class="upgrade-name font-weight-bold my-0 mr-2" data-listing-upgrade-form-selected-upgrade-type-display=""></h2>
+                            <a class="btn btn-primary d-flex align-items-center justify-content-center" data-listing-upgrade-form-back-to-upgrade-selection-btn="" href="#">
+                              <i class="fa fa-angle-left" style="color:#000"></i>
+                              <span class="ml-2" style="color:#000">Back to selection</span>
                             </a>
                           </div>
-                          <div class="border-top padding-top" style="border-color: #2a2a2a !important;">
+                          <div class="border-top padding-top">
                             <div class="upgrade-duration__radios mb-3"></div>
                             <div class="text-right w-100 pb-3">
-                              <strong class="lead" style="color: #fff;">Total: &euro; <span id="famount"></span></strong>
+                              <strong class="lead">Total: $ <span id="famount"></span></strong>
                             </div>
                           </div>
                         </div>
-
+                        
                         <!-- Account Balance Section -->
                         <div class="block px-4 py-3 mb-3 block--payment" id="account-balance-section" style="display: none;">
                           <div class="credits-label p-2">
-                            <h2 class="inline-block payment-options-box__title" style="color: #fff;">Account Balance</h2>
+                            <h2 class="inline-block payment-options-box__title">Account Balance</h2>
                           </div>
                           <ul class="payment-options toggle-li-radio list-unstyled mb-0">
                             <li class="mb-1">
@@ -513,16 +454,16 @@ a.text-warning:focus, a.text-warning {
                         <!-- Payment Method Selection -->
                         <div class="block px-0 mb-3" id="payment-methods-section" style="display: none;">
                           <div class="p-3" >
-                            <h2 class="payment-options-box__title d-flex align-items-center mb-0" style="color: #fff;"><span style="margin-right:10px">Payment Method</span></h2>
+                            <h2 class="payment-options-box__title d-flex align-items-center mb-0"><span style="margin-right:10px">Payment Method</span>  </h2>
                           </div>
                           <div class="p-3">
                             <!-- Primary Gateway Option -->
                             <div class="payment-method-option d-flex align-items-center disabled" data-payment-method="primary">
                               <input type="radio" name="payment_method" id="payment_method_primary" value="primary" disabled>
                               <label for="payment_method_primary" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
-                                <span style="font-size: 20px;margin-right: 10px;">Primary Gateway</span>
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 50px; margin-right: 8px;">
-                                <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 60px;">
+                                <span style="font-size: 16px;margin-right: 10px;">Primary Gateway</span>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 40px; margin-right: 8px;">
+                                <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 40px;">
                               </label>
                             </div>
                             
@@ -530,9 +471,9 @@ a.text-warning:focus, a.text-warning {
                             <div class="payment-method-option d-flex align-items-center disabled mt-2" data-payment-method="paypal">
                               <input type="radio" name="payment_method" id="payment_method_paypal" value="paypal" disabled>
                               <label for="payment_method_paypal" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
-                                <span style="font-size: 20px;margin-right: 10px;">Secondary Gateway</span>
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 50px; margin-right: 8px;">
-                                <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 60px;">
+                                <span style="font-size: 16px;margin-right: 10px;">Secondary Gateway</span>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 40px; margin-right: 8px;">
+                                <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 40px;">
                               </label>
                             </div>
                           </div>
@@ -542,7 +483,7 @@ a.text-warning:focus, a.text-warning {
                         <div id="wallet-payment-section" class="block p-0 mb-3 payment-section" style="display: none;">
                           <div class="p-3">
                             <p>You will be charged <strong>$<span class="payment-amount"></span></strong> from your account Credits.</p>
-                            <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-lg btn-xs-block" type="button" id="wallet-payment-button" style="background: #C1F11D; color: #000; border: none; border-radius: 22px; font-weight: 600;">
+                            <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-primary btn-lg btn-xs-block" type="button" id="wallet-payment-button">
                               <span class="button-text">Pay $<span class="payment-amount"></span> from Credits</span>
                               <span class="button-spinner" style="display: none;">
                                 <i class="fa fa-spinner fa-spin"></i> Processing...
@@ -570,11 +511,11 @@ a.text-warning:focus, a.text-warning {
                         </div>
                         
                         <!-- PayPal Payment Section -->
-                        <div id="paypal-payment-section" class="block p-0 mb-3 payment-section" style="display: none;">
-                          <div class="p-3">
+                        <div id="paypal-payment-section" class="block p-0 mb-3 payment-section" style="display: none;background: #f0f0f0;">
+                          <div class="p-3" style="color:#4e4e4e">
                             <p>You will be charged <strong>$<span class="payment-amount"></span></strong> via PayPal.</p>
                             <div id="paypal-button-container" class="mt-3"></div>
-                            <p class="small text-muted text-center mt-3">Secure payment processing by PayPal. You can use your PayPal account or credit/debit card.</p>
+                            <p class="small text-muted text-center mt-3" style="color:#4e4e4e">Secure payment processing by PayPal. You can use your PayPal account or credit/debit card.</p>
                           </div>
                         </div>
                         
@@ -583,7 +524,7 @@ a.text-warning:focus, a.text-warning {
                   </div>
                   
                     <div class="upgrade-types-bottom-text">
-                      <p class="text-muted lead">To find out more about the different upgrade options <a href="/help-for-advertisers#upgrade-options" target="_blank" style="color: #C1F11D;">click here.</a></p>
+                      <p class="text-muted lead">To find out more about the different upgrade options <a href="/help-for-advertisers#upgrade-options" target="_blank">click here</a>. </p>
                     </div>
                   </div>
                 </div>

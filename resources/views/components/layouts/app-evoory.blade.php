@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Evoory - Premium Escort Directory')</title>
-    <meta name="description" content="@yield('description', 'Connect with escorts from Dubai and around the world. Premium escort directory with verified listings.')">
+    <title>{{ $seoTitle ?? 'Evoory - Premium Escort Directory' }}</title>
+    <meta name="description" content="{{ $seoDescription ?? 'Connect with escorts from Dubai and around the world. Premium escort directory with verified listings.' }}">
+    @if(!empty($seoKeywords))
+    <meta name="keywords" content="{{ $seoKeywords }}">
+    @endif
     
     {{-- Preconnect for performance --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,28 +27,37 @@
         .ev-flex{display:flex}.ev-items-center{align-items:center}.ev-justify-between{justify-content:space-between}
     </style>
     
-    {{-- Main theme CSS --}}
-    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260227-1">
-    
+    {{-- Bootstrap 4 CSS + Font Awesome (required for grid, components, icons) --}}
+    <link rel="stylesheet" href="{{smart_asset('assets/css/app.css')}}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+
+    {{-- Main theme CSS (loaded after Bootstrap to override) --}}
+    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260318-4">
+
     {{-- Additional page-specific CSS --}}
     @stack('css')
 </head>
 <body>
     {{-- Header --}}
     @include('components.layouts.header-evoory')
-    
+
     {{-- Main Content --}}
     <main>
         {{ $slot ?? '' }}
         @yield('content')
     </main>
-    
+
     {{-- Footer --}}
     @include('components.layouts.footer-evoory')
-    
+
+    {{-- jQuery + Bootstrap JS (required for components and page scripts) --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"></script>
+
     {{-- Theme JS - Deferred for performance --}}
-    <script src="{{ asset('assets/js/evoory-theme.js') }}?v=20260227-1" defer></script>
-    
+    <script src="{{ asset('assets/js/evoory-theme.js') }}?v=20260318-4" defer></script>
+
     {{-- Additional page-specific JS --}}
     @stack('js')
 </body>

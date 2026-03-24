@@ -301,7 +301,7 @@
     .ev-sidebar-card .ev-unavailable {
         display: block;
         width: 100%;
-        padding: 10px;
+        padding: 6px 10px;
         border-radius: 8px;
         background: #333;
         color: #888;

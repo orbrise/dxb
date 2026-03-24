@@ -23,6 +23,15 @@ body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Se
 .ev-nav-link:hover{color:var(--text-primary);background:var(--bg-card);border-color:var(--text-secondary)}
 .ev-nav-link svg{width:18px;height:18px;flex-shrink:0}
 
+/* Header Tabs (Escorts / What's New) */
+.ev-header-tabs{display:inline-flex;align-items:center;background:#1D2224;border-radius:5px;padding:0;margin-left:16px;gap:0}
+.ev-header-tab{color:var(--accent);text-decoration:none;font-size:13px;font-weight:400;padding:10px 20px;border-radius:0;transition:var(--transition);text-transform:uppercase;letter-spacing:0.5px;position:relative;background:#1D2224}
+.ev-header-tab:first-child{border-radius:5px 0 0 5px}
+.ev-header-tab:last-child{border-radius:0 5px 5px 0}
+.ev-header-tab:hover{color:var(--text-primary);text-decoration:none}
+.ev-header-tab.active{color:var(--accent);background:#262C2F}
+.ev-header-tab.active::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:16px;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #262C2F}
+
 /* Buttons */
 .ev-btn{display:inline-flex;align-items:center;justify-content:center;gap:0px;padding:2px 12px 2px 19px;border-radius:21.5px;font-size:20px;font-weight:500;text-decoration:none;cursor:pointer;border:none;transition:var(--transition)}
 .ev-btn svg{flex-shrink:0;vertical-align:middle}
