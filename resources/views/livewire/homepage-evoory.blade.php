@@ -53,9 +53,12 @@
                 
                 {{-- List Now Card --}}
                 <div class="ev-card">
-                    <h2 class="ev-card-title">Individual escort or agency?</h2>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                        <svg style="flex-shrink:0;color:var(--accent)" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <h2 class="ev-card-title" style="margin:0;font-size:18px;line-height:1.3">Individual Escort or Agency</h2>
+                    </div>
                     <p style="color:var(--text-secondary);margin:0 0 16px;font-size:14px">
-                        A basic listing on the website is free! Don't worry if you don't see your city on the left or below – it will appear when you list!
+                        Join thousands of verified professionals. Create your listing and connect with clients worldwide.
                     </p>
                     <a href="action/listings/new" class="ev-btn ev-btn-primary">
                         List now
@@ -77,19 +80,16 @@
                     <div class="ev-popular-row">
                         <a href="female-escorts-in-abu-dhabi" class="ev-tag">Abu Dhabi</a>
                         <a href="female-escorts-in-al-manama" class="ev-tag">Al Manama</a>
+                        <a href="female-escorts-in-nairobi" class="ev-tag">Nairobi</a>
+                        <a href="female-escorts-in-dubai" class="ev-tag">Dubai</a>
                         <a href="female-escorts-in-bangalore" class="ev-tag">Bangalore</a>
                         <a href="female-escorts-in-bangkok" class="ev-tag">Bangkok</a>
                         <a href="female-escorts-in-chennai" class="ev-tag">Chennai</a>
                         <a href="female-escorts-in-doha" class="ev-tag">Doha</a>
-                    </div>
-                    <div class="ev-popular-row">
-                        <a href="female-escorts-in-dubai" class="ev-tag">Dubai</a>
                         <a href="female-escorts-in-hyderabad" class="ev-tag">Hyderabad</a>
                         <a href="female-escorts-in-manila" class="ev-tag">Manila</a>
                         <a href="female-escorts-in-mumbai" class="ev-tag">Mumbai</a>
                         <a href="female-escorts-in-muscat" class="ev-tag">Muscat</a>
-                    </div>
-                    <div class="ev-popular-row">
                         <a href="female-escorts-in-new-delhi" class="ev-tag">New Delhi</a>
                         <a href="female-escorts-in-pune" class="ev-tag">Pune</a>
                         <a href="female-escorts-in-riyadh" class="ev-tag">Riyadh</a>
@@ -102,17 +102,19 @@
     {{-- Welcome Section --}}
     <section class="ev-welcome">
         <div class="ev-container">
-            <h1 class="ev-welcome-title">Welcome to Evoory.com, your premier destination for connecting with escorts from all corners of the globe.</h1>
-            <p class="ev-welcome-text">
-                Our platform showcases a diverse array of stunning companions, each offering unique experiences tailored to your desires.
-                Whether you're seeking a charming dinner date, an adventurous travel partner, or an intimate encounter, you'll find the perfect match here.
-                Among our extensive listings, we proudly feature a selection of <strong>Dubai escorts</strong>, renowned for their elegance and sophistication.
-                These captivating companions embody the luxurious lifestyle of this vibrant city, providing unforgettable experiences that blend allure and excitement.
-                Explore profiles, read reviews, and connect with escorts who can make your time in Dubai truly exceptional.
-                Use our search feature to find a companion in Dubai (or any other city) that has all of your favourite physical characteristics or offering the service you would like to enjoy.
-                <br>
-                <strong>Join us at Evoory and discover the world of companionship at your fingertips, with a special emphasis on the enchanting Dubai escorts ready to elevate your experience.</strong>
-            </p>
+            <div class="ev-welcome-text-inner collapsed" id="ev-welcome-inner">
+                <p class="ev-welcome-text" style="margin:0">
+                    Welcome to Evoory, the world's premier platform for connecting with professional escort services worldwide. Our platform showcases a diverse array of stunning companions, each offering unique experiences tailored to your desires.
+                    Whether you're seeking a charming dinner date, an adventurous travel partner, or an intimate encounter, you'll find the perfect match here.
+                    Among our extensive listings, we proudly feature a selection of <strong>Dubai escorts</strong>, renowned for their elegance and sophistication.
+                    These captivating companions embody the luxurious lifestyle of this vibrant city, providing unforgettable experiences that blend allure and excitement.
+                    Explore profiles, read reviews, and connect with escorts who can make your time in Dubai truly exceptional.
+                    Use our search feature to find a companion in Dubai (or any other city) that has all of your favourite physical characteristics or offering the service you would like to enjoy.
+                    <br>
+                    <strong>Join us at Evoory and discover the world of companionship at your fingertips, with a special emphasis on the enchanting Dubai escorts ready to elevate your experience.</strong>
+                </p>
+            </div>
+            <button class="ev-read-more-btn" id="ev-read-more" aria-expanded="false" onclick="(function(b,w){var open=w.classList.toggle('collapsed');b.textContent=open?'Read more \u2193':'Show less \u2191';b.setAttribute('aria-expanded',!open)})(this,document.getElementById('ev-welcome-inner'))">Read more &#x2193;</button>
         </div>
     </section>
 
