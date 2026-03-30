@@ -377,15 +377,80 @@
         background: var(--bg-card-hover, #222);
     }
     @media (max-width: 768px) {
+        .ev-back-bar a {
+            font-size: 14px;
+        }
+        .ev-back-bar h1 {
+            font-size: 16px;
+        }
         .ev-account-cards {
             flex-direction: column;
         }
         .ev-account-card {
             flex-basis: auto;
         }
+        .ev-account-tabs {
+            padding: 12px 0;
+            gap: 6px;
+        }
         .ev-account-tabs a {
-            padding: 8px 16px;
-            font-size: 13px;
+            padding: 8px 10px;
+            font-size: 12px;
+            width: auto;
+            flex: 1;
+            min-width: 0;
+            border: 1px solid #333;
+        }
+        .ev-account-tabs a.active {
+            border-color: #C1F11D;
+        }
+        /* Newsletter modal mobile */
+        .ev-modal-overlay {
+            align-items: center;
+            padding: 1rem;
+        }
+        .ev-modal {
+            border-radius: 5px;
+            max-width: 100%;
+        }
+        .ev-modal-header {
+            padding: 14px 16px;
+        }
+        .ev-modal-header h2 {
+            font-size: 16px;
+        }
+        .ev-modal-body {
+            padding: 16px;
+        }
+        .ev-modal-footer {
+            padding: 12px 16px;
+        }
+        .ev-search-input {
+            border-radius: 5px;
+            border-color: #333;
+            background: #1a1a1a;
+        }
+        .ev-search-input input {
+            font-size: 14px;
+        }
+        .ev-city-tag {
+            border-radius: 5px;
+            border-color: #333;
+            background: #1a1a1a;
+        }
+        .ev-dropdown-results {
+            border-radius: 5px;
+        }
+        .ev-modal-close {
+            border-radius: 5px;
+        }
+        .ev-buy-btn {
+            width: 100%;
+            justify-content: center;
+            border-radius: 5px !important;
+        }
+        .ev-alert-success {
+            border-radius: 5px;
         }
     }
 </style>
@@ -396,9 +461,10 @@
     <div class="ev-back-bar">
         <div class="ev-container" style="display: flex; align-items: center; justify-content: center; position: relative;">
             <a href="{{ url('/') }}" wire:navigate style="position: absolute; left: 16px;">
-                <i class="fa fa-angle-left"></i> Back
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Home
             </a>
-            <h1><a href="/my-account">My Account</a></h1>
+            <h1>My Account</h1>
         </div>
     </div>
 

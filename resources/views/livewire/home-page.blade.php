@@ -761,14 +761,14 @@ min-width: 222px;
 
 @media (max-width: 768px) {
     .listing-li .img-wrapper.premium img {
-        width: 200px;
+        width: 247px;
         height: 221px;
         object-fit: cover;
     }
 
     .listing-li .img-wrapper.mini img {
-    width: 50px;
-    height: 53px;
+    width: 70px;
+    height: 70px;
     object-fit: cover;
 }
 }
@@ -819,8 +819,8 @@ min-width: 222px;
 
 @media (min-width: 768px) {
     .activity-record.mini .img-wrapper.featured img, .listing-li .img-wrapper.featured img, .listings-grid .img-wrapper.featured img {
-        width: 115px;
-        height: 135px;
+        width: 140px;
+        height: 146px;
         object-fit: cover;
     }
 }
@@ -1599,17 +1599,76 @@ overflow: hidden;
 
 @endif
 
+{{-- Mobile Location Bar --}}
+<div class="ev-mobile-location-bar visible-xs">
+    <div class="ev-location-pill">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 6-9 13-9 13s-9-7-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>{{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}</span>
+    </div>
+    <div class="ev-location-actions">
+        <a href="{{ route('new.profile') }}" class="ev-location-action-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </a>
+        <button type="button" class="ev-location-action-btn" onclick="document.querySelector('.mobile-search-modal') ? (document.querySelector('.mobile-search-modal').style.display='block') : (window.location.href='{{ route('mobile.search', ['gender' => $gender ?? 'female', 'city' => $selectedcity ?? 'Dubai']) }}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="6" x2="20" y2="6"></line>
+                <line x1="4" y1="12" x2="20" y2="12"></line>
+                <line x1="4" y1="18" x2="20" y2="18"></line>
+                <circle cx="8" cy="6" r="1.5" fill="currentColor"></circle>
+                <circle cx="16" cy="12" r="1.5" fill="currentColor"></circle>
+                <circle cx="10" cy="18" r="1.5" fill="currentColor"></circle>
+            </svg>
+        </button>
+    </div>
+</div>
 
- 
+{{-- Mobile "What's New" Section --}}
+@if(isset($reviews) && $reviews->count() > 0)
+<div class="ev-mobile-whatsnew visible-xs">
+    <div class="ev-whatsnew-header">
+        <div class="ev-whatsnew-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            What's New
+        </div>
+        <a href="/{{ $gender ?? 'female' }}-escort-news-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}" class="ev-whatsnew-seemore">See more</a>
+    </div>
+    <div class="ev-whatsnew-scroll">
+        @foreach($reviews->take(6) as $rev)
+        <a href="/{{ $gender ?? 'female' }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $rev->profile_id }}/{{ $rev->getuser->slug ?? '' }}" class="ev-whatsnew-card">
+            <div class="ev-whatsnew-card-img">
+                <img src="{{webp_asset('userimages/'.$rev->user_id.'/'.$rev->profile_id.'/'.$rev->getpic->image)}}" alt="{{ $rev->getuser->name ?? '' }}" loading="lazy" />
+            </div>
+            <div class="ev-whatsnew-card-text">
+                <strong>Feedback for {{ $rev->getuser->name ?? '' }} <span style="color:#C1F11D">&#10084;</span></strong>
+                <small>{{ str()->of($rev->review)->limit(60) }}</small>
+            </div>
+        </a>
+        @endforeach
+    </div>
+    {{-- Scroll indicators --}}
+    <div class="ev-whatsnew-indicators">
+        <button class="ev-scroll-arrow ev-scroll-left" aria-label="Scroll left">&#9664;</button>
+        <div class="ev-scroll-track"><div class="ev-scroll-thumb"></div></div>
+        <button class="ev-scroll-arrow ev-scroll-right" aria-label="Scroll right">&#9654;</button>
+    </div>
+</div>
+@endif
 
-  
   <div class="container-fluid">
     <div class="content-wrapper no-sidebar">
       <div id="content" class="mt-3">
 
     <div class="col-md-9 col-xs-12" style="padding:0px">
       <a class="page-title" href="/{{ $gender ?? 'female' }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}">
-        <h1>Escorts in {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}@if($currentCity && $currentCity->country), {{ $currentCity->country }}@endif</h1>
+        <h1 class="ev-city-heading">Escorts in {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}@if($currentCity && $currentCity->country), {{ $currentCity->country }}@endif</h1>
       </a>
       
       {{-- Sort rotation indicator --}}
@@ -1696,7 +1755,7 @@ overflow: hidden;
                     {{ $auction->winnerProfile->name }}
                     @if($auction->winnerProfile->reviews && $auction->winnerProfile->reviews->count() > 0)
                       <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews->count() }} approved reviews">
-                        <i class="fa fa-heart2"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         <span>{{ $auction->winnerProfile->reviews->count() }}</span>
                       </span>
                     @endif
@@ -1713,7 +1772,7 @@ overflow: hidden;
                     {{ $auction->winnerProfile->name ?? 'Available Spot' }}
                     @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews && $auction->winnerProfile->reviews->count() > 0)
                       <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews->count() }} approved reviews">
-                        <i class="fa fa-heart2"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         <span>{{ $auction->winnerProfile->reviews->count() }}</span>
                       </span>
                     @endif
@@ -1861,7 +1920,7 @@ overflow: hidden;
                         {{ $auction->winnerProfile->name }}
                         @if($auction->winnerProfile->reviews && $auction->winnerProfile->reviews->count() > 0)
                           <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews->count() }} approved reviews">
-                            <i class="fa fa-heart2"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                             <span>{{ $auction->winnerProfile->reviews->count() }}</span>
                           </span>
                         @endif
@@ -1878,7 +1937,7 @@ overflow: hidden;
                         {{ $auction->winnerProfile->name ?? 'Available Spot' }}
                         @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews && $auction->winnerProfile->reviews->count() > 0)
                           <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews->count() }} approved reviews">
-                            <i class="fa fa-heart2"></i>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                             <span>{{ $auction->winnerProfile->reviews->count() }}</span>
                           </span>
                         @endif
@@ -2016,7 +2075,7 @@ overflow: hidden;
         <div class="listing-li premium thumbs-3 thumbs-mini">
           <h2 class="visible-xxs">
             <a class="nostyle-link" href="/female-escorts-in-dubai/lea-ukrainian" title="Lea, Ukrainian escort in Dubai (3)">{{$profile->name}} <span class="badge" data-placement="top" data-toggle="tooltip" title="One review. Rating: ❤❤❤❤❤">
-                <i class="fa fa-heart2"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 <span>1</span>
               </span>
             </a>
@@ -2105,7 +2164,7 @@ overflow: hidden;
                 <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}" title="Lea, Ukrainian escort in Dubai (3)">{{$profile->name}} 
                   @if($profile->reviews->count() > 0)
                   <span class="badge" data-placement="top" data-toggle="tooltip" title="{{$profile->reviews->count()}} Reviews">
-                  <i class="fa fa-heart2"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     <span>{{ $profile->reviews->count() }}</span>
                   </span>
                   @endif
@@ -2341,7 +2400,7 @@ overflow: hidden;
             <div class="activity-record new-review mini">
               <div class="activity-row">
                 <div class="headline h3">
-                  <i class="fa fa-heart2"></i>New review for <a title="Sweet tanned GFE Big boobs - New in Town, Vietnamese escort in Dubai" href="/female-escorts-in-dubai/sweet-tanned-gfe-big-boobs-new-in-town">{{$rev->getuser->name ?? ''}} </a>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>New review for <a title="Sweet tanned GFE Big boobs - New in Town, Vietnamese escort in Dubai" href="/female-escorts-in-dubai/sweet-tanned-gfe-big-boobs-new-in-town">{{$rev->getuser->name ?? ''}} </a>
                 </div>
                 <div class="photo">
                   <a class=" pb-photo-link" href="/female-escorts-in-dubai/sweet-tanned-gfe-big-boobs-new-in-town">
@@ -3260,5 +3319,25 @@ setTimeout(() => {
         setTimeout(() => initMobileCitySearch(), 2000);
     }
 }, 3000);
+  </script>
+
+  {{-- What's New scroll indicator --}}
+  <script>
+  (function() {
+      var scroll = document.querySelector('.ev-whatsnew-scroll');
+      if (!scroll) return;
+      var thumb = document.querySelector('.ev-scroll-thumb');
+      var leftBtn = document.querySelector('.ev-scroll-left');
+      var rightBtn = document.querySelector('.ev-scroll-right');
+
+      if (thumb) {
+          scroll.addEventListener('scroll', function() {
+              var pct = scroll.scrollLeft / (scroll.scrollWidth - scroll.clientWidth);
+              thumb.style.transform = 'translateX(' + (pct * 30) + 'px)';
+          });
+      }
+      if (leftBtn) leftBtn.addEventListener('click', function() { scroll.scrollBy({left: -210, behavior: 'smooth'}); });
+      if (rightBtn) rightBtn.addEventListener('click', function() { scroll.scrollBy({left: 210, behavior: 'smooth'}); });
+  })();
   </script>
   @endpush

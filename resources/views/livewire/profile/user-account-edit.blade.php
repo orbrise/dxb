@@ -347,24 +347,142 @@
         transform: translateY(-1px);
     }
     @media (max-width: 768px) {
+        .ev-back-bar {
+            padding: 10px 0;
+        }
+        .ev-back-bar a {
+            font-size: 14px;
+            color: #C1F11D;
+        }
+        .ev-back-bar h1 {
+            font-size: 16px;
+        }
+        .ev-account-tabs {
+            padding: 12px 0;
+            gap: 6px;
+            justify-content: center;
+        }
+        .ev-account-tabs a {
+            width: auto;
+            flex: 1;
+            min-width: 0;
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 5px;
+            background: #1D2224;
+            border: 1px solid #333;
+        }
+        .ev-account-tabs a.active {
+            border-color: #C1F11D;
+        }
+        .ev-completion-card {
+            border-radius: 5px;
+            padding: 14px 16px;
+            margin-top: 10px !important;
+        }
+        .ev-completion-card h4 {
+            font-size: 15px;
+        }
+        .ev-completion-card p {
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .ev-completion-card .ev-missing {
+            font-size: 12px;
+        }
+        .ev-completion-inner {
+            flex-wrap: nowrap !important;
+        }
+        .ev-completion-inner > div:last-child {
+            min-width: 60px !important;
+            flex-shrink: 0;
+        }
+        .ev-completion-card svg {
+            width: 55px !important;
+            height: 55px !important;
+        }
+        .ev-completion-card svg circle {
+            stroke-width: 5 !important;
+        }
+        .ev-completion-inner > div:last-child div[style*="font-size: 18px"] {
+            font-size: 14px !important;
+        }
+        .ev-progress-bar-bg {
+            margin-top: 10px;
+            height: 6px;
+        }
         .ev-form-row {
-            flex-direction: column;
+            flex-direction: column-reverse;
             gap: 0;
         }
         .ev-form-col {
             flex-basis: auto;
         }
+        .ev-form-group {
+            margin-bottom: 16px;
+        }
+        .ev-form-group label {
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 6px;
+        }
+        .ev-form-group .ev-input {
+            border-radius: 5px;
+            padding: 10px 12px;
+            font-size: 14px;
+            border-color: #333;
+            background: #0a0a0a;
+        }
         .ev-avatar-section {
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+        }
+        .ev-avatar-preview {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
         }
         .ev-avatar-controls {
             margin-top: 0;
         }
-        .ev-account-tabs a {
-            width: auto;
-            flex: 1;
-            min-width: 100px;
+        .ev-file-input::file-selector-button {
+            border-radius: 5px;
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+        .ev-phone-row {
+            gap: 8px;
+        }
+        .ev-country-select {
+            width: 120px;
+        }
+        .ev-country-display {
+            border-radius: 5px;
+            padding: 10px 10px;
+            font-size: 13px;
+            border-color: #333;
+            background: #0a0a0a;
+        }
+        .ev-country-dropdown {
+            border-radius: 5px;
+        }
+        .ev-save-btn {
+            width: 100%;
+            justify-content: center;
+            border-radius: 5px;
+            padding: 14px 28px;
+            font-size: 16px;
+            margin-top: 16px;
+        }
+        .ev-alert-success {
+            border-radius: 5px;
+        }
+        .ev-radio-group {
+            gap: 16px;
+        }
+        .ev-radio-group label {
+            font-size: 13px;
         }
     }
 </style>
@@ -374,10 +492,11 @@
     {{-- Back bar --}}
     <div class="ev-back-bar">
         <div class="ev-container" style="display: flex; align-items: center; justify-content: center; position: relative;">
-            <a href="/my-account" style="position: absolute; left: 16px;">
-                <i class="fa fa-angle-left"></i> My account
+            <a href="/" style="position: absolute; left: 16px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Home
             </a>
-            <h1><a href="/my-account/edit">My Account - Edit</a></h1>
+            <h1>Edit Account</h1>
         </div>
     </div>
 
@@ -389,11 +508,24 @@
             </div>
         @endif
 
+        {{-- Account tabs --}}
+        <div class="ev-account-tabs">
+            <a href="/my-account" wire:navigate class="{{ request()->is('my-account') && !request()->is('my-account/*') ? 'active' : '' }}">
+                <i class="fa fa-user"></i> Account
+            </a>
+            <a href="/my-account/edit" wire:navigate class="{{ request()->is('my-account/edit') ? 'active' : '' }}">
+                <i class="fa fa-pencil-alt"></i> Edit
+            </a>
+            <a href="/my-password/edit" wire:navigate class="{{ request()->is('my-password/edit') ? 'active' : '' }}">
+                <i class="fa fa-key"></i> Password
+            </a>
+        </div>
+
         {{-- Profile Completion Progress --}}
         @php $profileCompletion = $this->profileCompletion; @endphp
-        <div class="ev-completion-card" style="margin-top: 16px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-                <div style="flex: 1; min-width: 200px;">
+        <div class="ev-completion-card">
+            <div class="ev-completion-inner" style="display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                <div style="flex: 1; min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                         @if($profileCompletion['percentage'] >= 100)
                             <i class="fa fa-check-circle" style="font-size: 24px;"></i>
@@ -417,7 +549,7 @@
                     @endif
                 </div>
 
-                <div style="text-align: center; min-width: 100px;">
+                <div style="text-align: center; min-width: 60px; flex-shrink: 0;">
                     <div style="position: relative; display: inline-block;">
                         <svg width="80" height="80" viewBox="0 0 80 80">
                             <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(193,241,29,0.2)" stroke-width="6"/>
@@ -437,19 +569,6 @@
             <div class="ev-progress-bar-bg">
                 <div class="ev-progress-bar-fill" style="width: {{ $profileCompletion['percentage'] }}%;"></div>
             </div>
-        </div>
-
-        {{-- Account tabs --}}
-        <div class="ev-account-tabs">
-            <a href="/my-account" wire:navigate class="{{ request()->is('my-account') && !request()->is('my-account/*') ? 'active' : '' }}">
-                <i class="fa fa-user"></i> Account
-            </a>
-            <a href="/my-account/edit" wire:navigate class="{{ request()->is('my-account/edit') ? 'active' : '' }}">
-                <i class="fa fa-pencil-alt"></i> Edit
-            </a>
-            <a href="/my-password/edit" wire:navigate class="{{ request()->is('my-password/edit') ? 'active' : '' }}">
-                <i class="fa fa-key"></i> Password
-            </a>
         </div>
 
         {{-- Edit Form --}}

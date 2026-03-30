@@ -122,13 +122,47 @@
         transform: translateY(-1px);
     }
     @media (max-width: 768px) {
+        .ev-back-bar a {
+            font-size: 14px;
+        }
+        .ev-back-bar h1 {
+            font-size: 16px;
+        }
+        .ev-account-tabs {
+            padding: 12px 0;
+            gap: 6px;
+        }
         .ev-account-tabs a {
             width: auto;
             flex: 1;
-            min-width: 100px;
+            min-width: 0;
+            padding: 8px 10px;
+            font-size: 12px;
+            border: 1px solid #333;
+        }
+        .ev-account-tabs a.active {
+            border-color: #C1F11D;
+        }
+        .ev-form-group label {
+            font-size: 13px;
+            color: #ccc;
         }
         .ev-form-group .ev-input {
             max-width: 100%;
+            background: #1a1a1a;
+            border-color: #333;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .ev-save-btn {
+            width: 100%;
+            justify-content: center;
+            border-radius: 5px;
+            font-size: 16px;
+            padding: 14px 28px;
+        }
+        .ev-alert-success {
+            border-radius: 5px;
         }
     }
 </style>
@@ -138,10 +172,11 @@
     {{-- Back bar --}}
     <div class="ev-back-bar">
         <div class="ev-container" style="display: flex; align-items: center; justify-content: center; position: relative;">
-            <a href="/my-account" style="position: absolute; left: 16px;">
-                <i class="fa fa-angle-left"></i> My account
+            <a href="/" style="position: absolute; left: 16px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Home
             </a>
-            <h1><a href="/my-password/edit">Change Password</a></h1>
+            <h1>Change Password</h1>
         </div>
     </div>
 

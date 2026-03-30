@@ -888,9 +888,379 @@ div#basic {
     }
 }
 
+/* ═══════════════════════════════════════════
+   MOBILE CREATE PROFILE VIEW
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* Prevent horizontal overflow */
+    body, html {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+    /* Universal box-sizing fix */
+    *, *::before, *::after {
+        box-sizing: border-box !important;
+    }
+    /* Kill all flex on root container */
+    div.row.container {
+        display: block !important;
+    }
+    .wrapper, form#new_listing {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    /* Fix all rows and containers to not overflow */
+    .row, .container, .container-fluid {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    /* Inner column already has padding, so reset parent row padding */
+    div.row.container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    .big-one-line, .big-one-line.left {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    /* Form wrapper */
+    form#new_listing {
+        padding: 0 !important;
+    }
+    .wrapper {
+        padding: 0 !important;
+    }
+    /* Reset column offsets and margins */
+    [class*="col-lg-offset"],
+    [class*="col-md-offset"] {
+        margin-left: 0 !important;
+    }
+    /* Ensure inputs don't overflow */
+    input, select, textarea {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    /* Hide desktop header, show mobile header */
+    .nav-bar.navbar-top-nav {
+        display: none !important;
+    }
+
+    /* Page container - force single column, override Bootstrap .row flex */
+    div.row.container,
+    .row.container {
+        display: block !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+    div.row.container::before,
+    div.row.container::after,
+    .row.container::before,
+    .row.container::after {
+        display: none !important;
+    }
+    .col-lg-offset-1,
+    .col-lg-10,
+    .col-lg-offset-1.col-lg-10,
+    div.col-lg-offset-1.col-lg-10 {
+        display: block !important;
+        padding: 0 16px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        margin-left: 0 !important;
+        float: none !important;
+        left: 0 !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+    }
+    /* Hide desktop header/nav on mobile */
+    #header, .navbar-top-nav, .nav-bar.navbar-top-nav {
+        display: none !important;
+    }
+
+    /* Remove ::before pseudo from row container */
+
+    /* Section title blocks - card style */
+    .h3.title-block, h2.h3.title-block {
+        background: #111 !important;
+        border: 1px solid #222 !important;
+        border-left: 4px solid #C1F11D !important;
+        border-radius: 5px !important;
+        padding: 14px 16px !important;
+        margin: 24px 0 16px !important;
+        font-size: 16px !important;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Form inputs - consistent dark style */
+    .form-control,
+    input.form-control,
+    textarea.form-control,
+    select.form-control {
+        background: #111 !important;
+        border: 1px solid #333 !important;
+        border-radius: 5px !important;
+        color: #fff !important;
+        font-size: 14px !important;
+        padding: 10px 12px !important;
+        height: 44px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+    textarea.form-control {
+        min-height: 140px !important;
+        height: auto !important;
+    }
+
+    /* Big one line inputs - override dashed borders and icons */
+    form.listing .big-one-line input#listing_name,
+    form.listing .big-one-line .typeahead-city-wrapper input,
+    form.listing .big-one-line .listinga {
+        border: 1px solid #333 !important;
+        border-bottom: 1px solid #333 !important;
+        border-radius: 5px !important;
+        height: 44px !important;
+        font-size: 14px !important;
+        background: #111 !important;
+        background-image: none !important;
+        padding: 10px 12px !important;
+    }
+    /* Remove map pin icon from city input */
+    form.listing .big-one-line .typeahead-city-wrapper input {
+        padding-left: 12px !important;
+    }
+    .typeahead-city-wrapper::before {
+        display: none !important;
+    }
+    /* Hide "in" label and city hint on mobile */
+    form.listing .big-one-line .listing_city_url label.city,
+    .ev-city-label {
+        font-size: 13px !important;
+        color: #ccc !important;
+        line-height: normal !important;
+        margin-bottom: 6px !important;
+    }
+    .city-hint,
+    .hint.city-hint {
+        display: none !important;
+    }
+    /* Hide dropdown arrow on category select */
+    form.listing .big-one-line .listinga {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        background-image: none !important;
+        padding-right: 12px !important;
+    }
+
+    form.listing .big-one-line,
+    form.listing .big-one-line.left,
+    .big-one-line,
+    .big-one-line.left {
+        display: block !important;
+        float: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    form.listing .big-one-line .form-group,
+    .big-one-line .form-group {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 16px !important;
+        float: none !important;
+        padding: 0 !important;
+        margin-left: 0 !important;
+    }
+    /* Ensure big-one-line inputs match other inputs width */
+    form.listing .big-one-line .form-group input,
+    form.listing .big-one-line .form-group select {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Labels */
+    label, .control-label {
+        font-size: 13px !important;
+        margin-bottom: 6px !important;
+    }
+
+    /* Custom select */
+    .custom-select2-selection {
+        border-radius: 5px !important;
+        height: 44px !important;
+        font-size: 14px !important;
+    }
+    .custom-select2-dropdown {
+        border-radius: 5px !important;
+    }
+
+    /* Phone row */
+    .phone-row, .ev-phone-row {
+        display: flex !important;
+        gap: 8px !important;
+    }
+
+    /* Services checkboxes - pill tags */
+    .checkbox-columns {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .checkbox-columns label,
+    .checkbox-columns .checkbox {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 6px 14px !important;
+        background: #111 !important;
+        border: 1px solid #333 !important;
+        border-radius: 5px !important;
+        margin: 0 !important;
+        font-size: 13px !important;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .checkbox-columns label.active,
+    .checkbox-columns .checkbox.active,
+    .checkbox-columns label:has(input:checked),
+    .checkbox-columns .checkbox:has(input:checked) {
+        border-color: #C1F11D !important;
+        color: #C1F11D !important;
+    }
+
+    /* Price inputs side by side */
+    .price-row, .row:has(.price-amount) {
+        display: flex !important;
+        gap: 10px !important;
+    }
+    .price-amount {
+        border-radius: 5px !important;
+        font-size: 14px !important;
+    }
+
+    /* Photo upload area */
+    .drag-drop {
+        border: 2px dashed #333 !important;
+        border-radius: 5px !important;
+        padding: 30px 20px !important;
+        text-align: center !important;
+    }
+
+    /* Messaging app checkboxes */
+    .messaging-apps label {
+        border-radius: 5px !important;
+    }
+
+    /* Submit button */
+    #submit, .btn-primary.btn-lg {
+        width: 100% !important;
+        background: #C1F11D !important;
+        color: #000 !important;
+        border: none !important;
+        border-radius: 5px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        padding: 14px !important;
+        margin-top: 20px !important;
+    }
+
+    /* Alert messages */
+    .alert {
+        border-radius: 5px !important;
+    }
+
+    /* Two column rows on mobile */
+    .row .col-sm-3,
+    .row .col-sm-4,
+    .row .col-sm-6 {
+        width: 50% !important;
+        float: left !important;
+        padding: 0 6px !important;
+    }
+    .row .col-sm-12 {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+
+    /* Form group spacing */
+    .form-group {
+        margin-bottom: 16px !important;
+    }
+
+    /* Hint text */
+    .hint, .city-hint, .char-count-container {
+        font-size: 11px !important;
+    }
+
+    /* Image previews */
+    .record.image {
+        border-radius: 5px !important;
+    }
+
+    /* Terms text at bottom */
+    .terms-text {
+        text-align: center;
+        font-size: 13px;
+        color: #888;
+    }
+    .terms-text a {
+        color: #C1F11D;
+    }
+
+    /* Hide elements not needed on mobile */
+    .hidden-mobile {
+        display: none !important;
+    }
+}
+
         </style>
 
 <div class="row container">
+
+{{-- Mobile Header --}}
+<div class="ev-newprofile-mobile-header" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
+        <a href="javascript:history.back()" style="color:#C1F11D;text-decoration:none;font-size:14px;display:flex;align-items:center;gap:4px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+        </a>
+        <a href="/" style="display:flex;align-items:center;gap:6px;text-decoration:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 100 100">
+                <circle cx="50" cy="30" r="8" fill="#E91E63"/>
+                <circle cx="70" cy="40" r="8" fill="#FF9800"/>
+                <circle cx="65" cy="62" r="8" fill="#4CAF50"/>
+                <circle cx="35" cy="62" r="8" fill="#2196F3"/>
+                <circle cx="30" cy="40" r="8" fill="#9C27B0"/>
+                <circle cx="50" cy="48" r="6" fill="#C1F11D"/>
+            </svg>
+            <span style="color:#C1F11D;font-size:18px;font-weight:600;font-style:italic;">evoory</span>
+        </a>
+        <div style="width:40px;"></div>
+    </div>
+    <div style="padding:0 16px 16px;">
+        <h1 style="color:#fff;font-size:20px;font-weight:600;margin:0 0 4px;">Create Your Listing</h1>
+        <p style="color:#888;font-size:13px;margin:0;">Complete all sections to publish your profile</p>
+    </div>
+</div>
+<style>
+@media (max-width: 768px) {
+    .ev-newprofile-mobile-header { display: block !important; }
+}
+</style>
 
             <div class="col-lg-offset-1 col-lg-10">
              
@@ -899,11 +1269,19 @@ div#basic {
                
                 <div class="wrapper">
                   <div id="basic">
+                    <h2 class="h3 title-block ev-mobile-section-title" style="display:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Basic Information
+                    </h2>
+                    <style>@media(max-width:768px){.ev-mobile-section-title{display:flex!important}}</style>
                     <div class="big-one-line left">
                       <div class="form-group string required listing_name">
-                        <input class="string required form-control medium validate" value="" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(3,40)" data-error-position-my="center bottom" data-error-position-offset="0 0" data-error-position-at="center top" data-tooltip-class="tooltip tooltip-s" maxlength="40" placeholder="Enter name" size="40" type="text" wire:model='name' name="listing[name]" id="listing_name" />
+                        <label class="ev-mobile-label" style="display:none;">Profile Name <span style="color:#f87171">*</span></label>
+                        <style>@media(max-width:768px){.ev-mobile-label{display:block!important;color:#ccc;font-size:13px;margin-bottom:6px}}</style>
+                        <input class="string required form-control medium validate" value="" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(3,40)" data-error-position-my="center bottom" data-error-position-offset="0 0" data-error-position-at="center top" data-tooltip-class="tooltip tooltip-s" maxlength="40" placeholder="Your professional name" size="40" type="text" wire:model='name' name="listing[name]" id="listing_name" />
                       </div>
                       <div class="form-group  listing_listed_as_id">
+                        <label class="ev-mobile-label" style="display:none;">Category</label>
                         <select class="form-control listinga" wire:model="listing" id="listing_listed_as_id">
                           @foreach($listings as $listingOption)
                             <option value="{{$listingOption->id}}">{{$listingOption->name}}</option>
@@ -911,9 +1289,9 @@ div#basic {
                         </select>
                       </div> 
                       <div class="form-group city optional listing_city_url">
-                        <label class="city optional control-label" for="listing_city_url">in</label>
+                        <label class="city optional control-label ev-city-label" for="listing_city_url">City <span class="ev-mobile-label" style="display:none;color:#f87171">*</span></label>
                         <div class='typeahead-city-wrapper'>
-                          <input class="city optional" placeholder="Enter city name" 
+                          <input class="city optional form-control" placeholder="Enter city name"
     wire:model.lazy='selectedcity' type="text" id="citysearch"/>
 <input type="hidden" wire:model.lazy='city' id="selectedcityid">
                           
@@ -930,9 +1308,9 @@ div#basic {
                     <div class="form-group text required listing_description">
                       <label class="text required control-label" for="listing_description">
                         About me <span class="required-star">*</span></label>
-                      <textarea class="text required form-control validate large" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(50,2000)" maxlength="2000" wire:model='aboutme' name="listing[description]" id="listing_description" oninput="updateCharCount(this)"></textarea>
+                      <textarea class="text required form-control validate large" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(50,2000)" maxlength="2000" wire:model='aboutme' name="listing[description]" id="listing_description" oninput="updateCharCount(this)" placeholder="Write a brief description of yourself..."></textarea>
                       <div class="char-count-container" style="margin-top: 5px; font-size: 12px;">
-                        <span id="char-count" style="color: #666;">0 characters</span>
+                        <span id="char-count" style="color: #666;">Minimum 50 characters</span>
                         <span id="char-count-warning" style="color: #dc3545; margin-left: 10px; display: none;">Minimum 50 characters required</span>
                         <span id="char-count-ok" style="color: #28a745; margin-left: 10px; display: none;">✓ Minimum reached</span>
                       </div>
@@ -1010,6 +1388,78 @@ div#basic {
                     </div>
                   </div>
 
+
+                  {{-- Mobile Contact Information --}}
+                  <div class="ev-mobile-contact" style="display:none;">
+                    <h2 class="h3 title-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        Contact Information
+                    </h2>
+
+                    <div class="ev-mc-group">
+                        <label>Phone Number</label>
+                        <div style="display:flex;gap:8px;">
+                            <div style="width:110px;flex-shrink:0;" wire:ignore>
+                                <select wire:model='countrycode' class="form-control" id="ev_mobile_phone_code" style="height:44px;font-size:13px;">
+                                    <option value="">Select</option>
+                                    @foreach($countries as $code)
+                                    <option value="{{$code->phonecode}}" {{ $countrycode == $code->phonecode ? 'selected' : '' }}>+{{$code->phonecode}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <input wire:model.lazy="phone" class="form-control" type="text" placeholder="Phone number" style="flex:1;height:44px;">
+                        </div>
+                    </div>
+
+                    <div class="ev-mc-group">
+                        <label>Messaging Apps</label>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <label class="ev-msg-pill">
+                                <input wire:model='iswhatsapp' type="checkbox" value="1" style="display:none;">
+                                <span>WhatsApp</span>
+                            </label>
+                            <label class="ev-msg-pill">
+                                <input wire:model='istelegram' type="checkbox" value="1" style="display:none;">
+                                <span>Telegram</span>
+                            </label>
+                            <label class="ev-msg-pill">
+                                <input wire:model='issignal' type="checkbox" value="1" style="display:none;">
+                                <span>Signal</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="ev-mc-group">
+                        <label>Email</label>
+                        <input class="form-control" type="email" value="{{$user->email}}" readonly placeholder="your@mail.com">
+                    </div>
+
+                    <div class="ev-mc-group">
+                        <label>Website</label>
+                        <input wire:model='website' class="form-control" type="text" placeholder="https://yourwebsite.com">
+                    </div>
+
+                    <div class="ev-mc-group">
+                        <label>OnlyFans</label>
+                        <input wire:model='onlyfans' class="form-control" type="text" placeholder="@username">
+                    </div>
+                  </div>
+                  <style>
+                    @media(max-width:768px){
+                        .ev-mobile-contact{display:block!important}
+                        #contact-information{display:none!important}
+                        .ev-mc-group{margin-bottom:16px}
+                        .ev-mc-group>label{display:block;color:#ccc;font-size:13px;font-weight:500;margin-bottom:6px}
+                        .ev-msg-pill{
+                            display:inline-flex;align-items:center;
+                            background:#111;border:1px solid #333;border-radius:5px;
+                            padding:8px 16px;cursor:pointer;color:#fff;font-size:13px;
+                        }
+                        .ev-msg-pill:has(input:checked){
+                            border-color:#C1F11D;color:#C1F11D;
+                        }
+                    }
+                  </style>
 
                   <div id="contact-information">
                     <h2 class="h3 title-block">Contact information</h2>
@@ -1121,6 +1571,64 @@ div#basic {
                       </div>
                     </div>
                   </div>
+                  {{-- Mobile Services Section --}}
+                  <div class="ev-mobile-services" style="display:none;">
+                    <h2 class="h3 title-block">Services Offered</h2>
+                    <div class="ev-svc-grid" id="evSvcGrid">
+                        @php
+                        $servicesList = [
+                            ['id'=>1,'name'=>'Anal Sex'],['id'=>2,'name'=>'BDSM'],['id'=>3,'name'=>'Come In Mouth'],
+                            ['id'=>4,'name'=>'Come On Body'],['id'=>5,'name'=>'Couples'],['id'=>6,'name'=>'Deep throat'],
+                            ['id'=>7,'name'=>'Domination'],['id'=>8,'name'=>'Face sitting'],['id'=>9,'name'=>'Fingering'],
+                            ['id'=>10,'name'=>'Fisting'],['id'=>11,'name'=>'Foot fetish'],['id'=>12,'name'=>'French kissing'],
+                            ['id'=>13,'name'=>'GFE'],['id'=>14,'name'=>'Giving hardsports'],['id'=>15,'name'=>'Lap dancing'],
+                            ['id'=>16,'name'=>'Massage'],['id'=>17,'name'=>'Nuru massage'],['id'=>18,'name'=>'Oral sex - blowjob'],
+                            ['id'=>19,'name'=>'Fisting'],['id'=>20,'name'=>'OWO'],['id'=>21,'name'=>'Parties'],
+                            ['id'=>22,'name'=>'Reverse oral'],['id'=>23,'name'=>'Giving rimming'],['id'=>24,'name'=>'Rimming receiving'],
+                            ['id'=>25,'name'=>'Role play'],['id'=>26,'name'=>'Sex toys'],['id'=>27,'name'=>'Spanking'],
+                            ['id'=>28,'name'=>'Strapon'],['id'=>29,'name'=>'Striptease'],['id'=>30,'name'=>'Submissive'],
+                            ['id'=>31,'name'=>'Squirting'],['id'=>32,'name'=>'Tantric massage'],['id'=>33,'name'=>'Teabagging'],
+                            ['id'=>34,'name'=>'Tie and tease'],['id'=>35,'name'=>'Uniforms'],['id'=>36,'name'=>'Giving watersports'],
+                            ['id'=>37,'name'=>'Receiving watersports'],['id'=>38,'name'=>'Webcam sex'],
+                        ];
+                        @endphp
+                        @foreach($servicesList as $idx => $svc)
+                        <label class="ev-svc-pill {{ $idx >= 20 ? 'ev-svc-hidden' : '' }}">
+                            <input wire:model="services" type="checkbox" value="{{ $svc['id'] }}" style="display:none;">
+                            <span>{{ $svc['name'] }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                    <button type="button" class="ev-svc-loadmore" id="evSvcLoadMore" onclick="document.querySelectorAll('.ev-svc-hidden').forEach(function(e){e.classList.remove('ev-svc-hidden')});this.style.display='none';">
+                        Load more <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                  </div>
+                  <style>
+                    @media(max-width:768px){
+                        .ev-mobile-services{display:block!important}
+                        #services{display:none!important}
+                        .ev-svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+                        .ev-svc-pill{
+                            display:flex;align-items:center;justify-content:center;
+                            background:#111;border:1px solid #333;border-radius:5px;
+                            padding:10px 8px;cursor:pointer;color:#fff;font-size:12px;
+                            text-align:center;
+                        }
+                        .ev-svc-pill:has(input:checked){
+                            border-color:#C1F11D;color:#C1F11D;
+                        }
+                        .ev-svc-pill:has(input:checked)::before{
+                            content:'✓ ';color:#C1F11D;
+                        }
+                        .ev-svc-hidden{display:none!important}
+                        .ev-svc-loadmore{
+                            background:none;border:none;color:#C1F11D;
+                            font-size:14px;font-weight:500;cursor:pointer;
+                            padding:12px 0;display:flex;align-items:center;gap:4px;
+                        }
+                    }
+                  </style>
+
                   <div id="services">
                     <h2 class="h3 title-block">Services</h2>
                     <div class="overflow-list-xs row">
@@ -1289,6 +1797,38 @@ div#basic {
                     </div>
                     <div class="clearfix"></div>
                   </div>
+                  {{-- Mobile Pricing Section --}}
+                  <div class="ev-mobile-pricing" style="display:none;">
+                    <h2 class="h3 title-block">
+                        <span style="color:#C1F11D;font-weight:700;font-size:18px;">$</span>
+                        Pricing
+                    </h2>
+                    <div class="ev-mc-group">
+                        <label>Currency</label>
+                        <select wire:model='incallcurr' class="form-control">
+                            @foreach($currencies as $curr)
+                            <option value="{{$curr->code}}" @if($curr->code == 'AED') selected @endif>{{$curr->code}} ({{$curr->symbol ?? $curr->code}})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:12px;">
+                        <div style="flex:1;">
+                            <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Incalls (per hour)</label>
+                            <input wire:model='incallprice' class="form-control" type="number" placeholder="300">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Outcalls (per hour)</label>
+                            <input wire:model='outcallprice' class="form-control" type="number" placeholder="400">
+                        </div>
+                    </div>
+                  </div>
+                  <style>
+                    @media(max-width:768px){
+                        .ev-mobile-pricing{display:block!important}
+                        #fees{display:none!important}
+                    }
+                  </style>
+
                   <div data-outlier-price-check-url="/check_outlier_price" id="fees">
                     <h2 class="h3 title-block">Prices</h2>
                     <div class="row d-flex align-items-center">
@@ -1337,6 +1877,132 @@ div#basic {
                       </div>
                     </div>
                   </div>
+                  {{-- Mobile Personal Details --}}
+                  <div class="ev-mobile-personal" style="display:none;">
+                    <h2 class="h3 title-block">Personal Details</h2>
+                    <div style="display:flex;gap:12px;margin-bottom:16px;">
+                        <div style="flex:1;">
+                            <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Gender <span style="color:#f87171">*</span></label>
+                            <select wire:model='gender' class="form-control">
+                                <option value="">Select</option>
+                                <option value="1">Female</option>
+                                <option value="2">Male</option>
+                                <option value="3">Trans</option>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Orientation</label>
+                            <select wire:model='ori' class="form-control">
+                                <option value="">Select</option>
+                                <option value="1">Heterosexual</option>
+                                <option value="2">Bisexual</option>
+                                <option value="3">Lesbian or Gay</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ev-mc-group">
+                        <label>Ethnicity</label>
+                        <select wire:model='ethnicity' class="form-control">
+                            <option value="">Select</option>
+                            @foreach($ethnicities as $eth)
+                            <option value="{{$eth->id}}">{{$eth->name}}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:12px;margin-bottom:16px;">
+                        <div style="flex:1;">
+                            <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Height (cm)</label>
+                            <input wire:model='height' class="form-control" type="text" placeholder="175" maxlength="4">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Age <span style="color:#f87171">*</span></label>
+                            <input wire:model='age' class="form-control" type="number" placeholder="25" min="18" max="60">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;margin-bottom:16px;">
+                        <div style="flex:1;">
+                            <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Bust Size</label>
+                            <select wire:model='bust' class="form-control">
+                                <option value="">Select</option>
+                                @foreach($busts as $bust)
+                                <option value="{{$bust->id}}">{{$bust->name}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Hair Color</label>
+                            <select wire:model='haircolor' class="form-control">
+                                <option value="">Select</option>
+                                @foreach($hairs as $hair)
+                                <option value="{{$hair->id}}">{{$hair->name}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                  </div>
+                  {{-- Mobile Languages Spoken --}}
+                  <div class="ev-mobile-languages" style="display:none;">
+                    <h2 class="h3 title-block">Languages Spoken</h2>
+                    <div class="ev-mc-group">
+                        <select wire:model='language1' class="form-control" style="margin-bottom:10px;">
+                            <option value="">Select language...</option>
+                            @foreach($languages as $lang)
+                            <option value="{{$lang->id}}">{{$lang->name}}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model='language2' class="form-control" style="margin-bottom:10px;">
+                            <option value="">Select language...</option>
+                            @foreach($languages as $lang)
+                            <option value="{{$lang->id}}">{{$lang->name}}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="button" class="ev-add-lang-btn" onclick="this.previousElementSibling.insertAdjacentHTML('beforeend','<select class=\'form-control\' style=\'margin-bottom:10px;\'><option value=\'\'>Select language...</option>@foreach($languages as $lang)<option value=\'{{$lang->id}}\'>{{$lang->name}}</option>@endforeach</select>')">
+                        + Add Language
+                    </button>
+                  </div>
+
+                  {{-- Mobile Additional Information --}}
+                  <div class="ev-mobile-additional" style="display:none;">
+                    <h2 class="h3 title-block">Additional Information</h2>
+                    <div class="ev-mc-group">
+                        <label>Shaved</label>
+                        <select wire:model='shaved' class="form-control">
+                            <option value="">Select</option>
+                            <option value="no">No</option>
+                            <option value="partially">Partially</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </div>
+                    <div class="ev-mc-group">
+                        <label>Smoking</label>
+                        <select wire:model='smoke' class="form-control">
+                            <option value="">Select</option>
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="ev-mc-group">
+                        <label>Add Video URL</label>
+                        <input wire:model='video' class="form-control" type="text" placeholder="https://yourchannel.com">
+                        <span style="color:#666;font-size:11px;margin-top:4px;display:block;">YouTube, Vimeo or other video platform URL</span>
+                    </div>
+                  </div>
+
+                  <style>
+                    @media(max-width:768px){
+                        .ev-mobile-personal{display:block!important}
+                        .ev-mobile-languages{display:block!important}
+                        .ev-mobile-additional{display:block!important}
+                        #about-me, #languages, #add-video, #social{display:none!important}
+                        .ev-add-lang-btn{
+                            width:100%;background:#111;border:1px solid #333;border-radius:5px;
+                            color:#fff;font-size:14px;padding:12px;cursor:pointer;
+                            display:flex;align-items:center;justify-content:center;gap:6px;
+                        }
+                    }
+                  </style>
+
                   <div id="about-me">
                     <h2 class="h3 title-block">About me</h2>
                     <div class="form-group radio_buttons required listing_gender_id validate" data-validations="presenceAny">
@@ -1556,16 +2222,18 @@ div#basic {
                 </div>
                 <hr />
                 
-                <button class="btn btn-xs-block btn-primary btn-lg margin-bottom" 
-                id="submit" 
-                type="submit" 
+                <button class="btn btn-xs-block btn-primary btn-lg margin-bottom"
+                id="submit"
+                type="submit"
                 wire:loading.attr="disabled"
                 wire:target="updateProfile">
-            <span wire:loading.remove wire:target="updateProfile">Add profile</span>
+            <span wire:loading.remove wire:target="updateProfile">Add Profile</span>
             <span wire:loading wire:target="updateProfile">
                 <i class="fa fa-spinner fa-spin"></i> Processing...
             </span>
-        </button>                
+        </button>
+        <p class="ev-terms-bottom" style="display:none;text-align:center;color:#888;font-size:13px;margin-top:12px;">By submitting, you agree to our <a href="/terms" style="color:#C1F11D;text-decoration:none;">Terms of Service</a></p>
+        <style>@media(max-width:768px){.ev-terms-bottom{display:block!important}}</style>                
         @if(session('error'))
                 <div class="alert alert-danger">
                     {{ session('error') }}

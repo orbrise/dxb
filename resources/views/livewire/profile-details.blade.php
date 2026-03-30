@@ -1,102 +1,80 @@
 @push('css')
 <link rel="stylesheet" href="{{ asset('assets/css/evoory-profile.css') }}?v={{ filemtime(public_path('assets/css/evoory-profile.css')) }}">
 <style>
-  /* Lightbox Play Button - exact pbAutoplayBtn style */
+  /* Lightbox Play Button - clean circular style */
   #lightboxPlay {
     display: block !important;
-    transition: transform 0.3s ease;
-  }
-
-  .on #lightboxPlay {
-    top: 0;
-    left: 0;
+    position: absolute !important;
+    top: 16px !important;
+    left: 16px !important;
+    width: 44px !important;
+    height: 44px !important;
+    z-index: 999;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
   }
 
   #lightboxPlay::before {
-    display: inline-block;
-    opacity: 0.8;
-    vertical-align: middle;
-    background: rgba(255, 255, 255, 0.2);
-    font-size: 2em;
-    content: '\2016';
-    width: 80px;
-    height: 80px;
+    content: '';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    font-weight: 700;
-    padding: 23px 0px 0px 33px;
-    text-indent: -6px;
-    line-height: 2;
-    transition: all 0.3s ease;
-    margin-left: -42px;
-    margin-top: -33px;
-    outline: 8px solid #333333;
-    outline-offset: 4px;
+    border: 2px solid rgba(255,255,255,0.6);
+    background: rgba(0,0,0,0.4);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='white' stroke='none'%3E%3Cpolygon points='5 3 19 12 5 21 5 3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 18px;
+  }
+
+  .on #lightboxPlay::before,
+  #lightboxPlay:not(.play)::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='white' stroke='none'%3E%3Crect x='6' y='4' width='4' height='16'/%3E%3Crect x='14' y='4' width='4' height='16'/%3E%3C/svg%3E");
   }
 
   #lightboxPlay:hover {
-    transform: scale(1.15);
+    opacity: 0.8;
   }
 
-  #lightboxPlay:hover::before {
-    opacity: 1;
-  }
-
-  #lightboxPlay.play::before {
-    content: '\25BA';
-  }
-
-  #lightboxPlay:active::before {
-    text-shadow: 0 0 3px #fff, 0 0 6px #fff;
-  }
-
-  /* Close button styling - matches play button but on right side */
+  /* Close button - clean circular style */
   #lightboxClose {
     position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
+    top: 16px !important;
+    right: 16px !important;
     z-index: 999;
-    text-align: center;
     cursor: pointer;
-    color: #fff !important;
-    width: 42px !important;
-    height: 55px !important;
-    padding: 0 !important;
-    transition: transform 0.3s ease;
+    width: 44px !important;
+    height: 44px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     background: none !important;
-    border-radius: 0 !important;
-    font-size: inherit !important;
+    border: none !important;
+    padding: 0 !important;
+    transition: opacity 0.2s ease;
   }
 
   #lightboxClose::before {
-    display: inline-block;
-    opacity: 0.8;
-    vertical-align: middle;
-    background: rgba(255, 255, 255, 0.2);
-    font-size: 3.2em;
-    content: ' ×';
-    width: 100%;
-    height: 100%;
-    border-radius: 0 0 0 70px;
-    font-weight: 700;
-    padding: 0;
-    line-height: 1.2;
-    padding-left: 10px;
-    transition: all 0.3s ease;
+    content: '';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.6);
+    background: rgba(0,0,0,0.4);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px;
   }
 
   #lightboxClose:hover {
-    transform: scale(1.15);
-  }
-
-  #lightboxClose:hover::before {
-    opacity: 1;
-  }
-
-  #lightboxClose:active::before {
-    text-shadow: 0 0 3px #fff, 0 0 6px #fff;
+    opacity: 0.8;
   }
 
   #additional-details dd {
@@ -22407,6 +22385,14 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
               @endif
               @endif
               
+              {{-- Mobile Tabs: About / Reviews / Questions --}}
+              <div class="ev-mobile-tabs visible-xs">
+                  <button class="ev-mobile-tab active" data-tab="about">About</button>
+                  <button class="ev-mobile-tab" data-tab="reviews">Reviews</button>
+                  <button class="ev-mobile-tab" data-tab="questions">Questions</button>
+              </div>
+
+              <div class="ev-mobile-tab-content" data-tab-content="about">
               <div class="description">
                 <p>{!! nl2br($user->about) !!} </p>
               </div>
@@ -22444,7 +22430,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                 @if(!empty($user->incall))
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="You can come to my place">
                   <div class="pull-left text-muted">
-                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #c2c2c2; border-radius: 50%; margin-right: 5px;padding: 7px;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #333; border-radius: 50%; margin-right: 5px;padding: 7px;">
                       <img src="https://assets.massagerepublic.com.co/assets/newtheme/incall.svg" width="12" height="16" alt="Message">
                     </span>
                   </div>
@@ -22457,8 +22443,9 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                 @if(!empty($user->outcall))
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="I can come to your place">
                   <div class="pull-left text-muted">
-                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #c2c2c2; border-radius: 50%; margin-right: 5px;padding: 7px;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #333; border-radius: 50%; margin-right: 5px;padding: 7px;">
                       <img src="https://assets.massagerepublic.com.co/assets/newtheme/outcall.svg" width="12" height="16" alt="Message">
+                    </span>
                   </div>
                   <div class="pull-left margin-right">
                     <div class="listing-price-label">Outcalls per hour from</div>{{ number_format($user->outcallprice) }}
@@ -22469,51 +22456,8 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                 <div class="clearfix"></div>
               </div>
               @endif
-              <dl class="languages dl-inline">
-                <dt>Languages</dt>
-                <dd>
-                  <div class="language-item">
-                    <span class="lang-name">
-                      @foreach($user->languages as $lang)
-                      {{$lang->getlangname->name}},
-                      @endforeach
-                    </span>
-                  </div>
-                </dd>
-              </dl>
-              <style>
-                .profile-details-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                }
-                .profile-details-table tr {
-                  border-bottom: 1px solid #3a3a3a;
-                }
-                .profile-details-table tr:last-child {
-                  border-bottom: none;
-                }
-                .profile-details-table td {
-                  padding: 8px 8px;
-                  vertical-align: top;
-                }
-                .profile-details-table .label-cell {
-                  color: #999;
-                  white-space: nowrap;
-                  width: 75px;
-                }
-                .profile-details-table .value-cell {
-                  color: #fff;
-                }
-                @media (max-width: 767px) {
-                  .profile-details-table td {
-                    padding: 6px 5px;
-                    font-size: 13px;
-                  }
-                  .profile-details-table .label-cell {
-                    width: 65px;
-                  }
-                }
-              </style>
+              {{-- Details table styles moved to evoory-profile.css --}}
+              <div class="ev-details-card">
               <table class="profile-details-table">
                 <tr>
                   <td class="label-cell">Orientation</td>
@@ -22563,6 +22507,77 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                   </td>
                 </tr>
               </table>
+              <div class="ev-languages-section">
+                <h3 class="ev-section-label">Languages</h3>
+                <div class="ev-language-pills">
+                    @foreach($user->languages as $lang)
+                    <span class="ev-lang-pill">{{$lang->getlangname->name}}</span>
+                    @endforeach
+                </div>
+              </div>
+              </div>{{-- /ev-details-card --}}
+
+              {{-- Mobile: Report link inside About tab --}}
+              <p class="ev-mobile-report visible-xs" style="text-align:center; padding: 16px 0; border-top: 1px solid #1a1a1a;">
+                  <a class="report-link" href="javascript:void(0);">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                      Report this Profile
+                  </a>
+              </p>
+              </div>{{-- /ev-mobile-tab-content[about] --}}
+
+              {{-- Mobile Reviews tab content --}}
+              <div class="ev-mobile-tab-content" data-tab-content="reviews" style="display:none;">
+                  <div class="reviews styled-questions" id="mobile-listing-reviews">
+                      @if(count($reviews) > 0)
+                      <ul class="list-unstyled list-separated revs">
+                          @foreach($reviews as $review)
+                          <li>
+                              <div class="review">
+                                  <span class="star-rating" data-val="{{$review->star}}"></span>
+                                  <span class="reviewer">by <a href="#">{{$review->getuser->name}}</a></span>
+                                  <div class="review-description">
+                                      <p class="review-text">{{ $review->review }}</p>
+                                  </div>
+                              </div>
+                          </li>
+                          @endforeach
+                      </ul>
+                      @else
+                      <div class="no-reviews">There are no reviews yet. <a class="add-review1" href="javascript:void(0)"><span>Add a review</span></a></div>
+                      @endif
+                  </div>
+              </div>
+
+              {{-- Mobile Questions tab content --}}
+              <div class="ev-mobile-tab-content" data-tab-content="questions" style="display:none;">
+                  <div class="styled-questions" id="mobile-listing-questions">
+                      @if($questions->count() > 0)
+                      <ul class="list-unstyled list-separated que">
+                          @foreach($questions as $question)
+                          <li>
+                              <div class="question-block">
+                                  <p class="question">{{$question->question}}</p>
+                              </div>
+                              <span class="questioner">by <a href="#">{{$question->getuser->name}}</a></span>
+                              @if($question->answer)
+                              <div class="answer-wrapper">
+                                  <div class="answer-block">
+                                      <p class="answer">{{$question->answer}}</p>
+                                  </div>
+                              </div>
+                              @else
+                              <div class="pending-answer text-muted"><i>Awaiting answer</i></div>
+                              @endif
+                          </li>
+                          @endforeach
+                      </ul>
+                      @else
+                      <p>No questions asked yet.</p>
+                      @endif
+                  </div>
+              </div>
+
               <div id="revsAndQs">
                 <ul class="nav nav-tabs mb-2" role="tablist">
                   <li class="active" role="presentation">
@@ -22711,10 +22726,29 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
           </div>
         </article>
 
-        
+
       </div>
       </div>
-     
+
+    {{-- Mobile Sticky Bottom Action Bar --}}
+    <div class="ev-mobile-action-bar visible-xs">
+        <a class="ev-action-item contact-phone1" href="javascript:void(0)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>Phone</span>
+        </a>
+        <a class="ev-action-item ev-action-primary send-message1" href="javascript:void(0)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Message</span>
+        </a>
+        <a class="ev-action-item ask-question1" href="javascript:void(0)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Ask</span>
+        </a>
+        <a class="ev-action-item add-review1" href="javascript:void(0)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Review</span>
+        </a>
+    </div>
 
     {{-- models --}}
     <div class="user-action-modal modal reviewmodal" wire:ignore.self data-backdrop="static">
@@ -23051,6 +23085,45 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
       </div>
     </div>
 
+    {{-- Mobile Call Modal - Bottom Sheet --}}
+    <div class="ev-mobile-modal-overlay" id="evMobileCallOverlay" style="display:none;">
+        <div class="ev-mobile-modal">
+            <div class="ev-mobile-modal-header">
+                <h3>Call me now</h3>
+                <button type="button" class="ev-mobile-modal-close" id="evMobileCallClose" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="ev-mobile-modal-body">
+                @if($user->iswhatsapp)
+                <a class="ev-call-row whatsapp-rotation-link"
+                   href="https://wa.me/{{$user->country_code}}{{ str_replace(' ', '', $user->phone) }}?text=Hi, I found your profile on evoory: {{ url()->current() }}"
+                   target="_blank"
+                   data-profile-id="{{ $user->id }}"
+                   data-phone="{{ $user->country_code }}{{ str_replace(' ', '', $user->phone) }}"
+                   data-profile-url="{{ url()->current() }}"
+                   onclick="handleWhatsAppClick(event, this)">
+                    <span class="ev-call-icon ev-whatsapp-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </span>
+                    <span class="ev-call-number">+{{$user->country_code}} {{$user->phone}}</span>
+                </a>
+                @endif
+                <a class="ev-call-row" href="tel:+{{$user->country_code.$user->phone}}">
+                    <span class="ev-call-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    </span>
+                    <span class="ev-call-number">+{{$user->country_code}} {{$user->phone}}</span>
+                </a>
+                <p class="ev-call-note">Please tell me you found me on evoory.</p>
+            </div>
+            <div class="ev-mobile-modal-footer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <p>Do not pay anyone in advance, as this is often used by scammers. Please report any suspicious profiles to us. For your safety, we recommend booking verified escorts.</p>
+            </div>
+        </div>
+    </div>
+
     <div class="modal callnow" wire:ignore.self data-backdrop="static">
       <div class="modal-md  modal-dialog">
         <div class="modal-content">
@@ -23202,6 +23275,43 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
 </div>
 
 @push('js')
+<script>
+/* Mobile Tab Switching */
+(function() {
+    var tabs = document.querySelectorAll('.ev-mobile-tab');
+    var contents = document.querySelectorAll('.ev-mobile-tab-content');
+    if (!tabs.length) return;
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var target = this.getAttribute('data-tab');
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            contents.forEach(function(c) {
+                c.style.display = c.getAttribute('data-tab-content') === target ? 'block' : 'none';
+            });
+        });
+    });
+})();
+
+/* Mobile Bottom Sheet Modal */
+(function() {
+    function closeModal(id) {
+        var overlay = document.getElementById(id);
+        if (overlay) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+    // Close button
+    var closeBtn = document.getElementById('evMobileCallClose');
+    if (closeBtn) closeBtn.addEventListener('click', function() { closeModal('evMobileCallOverlay'); });
+    // Close on overlay click
+    var overlay = document.getElementById('evMobileCallOverlay');
+    if (overlay) overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeModal('evMobileCallOverlay');
+    });
+})();
+</script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
@@ -23302,7 +23412,17 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           $("a.contact-phone1").off('click').on('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
+            // Use mobile bottom sheet on small screens
+            if (window.innerWidth < 768) {
+                var overlay = document.getElementById('evMobileCallOverlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+                return false;
+            }
+
             setTimeout(function() {
               $("div.callnow").modal({
                 backdrop: 'static',
@@ -23310,7 +23430,7 @@ document.querySelectorAll('.report-link').forEach(function(link) {
                 show: true
               });
             }, 100);
-            
+
             return false;
           });
           
