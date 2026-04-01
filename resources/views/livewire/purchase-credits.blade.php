@@ -115,15 +115,18 @@
 }
 
 .purchase-credits-page .payment-method-option img {
-    height: 28px;
-    margin-right: 8px;
+    height: 15px;
+    margin: 0;
 }
 
 .purchase-credits-page .payment-method-option input[type="radio"] {
     accent-color: #C1F11D;
     width: 18px;
     height: 18px;
+    margin: 0;
     margin-right: 15px;
+    flex-shrink: 0;
+    vertical-align: middle;
 }
 
 .purchase-credits-page .payment-method-option label {
@@ -131,6 +134,18 @@
     cursor: pointer;
     margin-bottom: 0;
     font-size: 15px;
+    line-height: 1;
+    flex: 1;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.purchase-credits-page .payment-method-option .ev-card-logos {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* Payment Section Card */
@@ -237,12 +252,145 @@
 .modal-backdrop {
     display: none !important;
 }
+
+/* ═══════════════════════════════════════════
+   MOBILE PURCHASE CREDITS VIEW
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* Hide desktop header */
+    #header, .nav-bar.navbar-top-nav {
+        display: none !important;
+    }
+
+    /* Sub-header as mobile nav */
+    .purchase-credits-subheader {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 14px 0 !important;
+    }
+    .purchase-credits-subheader .back-link {
+        font-size: 13px !important;
+    }
+    .purchase-credits-subheader .page-title {
+        font-size: 15px !important;
+    }
+
+    /* Main page padding */
+    .purchase-credits-page {
+        padding: 16px !important;
+    }
+
+    /* Hide desktop heading */
+    .purchase-credits-page .mb-2 h1 {
+        display: none !important;
+    }
+
+    /* Balance card */
+    .ev-balance-card {
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        background: linear-gradient(135deg, #1a2a10, #0f1a08);
+        border: 1px solid #2a3a1a;
+        border-radius: 5px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    .ev-balance-icon {
+        background: #1a2a10;
+        border: 1px solid #3a4a2a;
+        border-radius: 5px;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .ev-balance-label {
+        color: #999;
+        font-size: 11px;
+        margin-bottom: 2px;
+    }
+    .ev-balance-amount {
+        color: #fff;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    /* Info text */
+    .purchase-credits-page .mb-2 p {
+        font-size: 11px !important;
+        color: #666 !important;
+        margin-bottom: 16px !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Amount input */
+    .purchase-credits-page .amount-input-group {
+        border-radius: 5px !important;
+    }
+    .purchase-credits-page .amount-input-group .dollar-sign {
+        padding: 10px 12px !important;
+        font-size: 15px !important;
+    }
+    .purchase-credits-page .amount-input-group input {
+        font-size: 15px !important;
+        padding: 10px 12px !important;
+    }
+    .purchase-credits-page .choose-amount-label {
+        font-size: 13px !important;
+    }
+
+    /* Payment methods card */
+    .purchase-credits-page .payment-methods-card {
+        border-radius: 5px !important;
+        padding: 16px !important;
+        margin-top: 16px !important;
+    }
+    .purchase-credits-page .payment-methods-card h2 {
+        font-size: 15px !important;
+        margin-bottom: 14px !important;
+    }
+    .purchase-credits-page .payment-method-option {
+        border-radius: 5px !important;
+        padding: 12px 14px !important;
+        margin-bottom: 10px !important;
+    }
+    .purchase-credits-page .payment-method-option label {
+        font-size: 13px !important;
+    }
+    .purchase-credits-page .payment-method-option input[type="radio"] {
+        width: 16px !important;
+        height: 16px !important;
+        margin-right: 10px !important;
+    }
+    .purchase-credits-page .payment-method-option img {
+        height: 15px !important;
+    }
+
+    /* Payment section card */
+    .purchase-credits-page .payment-section-card {
+        border-radius: 5px !important;
+        padding: 16px !important;
+    }
+    .purchase-credits-page .package-display {
+        border-radius: 5px !important;
+        padding: 20px !important;
+    }
+
+    /* Iframe */
+    #primary-gateway-iframe {
+        border-radius: 5px !important;
+        min-height: 380px !important;
+    }
+}
 </style>
 
 <div>
 <div class="purchase-credits-subheader">
   <div class="ev-container">
-    <a href="/female-escorts-in-dubai" class="back-link">&lsaquo; Escorts in Dubai</a>
+    <a href="/female-escorts-in-dubai" class="back-link"><span class="ev-desktop-back">&lsaquo; Escorts in Dubai</span><span class="ev-mobile-back" style="display:none;">&lsaquo; Home</span></a>
+    <style>@media(max-width:768px){.ev-desktop-back{display:none!important}.ev-mobile-back{display:inline!important}}</style>
     <span class="page-title">Purchase Credits</span>
   </div>
 </div>
@@ -277,6 +425,17 @@
               </div>
             </div>
 
+            <!-- Mobile Balance Card -->
+            <div class="ev-balance-card" style="display:none;">
+                <div class="ev-balance-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>
+                </div>
+                <div>
+                    <div class="ev-balance-label">Current Balance</div>
+                    <div class="ev-balance-amount">${{ auth()->user()->wallet->balance ?? 0 }}</div>
+                </div>
+            </div>
+
             <!-- Page Header -->
             <div class="mb-2">
               <h1 class="mt-2" style="color: #fff; font-size: 28px; font-weight: 700;">Purchase Credits</h1>
@@ -302,22 +461,26 @@
                   <h2>Payment Method</h2>
                   <div class="payment-method-selector">
                     <!-- Primary Gateway Option -->
-                    <div class="payment-method-option d-flex align-items-center" data-payment-method="primary">
-                      <input type="radio" name="payment_method" id="payment_method_primary" value="primary">
-                      <label for="payment_method_primary" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
-                        <span style="margin-right: 15px;">Primary Gateway</span>
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 40px;">
-                        <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 45px;">
+                    <div class="payment-method-option" data-payment-method="primary">
+                      <label for="payment_method_primary" class="mb-0">
+                        <input type="radio" name="payment_method" id="payment_method_primary" value="primary">
+                        <span>Primary Gateway</span>
+                        <span class="ev-card-logos">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard">
+                          <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa">
+                        </span>
                       </label>
                     </div>
 
                     <!-- Secondary Gateway Option -->
-                    <div class="payment-method-option d-flex align-items-center" data-payment-method="paypal">
-                      <input type="radio" name="payment_method" id="payment_method_paypal" value="paypal">
-                      <label for="payment_method_paypal" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
-                        <span style="margin-right: 15px;">Secondary Gateway</span>
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard" style="width: 40px;">
-                        <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 45px;">
+                    <div class="payment-method-option" data-payment-method="paypal">
+                      <label for="payment_method_paypal" class="mb-0">
+                        <input type="radio" name="payment_method" id="payment_method_paypal" value="paypal">
+                        <span>Secondary Gateway</span>
+                        <span class="ev-card-logos">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard">
+                          <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa">
+                        </span>
                       </label>
                     </div>
                   </div>

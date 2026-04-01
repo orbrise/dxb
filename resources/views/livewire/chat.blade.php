@@ -478,34 +478,265 @@
         }
 
         @media (max-width: 768px) {
+            /* Hide site header spacing */
+            #header { margin-bottom: 0 !important; }
+
+            /* Back bar */
+            .ev-back-bar { position: sticky; top: 0; z-index: 100; }
+            .ev-back-bar .ev-desktop-back { display: none !important; }
+            .ev-back-bar .ev-mobile-back { display: inline !important; }
+            .ev-back-bar h1 { font-size: 15px !important; }
+
+            /* When chat is open, hide the back bar AND site header */
+            .ev-back-bar.ev-chat-open { display: none !important; }
+            .ev-back-bar.ev-chat-open ~ .ev-container { padding-top: 0 !important; }
+            body:has(.ev-chat-open) .ev-header { display: none !important; }
+            body:has(.ev-chat-open) #header { display: none !important; }
+
+            /* Full height chat */
+            .ev-container { padding: 0 16px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
             .chat-container {
-                height: calc(100vh - 150px);
+                height: calc(100vh - 60px) !important;
+                min-height: unset !important;
+                border-radius: 0 !important;
+                gap: 0 !important;
+                position: relative !important;
+            }
+            /* When back bar is hidden (chat open), use full height */
+            .ev-chat-open ~ .ev-container .chat-container,
+            .ev-back-bar[style*="display: none"] ~ .ev-container .chat-container {
+                height: 100vh !important;
             }
 
+            /* Sidebar takes full screen */
             .chat-sidebar {
-                position: absolute;
-                width: 100%;
-                height: 100%;
+                position: absolute !important;
+                width: 100% !important;
+                height: 100% !important;
                 z-index: 10;
                 left: 0;
                 top: 0;
+                min-width: unset !important;
+                border-radius: 0 !important;
+                background: #000 !important;
+            }
+            .chat-sidebar.mobile-hidden { display: none !important; }
+
+            /* Sidebar header - hidden on mobile, we use the back bar */
+            .chat-sidebar-header {
+                padding: 12px 16px !important;
+                background: #000 !important;
+            }
+            .chat-sidebar-header h4 { display: none !important; }
+
+            /* Search bar */
+            .chat-search {
+                display: flex !important;
+                gap: 8px !important;
+                align-items: center !important;
+            }
+            .chat-search input {
+                flex: 1 !important;
+                padding: 11px 16px 11px 36px !important;
+                border-radius: 5px !important;
+                font-size: 14px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
+                color: #fff !important;
+            }
+            .chat-search::before {
+                content: '';
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 14px;
+                height: 14px;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                z-index: 1;
+                pointer-events: none;
+            }
+            .chat-search select {
+                padding: 11px 14px !important;
+                border-radius: 5px !important;
+                font-size: 14px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
+                color: #fff !important;
+                min-width: 70px;
             }
 
-            .chat-sidebar.mobile-hidden {
-                display: none;
+            /* Conversation list */
+            .conversation-list {
+                background: #000 !important;
+                padding: 0 !important;
+            }
+            .conversation-item {
+                padding: 14px 16px !important;
+                border-bottom: 1px solid #1a1a1a !important;
+            }
+            .conversation-item:hover { background: #111 !important; }
+            .conversation-item.active {
+                background: #111 !important;
+                border-left: none !important;
+            }
+            .conversation-avatar {
+                width: 50px !important;
+                height: 50px !important;
+                margin-right: 14px !important;
+            }
+            .conversation-name {
+                font-size: 15px !important;
+                font-weight: 600 !important;
+                color: #fff !important;
+                margin-bottom: 4px !important;
+            }
+            .conversation-preview {
+                font-size: 13px !important;
+                color: #888 !important;
+                line-height: 1.3 !important;
+                -webkit-line-clamp: 2;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                white-space: normal !important;
+            }
+            .conversation-meta { margin-left: 8px !important; }
+            .conversation-time { font-size: 10px !important; display: none !important; }
+            .unread-badge {
+                font-size: 11px !important;
+                padding: 2px 8px !important;
+                background: #C1F11D !important;
+                color: #000 !important;
+                border-radius: 12px !important;
             }
 
+            /* Chat main panel */
             .chat-main {
-                width: 100%;
+                width: 100% !important;
+                border-radius: 0 !important;
+                background: #000 !important;
             }
 
+            /* Chat header - acts as top nav bar replacing site header */
+            .chat-header {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 1001 !important;
+                padding: 14px 16px !important;
+                padding-top: max(14px, env(safe-area-inset-top)) !important;
+                background: #0a0a0a !important;
+                border-bottom: 1px solid #1a1a1a !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            /* Add top padding to messages so they don't hide behind fixed header */
+            .chat-messages { padding-top: 70px !important; }
+            .chat-header-info {
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+                position: relative !important;
+            }
             .mobile-back-btn {
-                display: block;
+                display: block !important;
+                color: #C1F11D !important;
+                font-size: 14px !important;
+                padding: 0 !important;
+                margin-right: 0 !important;
+                position: absolute !important;
+                left: 0 !important;
+            }
+            .chat-header-avatar { display: none !important; }
+            .chat-header-info > div {
+                text-align: center !important;
+                width: 100% !important;
+            }
+            .chat-header-name {
+                font-size: 15px !important;
+                font-weight: 600 !important;
+                color: #fff !important;
+            }
+            .chat-header-email {
+                font-size: 0 !important;
+            }
+            .chat-header-email::after {
+                content: 'Active now';
+                font-size: 12px;
+                color: #C1F11D;
+            }
+            .chat-header-actions { display: none !important; }
+
+            /* Messages area */
+            .chat-messages {
+                background: #000 !important;
+                padding: 16px !important;
+                gap: 4px !important;
             }
 
+            /* Message bubbles */
             .message-bubble {
-                max-width: 85%;
+                max-width: 80% !important;
+                border-radius: 14px !important;
+                padding: 10px 14px !important;
             }
+            .message-wrapper.sent .message-bubble {
+                background: #C1F11D !important;
+                color: #000 !important;
+                border-bottom-right-radius: 4px !important;
+            }
+            .message-wrapper.received .message-bubble {
+                background: #1a1a1a !important;
+                color: #fff !important;
+                border: none !important;
+                border-bottom-left-radius: 4px !important;
+            }
+            .message-text { font-size: 14px !important; }
+
+            /* Message time - outside bubble */
+            .message-time {
+                font-size: 11px !important;
+                margin-top: 4px !important;
+                opacity: 0.6 !important;
+            }
+            .message-wrapper.sent .message-time { color: #888 !important; }
+            .message-wrapper.received .message-time { color: #666 !important; }
+
+            /* Chat input */
+            .chat-input {
+                padding: 10px 16px !important;
+                background: #0a0a0a !important;
+                border-top: 1px solid #1a1a1a !important;
+            }
+            .chat-input-form input {
+                padding: 10px 16px !important;
+                font-size: 14px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
+                border-radius: 5px !important;
+            }
+            .chat-input-form button {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 16px !important;
+                border-radius: 5px !important;
+            }
+
+            /* Communication nav - hide on mobile */
+            .ev-comm-nav, .communication-nav { display: none !important; }
+
+            /* Remove extra spacing */
+            #my-chat { margin: 0 !important; }
+            .mb-3 { margin-bottom: 0 !important; }
+
+            /* Empty state */
+            .chat-empty { padding: 40px 20px !important; }
+            .chat-empty h3 { font-size: 16px !important; }
+            .chat-empty p { font-size: 13px !important; }
         }
 
         /* Scrollbar styling */
@@ -532,12 +763,13 @@
     </style>
 
     <!-- Back Bar -->
-    <div class="ev-back-bar">
+    <div class="ev-back-bar {{ $selectedConversationId ? 'ev-chat-open' : '' }}" id="chatBackBar">
         <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
             <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
-                <i class="fa fa-angle-left"></i> Escorts in Dubai
+                <span class="ev-desktop-back"><i class="fa fa-angle-left"></i> Escorts in Dubai</span>
+                <span class="ev-mobile-back" style="display:none;"><i class="fa fa-angle-left"></i> Back</span>
             </a>
-            <h1>My Messages</h1>
+            <h1><span class="ev-desktop-back">My Messages</span><span class="ev-mobile-back" style="display:none;">Conversations</span></h1>
         </div>
     </div>
 
@@ -657,7 +889,7 @@
                                 <div class="chat-header">
                                     <div class="chat-header-info">
                                         <button class="mobile-back-btn" wire:click="closeConversation">
-                                            <i class="fa fa-arrow-left"></i>
+                                            <i class="fa fa-angle-left"></i> Back
                                         </button>
                                         <div class="chat-header-avatar">
                                             @if($selectedUser->profile_pic)

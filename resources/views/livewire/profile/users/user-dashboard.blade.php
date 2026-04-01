@@ -632,15 +632,212 @@
         .ev-stats-row { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
-        .ev-dashboard-tabs { flex-direction: column; align-items: stretch; }
-        .ev-dashboard-nav { flex-direction: column; }
-        .ev-dashboard-nav a { width: 100%; justify-content: center; }
-        .ev-dashboard-tabs .ev-add-btn { width: 100%; justify-content: center; }
-        .ev-profile-card { flex-direction: column; align-items: center; text-align: center; }
-        .ev-actions { justify-content: center; }
-        .ev-share-row { justify-content: center; flex-wrap: wrap; }
-        .ev-need-help { margin-left: 0; }
-        .ev-profile-card .ev-avatar { width: 120px; height: 120px; }
+        /* Remove header bottom margin on mobile */
+        #header { margin-bottom: 0 !important; }
+
+        /* Desktop/mobile visibility */
+        .ev-desktop-only { display: none !important; }
+        .ev-mobile-only { display: block !important; }
+
+        /* Back bar mobile */
+        .ev-back-bar { position: sticky; top: 0; z-index: 100; }
+        .ev-back-bar a { font-size: 13px !important; }
+        .ev-back-bar h1 { font-size: 15px !important; }
+        .ev-back-bar .ev-desktop-back { display: none !important; }
+        .ev-back-bar .ev-mobile-back { display: inline !important; }
+
+        /* Container */
+        .ev-container { padding: 0 16px !important; }
+
+        /* Tabs - horizontal pill row */
+        .ev-dashboard-tabs {
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            padding: 12px 0 !important;
+            gap: 0 !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .ev-dashboard-tabs::-webkit-scrollbar { display: none; }
+        .ev-dashboard-nav {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            width: 100%;
+        }
+        .ev-dashboard-nav a {
+            width: auto !important;
+            white-space: nowrap;
+            padding: 7px 16px !important;
+            font-size: 12px !important;
+            border-radius: 20px !important;
+            background: transparent !important;
+            border: 1px solid #3a3a3a !important;
+            color: #999 !important;
+        }
+        .ev-dashboard-nav a.active {
+            background: transparent !important;
+            border-color: #C1F11D !important;
+            color: #C1F11D !important;
+        }
+        .ev-dashboard-nav a i { display: none; }
+
+        /* Hide desktop Add Profile button (we have sticky bottom one) */
+        .ev-dashboard-tabs .ev-add-btn { display: none !important; }
+
+        /* Main grid - single column */
+        .ev-main-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+        }
+
+        /* Profile card - vertical mobile layout */
+        .ev-profile-card {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            text-align: left !important;
+            padding: 16px 0 !important;
+            gap: 12px !important;
+        }
+        .ev-profile-card .ev-profile-info {
+            padding-left: 0 !important;
+            border-left: none !important;
+            width: 100%;
+        }
+        .ev-profile-card .ev-profile-name {
+            font-size: 16px !important;
+            margin-bottom: 6px !important;
+        }
+        .ev-profile-card .ev-avatar {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 300px;
+            border-radius: 5px !important;
+        }
+        .ev-profile-card .ev-avatar img {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 5px !important;
+        }
+
+        /* Badges row */
+        .ev-profile-name { flex-wrap: wrap !important; }
+        .ev-badge { font-size: 11px !important; padding: 2px 6px !important; }
+
+        /* Action buttons - compact row */
+        .ev-actions {
+            justify-content: flex-start !important;
+            gap: 6px !important;
+        }
+        .ev-btn {
+            padding: 7px 14px !important;
+            font-size: 11px !important;
+            border-radius: 20px !important;
+            background: transparent !important;
+            border: 1px solid #3a3a3a !important;
+            color: #999 !important;
+        }
+        .ev-btn:hover, .ev-btn:active {
+            border-color: #C1F11D !important;
+            color: #C1F11D !important;
+        }
+        .ev-btn-accent {
+            border-color: #3a3a3a !important;
+            background: transparent !important;
+            color: #999 !important;
+        }
+        /* Hide delete button from inline actions on mobile (we have it below) */
+        .ev-actions .ev-btn-danger { display: none !important; }
+
+        /* About text */
+        .ev-about {
+            font-size: 13px !important;
+            -webkit-line-clamp: 5 !important;
+        }
+
+        /* Hide location on mobile (shown in badges area) */
+        .ev-location { font-size: 12px !important; }
+
+        /* Suggestion alert */
+        .ev-suggestion-alert { border-radius: 5px !important; padding: 14px !important; }
+        .ev-suggestion-alert h3 { font-size: 14px !important; }
+        .ev-suggestion-alert p { font-size: 12px !important; }
+
+        /* Pending alert */
+        .ev-pending-alert { border-radius: 5px !important; font-size: 12px !important; padding: 12px 16px !important; }
+
+        /* Sidebar cards */
+        .ev-sidebar-card { border-radius: 5px !important; padding: 16px !important; margin-bottom: 12px !important; }
+        .ev-sidebar-card h3 { font-size: 15px !important; }
+        .ev-sidebar-card p { font-size: 13px !important; }
+
+        /* Stats row - single column */
+        .ev-stats-row {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+        }
+        .ev-stats-card { border-radius: 5px !important; padding: 16px !important; }
+        .ev-stats-card h3 { font-size: 14px !important; }
+
+        /* Delete profile link - centered */
+        .ev-delete-link { margin-top: 16px !important; font-size: 14px !important; }
+
+        /* Sticky Add Profile button at bottom */
+        .ev-mobile-add-profile {
+            display: flex !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 12px 16px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            background: #0a0a0a;
+            border-top: 1px solid #2a2a2a;
+        }
+        .ev-mobile-add-profile a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 14px;
+            background: #C1F11D;
+            color: #000;
+            font-weight: 600;
+            font-size: 15px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+      
+        /* Sidebar accent card - dark on mobile */
+        .ev-sidebar-accent {
+            background: #1a1a1a !important;
+            border-color: #2a2a2a !important;
+        }
+        .ev-sidebar-accent h3 {
+            color: #C1F11D !important;
+            border-bottom-color: #2a2a2a !important;
+        }
+        .ev-sidebar-accent p { color: #ccc !important; }
+        .ev-sidebar-accent .ev-sub-text { color: #777 !important; }
+        .ev-sidebar-accent .ev-unavailable { background: #333 !important; color: #888 !important; border: 1px solid #3a3a3a !important; }
+        .ev-sidebar-accent .ev-btn-dark-solid {
+            background: transparent !important;
+            border: 1px solid #C1F11D !important;
+            color: #C1F11D !important;
+        }
+
+        /* Alerts */
+        .ev-alert-success { border-radius: 5px !important; font-size: 13px !important; }
+        .ev-alert-danger { border-radius: 5px !important; }
+        .ev-alert-danger h4 { font-size: 14px !important; }
+        .ev-alert-danger p { font-size: 12px !important; }
     }
 </style>
 @endpush
@@ -649,7 +846,8 @@
 <div class="ev-back-bar">
     <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
         <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
-            <i class="fa fa-angle-left"></i> Escorts in Dubai
+            <span class="ev-desktop-back"><i class="fa fa-angle-left"></i> Escorts in Dubai</span>
+            <span class="ev-mobile-back" style="display:none;"><i class="fa fa-angle-left"></i> Home</span>
         </a>
         <h1><a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}">{{Auth::user()->name}}'s Dubai profile</a></h1>
     </div>
@@ -717,8 +915,8 @@
         @endforeach
     @endif --}}
 
-    <!-- More Photos Suggestion -->
-    <div class="ev-suggestion-alert">
+    <!-- More Photos Suggestion (desktop) -->
+    <div class="ev-suggestion-alert ev-desktop-only">
         <button class="ev-close" onclick="this.parentElement.style.display='none'">&times;</button>
         <h3>More photos = More leads</h3>
         <p>Increasing the number of photos on your listing will produce more enquiries - you can add up to 30 - <a href="{{url('edit-profile/'.$user->slug.'/'.$user->id)}}#photos">Add more photos</a>.</p>
@@ -879,6 +1077,13 @@
                 </div>
                 @endif
             @endif
+
+            <!-- More Photos Suggestion (mobile - after pagination) -->
+            <div class="ev-suggestion-alert ev-mobile-only" style="display:none;">
+                <button class="ev-close" onclick="this.parentElement.style.display='none'">&times;</button>
+                <h3>More photos = More leads</h3>
+                <p>Increasing the number of photos on your listing will produce more enquiries - you can add up to 30 - <a href="{{url('edit-profile/'.$user->slug.'/'.$user->id)}}#photos">Add more photos</a>.</p>
+            </div>
         </div>
 
         <!-- Right Sidebar -->
@@ -978,6 +1183,13 @@
     </div>
     @endif
 
+</div>
+
+<!-- Mobile Sticky Add Profile Button -->
+<div class="ev-mobile-add-profile" style="display:none;">
+    <a href="{{ route('new.profile') }}">
+        <i class="fa fa-plus"></i> Add Profile
+    </a>
 </div>
 
 @push('js')
