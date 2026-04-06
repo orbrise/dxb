@@ -377,81 +377,222 @@
         background: var(--bg-card-hover, #222);
     }
     @media (max-width: 768px) {
-        .ev-back-bar a {
-            font-size: 14px;
-        }
-        .ev-back-bar h1 {
-            font-size: 16px;
-        }
-        .ev-account-cards {
-            flex-direction: column;
-        }
-        .ev-account-card {
-            flex-basis: auto;
-        }
+        /* Header */
+        #header { margin-bottom: 0 !important; }
+        .ev-header { margin-bottom: 0 !important; padding: 8px 0 !important; }
+        .ev-back-bar { padding: 8px 0 !important; }
+        .ev-back-bar a { font-size: 13px; }
+        .ev-back-bar h1 { font-size: 15px; }
+
+        /* Tabs - horizontal pills */
         .ev-account-tabs {
             padding: 12px 0;
-            gap: 6px;
+            gap: 8px;
+            flex-wrap: nowrap;
         }
         .ev-account-tabs a {
-            padding: 8px 10px;
+            padding: 8px 12px;
             font-size: 12px;
             width: auto;
             flex: 1;
             min-width: 0;
             border: 1px solid #333;
+            border-radius: 5px;
+            background: transparent;
+            color: #999;
+            justify-content: center;
         }
         .ev-account-tabs a.active {
             border-color: #C1F11D;
+            color: #C1F11D;
+            background: transparent;
         }
-        /* Newsletter modal mobile */
-        .ev-modal-overlay {
-            align-items: center;
-            padding: 1rem;
+
+        /* Cards - full width stacked */
+        .ev-account-cards {
+            flex-direction: column;
+            gap: 12px;
         }
-        .ev-modal {
+        .ev-account-card {
+            flex-basis: auto;
             border-radius: 5px;
-            max-width: 100%;
-        }
-        .ev-modal-header {
-            padding: 14px 16px;
-        }
-        .ev-modal-header h2 {
-            font-size: 16px;
-        }
-        .ev-modal-body {
             padding: 16px;
         }
-        .ev-modal-footer {
-            padding: 12px 16px;
+
+        /* User card */
+        .ev-user-card .ev-avatar {
+            width: 56px;
+            height: 56px;
         }
-        .ev-search-input {
+        .ev-user-card .ev-user-name {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .ev-user-card .ev-user-info li {
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+        .ev-edit-btn {
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
+        }
+
+        /* Credits card - mobile layout */
+        .ev-account-card:has(.ev-credits-amount) {
+            position: relative;
+        }
+        .ev-credits-mobile-row {
+            display: flex !important;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .ev-credits-icon {
+            display: flex !important;
+            width: 44px;
+            height: 44px;
+            background: #1a2a10;
+            border: 1px solid #3a4a2a;
             border-radius: 5px;
-            border-color: #333;
-            background: #1a1a1a;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        .ev-search-input input {
-            font-size: 14px;
+        .ev-credits-label {
+            color: #999;
+            font-size: 12px;
+            margin: 0;
         }
-        .ev-city-tag {
-            border-radius: 5px;
-            border-color: #333;
-            background: #1a1a1a;
-        }
-        .ev-dropdown-results {
-            border-radius: 5px;
-        }
-        .ev-modal-close {
-            border-radius: 5px;
+        .ev-credits-amount {
+            font-size: 22px !important;
+            margin: 0 !important;
         }
         .ev-buy-btn {
             width: 100%;
             justify-content: center;
             border-radius: 5px !important;
+            padding: 12px 20px;
         }
-        .ev-alert-success {
+        /* Hide payment icons & desktop credits on mobile */
+        .ev-payments { display: none !important; }
+        .ev-desktop-credits { display: none !important; }
+
+        /* Communication card - hide on mobile (shown as bottom nav) */
+        .ev-account-card:has(.ev-comm-list) { display: none !important; }
+
+        /* Newsletter card - hide desktop version, show mobile */
+        .ev-account-card:has(.ev-newsletter-text) { display: none !important; }
+        .ev-newsletter-mobile {
+            display: flex !important;
+            align-items: center;
+            gap: 12px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
             border-radius: 5px;
+            padding: 16px;
+            cursor: pointer;
         }
+        .ev-newsletter-mobile-icon {
+            width: 44px;
+            height: 44px;
+            background: #1a2a10;
+            border: 1px solid #3a4a2a;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .ev-newsletter-mobile-info { flex: 1; }
+        .ev-newsletter-mobile-info .ev-nl-title {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 500;
+            margin: 0;
+        }
+        .ev-newsletter-mobile-info .ev-nl-sub {
+            color: #888;
+            font-size: 13px;
+            margin: 0;
+        }
+        .ev-newsletter-mobile-arrow {
+            color: #888;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Delete account - full width card style */
+        .ev-delete-link {
+            width: 100%;
+            justify-content: center;
+            padding: 14px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #dc3545 !important;
+        }
+        div:has(> form > .ev-delete-link) {
+            text-align: center !important;
+            margin-top: 12px !important;
+        }
+
+        /* Mobile bottom nav */
+        .ev-mobile-bottom-nav {
+            display: flex !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: #0a0a0a;
+            border-top: 1px solid #2a2a2a;
+            padding: 10px 12px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+        .ev-mobile-bottom-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #888;
+            text-decoration: none;
+            font-size: 11px;
+            padding: 7px 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+        .ev-mobile-bottom-nav a i { font-size: 12px; }
+        .ev-mobile-bottom-nav a.ev-nav-active {
+            background: #C1F11D;
+            color: #000;
+            font-weight: 600;
+        }
+        .ev-mobile-bottom-nav a:not(.ev-nav-active):hover {
+            color: #fff;
+        }
+
+        /* Container spacing */
+        .ev-container { padding-bottom: 0px !important; padding-top: 0 !important; }
+
+        /* Alert */
+        .ev-alert-success { border-radius: 5px; }
+
+        /* Newsletter modal mobile */
+        .ev-modal-overlay { align-items: center; padding: 1rem; }
+        .ev-modal { border-radius: 5px; max-width: 100%; }
+        .ev-modal-header { padding: 14px 16px; }
+        .ev-modal-header h2 { font-size: 16px; }
+        .ev-modal-body { padding: 16px; }
+        .ev-modal-footer { padding: 12px 16px; }
+        .ev-search-input { border-radius: 5px; border-color: #333; background: #1a1a1a; }
+        .ev-search-input input { font-size: 14px; }
+        .ev-city-tag { border-radius: 5px; border-color: #333; background: #1a1a1a; }
+        .ev-dropdown-results { border-radius: 5px; }
+        .ev-modal-close { border-radius: 5px; }
     }
 </style>
 @endpush
@@ -514,7 +655,16 @@
 
             {{-- Credits card --}}
             <div class="ev-account-card">
-                <h2 class="ev-credits-amount">Credits ${{ auth()->user()->wallet->balance ?? 0 }}</h2>
+                <div class="ev-credits-mobile-row" style="display:none;">
+                    <div class="ev-credits-icon" style="display:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>
+                    </div>
+                    <div>
+                        <p class="ev-credits-label">Credits</p>
+                        <h2 class="ev-credits-amount">${{ number_format(auth()->user()->wallet->balance ?? 0, 2) }}</h2>
+                    </div>
+                </div>
+                <h2 class="ev-credits-amount ev-desktop-credits">Credits ${{ auth()->user()->wallet->balance ?? 0 }}</h2>
                 <div style="margin-bottom: 16px;">
                     <a class="ev-buy-btn" href="/purchase-credits" onclick="window.location.href='/purchase-credits'; return false;">
                         <i class="fa fa-coins"></i>
@@ -683,6 +833,65 @@
                 </div>
             </div>
 
+            {{-- Mobile Newsletter Row --}}
+            <div class="ev-newsletter-mobile" style="display:none;" x-data="{ show: false }">
+                <div class="ev-newsletter-mobile-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </div>
+                <div class="ev-newsletter-mobile-info" @click="show = true; $wire.call('loadUserSettings')">
+                    <p class="ev-nl-title">Newsletter</p>
+                    <p class="ev-nl-sub">Subscribed</p>
+                </div>
+                <span class="ev-newsletter-mobile-arrow" @click="show = true; $wire.call('loadUserSettings')">›</span>
+
+                {{-- Reuse newsletter modal --}}
+                <div x-show="show" x-cloak class="ev-modal-overlay" @click.self="show = false">
+                    <div class="ev-modal">
+                        <div class="ev-modal-header">
+                            <h2><i class="fa fa-newspaper"></i> <span>Newsletter</span></h2>
+                            <button type="button" class="ev-modal-close" @click="show = false">&times;</button>
+                        </div>
+                        <div class="ev-modal-body">
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: flex; align-items: center; cursor: pointer; font-size: 1rem;">
+                                    <input type="checkbox" wire:model.live="receiveNewsletter" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
+                                    <span style="margin-left: 0.75rem; font-weight: 500;">Send me newsletter for:</span>
+                                </label>
+                            </div>
+                            <div style="margin-bottom: 1rem; position: relative;">
+                                <div class="ev-search-input">
+                                    <span><i class="fa fa-map-marker-alt"></i></span>
+                                    <input type="text" placeholder="Find city..." wire:model.live="citySearch" autocomplete="off">
+                                    @if($citySearch)
+                                        <button type="button" wire:click="$set('citySearch', '')"><i class="fa fa-times"></i></button>
+                                    @endif
+                                </div>
+                                @if(count($searchResults) > 0)
+                                    <div class="ev-dropdown-results">
+                                        @foreach($searchResults as $city)
+                                            <button type="button" wire:click="addCity({{ $city['id'] }})">{{ $city['name'] }}@if($city['country']) <span style="color:#666;">({{ $city['country'] }})</span>@endif</button>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                            @if(count($selectedCities) > 0)
+                                <div style="margin-bottom: 1rem; max-height: 150px; overflow-y: auto;">
+                                    @foreach($selectedCities as $index => $city)
+                                        <div class="ev-city-tag">
+                                            <span><i class="fa fa-map-marker-alt" style="margin-right:0.5rem;"></i>{{ $city['name'] }}@if($city['country']) <span style="color:#666;">({{ $city['country'] }})</span>@endif</span>
+                                            <button type="button" style="background:none;border:none;cursor:pointer;font-size:1.2rem;padding:0;" wire:click="removeCity({{ $index }})"><i class="fa fa-times"></i></button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                        <div class="ev-modal-footer">
+                            <button type="button" class="ev-buy-btn" wire:click="saveNewsletter" @click="show = false"><span>Save</span> <i class="fa fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         {{-- Delete account --}}
@@ -695,5 +904,25 @@
             </form>
         </div>
 
+    </div>
+
+    {{-- Mobile Bottom Nav --}}
+    <div class="ev-mobile-bottom-nav" style="display:none;">
+        <a href="{{ route('favorites.dashboard') }}" class="ev-nav-active">
+            <i class="fa fa-heart"></i>
+            <span>Favorite</span>
+        </a>
+        <a href="{{ route('user.chat') }}" class="ev-nav-active">
+            <i class="fa fa-comment"></i>
+            <span>Message</span>
+        </a>
+        <a href="{{ route('user.questions') }}">
+            <i class="fa fa-question-circle"></i>
+            <span>Ask</span>
+        </a>
+        <a href="{{ route('user.reviews') }}">
+            <i class="fa fa-star"></i>
+            <span>Reviews</span>
+        </a>
     </div>
 </div>

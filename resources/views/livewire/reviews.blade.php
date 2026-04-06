@@ -261,22 +261,12 @@
 
         .mobile-back-btn {
             display: none;
-            background: #333;
+            background: none;
             border: none;
             color: #c1f11d;
-            font-size: 20px;
+            font-size: 14px;
             cursor: pointer;
-            padding: 5px 10px;
-            
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .mobile-back-btn:hover {
-            background: #444;
+            padding: 0;
         }
 
         /* Review & Reply Area */
@@ -472,62 +462,225 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .stats-row {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
+            /* Header spacing */
+            #header { margin-bottom: 0 !important; }
 
-            .stat-card {
-                padding: 15px;
-            }
+            /* Back bar */
+            .ev-back-bar { position: sticky; top: 0; z-index: 100; }
+            .ev-back-bar .ev-desktop-back { display: none !important; }
+            .ev-back-bar .ev-mobile-back { display: inline !important; }
+            .ev-back-bar h1 { font-size: 15px !important; }
 
-            .stat-card h3 {
-                font-size: 22px;
-            }
+            /* When review is open, hide back bar and site header */
+            .ev-back-bar.ev-review-open { display: none !important; }
+            body:has(.ev-review-open) .ev-header { display: none !important; }
+            body:has(.ev-review-open) #header { display: none !important; }
 
+            /* Container */
+            .ev-container { padding: 0 16px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+
+            /* Communication nav - hide on mobile */
+            .ev-comm-nav, .communication-nav { display: none !important; }
+
+            /* Remove extra spacing */
+            #my-reviews { margin: 0 !important; }
+            .mb-3 { margin-bottom: 0 !important; }
+
+            /* Stats - hide on mobile */
+            .stats-row { display: none !important; }
+
+            /* Reviews container */
             .reviews-container {
-                height: calc(100vh - 180px);
-                flex-direction: column;
+                height: calc(100vh - 60px) !important;
+                min-height: unset !important;
+                border-radius: 0 !important;
+                gap: 0 !important;
+                position: relative !important;
+                flex-direction: column !important;
             }
 
+            /* Sidebar takes full screen */
             .review-sidebar {
-                width: 100%;
-                min-width: 100%;
-                height: 100%;
-                max-height: 100%;
-                border-right: none;
-                border-bottom: none;
-                flex: 1;
+                width: 100% !important;
+                min-width: unset !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                border-radius: 0 !important;
+                background: #000 !important;
+                flex: 1 !important;
             }
+            .review-sidebar.hidden { display: none !important; }
 
-            .review-sidebar.hidden {
-                display: none;
+            /* Sidebar header */
+            .review-sidebar-header {
+                padding: 12px 0 !important;
+                background: #000 !important;
             }
+            .review-sidebar-header h4 { display: none !important; }
 
-            .review-main {
-                display: none;
-                height: 100%;
-            }
-
-            .review-main.fullscreen {
-                display: flex;
-                height: 100%;
-            }
-
-            .mobile-back-btn {
+            /* Filters / search bar */
+            .review-filters {
                 display: flex !important;
+                gap: 8px !important;
+            }
+            .review-filters input {
+                flex: 2 !important;
+                padding: 11px 14px !important;
+                border-radius: 5px !important;
+                font-size: 14px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
+            }
+            .review-filters select {
+                flex: 1 !important;
+                padding: 11px 10px !important;
+                border-radius: 5px !important;
+                font-size: 13px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
             }
 
-            .review-bubble {
-                max-width: 90%;
+            /* Reviews list */
+            .review-list { background: #000 !important; }
+            .review-item {
+                padding: 14px 0 !important;
+                border-bottom: 1px solid #1a1a1a !important;
             }
-        }
+            .review-item:hover { background: #111 !important; }
+            .review-item.active {
+                background: #111 !important;
+            }
+            .review-item-avatar {
+                width: 50px !important;
+                height: 50px !important;
+                margin-right: 14px !important;
+            }
+            .review-item-name { font-size: 15px !important; }
+            .review-item-preview {
+                font-size: 13px !important;
+                color: #888 !important;
+                white-space: normal !important;
+                -webkit-line-clamp: 2;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .review-item-time { font-size: 10px !important; display: none !important; }
+            .review-item-stars { font-size: 11px !important; }
+            .unreplied-badge {
+                font-size: 10px !important;
+                padding: 2px 7px !important;
+            }
 
-        /* Hide communication nav when review is selected on mobile */
-        @media (max-width: 768px) {
-            .hide-nav-mobile .communication-nav {
+            /* Review main panel */
+            .review-main {
                 display: none !important;
+                height: 100% !important;
+                background: #000 !important;
+                border-radius: 0 !important;
             }
+            .review-main.fullscreen {
+                display: flex !important;
+                height: 100% !important;
+            }
+
+            /* Hide the extra back button bar above header */
+            .review-main > div[style*="background: #2a2a2a"] { display: none !important; }
+
+            /* Review header - fixed top nav replacing site header */
+            .review-detail-header {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 1001 !important;
+                padding: 14px 16px !important;
+                padding-top: max(14px, env(safe-area-inset-top)) !important;
+                background: #0a0a0a !important;
+                border-bottom: 1px solid #1a1a1a !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .review-detail-info {
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+                position: relative !important;
+                gap: 0 !important;
+            }
+            .mobile-back-btn {
+                display: block !important;
+                position: absolute !important;
+                left: 0 !important;
+            }
+            .review-detail-avatar { display: none !important; }
+            .review-detail-info > div {
+                text-align: center !important;
+                width: 100% !important;
+            }
+            .review-detail-name {
+                font-size: 15px !important;
+                font-weight: 600 !important;
+                color: #fff !important;
+            }
+            .review-detail-profile {
+                font-size: 12px !important;
+                color: #C1F11D !important;
+            }
+            .review-detail-stars { display: none !important; }
+            .review-detail-actions { display: none !important; }
+
+            /* Review & Reply area */
+            .review-reply-area {
+                background: #000 !important;
+                padding: 16px !important;
+                padding-top: 70px !important;
+                gap: 4px !important;
+            }
+            .review-bubble {
+                max-width: 80% !important;
+                border-radius: 14px !important;
+                padding: 10px 14px !important;
+            }
+            .review-bubble.review-incoming {
+                background: #1a1a1a !important;
+                color: #fff !important;
+                border: none !important;
+            }
+            .review-bubble.review-outgoing {
+                background: #C1F11D !important;
+                color: #000 !important;
+            }
+            .review-text { font-size: 14px !important; }
+            .review-time { font-size: 11px !important; opacity: 0.6 !important; }
+            .review-label { font-size: 10px !important; }
+
+            /* Reply input */
+            .reply-input {
+                padding: 10px 16px !important;
+                background: #0a0a0a !important;
+                border-top: 1px solid #1a1a1a !important;
+            }
+            .reply-input textarea {
+                padding: 10px 16px !important;
+                font-size: 14px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
+                border-radius: 5px !important;
+            }
+            .reply-input button {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 16px !important;
+                border-radius: 5px !important;
+                background: #C1F11D !important;
+            }
+
+            /* Empty state */
+            .review-empty { padding: 40px 20px !important; }
+            .review-empty h3 { font-size: 16px !important; }
+            .review-empty p { font-size: 13px !important; }
         }
     </style>
 
@@ -536,12 +689,13 @@
     @endpush
 
     <!-- Back Bar -->
-    <div class="ev-back-bar">
+    <div class="ev-back-bar {{ $selectedReview ? 'ev-review-open' : '' }}">
         <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
             <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
-                <i class="fa fa-angle-left"></i> Escorts in Dubai
+                <span class="ev-desktop-back"><i class="fa fa-angle-left"></i> Escorts in Dubai</span>
+                <span class="ev-mobile-back" style="display:none;"><i class="fa fa-angle-left"></i> Back</span>
             </a>
-            <h1>My Reviews</h1>
+            <h1><span class="ev-desktop-back">My Reviews</span><span class="ev-mobile-back" style="display:none;">Reviews</span></h1>
         </div>
     </div>
 
@@ -675,14 +829,11 @@
                         <div class="review-main {{ $selectedReview ? 'fullscreen' : '' }}">
                             @if($selectedReview)
                                 {{-- Review Header --}}
-                                <div style="background: #2a2a2a;">
-                                 <button class="mobile-back-btn" wire:click="closeModal">
-                                            <i class="fa fa-arrow-left"></i>
-                                        </button>
-                                        </div>
                                 <div class="review-detail-header">
                                     <div class="review-detail-info">
-                                       
+                                        <button class="mobile-back-btn" wire:click="closeModal">
+                                            <i class="fa fa-angle-left"></i> Back
+                                        </button>
                                         <div class="review-detail-avatar">
                                             {{ strtoupper(substr($selectedReview->user->name ?? $selectedReview->user->email ?? 'G', 0, 1)) }}
                                         </div>

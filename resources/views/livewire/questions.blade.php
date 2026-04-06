@@ -414,70 +414,230 @@
             max-width: 300px;
         }
 
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            .questions-container {
-                height: calc(100vh - 180px);
-                flex-direction: column;
-            }
-
-            .questions-sidebar {
-                width: 100%;
-                min-width: 100%;
-                height: 100%;
-                max-height: 100%;
-                border-right: none;
-                border-bottom: none;
-                flex: 1;
-            }
-
-            .questions-sidebar.hidden {
-                display: none;
-            }
-
-            .question-main {
-                display: none;
-                height: 100%;
-            }
-
-            .question-main.fullscreen {
-                display: flex;
-                height: 100%;
-            }
-
-            .mobile-back-btn {
-                display: flex !important;
-            }
-
-            .qa-bubble {
-                max-width: 90%;
-            }
-
-            .stats-row {
-                flex-wrap: wrap;
-            }
-
-            .stat-card {
-                flex: 1 1 calc(33.33% - 10px);
-                min-width: 100px;
-            }
-        }
-
-        /* Hide communication nav when question is selected on mobile */
-        @media (max-width: 768px) {
-            .hide-nav-mobile .communication-nav {
-                display: none !important;
-            }
-        }
-
         .mobile-back-btn {
             display: none;
-            background: #333;
+            background: none;
             border: none;
             color: #c1f11d;
-            font-size: 20px;
+            font-size: 14px;
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 0;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            /* Header spacing */
+            #header { margin-bottom: 0 !important; }
+
+            /* Back bar */
+            .ev-back-bar { position: sticky; top: 0; z-index: 100; }
+            .ev-back-bar .ev-desktop-back { display: none !important; }
+            .ev-back-bar .ev-mobile-back { display: inline !important; }
+            .ev-back-bar h1 { font-size: 15px !important; }
+
+            /* When question is open, hide back bar and site header */
+            .ev-back-bar.ev-question-open { display: none !important; }
+            body:has(.ev-question-open) .ev-header { display: none !important; }
+            body:has(.ev-question-open) #header { display: none !important; }
+
+            /* Container */
+            .ev-container { padding: 0 16px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+
+            /* Communication nav - hide on mobile */
+            .ev-comm-nav, .communication-nav { display: none !important; }
+
+            /* Remove extra spacing */
+            #my-questions { margin: 0 !important; }
+            .mb-3 { margin-bottom: 0 !important; }
+
+            /* Stats - hide on mobile */
+            .stats-row { display: none !important; }
+
+            /* Questions container */
+            .questions-container {
+                height: calc(100vh - 60px) !important;
+                min-height: unset !important;
+                border-radius: 0 !important;
+                gap: 0 !important;
+                position: relative !important;
+                flex-direction: column !important;
+            }
+
+            /* Sidebar takes full screen */
+            .questions-sidebar {
+                width: 100% !important;
+                min-width: unset !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                border-radius: 0 !important;
+                background: #000 !important;
+                flex: 1 !important;
+            }
+            .questions-sidebar.hidden { display: none !important; }
+
+            /* Sidebar header */
+            .questions-sidebar-header {
+                padding: 12px 0 !important;
+                background: #000 !important;
+            }
+            .questions-sidebar-header h4 { display: none !important; }
+
+            /* Search bar */
+            .questions-search {
+                display: flex !important;
+                gap: 8px !important;
+            }
+            .questions-search input {
+                flex: 1 !important;
+                padding: 11px 14px !important;
+                border-radius: 5px !important;
+                font-size: 14px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
+            }
+            .questions-filter {
+                padding: 11px 14px !important;
+                border-radius: 5px !important;
+                font-size: 14px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
+            }
+
+            /* Questions list */
+            .questions-list { background: #000 !important; }
+            .question-item {
+                padding: 14px 0 !important;
+                border-bottom: 1px solid #1a1a1a !important;
+            }
+            .question-item:hover { background: #111 !important; }
+            .question-item.active {
+                background: #111 !important;
+                border-left: none !important;
+            }
+            .question-avatar {
+                width: 50px !important;
+                height: 50px !important;
+                margin-right: 14px !important;
+            }
+            .question-from { font-size: 15px !important; }
+            .question-preview {
+                font-size: 13px !important;
+                color: #888 !important;
+                white-space: normal !important;
+                -webkit-line-clamp: 2;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            .question-time { font-size: 10px !important; display: none !important; }
+            .unanswered-badge {
+                font-size: 10px !important;
+                padding: 2px 7px !important;
+            }
+
+            /* Question main panel */
+            .question-main {
+                display: none !important;
+                height: 100% !important;
+                background: #000 !important;
+                border-radius: 0 !important;
+            }
+            .question-main.fullscreen {
+                display: flex !important;
+                height: 100% !important;
+            }
+
+            /* Question header - fixed top nav replacing site header */
+            .question-detail-header {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 1001 !important;
+                padding: 14px 16px !important;
+                padding-top: max(14px, env(safe-area-inset-top)) !important;
+                background: #0a0a0a !important;
+                border-bottom: 1px solid #1a1a1a !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .question-detail-info {
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+                position: relative !important;
+            }
+            .mobile-back-btn {
+                display: block !important;
+                position: absolute !important;
+                left: 0 !important;
+            }
+            .question-detail-avatar { display: none !important; }
+            .question-detail-info > div {
+                text-align: center !important;
+                width: 100% !important;
+            }
+            .question-detail-name {
+                font-size: 15px !important;
+                font-weight: 600 !important;
+                color: #fff !important;
+            }
+            .question-detail-profile {
+                font-size: 12px !important;
+                color: #C1F11D !important;
+            }
+            .question-detail-actions { display: none !important; }
+
+            /* Q&A area */
+            .qa-area {
+                background: #000 !important;
+                padding: 16px !important;
+                padding-top: 70px !important;
+                gap: 4px !important;
+            }
+            .qa-bubble {
+                max-width: 80% !important;
+                border-radius: 14px !important;
+                padding: 10px 14px !important;
+            }
+            .qa-question {
+                background: #1a1a1a !important;
+                color: #fff !important;
+                border: none !important;
+            }
+            .qa-answer {
+                background: #C1F11D !important;
+                color: #000 !important;
+            }
+            .qa-text { font-size: 14px !important; }
+            .qa-time { font-size: 11px !important; opacity: 0.6 !important; }
+            .qa-label { font-size: 10px !important; }
+
+            /* Answer input */
+            .answer-input {
+                padding: 10px 16px !important;
+                background: #0a0a0a !important;
+                border-top: 1px solid #1a1a1a !important;
+            }
+            .answer-input textarea {
+                padding: 10px 16px !important;
+                font-size: 14px !important;
+                background: #1a1a1a !important;
+                border: 1px solid #333 !important;
+                border-radius: 5px !important;
+            }
+            .answer-input button {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 16px !important;
+                border-radius: 5px !important;
+            }
+
+            /* Empty state */
+            .question-empty { padding: 40px 20px !important; }
+            .question-empty h3 { font-size: 16px !important; }
+            .question-empty p { font-size: 13px !important; }
         }
 
         /* Scrollbar styling */
@@ -499,12 +659,13 @@
     </style>
 
     <!-- Back Bar -->
-    <div class="ev-back-bar">
+    <div class="ev-back-bar {{ $selectedQuestion ? 'ev-question-open' : '' }}">
         <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
             <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
-                <i class="fa fa-angle-left"></i> Escorts in Dubai
+                <span class="ev-desktop-back"><i class="fa fa-angle-left"></i> Escorts in Dubai</span>
+                <span class="ev-mobile-back" style="display:none;"><i class="fa fa-angle-left"></i> Back</span>
             </a>
-            <h1>My Questions</h1>
+            <h1><span class="ev-desktop-back">My Questions</span><span class="ev-mobile-back" style="display:none;">Questions</span></h1>
         </div>
     </div>
 
@@ -604,7 +765,7 @@
                                 <div class="question-detail-header">
                                     <div class="question-detail-info">
                                         <button class="mobile-back-btn" wire:click="closeModal">
-                                            <i class="fa fa-arrow-left"></i>
+                                            <i class="fa fa-angle-left"></i> Back
                                         </button>
                                         <div class="question-detail-avatar">
                                             {{ strtoupper(substr($selectedQuestion->askedBy->name ?? $selectedQuestion->askedBy->email ?? 'G', 0, 1)) }}

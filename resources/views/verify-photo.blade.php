@@ -486,23 +486,117 @@ body { background: #0a0a0a !important; }
 }
 
 @media (max-width: 768px) {
-    .verify-layout {
-        flex-direction: column;
+    /* Header spacing */
+    #header { margin-bottom: 0 !important; }
+
+    /* Page header - mobile nav style */
+    .ev-page-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 14px 0 !important;
+        border-bottom: none !important;
     }
+    .ev-page-header .ev-container {
+        display: flex !important;
+        align-items: center !important;
+        position: relative !important;
+        justify-content: center !important;
+    }
+    .ev-back-link {
+        position: absolute !important;
+        left: 16px !important;
+        font-size: 13px !important;
+    }
+    .ev-back-link .ev-desktop-back { display: none !important; }
+    .ev-back-link .ev-mobile-back { display: inline !important; }
     .ev-page-title {
-        font-size: 15px;
-        text-align: left;
+        font-size: 15px !important;
+        text-align: center !important;
     }
+    .ev-page-title .ev-desktop-title { display: none !important; }
+    .ev-page-title .ev-mobile-title { display: inline !important; }
+
+    /* Container */
+    .ev-container { padding: 0 16px !important; }
+
+    /* Profile selector */
+    .profile-selector { margin-bottom: 12px !important; }
+    .profile-selector .selector-row {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .profile-selector h4 { font-size: 14px !important; }
+    .profile-search-wrapper { max-width: 100% !important; }
+
+    /* Layout - single column, right column first */
+    .verify-layout {
+        flex-direction: column-reverse !important;
+        gap: 16px !important;
+    }
+
+    /* Warning alert */
+    .verify-warning {
+        border-radius: 5px !important;
+        padding: 14px 16px !important;
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Why verify section */
+    .verify-pitch h2 { font-size: 17px !important; margin-bottom: 12px !important; }
+    .verify-pitch h3 { font-size: 15px !important; font-weight: 600 !important; }
+    .verify-pitch p { font-size: 13px !important; margin-bottom: 16px !important; }
+
+    /* Steps card */
     .verify-card {
-        padding: 16px;
+        padding: 16px !important;
+        border-radius: 5px !important;
     }
-    .profile-search-wrapper {
-        max-width: 100%;
+    .verify-steps li {
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+        padding-bottom: 16px !important;
     }
+    .step-number {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 13px !important;
+    }
+    .step-content { font-size: 13px !important; }
+
+    /* Profile photo */
+    .verify-profile-photo {
+        margin-left: 2.5rem !important;
+    }
+    .verify-profile-photo img {
+        max-width: 80px !important;
+        border-radius: 5px !important;
+    }
+
+    /* Camera button */
+    .btn-open-camera {
+        width: 100% !important;
+        justify-content: center !important;
+        border-radius: 5px !important;
+        padding: 14px 24px !important;
+        font-size: 15px !important;
+    }
+
+    /* QR section */
+    .qr-section { margin-top: 16px !important; }
+
+    /* Info alert */
     .verify-info-alert {
-        flex-wrap: wrap;
-        max-width: 100%;
+        flex-wrap: wrap !important;
+        max-width: 100% !important;
+        border-radius: 5px !important;
+        padding: 12px 14px !important;
     }
+
+    /* Hide profile selector on mobile if profile is already known */
+    .profile-selector { display: none !important; }
 }
 </style>
 @endpush
@@ -512,10 +606,13 @@ body { background: #0a0a0a !important; }
 <div class="ev-page-header">
     <div class="ev-container">
         <a class="ev-back-link" href="/my-profile/{{ $user->slug }}/{{ $user->id }}">
-            <i class="fas fa-chevron-left"></i>
-            My profile
+            <span class="ev-desktop-back"><i class="fas fa-chevron-left"></i> My profile</span>
+            <span class="ev-mobile-back" style="display:none;"><i class="fas fa-chevron-left"></i> Profile</span>
         </a>
-        <h1 class="ev-page-title">Verification Application for {{ $user->name }}</h1>
+        <h1 class="ev-page-title">
+            <span class="ev-desktop-title">Verification Application for {{ $user->name }}</span>
+            <span class="ev-mobile-title" style="display:none;">Verification Application</span>
+        </h1>
     </div>
 </div>
 

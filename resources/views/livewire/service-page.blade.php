@@ -597,10 +597,68 @@ min-width: 222px;
     }
 }
 
+/* ═══ MOBILE AUCTION SPOTS (high specificity to override app.css) ═══ */
+@media screen and (max-width: 768px) {
+    /* Auction spots - remove borders and padding */
+    div.listings.listings-spots { border: none !important; border-top: none !important; border-bottom: none !important; padding: 0 !important; margin: 0 !important; }
+
+    /* Each spot card */
+    div.listings-spots div.spot { position: relative !important; margin-bottom: 24px !important; border-radius: 5px !important; overflow: hidden !important; }
+
+    /* Profile listing becomes full bg image */
+    div.spot div.listing-li.listing-li--spot { position: relative !important; min-height: 300px !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; border: none !important; box-shadow: none !important; outline: none !important; }
+    div.spot div.listing-li.listing-li--spot.premium { border: none !important; }
+    div.spot div.listing-li--spot .thumbs { position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; z-index: 0 !important; }
+    div.spot div.listing-li--spot .thumbs .main-thumbs,
+    div.spot div.listing-li--spot .thumbs .main-thumbs a.img,
+    div.spot div.listing-li--spot .thumbs .main-thumbs span.img-wrapper,
+    div.spot div.listing-li--spot .thumbs .main-thumbs div.image-wrapper { width: 100% !important; height: 100% !important; display: block !important; max-width: none !important; border: none !important; }
+    div.spot div.listing-li--spot .thumbs .main-thumbs img { width: 100% !important; height: 100% !important; object-fit: cover !important; max-width: none !important; max-height: none !important; border: none !important; }
+    div.spot div.listing-li--spot .thumbs .side-thumbs,
+    div.spot div.listing-li--spot .detail-wrapper,
+    div.spot div.listing-li--spot .detail,
+    div.spot div.listing-li--spot h2.visible-xxs { display: none !important; }
+
+    /* Auction overlay */
+    div.spot div.auction-cover {
+        position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;
+        z-index: 2 !important; background: rgba(0,0,0,0.6) !important;
+        border: none !important; border-radius: 5px !important;
+        display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
+        padding: 16px !important;
+    }
+
+    /* Spot # top left */
+    div.spot div.auction-cover .flex-sidebar { position: absolute !important; top: 0 !important; left: 0 !important; z-index: 3 !important; flex-direction: row !important; width: auto !important; align-self: auto !important; }
+    div.spot div.auction-cover .spot-id { color: #fff !important; font-size: 14px !important; font-weight: 600 !important; }
+    div.spot div.auction-cover .flex-sidebar details { display: none !important; }
+
+    /* Price + button + timer */
+    div.spot div.auction-cover .flex-not-sidebar { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; z-index: 2 !important; width: 100% !important; flex: 1 !important; }
+    div.spot div.auction-cover .flex-not-sidebar > div { display: flex !important; flex-direction: column !important; align-items: center !important; width: 100% !important; }
+    div.spot div.auction-cover .flex-not-sidebar h3 { text-align: center !important; margin-bottom: 14px !important; color: #fff !important; background: none !important; display: flex !important; flex-direction: column !important; align-items: center !important; width: 100% !important; }
+    div.spot div.auction-cover .flex-not-sidebar h3 span { font-size: 16px !important; color: #fff !important; display: block !important; margin-left: 0 !important; }
+    div.spot div.auction-cover .flex-not-sidebar h3 strong { color: #C1F11D !important; font-size: 32px !important; font-weight: 700 !important; display: block !important; margin-left: 0 !important; }
+
+    /* Make Offer button - GREEN not yellow */
+    div.spot div.auction-cover a.btn.btn-primary,
+    div.spot div.auction-cover .btn-primary,
+    div.spot .auction-cover a.btn { background: #C1F11D !important; color: #000 !important; border: none !important; border-radius: 25px !important; padding: 10px 32px !important; font-size: 15px !important; font-weight: 600 !important; margin-bottom: 14px !important; }
+
+    /* Timer */
+    div.spot div.auction-cover .flex-not-sidebar > div:last-child { display: flex !important; align-items: center !important; gap: 6px !important; }
+    div.spot div.auction-cover .flex-not-sidebar > div:last-child img { filter: invert(1) !important; opacity: 0.6 !important; width: 20px !important; height: 20px !important; }
+    div.spot div.auction-cover .flex-not-sidebar > div:last-child p { color: #ccc !important; font-size: 13px !important; margin: 0 !important; }
+
+    /* Hide text below auction overlay */
+    div.spot div.listing-li--spot .short-description,
+    div.spot div.listing-li--spot .ad-text { display: none !important; }
+}
+
      </style>
 
 @endpush
-    
+
 <div class="">
   <div wire:loading class="page-loader">
     <div class="spinner"></div>

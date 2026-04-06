@@ -2,8 +2,8 @@
 <div class="nav-bar navbar-top-nav">
     <div class="container-fluid" style="background:transparent !important;">
         <a class="back-link" href="{{ url('/auctions/'.$gender.'-escorts-in-'.$city) }}">
-            <i class="fa fa-angle-left fa-fw"></i>
-            <span class="hidden-xs" style="color: #C1F11D !important;">Back to Auctions</span>
+            <span class="ev-desktop-back"><i class="fa fa-angle-left fa-fw"></i> Back to Auctions</span>
+            <span class="ev-mobile-back" style="display:none;color:#C1F11D;"><i class="fa fa-angle-left"></i> Back</span>
         </a>
         <div class="title">
             <h1>Bid on Spot #{{ $spotNumber }}</h1>
@@ -407,6 +407,185 @@ ul.list-inline > li > a {
 .custom-select2-option.hidden {
     display: none;
 }
+
+/* ═══ MOBILE VIEW ═══ */
+@media (max-width: 768px) {
+    /* Header */
+    #header { margin-bottom: 0 !important; }
+    #header .nav-bar { padding: 10px 0 !important; }
+    #header .nav-bar .title h1 { font-size: 15px !important; }
+    #header .nav-bar .back-link { font-size: 13px !important; }
+    #header .nav-bar .back-link .ev-desktop-back { display: none !important; }
+    #header .nav-bar .back-link .ev-mobile-back { display: inline !important; }
+
+    /* Container */
+    .container-fluid { padding: 0 16px !important; margin: 0 !important; width: 100% !important; }
+
+    /* Stack columns */
+    .row { display: flex !important; flex-direction: column !important; margin: 0 !important; }
+    .col-md-8, .col-md-4 { width: 100% !important; padding: 0 !important; float: none !important; }
+    .col-md-4 { margin-top: 0 !important; }
+    .col-md-8 .mt-4 { margin-top: 0 !important; }
+
+    /* Reorder: bid form first, history, then right column cards */
+    .col-md-8 { order: 1; }
+    .col-md-4 { order: 2; }
+
+    /* Bid form */
+    .bid-form {
+        border-radius: 5px !important;
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+    }
+    .bid-form-header h4 { font-size: 16px !important; }
+    .bid-form-gender { font-size: 13px !important; }
+    .bid-form label { font-size: 13px !important; }
+    .bid-form .form-control {
+        border-radius: 5px !important;
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+    }
+    .bid-form .btn-primary,
+    .bid-form .btn-primary.btn-lg {
+        width: 100% !important;
+        border-radius: 25px !important;
+        padding: 14px !important;
+        font-size: 15px !important;
+    }
+    .bid-form-footer {
+        flex-direction: column !important;
+        gap: 12px !important;
+        align-items: stretch !important;
+    }
+    .bid-form-meta {
+        text-align: center !important;
+    }
+    .bid-form-meta .current-price {
+        font-size: 16px !important;
+    }
+    .bid-form-meta .auction-timer {
+        font-size: 13px !important;
+    }
+
+    /* Custom select2 */
+    .custom-select2-selection {
+        border-radius: 5px !important;
+        padding: 10px 12px !important;
+    }
+    .custom-select2-dropdown {
+        border-radius: 5px !important;
+    }
+
+    /* Bid history */
+    .bid-history { margin-top: 16px !important; }
+    .bid-history h3 { font-size: 16px !important; margin-bottom: 12px !important; }
+    .bid-history-item {
+        padding: 12px 0 !important;
+    }
+    .bid-history-item .row {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+    }
+    .bid-history-item .col-md-3 {
+        width: auto !important;
+        flex: none !important;
+        padding: 0 6px !important;
+        font-size: 12px !important;
+    }
+    .bid-history-item .col-md-3:first-child {
+        flex: 1 !important;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .bid-history-item .col-md-3:last-child {
+        text-align: right !important;
+    }
+    .bid-status-badge {
+        font-size: 10px !important;
+        padding: 3px 10px !important;
+        border-radius: 5px !important;
+    }
+
+    /* Cards */
+    .card {
+        border-radius: 5px !important;
+        margin-top: 16px !important;
+        background: #1a1a1a !important;
+        border: 1px solid #2a2a2a !important;
+    }
+    .card-header { padding: 12px 16px !important; }
+    .card-header h4 { font-size: 15px !important; }
+    .card-body {
+        padding: 16px !important;
+        font-size: 13px !important;
+    }
+    .card-body .alert-info {
+        border-radius: 5px !important;
+        font-size: 13px !important;
+        padding: 12px !important;
+    }
+
+    /* Highest bidder */
+    .highest-bidder-row {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 14px !important;
+    }
+    .highest-bidder-img {
+        width: 90px !important;
+        height: 90px !important;
+        border-radius: 5px !important;
+        flex-shrink: 0 !important;
+    }
+    .highest-bidder-info {
+        flex: 1 !important;
+    }
+    .highest-bidder-info h5 { font-size: 16px !important; margin-bottom: 4px !important; }
+    .highest-bidder-info p { font-size: 14px !important; color: #ccc !important; }
+    /* Hide desktop view profile button, show inline one */
+    .ev-desktop-view-profile { display: none !important; }
+    .highest-bidder-info .btn-outline-primary {
+        display: inline-block !important;
+        border-radius: 5px !important;
+        padding: 8px 20px !important;
+        font-size: 13px !important;
+        background: #1a1a1a !important;
+        border: 1px solid #333 !important;
+        color: #C1F11D !important;
+    }
+    .card-body .btn-outline-primary {
+        border-radius: 5px !important;
+    }
+
+    /* Bottom info sections */
+    .bottom-info-sections {
+        margin-top: 24px !important;
+        padding-top: 20px !important;
+    }
+    .bottom-info-sections h4 { font-size: 16px !important; }
+    .bottom-info-sections ul li,
+    .bottom-info-sections ol li {
+        font-size: 13px !important;
+        margin-bottom: 6px !important;
+    }
+    .bottom-info-sections .col-md-6 {
+        width: 100% !important;
+        padding: 0 !important;
+        margin-bottom: 20px;
+    }
+
+    /* Pagination */
+    .pagination { justify-content: center; }
+    .pagination li a, .pagination li span {
+        border-radius: 5px !important;
+    }
+
+    /* Alert */
+    .alert { border-radius: 5px !important; }
+}
 </style>
 
 <div class="container-fluid">
@@ -560,10 +739,14 @@ ul.list-inline > li > a {
                         <div class="highest-bidder-info">
                             <h5>{{ $highestBidderProfile->name ?? 'No bids yet' }}</h5>
                             <p>Current bid: ${{ number_format($auction->current_price, 2) }}</p>
+                            @if($highestBidderProfile)
+                            <a href="{{ url($gender.'-escorts-in-'.$city.'/'.$highestBidderProfile->id.'/'.$highestBidderProfile->slug) }}"
+                               class="btn btn-outline-primary" style="margin-top:8px;">View Profile</a>
+                            @endif
                         </div>
                     </div>
                     @if($highestBidderProfile)
-                    <div class="text-center mt-3">
+                    <div class="text-center mt-3 ev-desktop-view-profile">
                         <a href="{{ url($gender.'-escorts-in-'.$city.'/'.$highestBidderProfile->id.'/'.$highestBidderProfile->slug) }}"
                            class="btn btn-outline-primary btn-block">View Profile</a>
                     </div>

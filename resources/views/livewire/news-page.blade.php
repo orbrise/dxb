@@ -322,10 +322,136 @@ input.tt-hint,
 
 
  #main-nav a.selected:before {width: 16px;border-top-color:transparent !important;}
+
+/* ═══ MOBILE VIEW ═══ */
+@media (max-width: 767px) {
+    /* Hide ESCORTS/WHAT'S NEW mobile tabs - we have back bar */
+    div.visible-xs { display: none !important; }
+
+    /* Nav bar */
+    header#header .nav-bar { background: #000 !important; padding: 8px 16px !important; }
+    header#header .nav-bar .container-fluid { padding: 0 !important; }
+
+    /* Gender + City row */
+    form.activity-nav-form { display: flex !important; gap: 8px !important; margin-bottom: 10px !important; flex-wrap: nowrap !important; }
+    form.activity-nav-form .form-group { flex: 1 !important; margin: 0 !important; float: none !important; }
+    form.activity-nav-form .activity-search-gender { flex: none !important; width: auto !important; }
+    form.activity-nav-form button.search-bar--gender {
+        background: #1a1a1a !important;
+        border: 1px solid #333 !important;
+        border-radius: 5px !important;
+        color: #fff !important;
+        font-size: 13px !important;
+        padding: 10px 12px !important;
+    }
+    form.activity-nav-form input.search-bar--city {
+        background: #1a1a1a !important;
+        border: 1px solid #333 !important;
+        border-radius: 5px !important;
+        font-size: 13px !important;
+        padding: 10px 12px 10px 36px !important;
+        width: 100% !important;
+    }
+
+    /* Activity stream nav - horizontal pills */
+    div.activity-stream-nav.btn-group {
+        display: flex !important;
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 8px !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    div.activity-stream-nav.btn-group::-webkit-scrollbar { display: none; }
+    div.activity-stream-nav a.btn.btn-dark {
+        white-space: nowrap !important;
+        padding: 7px 14px !important;
+        font-size: 12px !important;
+        border-radius: 5px !important;
+        background: transparent !important;
+        border: 1px solid #333 !important;
+        color: #999 !important;
+        flex-shrink: 0 !important;
+        box-shadow: none !important;
+    }
+    div.activity-stream-nav a.btn.btn-dark.active {
+        border-color: #C1F11D !important;
+        color: #C1F11D !important;
+        background: transparent !important;
+    }
+    div.activity-stream-nav a.btn.btn-dark:not(.active) {
+        color: #999 !important;
+    }
+
+    /* Main content */
+    div.container-fluid { padding: 0 16px !important; }
+
+    /* Hide subscribe button and page title */
+    .subscribe-btn-wrapper { display: none !important; }
+    a.page-title { display: none !important; }
+
+    /* Date headers */
+    .date-wrapper .date {
+        background: #1a1a1a !important;
+        border-radius: 5px !important;
+        padding: 8px 16px !important;
+        text-align: center !important;
+        margin: 16px 0 12px !important;
+    }
+    .date-wrapper .date .day {
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #fff !important;
+    }
+    .date-wrapper .date .month {
+        font-size: 12px !important;
+        color: #999 !important;
+        text-transform: uppercase !important;
+    }
+
+    /* Activity items */
+    ul.activity-stream { padding: 0 !important; list-style: none !important; }
+    ul.activity-stream li { border-color: #1a1a1a !important; padding: 12px 0 !important; }
+    .activity-record { padding: 0 !important; }
+    .activity-record .headline { font-size: 14px !important; margin-bottom: 8px !important; }
+    .activity-record .photo img,
+    .activity-stream .photo img,
+    .activity-stream .right-thumbs img {
+        width: 80px !important;
+        height: 80px !important;
+        border-radius: 5px !important;
+        object-fit: cover !important;
+    }
+
+    /* Reply boxes */
+    .listing-reply, .listing-reply > div {
+        border-radius: 5px !important;
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+    }
+
+    /* Dropdown menu */
+    .dropdown-menu { background: #1a1a1a !important; border: 1px solid #333 !important; border-radius: 5px !important; }
+    .dropdown-menu li a { color: #fff !important; padding: 8px 16px !important; }
+    .dropdown-menu li a:hover { background: #2a2a2a !important; }
+    .dropdown-menu li.active a { color: #C1F11D !important; }
+}
 </style>
 @endpush
 
 <div>
+{{-- Mobile Back Bar --}}
+<div class="ev-news-back-bar" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:center;position:relative;padding:12px 16px;background:#131616;">
+        <a href="/{{ $gender ?? 'female' }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}" style="position:absolute;left:16px;color:#C1F11D;text-decoration:none;font-size:13px;">
+            <i class="fa fa-angle-left"></i> Back
+        </a>
+        <span style="color:#fff;font-size:15px;font-weight:500;">What's New</span>
+    </div>
+</div>
+<style>@media screen and (max-width:768px){.ev-news-back-bar{display:block!important}}</style>
+
 {{-- ESCORTS / WHAT'S NEW Navigation Tabs - Mobile Only --}}
 <div class="visible-xs" style="padding: 8px 15px 0 15px; margin: 0; width: 100%;">
     <div class="btn-group" role="group" style="display: flex !important; width: 100%; margin: 0; border-radius: 4px; overflow: visible; position: relative;">

@@ -32,7 +32,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 
     {{-- Main theme CSS (loaded after Bootstrap to override) --}}
-    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260318-4">
+    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260404-1">
 
     {{-- Additional page-specific CSS --}}
     @stack('css')

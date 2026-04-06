@@ -46,10 +46,17 @@
         input[type="tel"].form-control,
         textarea.form-control,
         select.form-control {
-            background-color: transparent !important;
+            background-color: #1a1b1e !important;
             border: 1px solid #2e3033 !important;
             color: #fff !important;
-            border-radius: 4px !important;
+            border-radius: 6px !important;
+            padding: 10px 14px !important;
+            height: 44px !important;
+            font-size: 14px !important;
+        }
+        textarea.form-control {
+            height: auto !important;
+            min-height: 160px !important;
         }
         .form-control:focus {
             border-color: #c8ff00 !important;
@@ -659,6 +666,10 @@
 
 }
 
+.typeahead-city-wrapper {
+    position: relative;
+}
+
 .typeahead-city-wrapper::before {
     position: absolute;
     z-index: 1;
@@ -748,9 +759,8 @@ form.listing .image {
     background: #111213;
     transition: all 0.3s ease;
     position: relative;
+    text-align: center;
 }
-
-
 
 .drag-drop .icon-image {
     color: #888;
@@ -759,7 +769,6 @@ form.listing .image {
     border-radius: 50%;
     background-color: transparent;
     box-shadow: none;
-    -webkit-transition: all .3s;
     transition: all .3s;
     padding: 20px;
     display: inline-flex;
@@ -768,17 +777,16 @@ form.listing .image {
     margin-bottom: 20px;
 }
 
-
-
 .drag-drop-text-main {
-    font-size: 25px !important;
+    font-size: 12px !important;
     color: #fff !important;
     font-weight: 400 !important;
+    margin-bottom: 20px !important;
 }
 
 .drag-drop-text {
-    color: #ffffff !important;
-    font-size: 14px !important;
+    color: #6c757d !important;
+    font-size: 13px !important;
 }
 
 .drag-drop .btn-warning {
@@ -836,6 +844,32 @@ div#basic {
 
 .btn ,.btn-dark, #add-phone {box-shadow: none !important;}
 
+/* ── Messenger icons (app2.css not loaded in evoory layout) ── */
+.icon-whatsapp::before,
+.icon-telegram::before,
+.icon-signal::before,
+.icon-wechat::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    vertical-align: middle;
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+}
+.icon-whatsapp::before {
+    background-image: url(https://d257pz9kz95xf4.cloudfront.net/assets/icons/whatsapp-7c70745f5ee9f066d5a9ab9595d0f24c19e36c020003bdc2981875ce9b681988.png);
+}
+.icon-telegram::before {
+    background-image: url(https://d257pz9kz95xf4.cloudfront.net/assets/icons/telegram-823ab0b30ac8bf149a5a1f0de712b6026795fa5a5ca2ca79aa18ee02d9c53a3f.svg);
+}
+.icon-signal::before {
+    background-image: url(https://d257pz9kz95xf4.cloudfront.net/assets/icons/signal-f7667b414b42429d038aa3def28963c689fc16ee490dacb3ab2ccbb65cde2f9e.svg);
+}
+.icon-wechat::before {
+    background-image: url(https://d257pz9kz95xf4.cloudfront.net/assets/icons/wechat-e812583da1b740372beac8db4e10f75511752567505d6d6e470665f2b4239190.svg);
+}
+
 @media (max-width: 767px) {
     #header {
         margin-bottom: 0px;
@@ -879,32 +913,55 @@ div#basic {
         #image-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
-        
+
+        .record.image {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1a1b1e;
+            border: 1px solid #2e3033;
+            flex-shrink: 0;
+        }
+
         .record.image img {
-            max-width: 100%;
-            max-height: 100px;
-            height: auto;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             display: block;
-            margin: 0 auto;
         }
-        
+
         .record.image .delete {
             position: absolute;
             top: 5px;
             right: 5px;
             cursor: pointer;
-            background: rgba(255, 0, 0, 0.7);
+            background: rgba(255, 0, 0, 0.8);
             color: white;
-            padding: 5px 7px;
+            padding: 4px 6px;
             border-radius: 50%;
             z-index: 10;
-            font-size: 11px;
+            font-size: 10px;
+            line-height: 1;
         }
-        
+
         .record.image .delete:hover {
             background: rgba(255, 0, 0, 1);
+        }
+
+        .record.image .img-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            text-align: center;
+            padding: 4px 2px;
+            font-size: 9px;
         }
 
         form.listing .image i.delete {
@@ -919,6 +976,471 @@ div#basic {
 
 form.listing .form-group.listing_description {
     max-width: 900px;
+}
+
+/* ═══════════════════════════════════════════
+   DESKTOP EDIT PROFILE LAYOUT
+   ═══════════════════════════════════════════ */
+@media (min-width: 769px) {
+    /* Centered page container (replaces Bootstrap col-lg-offset-1 col-lg-10) */
+    div.row.container {
+        max-width: 1170px;
+        margin: 0 auto;
+        padding: 0 15px;
+        display: block;
+    }
+    .col-lg-offset-1.col-lg-10 {
+        margin-left: 8.33333%;
+        width: 83.33333%;
+        display: block;
+        padding: 0;
+    }
+
+    /* Big-one-line: horizontal row — Name | Category | in | City */
+    form.listing .big-one-line,
+    .big-one-line.left {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 0 !important;
+        flex-wrap: nowrap !important;
+        float: none !important;
+        margin-bottom: 10px !important;
+        overflow: visible !important;
+    }
+    form.listing .big-one-line::after {
+        content: '';
+        display: block;
+        clear: both;
+    }
+    form.listing .big-one-line .form-group {
+        margin: 0 10px 0 0 !important;
+        padding: 0 !important;
+        float: none !important;
+    }
+    form.listing .big-one-line .form-group.listing_name {
+        flex: 0 0 300px;
+        width: 300px !important;
+    }
+    form.listing .big-one-line .form-group.listing_listed_as_id {
+        flex: 0 0 210px;
+        width: 210px !important;
+    }
+    form.listing .big-one-line .form-group.listing_city_url {
+        flex: 1;
+        display: flex;
+        align-items: flex-start;
+        gap: 0;
+        margin: 0 !important;
+    }
+    form.listing .big-one-line .form-group.listing_city_url .typeahead-city-wrapper {
+        flex: 1;
+        position: relative;
+    }
+
+    /* "in" label next to city input */
+    form.listing .big-one-line .ev-city-label {
+        white-space: nowrap;
+        margin: 0 10px 0 0 !important;
+        padding-top: 12px;
+        font-size: 16px !important;
+        line-height: 1;
+        color: #ccc !important;
+        flex-shrink: 0;
+    }
+
+    /* City hint below city input */
+    .city-hint {
+        margin-top: 4px;
+    }
+
+    /* Inputs fill their flex container */
+    form.listing .big-one-line .listinga,
+    form.listing .big-one-line input#listing_name {
+        width: 100% !important;
+        display: block !important;
+    }
+
+    /* Section title */
+    div#basic {
+        margin-top: 20px;
+    }
+
+    /* About me — full width, label on top of textarea */
+    .form-group.listing_description {
+        display: block !important;
+        width: 100% !important;
+        clear: both !important;
+        margin-top: 20px !important;
+    }
+    .form-group.listing_description .control-label {
+        display: block !important;
+        float: none !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding-top: 0 !important;
+        margin-bottom: 8px !important;
+    }
+    .form-group.listing_description textarea.form-control {
+        display: block !important;
+        width: 100% !important;
+        min-height: 180px !important;
+        height: auto !important;
+    }
+
+    /* ── Contact information ── */
+    #contact-information > label {
+        display: block !important;
+        font-weight: 500 !important;
+        font-size: 15px !important;
+        color: #ccc !important;
+        margin-bottom: 10px !important;
+        text-transform: capitalize !important;
+    }
+    /* Each phone_number block is one flex row: [code][input][checkboxes] */
+    #contact-information .inline-group {
+        display: block !important;
+    }
+    #contact-information .form-group.phone_number {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        margin-bottom: 16px !important;
+        float: none !important;
+    }
+    /* .wrappper = country code + phone number, inline flex */
+    #contact-information .wrappper {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        float: none !important;
+        width: auto !important;
+        flex-shrink: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    #contact-information .insidewrapper {
+        width: 160px !important;
+        flex-shrink: 0 !important;
+        margin-right: 0 !important;
+    }
+    #contact-information .wrappper > div:last-child {
+        width: 200px !important;
+        flex-shrink: 0 !important;
+    }
+    /* Messaging checkboxes div — inline next to phone */
+    #contact-information .form-group.phone_number > div[style*="row"] {
+        display: flex !important;
+        align-items: center !important;
+        gap: 16px !important;
+        flex-wrap: nowrap !important;
+        margin: 0 !important;
+    }
+    #contact-information label.inline-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        float: none !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
+        font-size: 14px !important;
+    }
+    /* All contact inputs same height + padding */
+    #contact-information .form-control,
+    #contact-information input[type="text"],
+    #contact-information select,
+    #contact-information .custom-select2-selection,
+    #contact-information .input-group-addon {
+        height: 44px !important;
+        font-size: 14px !important;
+        padding: 10px 14px !important;
+    }
+    /* Contact form + email + website + onlyfans: match phone row width */
+    #contact-information .row {
+        margin: 0 0 20px 0 !important;
+    }
+    #contact-information .form-group {
+        margin-bottom: 16px !important;
+    }
+    #contact-information .row .col-sm-6 {
+        width: 370px !important;
+        padding: 0 !important;
+        float: none !important;
+    }
+    #contact-information #listing_contact_email_address,
+    #contact-information #listing_website {
+        width: 100% !important;
+    }
+    #contact-information .input-group {
+        display: flex !important;
+        width: 100% !important;
+    }
+    #contact-information .input-group-addon {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    #contact-information #listing_onlyfans {
+        flex: 1 !important;
+        width: auto !important;
+    }
+
+    /* ── Prices: Incall/Outcall rows ── */
+    #fees .row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 16px !important;
+        margin: 0 0 12px 0 !important;
+        flex-wrap: nowrap !important;
+    }
+    #fees .row > [class*="col-"] {
+        width: auto !important;
+        flex: none !important;
+        padding: 0 !important;
+        float: none !important;
+    }
+    /* Incalls/Outcalls checkbox */
+    #fees .form-group.mb-0,
+    #fees .form-group.boolean {
+        margin: 0 !important;
+        min-width: 90px !important;
+    }
+    #fees .form-group.mb-0 label,
+    #fees .form-group.boolean label {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+        font-size: 14px !important;
+    }
+    /* "Per hour from:" label above the price control */
+    #fees .form-group.price {
+        margin: 0 !important;
+    }
+    #fees .form-group.price label {
+        font-size: 12px !important;
+        color: #888 !important;
+        margin-bottom: 4px !important;
+    }
+    /* Price input + currency side by side */
+    #fees .price-control {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0 !important;
+    }
+    #fees .price-amount {
+        width: 100px !important;
+        height: 40px !important;
+        border-radius: 6px 0 0 6px !important;
+        border-right: none !important;
+    }
+    #fees .price-currency,
+    #fees .custom-select2 {
+        width: 120px !important;
+        flex-shrink: 0 !important;
+    }
+    #fees .custom-select2 .custom-select2-selection {
+        border-radius: 0 6px 6px 0 !important;
+    }
+    #fees .custom-select2-selection {
+        height: 40px !important;
+        border-radius: 6px !important;
+    }
+    /* Hide price warning by default */
+    #fees .average-price-alert {
+        display: none;
+    }
+
+    /* ── About me section ── */
+    /* Radio inline groups (gender, orientation, shaved) */
+    #about-me .radio-inline {
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-right: 16px !important;
+    }
+    #about-me .radio-inline label {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        font-size: 14px !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+    }
+    #about-me .form-group.radio_buttons {
+        margin-bottom: 20px !important;
+    }
+    #about-me .form-group.radio_buttons > label.control-label {
+        display: block !important;
+        margin-bottom: 10px !important;
+        font-size: 14px !important;
+    }
+
+    /* 6-column attributes row */
+    #about-me > .row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+        margin: 0 0 20px 0 !important;
+    }
+    #about-me > .row > [class*="col-"] {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        width: 0 !important;
+        padding: 0 !important;
+        float: none !important;
+    }
+    #about-me > .row .form-group {
+        margin-bottom: 0 !important;
+    }
+    #about-me > .row .form-group > label {
+        font-size: 13px !important;
+        margin-bottom: 6px !important;
+        display: block !important;
+    }
+    #about-me > .row .form-control,
+    #about-me > .row input[type="text"],
+    #about-me > .row input[type="number"] {
+        width: 100% !important;
+        height: 40px !important;
+        border-radius: 6px !important;
+    }
+    #about-me > .row .custom-select2-selection {
+        height: 40px !important;
+        border-radius: 6px !important;
+    }
+    #about-me > .row .custom-select2 {
+        width: 100% !important;
+    }
+
+    /* Languages section */
+    #languages {
+        margin: 24px 0 !important;
+    }
+    #languages > label.label-block {
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        margin-bottom: 14px !important;
+        display: block !important;
+    }
+    #languages > div[id^="remove"] {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-bottom: 12px !important;
+        position: relative !important;
+    }
+    #languages > #remove1 { z-index: 30 !important; }
+    #languages > #remove2 { z-index: 20 !important; }
+    #languages > #remove3 { z-index: 10 !important; }
+    #languages .rm-lang-field {
+        flex-shrink: 0 !important;
+        cursor: pointer !important;
+        font-size: 16px !important;
+    }
+    #languages .form-group.select {
+        flex: 0 0 200px !important;
+        margin: 0 !important;
+    }
+    #languages .custom-select2-selection {
+        height: 40px !important;
+        border-radius: 6px !important;
+    }
+    #languages .form-group.radio_buttons {
+        display: flex !important;
+        align-items: center !important;
+        gap: 16px !important;
+        margin: 0 !important;
+    }
+    #languages .radio-inline {
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+    #languages .radio-inline label {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        font-size: 14px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Shaved / Smoke */
+    .aboutme-radios {
+        margin-top: 16px !important;
+    }
+
+    /* ── Video + X posts + Submit ── */
+    #video .row,
+    #social .row {
+        margin: 0 !important;
+    }
+    #video .row .col-sm-6,
+    #social .row .col-sm-6 {
+        width: 500px !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        float: none !important;
+    }
+    #video .form-control,
+    #social .form-control {
+        width: 100% !important;
+        height: 40px !important;
+    }
+    #social .row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 16px !important;
+    }
+    #social .row .col-sm-6:last-child {
+        width: auto !important;
+        flex: none !important;
+    }
+    #social svg {
+        margin: 0 !important;
+    }
+    /* Submit button */
+    button#submit {
+        margin-top: 20px !important;
+    }
+
+    /* ── Services: 4-column checkbox grid ── */
+    #services .overflow-list-xs.row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        margin: 0 !important;
+    }
+    #services .overflow-list-xs.row > ul {
+        flex: 0 0 25% !important;
+        max-width: 25% !important;
+        padding: 0 10px !important;
+        list-style: none !important;
+    }
+    #services .overflow-list-xs.row > ul li.checkbox {
+        margin-bottom: 8px !important;
+    }
+    #services .overflow-list-xs.row > ul li.checkbox label {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        color: #ccc !important;
+        font-size: 14px !important;
+        cursor: pointer !important;
+    }
+    #services .overflow-list-xs.row > ul li.checkbox input[type="checkbox"] {
+        flex-shrink: 0;
+    }
+
+    /* Mobile-only elements: hide on desktop */
+    .ev-mobile-personal,
+    .ev-mobile-languages,
+    .ev-mobile-services,
+    .ev-mobile-prices,
+    .ev-mobile-contact,
+    .ev-mobile-phone,
+    .ev-mobile-section-title {
+        display: none !important;
+    }
 }
 
 /* ═══════════════════════════════════════════
@@ -1362,10 +1884,8 @@ form.listing .form-group.listing_description {
 
                     <div class="form-group text required listing_description">
                       <label class="text required control-label" for="listing_description">
-                        <span class="ev-desktop-about-label"><abbr title="required"></abbr> About me</span>
-                        <span class="ev-mobile-about-label" style="display:none;">About <span style="color:#f87171">*</span></span>
+                        About me <span class="required-star">*</span>
                       </label>
-                      <style>@media(max-width:768px){.ev-desktop-about-label{display:none!important}.ev-mobile-about-label{display:inline!important}}</style>
                       <textarea class="text required form-control validate large" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(50,2000)" maxlength="2000" wire:model='aboutme' name="listing[description]" id="listing_description" oninput="updateCharCount(this)" placeholder="Write a brief description of yourself..."></textarea>
                       <div class="char-count-container" style="margin-top: 5px; font-size: 12px;">
                         <span id="char-count" style="color: #666;">Minimum 50 characters</span>
@@ -1379,7 +1899,6 @@ form.listing .form-group.listing_description {
                   </div>
                   <div id="">
                     <h2 class="h3 title-block">
-                        <svg class="ev-section-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         <span class="ev-desktop-title">Upload photos</span>
                         <span class="ev-mobile-title" style="display:none;">Photos</span>
                     </h2>
@@ -1455,13 +1974,14 @@ form.listing .form-group.listing_description {
                           <div class="file optional add-img">
                             <label class="modern-upload-label" for="mphoto" style="cursor: pointer;">
                               <div class="text-center mb-4 drag-drop" id="drag-drop-area">
-                                <img style="    width: 55px; margin-bottom: 20px;" src="{{smart_asset('assets/newtheme/upload.svg')}}" alt="Upload Icon" class="">
+                                <img style="width: 55px; margin: 0 auto 20px; display: block;" src="{{smart_asset('assets/newtheme/upload.svg')}}" alt="Upload Icon">
 
                                 <div class="upload-available">
-                                  <p class="m-0 font-weight-bold drag-drop-text-main" style="font-size: 18px; color: #333;">Drop files here</p>
+                                  <p class="m-0 font-weight-bold drag-drop-text-main" style="font-size: 12px; color: #ffffff; font-weight:400; margin-bottom:20px">Drop files here</p>
                                   <p class="m-1 drag-drop-text ev-desktop-upload-text" style="color: #6c757d;padding-top:10px; padding-bottom:15px">or</p>
-                                  <button class="m-1 mb-3 btn btn-primary" type="button" onclick="document.getElementById('mphoto').click(); return false;">Choose file</button>
-                                  <p class="m-0 mt-3 drag-drop-text ev-desktop-upload-text" style="font-size: 13px; color: #6c757d;">Supports: JPG, PNG, GIF (Max 5MB)</p>
+                                  <button class="m-1 mb-3 btn btn-primary" type="button" onclick="document.getElementById('mphoto').click(); return false;" style="background:#c8ff00;color:#000;border:none;border-radius:50px;font-weight:600;padding:8px 24px;font-size:16px;">Choose file</button>
+                                  <p class="m-0 mt-3 drag-drop-text ev-desktop-upload-text" style="font-size: 13px; color: #6c757d;">Pick a file up to 8MB and at least 400×400 px</p>
+                                  <p class="m-0 drag-drop-text ev-desktop-upload-text" style="font-size: 13px; color: #6c757d;">Allowed file formats: jpg, jpeg, gif, png, webp</p>
                                   <p class="m-0 mt-2 ev-mobile-upload-info" style="display:none;font-size: 11px; color: #888; line-height: 1.4;">JPG, PNG up to 10MB each.<br>Min 3 photos required.</p>
                                 </div>
                               </div>
@@ -1547,7 +2067,7 @@ form.listing .form-group.listing_description {
 
                   <div id="contact-information">
                     <h2 class="h3 title-block">Contact information</h2>
-                    <label>phone:</label>
+                    <label>Phone:</label>
                     <div class="inline-group">
                       <div class="form-group phone_number">
                         <div style="margin-bottom:15px" class="d-flex align-items-center wrappper">

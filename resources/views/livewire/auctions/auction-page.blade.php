@@ -79,9 +79,36 @@
 }
 @media (max-width: 480px) {
     .auction-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        max-width: 320px;
+        margin: 0 auto;
     }
+}
+
+/* ═══ MOBILE VIEW ═══ */
+@media (max-width: 768px) {
+    #header { margin-bottom: 0 !important; }
+    .auction-subheader { padding: 10px 0 !important; }
+    .auction-subheader .back-link { font-size: 13px !important; }
+    .auction-subheader .back-link .ev-desktop-back { display: none !important; }
+    .auction-subheader .back-link .ev-mobile-back { display: inline-flex !important; align-items: center; gap: 4px; }
+    .auction-subheader .page-title { font-size: 14px !important; }
+    .auction-page { padding: 16px 0 40px !important; }
+    .auction-page .section-title { font-size: 16px !important; }
+    .auction-page .section-subtitle { font-size: 12px !important; }
+    .auction-warning { border-radius: 5px !important; font-size: 13px !important; padding: 10px 14px !important; }
+    .auction-grid { grid-template-columns: 1fr; gap: 20px; max-width: 320px; margin: 0 auto; }
+    .auction-card-img { height: 280px !important; border-radius: 5px !important; }
+    .auction-overlay .price { font-size: 28px !important; }
+    .auction-overlay .btn-offer { border-radius: 5px !important; padding: 10px 32px !important; font-size: 15px !important; }
+    .auction-overlay .duration { font-size: 14px !important; color: #ccc !important; }
+    .auction-overlay .timer { flex-direction: column !important; gap: 2px !important; margin-top: 16px !important; }
+    .auction-overlay .timer-icon { width: 22px !important; height: 22px !important; opacity: 0.6 !important; }
+    .auction-overlay .timer-text { text-align: center !important; }
+    .auction-overlay .timer-text span { font-size: 13px !important; color: #ccc !important; }
+    .auction-overlay .timer-text .countdown { font-size: 16px !important; font-weight: 700 !important; color: #fff !important; }
+    .auction-spot-label { font-size: 14px !important; padding: 8px 0 !important; text-transform: uppercase !important; letter-spacing: 1px !important; }
 }
 
 /* Auction card */
@@ -145,11 +172,7 @@
     margin: 0;
     line-height: 1.2;
 }
-@media (max-width: 480px) {
-    .auction-overlay .price {
-        font-size: 22px;
-    }
-}
+/* price size handled in mobile section below */
 .auction-overlay .duration {
     color: #ccc;
     font-size: 13px;
@@ -221,8 +244,8 @@
 <div class="auction-subheader">
     <div class="ev-container">
         <a class="back-link" href="/{{ $gender }}-escorts-in-{{ strtolower($cityName) }}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Back
+            <span class="ev-desktop-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> Back</span>
+            <span class="ev-mobile-back" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> Home</span>
         </a>
         <h1 class="page-title">Auctions for Top Spots</h1>
     </div>
