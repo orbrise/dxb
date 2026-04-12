@@ -1,5 +1,5 @@
 @section('headerform')
-<div class="nav-bar navbar-top-nav" style="background:#111213;border-bottom:1px solid #2e3033;">
+<div class="nav-bar navbar-top-nav" style="background:#111213;">
     <div class="container-fluid" style="text-align:center;">
       <div class="title">
         <h1 style="color:#fff;font-size:16px;font-weight:500;margin:10px 0;">Add your profile</h1>
@@ -10,7 +10,7 @@
 
 <style>
         /* ===== EVOORY DARK THEME FOR NEW PROFILE ===== */
-        body, .container, .container-fluid, .content-wrapper, #content {
+        body, .content-wrapper, #content {
             background-color: #0a0b0d !important;
         }
         .row.container, .col-lg-offset-1.col-lg-10 {
@@ -23,7 +23,7 @@
             font-size: 18px !important;
             font-weight: 600 !important;
             background: #1a1b1e;
-            border-left: 4px solid #c8ff00;
+            
             padding: 12px 18px !important;
             margin: 30px 0 20px !important;
             border-radius: 0 6px 6px 0;
@@ -36,6 +36,76 @@
         }
         .required-star {
             color: #ff4444 !important;
+        }
+
+        /* Big one line row - full width to match textarea/upload sections */
+        #basic { width: 100% !important; }
+        form.listing #basic .big-one-line,
+        form.listing #basic .big-one-line.left,
+        form.listing .big-one-line,
+        form.listing .big-one-line.left {
+            width: 100% !important;
+            max-width: 100% !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+            align-items: flex-start !important;
+            margin-right: 0 !important;
+            float: none !important;
+            box-sizing: border-box !important;
+        }
+        form.listing .big-one-line .form-group {
+            flex: 1 1 0 !important;
+            min-width: 200px !important;
+            margin-right: 0 !important;
+        }
+        form.listing .big-one-line .form-group.listing_name { flex: 3 1 0 !important; max-width: none !important; }
+        form.listing .big-one-line .form-group.listing_listed_as_id { flex: 0 0 200px !important; max-width: 200px !important; }
+        @media (max-width: 768px) {
+            form.listing .big-one-line .form-group.listing_listed_as_id {
+                flex: 1 1 100% !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            form.listing .big-one-line .listinga { width: 100% !important; }
+        }
+        form.listing .big-one-line .form-group.listing_city_url { flex: 3 1 0 !important; max-width: none !important; }
+        form.listing .big-one-line input#listing_name,
+        form.listing .big-one-line .listinga,
+        form.listing .big-one-line .typeahead-city-wrapper input {
+            width: 100% !important;
+        }
+        form.listing .big-one-line .form-group.listing_city_url label.city {
+            display: none !important;
+        }
+
+        /* About me textarea - force dark theme + full width */
+        #basic .form-group.listing_description,
+        .form-group.listing_description {
+            width: 100% !important;
+            max-width: 100% !important;
+            display: block !important;
+            float: none !important;
+            clear: both !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        textarea#listing_description {
+            background-color: #000 !important;
+            border: 1px solid #2e3033 !important;
+            color: #fff !important;
+            border-radius: 6px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: 180px !important;
+            padding: 14px 16px !important;
+            display: block !important;
+            box-sizing: border-box !important;
+        }
+        textarea#listing_description:focus {
+            border-color: #c8ff00 !important;
+            box-shadow: 0 0 0 2px rgba(200,255,0,0.1) !important;
+            outline: none !important;
         }
 
         /* Text inputs & textareas */
@@ -322,8 +392,8 @@
 
         /* Nav bar styling */
         .nav-bar.navbar-top-nav {
-            background: #111213 !important;
-            border-bottom: 1px solid #2e3033 !important;
+            background: #131616;  !important;
+        
         }
         .nav-bar.navbar-top-nav .title h1 {
             color: #fff !important;
@@ -996,7 +1066,6 @@ div#basic {
     .h3.title-block, h2.h3.title-block {
         background: #111 !important;
         border: 1px solid #222 !important;
-        border-left: 4px solid #C1F11D !important;
         border-radius: 5px !important;
         padding: 14px 16px !important;
         margin: 24px 0 16px !important;
@@ -1227,6 +1296,20 @@ div#basic {
     }
 }
 
+@media (min-width: 992px) {
+    form.listing .big-one-line .form-group, form.listing .big-one-line div.typeahead-city-wrapper, form.listing .big-one-line label {
+        float: left;
+        margin-right: 10px;
+        width: 100%;
+    }
+}
+
+#footer {
+    background-color: #0a0b0d  !important;
+}
+#footer > .container-fluid {
+    margin-left:6rem;}
+
         </style>
 
 <div class="row container">
@@ -1282,7 +1365,7 @@ div#basic {
                       </div>
                       <div class="form-group  listing_listed_as_id">
                         <label class="ev-mobile-label" style="display:none;">Category</label>
-                        <select class="form-control listinga" wire:model="listing" id="listing_listed_as_id">
+                        <select data-radius="all" class="apply-custom-select2 form-control listinga" wire:model="listing" id="listing_listed_as_id">
                           @foreach($listings as $listingOption)
                             <option value="{{$listingOption->id}}">{{$listingOption->name}}</option>
                           @endforeach
@@ -1365,7 +1448,7 @@ div#basic {
                           <div class="file optional add-img">
                             <label class="modern-upload-label" for="mphoto" style="cursor: pointer;">
                               <div class="text-center mb-4 drag-drop" id="drag-drop-area">
-                                <img style="    width: 55px; margin-bottom: 20px;" src="{{smart_asset('assets/newtheme/upload.svg')}}" alt="Upload Icon" class="">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="55" height="55" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                                
                                 <div class="upload-available">
                                   <p class="m-0 font-weight-bold drag-drop-text-main" style="font-size: 12px; color: #ffffff; font-weight:400; margin-bottom:20px">Drop files here</p>
@@ -1400,7 +1483,7 @@ div#basic {
                         <label>Phone Number</label>
                         <div style="display:flex;gap:8px;">
                             <div style="width:110px;flex-shrink:0;" wire:ignore>
-                                <select wire:model='countrycode' class="form-control" id="ev_mobile_phone_code" style="height:44px;font-size:13px;">
+                                <select data-radius="all" wire:model='countrycode' class="apply-custom-select2 form-control" id="ev_mobile_phone_code" style="height:44px;font-size:13px;">
                                     <option value="">Select</option>
                                     @foreach($countries as $code)
                                     <option value="{{$code->phonecode}}" {{ $countrycode == $code->phonecode ? 'selected' : '' }}>+{{$code->phonecode}}</option>
@@ -1805,7 +1888,7 @@ div#basic {
                     </h2>
                     <div class="ev-mc-group">
                         <label>Currency</label>
-                        <select wire:model='incallcurr' class="form-control">
+                        <select data-radius="all" wire:model='incallcurr' class="apply-custom-select2 form-control">
                             @foreach($currencies as $curr)
                             <option value="{{$curr->code}}" @if($curr->code == 'AED') selected @endif>{{$curr->code}} ({{$curr->symbol ?? $curr->code}})</option>
                             @endforeach
@@ -1883,7 +1966,7 @@ div#basic {
                     <div style="display:flex;gap:12px;margin-bottom:16px;">
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Gender <span style="color:#f87171">*</span></label>
-                            <select wire:model='gender' class="form-control">
+                            <select data-radius="all" wire:model='gender' class="apply-custom-select2 form-control">
                                 <option value="">Select</option>
                                 <option value="1">Female</option>
                                 <option value="2">Male</option>
@@ -1892,7 +1975,7 @@ div#basic {
                         </div>
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Orientation</label>
-                            <select wire:model='ori' class="form-control">
+                            <select data-radius="all" wire:model='ori' class="apply-custom-select2 form-control">
                                 <option value="">Select</option>
                                 <option value="1">Heterosexual</option>
                                 <option value="2">Bisexual</option>
@@ -1902,7 +1985,7 @@ div#basic {
                     </div>
                     <div class="ev-mc-group">
                         <label>Ethnicity</label>
-                        <select wire:model='ethnicity' class="form-control">
+                        <select data-radius="all" wire:model='ethnicity' class="apply-custom-select2 form-control">
                             <option value="">Select</option>
                             @foreach($ethnicities as $eth)
                             <option value="{{$eth->id}}">{{$eth->name}}</option>
@@ -1922,7 +2005,7 @@ div#basic {
                     <div style="display:flex;gap:12px;margin-bottom:16px;">
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Bust Size</label>
-                            <select wire:model='bust' class="form-control">
+                            <select data-radius="all" wire:model='bust' class="apply-custom-select2 form-control">
                                 <option value="">Select</option>
                                 @foreach($busts as $bust)
                                 <option value="{{$bust->id}}">{{$bust->name}}</option>
@@ -1931,7 +2014,7 @@ div#basic {
                         </div>
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Hair Color</label>
-                            <select wire:model='haircolor' class="form-control">
+                            <select data-radius="all" wire:model='haircolor' class="apply-custom-select2 form-control">
                                 <option value="">Select</option>
                                 @foreach($hairs as $hair)
                                 <option value="{{$hair->id}}">{{$hair->name}}</option>
@@ -1944,13 +2027,13 @@ div#basic {
                   <div class="ev-mobile-languages" style="display:none;">
                     <h2 class="h3 title-block">Languages Spoken</h2>
                     <div class="ev-mc-group">
-                        <select wire:model='language1' class="form-control" style="margin-bottom:10px;">
+                        <select data-radius="all" wire:model='language1' class="apply-custom-select2 form-control" style="margin-bottom:10px;">
                             <option value="">Select language...</option>
                             @foreach($languages as $lang)
                             <option value="{{$lang->id}}">{{$lang->name}}</option>
                             @endforeach
                         </select>
-                        <select wire:model='language2' class="form-control" style="margin-bottom:10px;">
+                        <select data-radius="all" wire:model='language2' class="apply-custom-select2 form-control" style="margin-bottom:10px;">
                             <option value="">Select language...</option>
                             @foreach($languages as $lang)
                             <option value="{{$lang->id}}">{{$lang->name}}</option>
@@ -1967,7 +2050,7 @@ div#basic {
                     <h2 class="h3 title-block">Additional Information</h2>
                     <div class="ev-mc-group">
                         <label>Shaved</label>
-                        <select wire:model='shaved' class="form-control">
+                        <select data-radius="all" wire:model='shaved' class="apply-custom-select2 form-control">
                             <option value="">Select</option>
                             <option value="no">No</option>
                             <option value="partially">Partially</option>
@@ -1976,17 +2059,17 @@ div#basic {
                     </div>
                     <div class="ev-mc-group">
                         <label>Smoking</label>
-                        <select wire:model='smoke' class="form-control">
+                        <select data-radius="all" wire:model='smoke' class="apply-custom-select2 form-control">
                             <option value="">Select</option>
                             <option value="0">No</option>
                             <option value="1">Yes</option>
                         </select>
                     </div>
-                    <div class="ev-mc-group">
+                    <!-- <div class="ev-mc-group">
                         <label>Add Video URL</label>
                         <input wire:model='video' class="form-control" type="text" placeholder="https://yourchannel.com">
                         <span style="color:#666;font-size:11px;margin-top:4px;display:block;">YouTube, Vimeo or other video platform URL</span>
-                    </div>
+                    </div> -->
                   </div>
 
                   <style>
@@ -2189,8 +2272,8 @@ div#basic {
                   <div id="video">
                     <h2 class="h3 title-block">Add video</h2>
                     <div class="input video-embedder" data-height="320" data-service-url="https://massagerepublic.com/action/videos/preview" data-width="510">
-                      <div class="row margin-bottom">
-                        <div class="col-sm-6">
+                      <div class="row margin-bottom" style="padding-inline:0px !important">
+                        <div class="col-sm-12">
                           <div id="listing-video-url-input">
                             <div class="input-group1">
                               <input class="form-control validate" wire:model='video' data-validations="urlFormat" placeholder="Video URL" data-validations-error-container="#listing-video-url-input" type="text" name="listing[video_attributes][url]" id="listing_video_attributes_url" />
@@ -2259,7 +2342,7 @@ div#basic {
           @script
           <script>
 // Custom Select2 Implementation
-class CustomSelect2 {
+window.CustomSelect2 = class CustomSelect2 {
     constructor(selectElement, options = {}) {
         this.selectElement = selectElement;
         this.options = {

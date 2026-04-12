@@ -975,9 +975,9 @@
                         <div class="ev-avatar">
                             <a href="{{ $profileUrl }}" wire:navigate>
                                 @if(!empty($profile->coverimg->image))
-                                    <img alt="{{$profile->name}}" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image)}}" />
+                                    <img alt="{{$profile->name}}" src="{{webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image)}}" />
                                 @elseif(!empty($profile->singleimg->image))
-                                    <img alt="{{$profile->name}}" src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image)}}" />
+                                    <img alt="{{$profile->name}}" src="{{webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image)}}" />
                                 @else
                                     <img alt="{{$profile->name}}" src="{{smart_asset('assets/images/default-avatar.png')}}" />
                                 @endif
@@ -1136,9 +1136,9 @@
                 <a href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>
                     <div class="ev-verified-badge"><i class="fa fa-check"></i> Verified photos</div>
                     @if(!empty($user->coverimg->image))
-                    <img alt="{{$user->name}}" src="{{smart_asset('/userimages/'.$user->user_id.'/'.$user->id.'/'.$user->coverimg->image)}}" />
+                    <img alt="{{$user->name}}" src="{{webp_asset('userimages/'.$user->user_id.'/'.$user->id.'/'.$user->coverimg->image)}}" />
                     @elseif(!empty($user->singleimg->image))
-                    <img alt="{{$user->name}}" src="{{smart_asset('userimages/'.$user->user_id.'/'.$user->id.'/'.$user->singleimg->image)}}" />
+                    <img alt="{{$user->name}}" src="{{webp_asset('userimages/'.$user->user_id.'/'.$user->id.'/'.$user->singleimg->image)}}" />
                     @endif
                 </a>
                 <span class="ev-label">Preview</span>

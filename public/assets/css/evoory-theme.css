@@ -226,6 +226,51 @@ button.ev-nav-link{height:42px;padding:12px 20px;font-size:14px;font-family:inhe
   body{background:#fff;color:#000}
 }
 
+/* ═══ DESKTOP AUCTION SPOTS ═══ */
+@media screen and (min-width: 769px) {
+  div.spot div.auction-cover {
+    background: rgba(0,0,0,0.85) !important;
+    border: none !important;
+    border-radius: 8px !important;
+  }
+  div.spot div.auction-cover .flex-not-sidebar h3 {
+    color: #fff !important;
+    background: none !important;
+  }
+  div.spot div.auction-cover .flex-not-sidebar h3 span {
+    color: #fff !important;
+  }
+  div.spot div.auction-cover .flex-not-sidebar h3 strong {
+    color: #C1F11D !important;
+  }
+  div.spot div.auction-cover a.btn.btn-primary,
+  div.spot div.auction-cover .btn-primary,
+  div.spot .auction-cover a.btn {
+    background: #C1F11D !important;
+    color: #000 !important;
+    border: none !important;
+    border-radius: 50px !important;
+    padding: 10px 32px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
+  div.spot div.auction-cover a.btn.btn-primary:hover,
+  div.spot div.auction-cover .btn-primary:hover,
+  div.spot .auction-cover a.btn:hover {
+    background: #b5e600 !important;
+  }
+  div.spot div.auction-cover .spot-id {
+    color: #fff !important;
+  }
+  div.spot div.auction-cover .flex-not-sidebar > div:last-child img {
+    filter: invert(1) !important;
+    opacity: 0.6 !important;
+  }
+  div.spot div.auction-cover .flex-not-sidebar > div:last-child p {
+    color: #ccc !important;
+  }
+}
+
 /* ═══ MOBILE AUCTION SPOTS ═══ */
 @media screen and (max-width: 768px) {
   div.listings.listings-spots { border: none !important; border-top: none !important; border-bottom: none !important; padding: 0 !important; margin: 0 !important; }

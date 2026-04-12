@@ -204,22 +204,37 @@
     padding-top: 1px;
   }
 
+  /* Desktop: 2-column gallery grid */
+  .listing-photos-sm-plus {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    margin: 0 -6px !important;
+  }
+  .listing-photos-sm-plus > .col-lg-6 {
+    width: 50% !important;
+    float: none !important;
+    padding: 0 6px !important;
+    margin-bottom: 12px !important;
+    display: block !important;
+  }
+  .listing-photos-sm-plus .pb-photo-link,
+  .listing-photos-sm-plus .img-wrapper {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
   .listing-photos-sm-plus .image-wrapper {
-    width: 240px !important;
-    height: 300px !important;
-    overflow: hidden;
+    width: 100% !important;
+    aspect-ratio: 3 / 4 !important;
+    height: auto !important;
+    overflow: hidden !important;
+    border-radius: 6px !important;
   }
-
   .listing-photos-sm-plus .uniform-image {
-    width: 240px !important;
-    height: 300px !important;
-    object-fit: cover;
-  }
-
-  .listing-photos-sm-plus .col-lg-6 {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 10px;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
   }
 
   .listing-photos-sm-plus .img-wrapper:before,
@@ -270,6 +285,31 @@
 
 .listing-photos-xs img.img-responsive {
     object-fit: cover;
+}
+
+.listing-photos-xs {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+}
+.listing-photos-xs > a.pb-photo-link {
+    display: block !important;
+    width: 100% !important;
+    float: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.listing-photos-xs > a.pb-photo-link .img-wrapper,
+.listing-photos-xs > a.pb-photo-link .image-wrapper {
+    width: 100% !important;
+    display: block !important;
+}
+.listing-photos-xs > a.pb-photo-link img.img-responsive {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 3 / 4 !important;
+    object-fit: cover !important;
+    border-radius: 6px !important;
 }
 
  .half-circle-button-vertical {
@@ -8069,6 +8109,45 @@ label.new:after {
 
 .listing-photos-xs img.img-responsive {
     height: 326px
+}
+
+div.visible-xs.pb-thumbnails div.listing-photos-xs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x mandatory !important;
+    padding: 0 12px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+}
+div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link {
+    display: inline-block !important;
+    flex: 0 0 auto !important;
+    width: 75% !important;
+    float: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    scroll-snap-align: center !important;
+}
+div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link span.img-wrapper,
+div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link .image-wrapper {
+    width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+}
+div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link img.img-responsive {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 3 / 4 !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
 }
 
 @media (min-width: 768px) and (max-width:1199px) {
@@ -22307,7 +22386,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
               <div class="visible-xs pb-thumbnails">
                 <div class="listing-photos-xs">
                   @foreach($images as $img)
-                  <a class=" pb-photo-link" href="{{smart_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}">
+                  <a class=" pb-photo-link" href="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}">
                     <span class="img-wrapper listing">
                       @if($user->photoverify && $user->photoverify->status == 'approved')
                       <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
@@ -22316,7 +22395,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                       </span>
                       @endif
                       <div class="image-wrapper">
-                        <img alt="" class="img-responsive" data-original-height="1499" data-original-width="1000" data-thumb-url="{{smart_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" height="327" src="{{smart_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" width="238">
+                        <img alt="{{ $user->name }} - escort in {{ $user->city }}" class="img-responsive" data-original-height="1499" data-original-width="1000" data-thumb-url="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" height="327" loading="lazy" decoding="async" src="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" width="238">
                       </div>
                     </span>
                   </a>
@@ -22610,7 +22689,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                             <div class="hidden" itemprop="itemReviewed" itemscope=""
                               itemtype="https://schema.org/AdultEntertainment">
                               <meta
-                                content="{{ $profile->images->first() ? smart_asset('userimages/'.$profile->images->first()->user_id.'/'.$profile->images->first()->profile_id.'/'.$profile->images->first()->image) : '' }}"
+                                content="{{ $profile->images->first() ? webp_asset('userimages/'.$profile->images->first()->user_id.'/'.$profile->images->first()->profile_id.'/'.$profile->images->first()->image) : '' }}"
                                 itemprop="image" />
                               <meta content="{{ $profile->name }} - escort in {{ $user->gcity->name ?? 'Dubai' }}" itemprop="name" />
                               <meta content="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}/{{ $profile->slug }}" itemprop="url" />
@@ -22710,11 +22789,12 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                 @foreach($images as $img)
                 <div class="col-lg-6">
                   <a class="pb-photo-link"
-                    href="{{smart_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}">
+                    href="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}">
                     <span class="img-wrapper listing">
                       <div class="image-wrapper">
-                        <img alt="" class="img-responsive uniform-image"
-                          src="{{smart_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" />
+                        <img alt="{{ $user->name }} - escort in {{ $user->city }}" class="img-responsive uniform-image"
+                          loading="lazy" decoding="async"
+                          src="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" />
                       </div>
                     </span>
                   </a>

@@ -580,14 +580,15 @@ min-width: 222px;
 .pagination {
     display: inline-flex;
     align-items: stretch;
-    background-color: transparent;
+    background-color: #3a3a3a;
     border-radius: 25px;
     padding: 0;
     margin: 20px 0;
-    overflow: visible;
+    overflow: hidden;
     gap: 0;
-    border: 1px solid #4c4c4c;
-        height: 55px;
+    border: none;
+    height: 55px;
+    box-sizing: border-box;
 }
 
 .pagination li {
@@ -605,7 +606,7 @@ min-width: 222px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 24px;
+    padding: 10px 24px;
     color: #C1F11D;
     background-color: #3a3a3a;
     text-decoration: none;
@@ -671,15 +672,44 @@ min-width: 222px;
     transition: all 0.3s ease;
 }
 
-.pagination .fa-arrow-left,
-.pagination .fa-arrow-right {
-    color: #C1F11D;
+/* SVG arrow styling */
+.pagination svg.pag-arrow {
+    display: block !important;
+    width: 18px !important;
+    height: 18px !important;
+    color: #C1F11D !important;
+    flex-shrink: 0 !important;
+    vertical-align: middle !important;
+}
+.pagination .pag-arrow-left { margin-right: 8px !important; }
+.pagination .pag-arrow-right { margin-left: 8px !important; }
+.pagination li.inactive .pag-arrow {
+    color: #C1F11D !important;
+    opacity: 0.5 !important;
 }
 
-.pagination li.inactive .fa-arrow-left,
-.pagination li.inactive .fa-arrow-right {
-    color: #C1F11D;
-    opacity: 0.5;
+/* Force full height on all pagination cells */
+.pagination {
+    align-items: stretch !important;
+    height: 55px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+.pagination li,
+.pagination li.d-inline {
+    display: flex !important;
+    align-items: stretch !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+.pagination li > a,
+.pagination li > span {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    align-self: stretch !important;
 }
 
 /* Responsive adjustments */
@@ -742,6 +772,7 @@ min-width: 222px;
 .listing-li.premium .listing-info-wrapper .listing-info {
     height: 125px !important;
     overflow: hidden;
+    padding-inline: 8px;
 }
 
 /* Featured package (ID: 20) */
@@ -762,8 +793,8 @@ min-width: 222px;
 
 @media (max-width: 768px) {
     .listing-li .img-wrapper.premium img {
-        width: 247px;
-        height: 221px;
+        width: 280px;
+        height: 223px;
         object-fit: cover;
     }
 
@@ -1645,7 +1676,9 @@ overflow: hidden;
         @foreach($reviews->take(6) as $rev)
         <a href="/{{ $gender ?? 'female' }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $rev->profile_id }}/{{ $rev->getuser->slug ?? '' }}" class="ev-whatsnew-card">
             <div class="ev-whatsnew-card-img">
-                <img src="{{webp_asset('userimages/'.$rev->user_id.'/'.$rev->profile_id.'/'.$rev->getpic->image)}}" alt="{{ $rev->getuser->name ?? '' }}" loading="lazy" />
+                @if($rev->getpic)
+                <img src="{{ webp_asset('userimages/'.$rev->user_id.'/'.$rev->profile_id.'/'.$rev->getpic->image) }}" alt="{{ $rev->getuser->name ?? '' }}" loading="lazy" />
+                @endif
             </div>
             <div class="ev-whatsnew-card-text">
                 <strong>Feedback for {{ $rev->getuser->name ?? '' }} <span style="color:#C1F11D">&#10084;</span></strong>
@@ -2401,24 +2434,22 @@ overflow: hidden;
             <div class="activity-record new-review mini">
               <div class="activity-row">
                 <div class="headline h3">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>New review for <a title="Sweet tanned GFE Big boobs - New in Town, Vietnamese escort in Dubai" href="/female-escorts-in-dubai/sweet-tanned-gfe-big-boobs-new-in-town">{{$rev->getuser->name ?? ''}} </a>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>New review for <a title="{{ $rev->getuser->name ?? '' }}" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}/{{ $rev->profile_id }}">{{ $rev->getuser->name ?? '' }}</a>
                 </div>
+                @if($rev->getpic)
                 <div class="photo">
-                  <a class=" pb-photo-link" href="/female-escorts-in-dubai/sweet-tanned-gfe-big-boobs-new-in-town">
+                  <a class="pb-photo-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}/{{ $rev->profile_id }}">
                     <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
-                        <i class="fa fa-check"></i>
-                        <span>Verified photos</span>
-                      </span>
                       <div class="image-wrapper">
-                        <img alt="" class="img-responsive" height="60" src="{{webp_asset("userimages/".$rev->user_id."/".$rev->profile_id."/".$rev->getpic->image)}}" width="60" />
+                        <img alt="{{ $rev->getuser->name ?? '' }}" class="img-responsive" height="60" width="60" loading="lazy" src="{{ webp_asset('userimages/'.$rev->user_id.'/'.$rev->profile_id.'/'.$rev->getpic->image) }}" />
                       </div>
                     </span>
                   </a>
                 </div>
+                @endif
                 <div class="activity-content">
                   <div class="review-description">
-                    <p>{{$rev->review}} </p>
+                    <p>{{ Str::limit($rev->review, 150) }}</p>
                   </div>
                 </div>
               </div>

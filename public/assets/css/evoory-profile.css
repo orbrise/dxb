@@ -159,7 +159,7 @@
 .listing-photos-sm-plus {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 0px;
 }
 .listing-photos-sm-plus .col-lg-6 {
     padding: 0 !important;

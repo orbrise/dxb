@@ -23,7 +23,6 @@
             font-size: 18px !important;
             font-weight: 600 !important;
             background: #1a1b1e;
-            border-left: 4px solid #c8ff00;
             padding: 12px 18px !important;
             margin: 30px 0 20px !important;
             border-radius: 0 6px 6px 0;
@@ -743,6 +742,42 @@ form.listing .image {
 .insidewrapper {
   width: 40%;
   margin-right:5px;
+  position: relative;
+}
+.form-group.phone_number,
+.inline-group,
+#contact-information,
+#about-me,
+#about-me .row,
+#about-me .row > [class*="col-"],
+#about-me .form-group,
+#languages,
+#languages > div[id^="remove"],
+#fees,
+#fees .row,
+#fees .row > [class*="col-"],
+#fees .form-group,
+.wrappper {
+  overflow: visible !important;
+}
+/* First phone row stacks ABOVE the second phone row */
+#contact-information .form-group.phone_number {
+  position: relative;
+}
+#contact-information .form-group.phone_number:nth-of-type(1) { z-index: 100; }
+#contact-information .form-group.phone_number:nth-of-type(2) { z-index: 50; }
+#contact-information .form-group.phone_number:nth-of-type(2) .insidewrapper,
+#contact-information .form-group.phone_number:nth-of-type(2) .custom-select2 {
+  z-index: 1 !important;
+}
+/* Open dropdown - max stacking */
+.insidewrapper .custom-select2.open {
+  position: relative !important;
+  z-index: 999999 !important;
+}
+.insidewrapper .custom-select2.open .custom-select2-dropdown.open {
+  z-index: 999999 !important;
+  background: #1a1b1e !important;
 }
 
 /* Modern Upload Area Styles */
@@ -975,7 +1010,25 @@ div#basic {
 }
 
 form.listing .form-group.listing_description {
-    max-width: 900px;
+    max-width: 100% !important;
+    width: 100% !important;
+}
+form.listing textarea#listing_description {
+    background-color: #000 !important;
+    border: 1px solid #2e3033 !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 200px !important;
+    padding: 14px 16px !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+form.listing textarea#listing_description:focus {
+    border-color: #c8ff00 !important;
+    box-shadow: 0 0 0 2px rgba(200,255,0,0.1) !important;
+    outline: none !important;
 }
 
 /* ═══════════════════════════════════════════
@@ -1026,15 +1079,23 @@ form.listing .form-group.listing_description {
         width: 210px !important;
     }
     form.listing .big-one-line .form-group.listing_city_url {
-        flex: 1;
-        display: flex;
-        align-items: flex-start;
-        gap: 0;
+        flex: 1 1 auto !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 0 !important;
         margin: 0 !important;
+        min-width: 0 !important;
     }
     form.listing .big-one-line .form-group.listing_city_url .typeahead-city-wrapper {
-        flex: 1;
+        flex: 1 1 auto !important;
         position: relative;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    form.listing .big-one-line .form-group.listing_city_url .typeahead-city-wrapper input,
+    form.listing .big-one-line .form-group.listing_city_url input#citysearch {
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     /* "in" label next to city input */
@@ -1193,7 +1254,11 @@ form.listing .form-group.listing_description {
         gap: 16px !important;
         margin: 0 0 12px 0 !important;
         flex-wrap: nowrap !important;
+        position: relative !important;
     }
+    #fees .row:first-of-type { z-index: 20; }
+    #fees .row:nth-of-type(2) { z-index: 10; }
+    #fees .row:has(.custom-select2.open) { z-index: 999999 !important; }
     #fees .row > [class*="col-"] {
         width: auto !important;
         flex: none !important;
@@ -1290,6 +1355,10 @@ form.listing .form-group.listing_description {
         width: 0 !important;
         padding: 0 !important;
         float: none !important;
+        position: relative !important;
+    }
+    #about-me > .row > [class*="col-"]:has(.custom-select2.open) {
+        z-index: 999999 !important;
     }
     #about-me > .row .form-group {
         margin-bottom: 0 !important;
@@ -1334,6 +1403,7 @@ form.listing .form-group.listing_description {
     #languages > #remove1 { z-index: 30 !important; }
     #languages > #remove2 { z-index: 20 !important; }
     #languages > #remove3 { z-index: 10 !important; }
+    #languages > div[id^="remove"]:has(.custom-select2.open) { z-index: 999999 !important; }
     #languages .rm-lang-field {
         flex-shrink: 0 !important;
         cursor: pointer !important;
@@ -1534,7 +1604,7 @@ form.listing .form-group.listing_description {
     .h3.title-block, h2.h3.title-block {
         background: #111 !important;
         border: 1px solid #222 !important;
-        border-left: 4px solid #C1F11D !important;
+        
         border-radius: 5px !important;
         padding: 14px 16px !important;
         margin: 24px 0 16px !important;
@@ -1579,6 +1649,22 @@ form.listing .form-group.listing_description {
     }
     form.listing .big-one-line .typeahead-city-wrapper input {
         padding-left: 12px !important;
+        width: 100% !important;
+    }
+    form.listing .big-one-line .form-group.listing_city_url,
+    form.listing .big-one-line .form-group.listing_city_url .typeahead-city-wrapper,
+    form.listing .big-one-line .form-group.listing_city_url .twitter-typeahead,
+    form.listing .big-one-line .form-group.listing_city_url input#citysearch,
+    .form-group.listing_city_url,
+    .form-group.listing_city_url .typeahead-city-wrapper,
+    .form-group.listing_city_url .twitter-typeahead,
+    .form-group.listing_city_url input#citysearch {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+        box-sizing: border-box !important;
+        float: none !important;
     }
     .typeahead-city-wrapper::before {
         display: none !important;
@@ -1641,8 +1727,78 @@ form.listing .form-group.listing_description {
         height: 44px !important;
         font-size: 14px !important;
     }
-    .custom-select2-dropdown {
+
+    /* Mobile custom-select2 dropdowns - appear below their trigger */
+    .custom-select2 {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+    .custom-select2.open {
+        z-index: 999999 !important;
+    }
+    /* When a select2 is open, lift its immediate parent above siblings */
+    div:has(> .custom-select2.open),
+    div:has(> div > .custom-select2.open) {
+        z-index: 999999 !important;
+        position: relative !important;
+    }
+    /* Parent lifting handled by JS in openDropdown/closeDropdown */
+    .custom-select2-dropdown,
+    .custom-select2-dropdown.open {
+        position: absolute !important;
+        top: calc(100% + 2px) !important;
+        bottom: auto !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        max-height: 250px !important;
         border-radius: 5px !important;
+        z-index: 999999 !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.7) !important;
+        background: #1a1b1e !important;
+        border: 1px solid #333 !important;
+    }
+    /* Prevent ALL ancestors from clipping the dropdown */
+    .custom-select2,
+    .ev-mc-group,
+    .ev-mobile-personal,
+    .ev-mobile-languages,
+    .ev-mobile-additional,
+    .ev-mobile-pricing,
+    .ev-mobile-contact,
+    .ev-mobile-personal > div,
+    .ev-mobile-languages > div,
+    .ev-mobile-additional > div,
+    .ev-mobile-personal div,
+    .ev-mobile-languages div,
+    .ev-mobile-additional div,
+    .ev-mobile-pricing div,
+    .ev-mobile-contact div,
+    .ev-lang-row,
+    .ev-lang-list,
+    .form-group,
+    .wrapper,
+    #contact-information,
+    #about-me,
+    #about-me .row,
+    #about-me .row > [class*="col-"],
+    #about-me .form-group,
+    #languages,
+    #languages > div,
+    #fees,
+    #fees .row,
+    #fees .row > [class*="col-"],
+    .wrappper,
+    .insidewrapper,
+    .inline-group,
+    .col-lg-offset-1,
+    .col-lg-10,
+    .row.container,
+    #content,
+    .content-wrapper {
+        overflow: visible !important;
     }
 
     /* Phone row */
@@ -2004,7 +2160,7 @@ form.listing .form-group.listing_description {
                         <label>Phone Number</label>
                         <div style="display:flex;gap:8px;">
                             <div style="width:110px;flex-shrink:0;" wire:ignore>
-                                <select wire:model='countrycode' class="form-control" id="ev_mobile_phone_code" style="height:44px;font-size:13px;">
+                                <select wire:model='countrycode' class="form-control apply-custom-select2" id="ev_mobile_phone_code" style="height:44px;font-size:13px;">
                                     <option value="">Select</option>
                                     @foreach($countries as $code)
                                     <option value="{{$code->phonecode}}" {{ $countrycode == $code->phonecode ? 'selected' : '' }}>+{{$code->phonecode}}</option>
@@ -2395,7 +2551,7 @@ form.listing .form-group.listing_description {
                     </h2>
                     <div class="ev-mc-group">
                         <label>Currency</label>
-                        <select wire:model='incallcurr' class="form-control">
+                        <select wire:model='incallcurr' class="form-control apply-custom-select2">
                             @foreach($currencies as $curr)
                             <option value="{{$curr->code}}" @if($curr->code == 'AED') selected @endif>{{$curr->code}} ({{$curr->symbol ?? $curr->code}})</option>
                             @endforeach
@@ -2481,7 +2637,7 @@ form.listing .form-group.listing_description {
                     <div style="display:flex;gap:12px;margin-bottom:16px;">
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Gender <span style="color:#f87171">*</span></label>
-                            <select wire:model='gender' class="form-control">
+                            <select wire:model='gender' class="form-control apply-custom-select2">
                                 <option value="">Select</option>
                                 <option value="1">Female</option>
                                 <option value="2">Male</option>
@@ -2490,7 +2646,7 @@ form.listing .form-group.listing_description {
                         </div>
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Orientation</label>
-                            <select wire:model='ori' class="form-control">
+                            <select wire:model='ori' class="form-control apply-custom-select2">
                                 <option value="">Select</option>
                                 <option value="1">Straight</option>
                                 <option value="2">Bisexual</option>
@@ -2500,7 +2656,7 @@ form.listing .form-group.listing_description {
                     </div>
                     <div class="ev-mc-group">
                         <label>Ethnicity</label>
-                        <select wire:model='ethnicity' class="form-control">
+                        <select wire:model='ethnicity' class="form-control apply-custom-select2">
                             <option value="">Select</option>
                             @foreach($ethnicities as $eth)
                             <option value="{{$eth->id}}">{{$eth->name}}</option>
@@ -2520,7 +2676,7 @@ form.listing .form-group.listing_description {
                     <div style="display:flex;gap:12px;margin-bottom:16px;">
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Bust Size</label>
-                            <select wire:model='bust' class="form-control">
+                            <select wire:model='bust' class="form-control apply-custom-select2">
                                 <option value="">Select</option>
                                 @foreach($busts as $bustItem)
                                 <option value="{{$bustItem->id}}">{{$bustItem->name}}</option>
@@ -2529,7 +2685,7 @@ form.listing .form-group.listing_description {
                         </div>
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Hair Color</label>
-                            <select wire:model='haircolor' class="form-control">
+                            <select wire:model='haircolor' class="form-control apply-custom-select2">
                                 <option value="">Select</option>
                                 @foreach($hairs as $hair)
                                 <option value="{{$hair->id}}">{{$hair->name}}</option>
@@ -2544,13 +2700,13 @@ form.listing .form-group.listing_description {
                     <h2 class="h3 title-block">Languages Spoken</h2>
                     <div class="ev-lang-list">
                         <div class="ev-lang-row">
-                            <select wire:model='language1' class="form-control" style="margin-bottom:8px;">
+                            <select wire:model='language1' class="form-control apply-custom-select2" style="margin-bottom:8px;">
                                 <option value="">Select language...</option>
                                 @foreach($languages as $lang)
                                 <option value="{{$lang->id}}">{{$lang->name}}</option>
                                 @endforeach
                             </select>
-                            <select wire:model='expert1' class="form-control" style="margin-bottom:8px;">
+                            <select wire:model='expert1' class="form-control apply-custom-select2" style="margin-bottom:8px;">
                                 <option value="">Level...</option>
                                 <option value="Fluent">Fluent</option>
                                 <option value="Good">Good</option>
@@ -2558,13 +2714,13 @@ form.listing .form-group.listing_description {
                             </select>
                         </div>
                         <div class="ev-lang-row">
-                            <select wire:model='language2' class="form-control" style="margin-bottom:8px;">
+                            <select wire:model='language2' class="form-control apply-custom-select2" style="margin-bottom:8px;">
                                 <option value="">Select language...</option>
                                 @foreach($languages as $lang)
                                 <option value="{{$lang->id}}">{{$lang->name}}</option>
                                 @endforeach
                             </select>
-                            <select wire:model='expert2' class="form-control" style="margin-bottom:8px;">
+                            <select wire:model='expert2' class="form-control apply-custom-select2" style="margin-bottom:8px;">
                                 <option value="">Level...</option>
                                 <option value="Fluent">Fluent</option>
                                 <option value="Good">Good</option>
@@ -2575,13 +2731,13 @@ form.listing .form-group.listing_description {
                             </button>
                         </div>
                         <div class="ev-lang-row">
-                            <select wire:model='language3' class="form-control" style="margin-bottom:8px;">
+                            <select wire:model='language3' class="form-control apply-custom-select2" style="margin-bottom:8px;">
                                 <option value="">Select language...</option>
                                 @foreach($languages as $lang)
                                 <option value="{{$lang->id}}">{{$lang->name}}</option>
                                 @endforeach
                             </select>
-                            <select wire:model='expert3' class="form-control" style="margin-bottom:8px;">
+                            <select wire:model='expert3' class="form-control apply-custom-select2" style="margin-bottom:8px;">
                                 <option value="">Level...</option>
                                 <option value="Fluent">Fluent</option>
                                 <option value="Good">Good</option>
@@ -2602,7 +2758,7 @@ form.listing .form-group.listing_description {
                     <h2 class="h3 title-block">Additional Information</h2>
                     <div class="ev-mc-group">
                         <label>Shaved</label>
-                        <select wire:model='shaved' class="form-control">
+                        <select wire:model='shaved' class="form-control apply-custom-select2">
                             <option value="">Select</option>
                             <option value="no">No</option>
                             <option value="partialy">Partially Shaved</option>
@@ -2611,7 +2767,7 @@ form.listing .form-group.listing_description {
                     </div>
                     <div class="ev-mc-group">
                         <label>Smoking</label>
-                        <select wire:model='smoke' class="form-control">
+                        <select wire:model='smoke' class="form-control apply-custom-select2">
                             <option value="">Select</option>
                             <option value="0">Non-Smoker</option>
                             <option value="1">Smoker</option>
@@ -2641,9 +2797,10 @@ form.listing .form-group.listing_description {
 
                   <style>
                     @media(max-width:768px){
-                        .ev-mobile-personal{display:block!important}
-                        .ev-mobile-languages{display:block!important}
-                        .ev-mobile-additional{display:block!important}
+                        .ev-mobile-personal{display:block!important;overflow:visible!important}
+                        .ev-mobile-languages{display:block!important;overflow:visible!important}
+                        .ev-mobile-additional{display:block!important;overflow:visible!important}
+                        /* Mobile custom-select2 handled globally above */
                         #about-me,#video,#social{display:none!important}
                         #about-me #languages{display:none!important}
                         .ev-add-lang-btn{
@@ -3808,148 +3965,118 @@ if (typeof jQuery !== 'undefined') {
     });
 }
 
-// Custom Select2 Implementation
-class CustomSelect2 {
+// Custom Select2 Implementation (matching new-profile.blade.php)
+window.CustomSelect2 = class CustomSelect2 {
     constructor(selectElement, options = {}) {
-        this.select = selectElement;
+        this.selectElement = selectElement;
         this.options = {
-            placeholder: options.placeholder || 'Select an option',
+            placeholder: options.placeholder || 'Select...',
             searchable: options.searchable !== false,
+            allowClear: options.allowClear || false,
+            width: options.width || '100%',
             onChange: options.onChange || null
         };
-        
-        this.isOpen = false;
-        this.selectedValue = this.select.value;
+
         this.init();
     }
 
     init() {
         // Hide original select
-        this.select.style.display = 'none';
-        
-        // Get initial value from select or from Livewire wire:model
-        const wireModel = this.select.getAttribute('wire:model');
-        if (!this.selectedValue && wireModel && typeof Livewire !== 'undefined') {
-            // Try to get value from Livewire component
-            try {
-                const componentId = this.select.closest('[wire\\:id]')?.getAttribute('wire:id');
-                if (componentId && window.Livewire) {
-                    const component = window.Livewire.find(componentId);
-                    if (component && component.get) {
-                        this.selectedValue = component.get(wireModel);
-                    }
-                }
-            } catch (e) {
-                console.log('Could not get Livewire value:', e);
-            }
-        }
-        
-        // Create custom select structure
-        this.createCustomSelect();
-        this.attachEventListeners();
-        
-        // Set initial value if exists
-        if (this.selectedValue) {
-            this.selectOption(this.selectedValue);
-        }
-    }
+        this.selectElement.style.display = 'none';
 
-    createCustomSelect() {
-        // Create wrapper
-        this.wrapper = document.createElement('div');
-        this.wrapper.className = 'custom-select2';
-        
-        // For country code selects, set specific width
-        if (this.select.classList.contains('select2-country')) {
-            this.wrapper.style.width = '100%';
-            this.wrapper.style.display = 'inline-block';
-        } else {
-            this.wrapper.style.width = '100%';
-            this.wrapper.style.display = 'inline-block';
-        }
-        
-        this.wrapper.style.position = 'relative';
-        
-        // Apply radius class if specified
-        const radiusClass = this.select.getAttribute('data-radius');
+        // Create custom select container
+        this.container = document.createElement('div');
+        this.container.className = 'custom-select2';
+        this.container.style.width = this.options.width;
+
+        // Apply radius class from data-radius attribute
+        const radiusClass = this.selectElement.getAttribute('data-radius');
         if (radiusClass) {
-            this.wrapper.classList.add('radius-' + radiusClass);
+            this.container.classList.add('radius-' + radiusClass);
         }
-        
+
         // Create selection box
         this.selectionBox = document.createElement('div');
         this.selectionBox.className = 'custom-select2-selection';
-        this.selectionBox.textContent = this.options.placeholder;
-        
+        this.selectionBox.innerHTML = `<span class="custom-select2-placeholder">${this.options.placeholder}</span>`;
+
         // Create dropdown
         this.dropdown = document.createElement('div');
         this.dropdown.className = 'custom-select2-dropdown';
-        
-        // Create search input if searchable
+
+        // Create search if enabled
         if (this.options.searchable) {
             const searchContainer = document.createElement('div');
             searchContainer.className = 'custom-select2-search';
-            
             this.searchInput = document.createElement('input');
             this.searchInput.type = 'text';
             this.searchInput.placeholder = 'Search...';
-            
             searchContainer.appendChild(this.searchInput);
             this.dropdown.appendChild(searchContainer);
         }
-        
+
         // Create results list
         this.resultsList = document.createElement('ul');
         this.resultsList.className = 'custom-select2-results';
-        
+        this.dropdown.appendChild(this.resultsList);
+
+        // Append elements
+        this.container.appendChild(this.selectionBox);
+        this.container.appendChild(this.dropdown);
+        this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
+
         // Populate options
-        Array.from(this.select.options).forEach(option => {
-            if (option.value === '') return; // Skip placeholder option
-            
+        this.populateOptions();
+
+        // Bind events
+        this.bindEvents();
+    }
+
+    populateOptions() {
+        this.resultsList.innerHTML = '';
+        const options = this.selectElement.querySelectorAll('option');
+
+        options.forEach((option, index) => {
+            if (index === 0 && option.value === '') {
+                return;
+            }
+
             const li = document.createElement('li');
             li.className = 'custom-select2-option';
             li.textContent = option.textContent;
             li.dataset.value = option.value;
-            
-            if (option.value === this.selectedValue) {
-                li.classList.add('selected');
+
+            if (option.selected) {
+                this.selectOption(li, false);
             }
-            
+
             this.resultsList.appendChild(li);
         });
-        
-        this.dropdown.appendChild(this.resultsList);
-        this.wrapper.appendChild(this.selectionBox);
-        this.wrapper.appendChild(this.dropdown);
-        
-        // Insert after select element
-        this.select.parentNode.insertBefore(this.wrapper, this.select.nextSibling);
     }
 
-    attachEventListeners() {
+    bindEvents() {
         // Toggle dropdown
         this.selectionBox.addEventListener('click', (e) => {
             e.stopPropagation();
             this.toggleDropdown();
         });
-        
+
         // Search functionality
         if (this.searchInput) {
             this.searchInput.addEventListener('input', (e) => {
-                e.stopPropagation();
                 this.filterOptions(e.target.value);
             });
-            
+
             this.searchInput.addEventListener('click', (e) => {
                 e.stopPropagation();
             });
         }
-        
+
         // Option selection - handle both click and touch
         const handleOptionSelect = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
+
             let target = e.target;
             // Find the option element if clicked on child
             while (target && !target.classList.contains('custom-select2-option')) {
@@ -3959,31 +4086,30 @@ class CustomSelect2 {
                     break;
                 }
             }
-            
+
             if (target && target.classList.contains('custom-select2-option')) {
-                this.selectOption(target.dataset.value);
+                this.selectOption(target);
                 this.closeDropdown();
             }
         };
-        
+
         this.resultsList.addEventListener('click', handleOptionSelect);
         this.resultsList.addEventListener('touchend', handleOptionSelect);
-        
+
         // Close on outside click
-        document.addEventListener('click', (e) => {
-            if (!this.wrapper.contains(e.target)) {
+        const outsideClickHandler = (e) => {
+            if (!this.container.contains(e.target)) {
                 this.closeDropdown();
             }
-        });
-        
-        // Prevent dropdown from closing when clicking inside
-        this.dropdown.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
+        };
+
+        document.addEventListener('click', outsideClickHandler);
+        this.outsideClickHandler = outsideClickHandler;
     }
 
     toggleDropdown() {
-        if (this.isOpen) {
+        const isOpen = this.dropdown.classList.contains('open');
+        if (isOpen) {
             this.closeDropdown();
         } else {
             this.openDropdown();
@@ -3991,30 +4117,85 @@ class CustomSelect2 {
     }
 
     openDropdown() {
+        // Close all other open dropdowns first
+        document.querySelectorAll('.custom-select2.open').forEach(openContainer => {
+            if (openContainer !== this.container) {
+                openContainer.classList.remove('open');
+                openContainer.querySelector('.custom-select2-dropdown')?.classList.remove('open');
+                openContainer.querySelector('.custom-select2-selection')?.classList.remove('open');
+            }
+        });
+        // Reset all ancestor z-indexes from previous opens
+        document.querySelectorAll('[data-cs2-lifted]').forEach(el => {
+            el.style.zIndex = '';
+            el.style.position = '';
+            el.removeAttribute('data-cs2-lifted');
+        });
+        // Restore all custom-select2 z-index
+        document.querySelectorAll('.custom-select2').forEach(el => {
+            el.style.zIndex = '';
+        });
+
         this.dropdown.classList.add('open');
         this.selectionBox.classList.add('open');
-        this.isOpen = true;
-        
+        this.container.classList.add('open');
+
+        // Push ALL other custom-select2 to z-index:0 so they don't overlap
+        document.querySelectorAll('.custom-select2').forEach(el => {
+            if (el !== this.container) {
+                el.style.zIndex = '0';
+            }
+        });
+
+        // Walk up ancestors and lift z-index so dropdown isn't clipped
+        let el = this.container.parentElement;
+        while (el && el !== document.body) {
+            el.style.zIndex = '999999';
+            el.style.position = 'relative';
+            el.setAttribute('data-cs2-lifted', '1');
+            // Stop at major section containers
+            if (el.classList.contains('ev-mobile-personal') ||
+                el.classList.contains('ev-mobile-languages') ||
+                el.classList.contains('ev-mobile-additional') ||
+                el.classList.contains('ev-mobile-pricing') ||
+                el.classList.contains('ev-mobile-contact') ||
+                el.id === 'contact-information' ||
+                el.id === 'about-me' ||
+                el.id === 'fees' ||
+                el.classList.contains('wrapper')) {
+                break;
+            }
+            el = el.parentElement;
+        }
+
         if (this.searchInput) {
-            setTimeout(() => this.searchInput.focus(), 100);
+            this.searchInput.value = '';
+            this.searchInput.focus();
+            this.filterOptions('');
         }
     }
 
     closeDropdown() {
         this.dropdown.classList.remove('open');
         this.selectionBox.classList.remove('open');
-        this.isOpen = false;
-        
-        if (this.searchInput) {
-            this.searchInput.value = '';
-            this.filterOptions('');
-        }
+        this.container.classList.remove('open');
+
+        // Reset lifted ancestors
+        document.querySelectorAll('[data-cs2-lifted]').forEach(el => {
+            el.style.zIndex = '';
+            el.style.position = '';
+            el.removeAttribute('data-cs2-lifted');
+        });
+        // Restore all custom-select2 z-index
+        document.querySelectorAll('.custom-select2').forEach(el => {
+            el.style.zIndex = '';
+        });
     }
 
     filterOptions(searchTerm) {
         const options = this.resultsList.querySelectorAll('.custom-select2-option');
         const term = searchTerm.toLowerCase();
-        
+
         options.forEach(option => {
             const text = option.textContent.toLowerCase();
             if (text.includes(term)) {
@@ -4025,124 +4206,122 @@ class CustomSelect2 {
         });
     }
 
-    selectOption(value) {
-        // Update select element
-        this.select.value = value;
-        this.selectedValue = value;
-        
-        // Trigger change event on original select
-        const event = new Event('change', { bubbles: true });
-        this.select.dispatchEvent(event);
-        
-        // Update UI
-        const selectedOption = Array.from(this.select.options).find(opt => opt.value === value);
-        if (selectedOption) {
-            const fullText = selectedOption.textContent;
-            let displayText = fullText;
-            
-            // Only extract country code for country code selects (select2-country class)
-            if (this.select.classList.contains('select2-country')) {
-                const codeMatch = fullText.match(/^(\+\d+)/);
-                displayText = codeMatch ? codeMatch[1] : fullText;
-            }
-            // For currency selects in price-control, show only the currency code
-            else if (this.select.classList.contains('price-currency')) {
-                displayText = fullText.trim();
-            }
-            
-            this.selectionBox.textContent = displayText;
-            this.selectionBox.classList.remove('custom-select2-placeholder');
+    selectOption(optionElement, triggerChange = true) {
+        // Remove previous selection
+        const previousSelected = this.resultsList.querySelector('.custom-select2-option.selected');
+        if (previousSelected) {
+            previousSelected.classList.remove('selected');
         }
-        
-        // Update selected state in list
-        this.resultsList.querySelectorAll('.custom-select2-option').forEach(li => {
-            if (li.dataset.value === value) {
-                li.classList.add('selected');
-            } else {
-                li.classList.remove('selected');
-            }
-        });
-        
-        // Call onChange callback if provided
-        if (this.options.onChange) {
-            this.options.onChange(value);
+
+        // Add new selection
+        optionElement.classList.add('selected');
+
+        // Update selection box display text
+        const fullText = optionElement.textContent.trim();
+        let displayText = fullText;
+
+        // Only extract country code for country code selects (select2-country class)
+        if (this.selectElement.classList.contains('select2-country')) {
+            const codeMatch = fullText.match(/^(\+\d+)/);
+            displayText = codeMatch ? codeMatch[1] : fullText.split('-')[0].trim();
         }
-        
-        // Update Livewire if wire:model exists
-        const wireModel = this.select.getAttribute('wire:model');
-        if (wireModel && typeof Livewire !== 'undefined') {
-            @this.set(wireModel, value);
+        // For currency selects in price-control, show only the currency code
+        else if (this.selectElement.classList.contains('price-currency')) {
+            displayText = fullText.trim();
+        }
+
+        this.selectionBox.innerHTML = displayText;
+
+        // Update original select
+        this.selectElement.value = optionElement.dataset.value;
+
+        // Trigger change event
+        if (triggerChange) {
+            const event = new Event('change', { bubbles: true });
+            this.selectElement.dispatchEvent(event);
+
+            // Call custom onChange if provided
+            if (this.options.onChange) {
+                this.options.onChange(optionElement.dataset.value);
+            }
+
+            // Update Livewire if wire:model exists
+            const wireModel = this.selectElement.getAttribute('wire:model');
+            if (wireModel && typeof Livewire !== 'undefined') {
+                @this.set(wireModel, optionElement.dataset.value);
+            }
         }
     }
 
     destroy() {
-        // Remove the wrapper from DOM
-        if (this.wrapper && this.wrapper.parentNode) {
-            this.wrapper.parentNode.removeChild(this.wrapper);
+        if (this.container && this.container.parentNode) {
+            this.container.parentNode.removeChild(this.container);
         }
-        // Show original select
-        this.select.style.display = '';
-        // Clear reference
-        this.wrapper = null;
+        this.selectElement.style.display = '';
     }
 }
 
-// Initialize Custom Select2 for elements with apply-custom-select2 class
+// Initialize custom select2 ONLY for selects with .apply-custom-select2 class
 function initializeCustomSelect2() {
     console.log('Initializing Custom Select2...');
+
     const customSelects = document.querySelectorAll('select.apply-custom-select2');
-    console.log('Found custom selects:', customSelects.length);
-    
+
     customSelects.forEach(select => {
-        // Check if there's already a wrapper next to this select
-        const existingWrapper = select.nextElementSibling;
-        if (existingWrapper && existingWrapper.classList.contains('custom-select2')) {
-            console.log('Wrapper already exists for', select.id, '- skipping');
-            return;
+        if (!select.customSelect2Instance) {
+            const wireModel = select.getAttribute('wire:model');
+            const placeholder = select.querySelector('option[value=""]')?.textContent || 'Select...';
+
+            select.customSelect2Instance = new CustomSelect2(select, {
+                placeholder: placeholder,
+                searchable: true,
+                onChange: (value) => {
+                    // Trigger native change event for wire:model to pick up
+                    select.value = value;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    select.dispatchEvent(new Event('input', { bubbles: true }));
+
+                    // Also try direct Livewire sync
+                    if (wireModel && typeof Livewire !== 'undefined') {
+                        try {
+                            const component = Livewire.find(select.closest('[wire\\:id]')?.getAttribute('wire:id'));
+                            if (component) {
+                                component.set(wireModel, value);
+                            }
+                        } catch (e) {
+                            console.log('Livewire sync fallback:', e);
+                        }
+                    }
+                }
+            });
+            console.log('Initialized custom select2 for:', select.id || wireModel);
         }
-        
-        // Destroy existing instance if present
+    });
+
+    console.log('Custom Select2 initialized for', customSelects.length, 'dropdowns');
+}
+
+// Destroy all custom select2 instances
+function destroyCustomSelect2() {
+    const allSelects = document.querySelectorAll('select');
+    allSelects.forEach(select => {
         if (select.customSelect2Instance) {
-            console.log('Destroying existing instance for', select.id);
             select.customSelect2Instance.destroy();
             select.customSelect2Instance = null;
         }
-        
-        const placeholder = select.options[0]?.textContent || 'Select an option';
-        const wireModel = select.getAttribute('wire:model');
-        
-        console.log('Creating new instance for', select.id);
-        select.customSelect2Instance = new CustomSelect2(select, {
-            placeholder: placeholder,
-            searchable: true,
-            onChange: (value) => {
-                // Trigger native change event for wire:model to pick up
-                select.value = value;
-                select.dispatchEvent(new Event('change', { bubbles: true }));
-                select.dispatchEvent(new Event('input', { bubbles: true }));
-                
-                // Also try direct Livewire sync
-                if (wireModel && typeof Livewire !== 'undefined') {
-                    try {
-                        // Find the Livewire component
-                        const component = Livewire.find(select.closest('[wire\\:id]')?.getAttribute('wire:id'));
-                        if (component) {
-                            component.set(wireModel, value);
-                        }
-                    } catch (e) {
-                        console.log('Livewire sync fallback:', e);
-                    }
-                }
-            }
-        });
     });
-    console.log('Custom Select2 initialization complete');
 }
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait a bit for Livewire to finish rendering
-    setTimeout(initializeCustomSelect2, 100);
+    setTimeout(initializeCustomSelect2, 500);
+});
+
+window.addEventListener('load', function() {
+    const firstSelect = document.getElementById('first_phone_code');
+    if (firstSelect && !firstSelect.customSelect2Instance) {
+        initializeCustomSelect2();
+    }
 });
 
 // Re-initialize after Livewire updates
@@ -4152,14 +4331,11 @@ if (typeof Livewire !== 'undefined') {
     });
 }
 
-// CRITICAL: Re-initialize on Livewire navigation events
 document.addEventListener('livewire:navigated', function() {
-    console.log('Livewire navigated - reinitializing custom select2');
     setTimeout(initializeCustomSelect2, 200);
 });
 
 document.addEventListener('livewire:load', function() {
-    console.log('Livewire loaded - reinitializing custom select2');
     setTimeout(initializeCustomSelect2, 200);
 });
 

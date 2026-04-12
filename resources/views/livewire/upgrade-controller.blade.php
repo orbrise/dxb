@@ -316,8 +316,8 @@ a {color: #C1F11D !important;}
                                       $textLimit = 120;
                                       $showSideImages = 2;
                                   } elseif($package->name == 'VIP') { // Premium/VIP
-                                      $imageSize = '90px';
-                                      $minHeight = '90px';
+                                      $imageSize = '94px';
+                                      $minHeight = '94px';
                                       $textLimit = 150;
                                       $showSideImages = 3;
                                   }
@@ -330,9 +330,9 @@ a {color: #C1F11D !important;}
                                   <!-- Main Image -->
                                   <div style="width: {{ $imageSize }}; height: {{ $imageSize }}; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                       @if($profile->coverimg && $profile->coverimg->image)
-                                          <img src="{{ smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}" alt="Profile Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                          <img src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}" alt="Profile Preview" style="width: 100%; height: 100%; object-fit: cover;">
                                       @else
-                                          <img src="/admin/assets1/images/default-avatar.png" alt="Profile Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                          <img src="{{ smart_asset('assets/images/default-avatar.png') }}" alt="Profile Preview" style="width: 100%; height: 100%; object-fit: cover;">
                                       @endif
                                   </div>
                                   
@@ -341,16 +341,16 @@ a {color: #C1F11D !important;}
                                   <div style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;">
                                       @php
                                           $sideImages = $profileImages->take($showSideImages);
-                                          $sideImageSize = $package->name == 'VIP' ? '20px' : '20px';
+                                          $sideImageSize = $package->name == 'VIP' ? '30px' : '30px';
                                       @endphp
                                       @foreach($sideImages as $sideImage)
                                       <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #333; overflow: hidden;">
-                                          <img src="{{ smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$sideImage->image) }}" alt="Side Image" style="width: 100%; height: 100%; object-fit: cover;">
+                                          <img src="{{ webp_asset('userimages/'.$sideImage->user_id.'/'.$sideImage->profile_id.'/'.$sideImage->image) }}" alt="Side Image" style="width: 100%; height: 100%; object-fit: cover;">
                                       </div>
                                       @endforeach
                                       @for($i = $sideImages->count(); $i < $showSideImages; $i++)
                                       <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #333; overflow: hidden;">
-                                          <img src="/admin/assets1/images/default-avatar.png" alt="Placeholder" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5;">
+                                          <img src="{{ smart_asset('assets/images/default-avatar.png') }}" alt="Placeholder" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5;">
                                       </div>
                                       @endfor
                                   </div>

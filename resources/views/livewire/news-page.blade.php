@@ -589,14 +589,14 @@ input.tt-hint,
                                                  height="208" 
                                                  width="200"
                                                  loading="lazy"
-                                                 src="{{ smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
                                             @elseif(!empty($profile->singleimg))
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
                                                  loading="lazy"
-                                                 src="{{ smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image) }}">
                                             @endif
                                         </div>
                                     </span>
@@ -621,7 +621,7 @@ input.tt-hint,
                                                  height="208" 
                                                  width="200"
                                                  loading="lazy"
-                                                 src="{{ smart_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
                                         </div>
                                     </span>
                                 </a>
@@ -675,13 +675,13 @@ input.tt-hint,
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->coverimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->coverimg->image) }}">
                                             @elseif(!empty($question->profile->singleimg))
                                             <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}" 
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->singleimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->singleimg->image) }}">
                                             @endif
                                         </div>
                                     </span>
@@ -704,7 +704,7 @@ input.tt-hint,
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
                                         </div>
                                     </span>
                                 </a>
@@ -777,13 +777,13 @@ input.tt-hint,
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
                                             @elseif(!empty($profile->singleimg))
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image) }}">
                                             @endif
                                         </div>
                                     </span>
@@ -800,7 +800,7 @@ input.tt-hint,
                                                      class="img-responsive" 
                                                      height="208" 
                                                      width="200"
-                                                     src="{{ smart_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
+                                                     src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
                                             </div>
                                         </span>
                                     </a>
@@ -855,13 +855,13 @@ input.tt-hint,
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$review->profile->user_id.'/'.$review->profile->id.'/'.$review->profile->coverimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$review->profile->user_id.'/'.$review->profile->id.'/'.$review->profile->coverimg->image) }}">
                                             @elseif(!empty($review->profile->singleimg))
                                             <img alt="{{ $review->profile->name }} - escort in {{ $cityname }}" 
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$review->profile->user_id.'/'.$review->profile->id.'/'.$review->profile->singleimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$review->profile->user_id.'/'.$review->profile->id.'/'.$review->profile->singleimg->image) }}">
                                             @endif
                                         </div>
                                     </span>
@@ -884,7 +884,7 @@ input.tt-hint,
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
                                         </div>
                                     </span>
                                 </a>
@@ -984,13 +984,13 @@ input.tt-hint,
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->coverimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->coverimg->image) }}">
                                             @elseif(!empty($question->profile->singleimg))
                                             <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}" 
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->singleimg->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->singleimg->image) }}">
                                             @endif
                                         </div>
                                     </span>
@@ -1013,7 +1013,7 @@ input.tt-hint,
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 src="{{ smart_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
+                                                 src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
                                         </div>
                                     </span>
                                 </a>
