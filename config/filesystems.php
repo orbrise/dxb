@@ -66,7 +66,7 @@ return [
         'assets_external' => [
             'driver' => 'local',
             'root' => env('EXTERNAL_ASSETS_PATH', 'C:\assets_storage'), // External folder
-            'url' => env('ASSETS_EXTERNAL_URL', 'https://assets.massagerepublic.co'),
+            'url' => env('ASSETS_EXTERNAL_URL', 'https://assets.evoory.com'),
             'visibility' => 'public',
             'throw' => false,
         ],

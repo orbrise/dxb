@@ -129,7 +129,7 @@ if (!function_exists('webp_asset')) {
                 $webpPath = $path;
             }
             // Always use assets CDN for user images
-            return 'https://assets.massagerepublic.com.co/' . $webpPath;
+            return config('filesystems.disks.assets_external.url', 'https://assets.evoory.com') . '/' . $webpPath;
         }
         
         // For other images, use external_asset

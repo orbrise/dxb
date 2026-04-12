@@ -1677,7 +1677,7 @@ overflow: hidden;
         <a href="/{{ $gender ?? 'female' }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $rev->profile_id }}/{{ $rev->getuser->slug ?? '' }}" class="ev-whatsnew-card">
             <div class="ev-whatsnew-card-img">
                 @if($rev->getpic)
-                <img src="{{ webp_asset('userimages/'.$rev->user_id.'/'.$rev->profile_id.'/'.$rev->getpic->image) }}" alt="{{ $rev->getuser->name ?? '' }}" loading="lazy" />
+                <img src="{{ webp_asset('userimages/'.$rev->getpic->user_id.'/'.$rev->getpic->profile_id.'/'.$rev->getpic->image) }}" alt="{{ $rev->getuser->name ?? '' }}" loading="lazy" />
                 @endif
             </div>
             <div class="ev-whatsnew-card-text">
@@ -2434,14 +2434,14 @@ overflow: hidden;
             <div class="activity-record new-review mini">
               <div class="activity-row">
                 <div class="headline h3">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>New review for <a title="{{ $rev->getuser->name ?? '' }}" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}/{{ $rev->profile_id }}">{{ $rev->getuser->name ?? '' }}</a>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>New review for <a title="{{ $rev->getuser->name ?? '' }}" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}/{{ $rev->profile_id }}/{{ $rev->getuser->slug ?? '' }}">{{ $rev->getuser->name ?? '' }}</a>
                 </div>
                 @if($rev->getpic)
                 <div class="photo">
-                  <a class="pb-photo-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}/{{ $rev->profile_id }}">
+                  <a class="pb-photo-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}/{{ $rev->profile_id }}/{{ $rev->getuser->slug ?? '' }}">
                     <span class="img-wrapper mini">
                       <div class="image-wrapper">
-                        <img alt="{{ $rev->getuser->name ?? '' }}" class="img-responsive" height="60" width="60" loading="lazy" src="{{ webp_asset('userimages/'.$rev->user_id.'/'.$rev->profile_id.'/'.$rev->getpic->image) }}" />
+                        <img alt="{{ $rev->getuser->name ?? '' }}" class="img-responsive" height="60" width="60" loading="lazy" src="{{ webp_asset('userimages/'.$rev->getpic->user_id.'/'.$rev->getpic->profile_id.'/'.$rev->getpic->image) }}" />
                       </div>
                     </span>
                   </a>
