@@ -31,15 +31,11 @@
         {{-- Mobile Logo & Header --}}
         <div class="ev-reg-mobile-header">
             <a href="/" class="ev-reg-logo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 100 100">
-                    <circle cx="50" cy="30" r="8" fill="#E91E63"/>
-                    <circle cx="70" cy="40" r="8" fill="#FF9800"/>
-                    <circle cx="65" cy="62" r="8" fill="#4CAF50"/>
-                    <circle cx="35" cy="62" r="8" fill="#2196F3"/>
-                    <circle cx="30" cy="40" r="8" fill="#9C27B0"/>
-                    <circle cx="50" cy="48" r="6" fill="#C1F11D"/>
-                </svg>
-                <span>evoory</span>
+                @if(isset($setting) && $setting->app_logo)
+                <img src="{{ smart_asset($setting->app_logo) }}" alt="{{ $setting->app_name ?? 'evoory' }}" style="height:36px;width:auto;">
+                @else
+                <span>{{ $setting->app_name ?? 'evoory' }}</span>
+                @endif
             </a>
             <h1 class="ev-reg-welcome">Create Account</h1>
             <p class="ev-reg-subtitle">Join Evoory today</p>

@@ -7,7 +7,7 @@ html{scroll-behavior:smooth}
 body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-weight:300;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;-webkit-font-smoothing:antialiased}
 
 /* Layout */
-.ev-container{width:100%;max-width:1200px;margin:0 auto;padding:0 16px}
+.ev-container{width:100%;max-width:1300px;margin:0 auto;padding:0 0px}
 .ev-flex{display:flex}.ev-flex-col{flex-direction:column}.ev-flex-wrap{flex-wrap:wrap}
 .ev-items-center{align-items:center}.ev-justify-between{justify-content:space-between}.ev-justify-center{justify-content:center}
 .ev-gap-1{gap:4px}.ev-gap-2{gap:8px}.ev-gap-3{gap:12px}.ev-gap-4{gap:16px}.ev-gap-6{gap:24px}

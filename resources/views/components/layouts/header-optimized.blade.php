@@ -55,9 +55,15 @@
             </div>
             
             <!-- Logo optimized with proper image attributes -->
-            <a class="logo navbar-brand" href="/" wire:navigate>
-                Dubai Escorts at Massage Republic
+            @if(isset($setting) && $setting->app_logo)
+            <a class="navbar-brand" href="/" wire:navigate style="padding:8px 0;margin:0 10px 0 0;">
+                <img src="{{ smart_asset($setting->app_logo) }}" alt="{{ $setting->app_name ?? 'evoory' }}" style="height:40px;width:auto;display:block;">
             </a>
+            @else
+            <a class="logo navbar-brand" href="/" wire:navigate>
+                {{ $setting->app_name ?? 'evoory' }}
+            </a>
+            @endif
         </div>
 
         @yield('whatsnew')

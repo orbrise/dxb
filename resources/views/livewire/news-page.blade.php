@@ -13,17 +13,7 @@ body { background: #000 !important; }
 /* Header - Evoory style */
 .navbar.navbar-inverse { background: #0D1011 !important; border: none !important; }
 .logo.navbar-brand, .logo2.navbar-brand { display: none !important; }
-.navbar-header::before {
-    content: "evoory";
-    font-size: 24px;
-    font-weight: 700;
-    color: #C1F11D;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    display: flex;
-    align-items: center;
-    margin-right: auto;
-    padding: 10px 0;
-}
+.navbar-header::before { display: none !important; }
 .auth-button-group { gap: 10px !important; }
 .auth-button-group .btn-navbar-header,
 .auth-button-group .button_to .btn-navbar-header {

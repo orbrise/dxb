@@ -208,10 +208,14 @@
         );
       @endphp
       
-      @if($showDashboardLogo)
-        <a class="logo2 navbar-brand" href="/">Dubai Escorts at Massage Republic</a>
+      @if(isset($setting) && $setting->app_logo)
+        <a class="navbar-brand" href="/" style="padding:8px 0;margin:0 10px 0 0;">
+          <img src="{{ smart_asset($setting->app_logo) }}" alt="{{ $setting->app_name ?? 'evoory' }}" style="height:40px;width:auto;display:block;">
+        </a>
+      @elseif($showDashboardLogo)
+        <a class="logo2 navbar-brand" href="/">{{ $setting->app_name ?? 'evoory' }}</a>
       @else
-        <a class="logo navbar-brand" href="/">Dubai Escorts at Massage Republic</a>
+        <a class="logo navbar-brand" href="/">{{ $setting->app_name ?? 'evoory' }}</a>
       @endif
       
       <div class="btn-group" id="main-nav">

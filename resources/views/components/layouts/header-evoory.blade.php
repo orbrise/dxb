@@ -4,7 +4,11 @@
         <div class="ev-flex ev-items-center ev-justify-between">
             {{-- Logo + Tabs grouped together --}}
             <div class="ev-flex ev-items-center">
-                <a href="/" class="ev-logo">evoory</a>
+                @if(isset($setting) && $setting->app_logo)
+                <a href="/" class="ev-logo"><img src="{{ smart_asset($setting->app_logo) }}" alt="{{ $setting->app_name ?? 'evoory' }}" style="height:36px;width:auto;display:block;"></a>
+                @else
+                <a href="/" class="ev-logo">{{ $setting->app_name ?? 'evoory' }}</a>
+                @endif
 
                 {{-- Escorts / What's New Buttons --}}
                 @php
