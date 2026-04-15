@@ -1247,6 +1247,52 @@ button.btn.btn-primary#submit[type="submit"]:hover {
     transition: transform 0.2s;
 }
 
+/* Mobile: remove border-radius from all listing images */
+@media (max-width: 768px) {
+    .listing-li .thumbs img,
+    .listing-li .thumbs .img-wrapper,
+    .listing-li .thumbs .image-wrapper,
+    .listing-li .thumbs .main-thumbs img,
+    .listing-li .thumbs .main-thumbs .img-wrapper,
+    .listing-li .thumbs .main-thumbs .image-wrapper,
+    .listing-li .thumbs .main-thumbs:first-child:last-child img,
+    .listing-li .thumbs .main-thumbs:first-child:last-child .img-wrapper,
+    .listing-li .thumbs .main-thumbs:first-child:last-child .image-wrapper,
+    .listing-li .thumbs .main-thumbs:only-child img,
+    .listing-li .thumbs .main-thumbs:only-child .img-wrapper,
+    .listing-li .thumbs .main-thumbs:only-child .image-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:first-child img,
+    .listing-li .thumbs .other-thumbs .thumb:first-child .img-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:first-child .image-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:last-child img,
+    .listing-li .thumbs .other-thumbs .thumb:last-child .img-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:last-child .image-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:only-child img,
+    .listing-li .thumbs .other-thumbs .thumb:only-child .img-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:only-child .image-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) img,
+    .listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) .img-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) .image-wrapper,
+    .listing-li .thumbs .side-thumbs a:first-child img,
+    .listing-li .thumbs .side-thumbs a:first-child .img-wrapper,
+    .listing-li .thumbs .side-thumbs a:first-child .image-wrapper,
+    .listing-li .thumbs .side-thumbs a:last-child img,
+    .listing-li .thumbs .side-thumbs a:last-child .img-wrapper,
+    .listing-li .thumbs .side-thumbs a:last-child .image-wrapper,
+    .listing-li .thumbs .side-thumbs a:only-child img,
+    .listing-li .thumbs .side-thumbs a:only-child .img-wrapper,
+    .listing-li .thumbs .side-thumbs a:only-child .image-wrapper,
+    .listing-li .thumbs .side-thumbs a:not(:first-child):not(:last-child) img,
+    .listing-li .thumbs .side-thumbs a:not(:first-child):not(:last-child) .img-wrapper,
+    .listing-li .thumbs .side-thumbs a:not(:first-child):not(:last-child) .image-wrapper {
+        border-radius: 0 !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+}
+
 /* "See more & contact" button - outlined style on mobile */
 @media (max-width: 768px) {
     .listing-li a.btn.btn-dark {

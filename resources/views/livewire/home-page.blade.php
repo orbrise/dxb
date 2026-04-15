@@ -793,14 +793,14 @@ min-width: 222px;
 
 @media (max-width: 768px) {
     .listing-li .img-wrapper.premium img {
-        width: 280px;
+        width: 330px;
         height: 223px;
         object-fit: cover;
     }
 
     .listing-li .img-wrapper.mini img {
-    width: 70px;
-    height: 70px;
+    width: 95px;
+    height: 65px;
     object-fit: cover;
 }
 }
