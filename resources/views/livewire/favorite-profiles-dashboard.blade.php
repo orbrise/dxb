@@ -15,23 +15,33 @@
 
     /* Stats Card */
     .stats-card {
-        background: #2a2a2a;
-        border-radius: 10px;
-        padding: 20px;
+        background: #121212;
+        border: 0;
+        border-radius: 12px;
+        padding: 18px 20px;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
 
     .stats-card h3 {
-        font-size: 28px;
-        margin: 0 0 5px 0;
+        font-size: 22px;
+        margin: 0 0 4px 0;
         color: #C1F11D;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .stats-card h3 i {
+        font-size: 20px;
     }
 
     .stats-card p {
         margin: 0;
-        color: #888;
+        color: #fff;
         font-size: 14px;
+        font-weight: 500;
     }
 
     /* Favorites Grid */
@@ -178,42 +188,59 @@
 
     /* Empty State */
     .favorites-empty {
-        background: #2a2a2a;
+        background: #121212;
+        border: 0;
         border-radius: 12px;
-        padding: 60px 40px;
+        padding: 56px 28px;
         text-align: center;
-    }
-
-    .favorites-empty i {
-        font-size: 60px;
-        color: #444;
         margin-bottom: 20px;
     }
 
+    .favorites-empty i {
+        font-size: 64px;
+        color: #4a4a4a;
+        margin-bottom: 20px;
+        display: block;
+    }
+
     .favorites-empty h4 {
-        color: #fff;
-        margin-bottom: 10px;
+        color: #888;
+        font-size: 20px;
+        font-weight: 500;
+        margin: 0 0 12px;
     }
 
     .favorites-empty p {
         color: #888;
-        margin-bottom: 20px;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0 auto;
+        max-width: 360px;
     }
 
-    .favorites-empty .btn {
+    .favorites-search-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
         background: #C1F11D;
-        border: none;
         color: #000;
-        padding: 12px 25px;
-        border-radius: 25px;
         font-weight: 600;
-        transition: transform 0.2s;
+        font-size: 15px;
+        padding: 14px 24px;
+        border-radius: 999px;
+        border: none;
         text-decoration: none;
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+        transition: transform 0.15s ease, background 0.15s ease;
     }
 
-    .favorites-empty .btn:hover {
-        transform: scale(1.05);
+    .favorites-search-btn:hover {
+        background: #d4ff3a;
         color: #000;
+        text-decoration: none;
     }
 
     /* Success alert */
@@ -257,16 +284,6 @@
         }
     }
 </style>
-
-<!-- Back Bar -->
-<div class="ev-back-bar">
-    <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
-        <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
-            <i class="fa fa-angle-left"></i> Escorts in Dubai
-        </a>
-        <h1>My Favorites</h1>
-    </div>
-</div>
 
 <div class="ev-container" style="padding-top: 8px; padding-bottom: 40px;">
     @include('components.communication-nav')
@@ -353,10 +370,10 @@
             <i class="fa fa-heart"></i>
             <h4>No favorites yet</h4>
             <p>You haven't favorited any profiles yet. Browse escorts and click the bookmark icon to add them to your favorites.</p>
-            <a href="/female-escorts-in-dubai" class="btn">
-                <i class="fa fa-search" style="font-size:20px"></i> Browse Escorts
-            </a>
         </div>
+        <a href="/female-escorts-in-dubai" class="favorites-search-btn">
+            <i class="fa fa-search"></i> Search Escorts
+        </a>
     @endif
 </div>
 </div>

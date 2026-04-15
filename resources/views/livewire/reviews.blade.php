@@ -688,17 +688,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     @endpush
 
-    <!-- Back Bar -->
-    <div class="ev-back-bar {{ $selectedReview ? 'ev-review-open' : '' }}">
-        <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
-            <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
-                <span class="ev-desktop-back"><i class="fa fa-angle-left"></i> Escorts in Dubai</span>
-                <span class="ev-mobile-back" style="display:none;"><i class="fa fa-angle-left"></i> Back</span>
-            </a>
-            <h1><span class="ev-desktop-back">My Reviews</span><span class="ev-mobile-back" style="display:none;">Reviews</span></h1>
-        </div>
-    </div>
-
     <div class="ev-container {{ $selectedReview ? 'hide-nav-mobile' : '' }}" style="padding-top: 8px; padding-bottom: 40px;">
                 @include('components.communication-nav')
 

@@ -1322,15 +1322,11 @@ div#basic {
             Back
         </a>
         <a href="/" style="display:flex;align-items:center;gap:6px;text-decoration:none;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 100 100">
-                <circle cx="50" cy="30" r="8" fill="#E91E63"/>
-                <circle cx="70" cy="40" r="8" fill="#FF9800"/>
-                <circle cx="65" cy="62" r="8" fill="#4CAF50"/>
-                <circle cx="35" cy="62" r="8" fill="#2196F3"/>
-                <circle cx="30" cy="40" r="8" fill="#9C27B0"/>
-                <circle cx="50" cy="48" r="6" fill="#C1F11D"/>
-            </svg>
-            <span style="color:#C1F11D;font-size:18px;font-weight:600;font-style:italic;">evoory</span>
+            @if(isset($setting) && $setting->app_logo)
+                <img src="{{ smart_asset($setting->app_logo) }}" alt="{{ $setting->app_name ?? 'evoory' }}" style="height:28px;width:auto;display:block;">
+            @else
+                <span style="color:#C1F11D;font-size:18px;font-weight:600;font-style:italic;">{{ $setting->app_name ?? 'evoory' }}</span>
+            @endif
         </a>
         <div style="width:40px;"></div>
     </div>

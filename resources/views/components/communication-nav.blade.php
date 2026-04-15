@@ -124,40 +124,7 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    .communication-nav-menu {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-    }
-    
-    .communication-nav-item {
-        min-width: auto;
-    }
-    
-    .communication-nav-link {
-        padding: 10px 12px;
-        font-size: 13px;
-    }
-    
-    .communication-nav-link i {
-        font-size: 14px;
-    }
-    
-    .communication-nav-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .communication-nav-menu {
-        grid-template-columns: 1fr;
-    }
-    
-    .communication-nav-link {
-        justify-content: flex-start;
-    }
+    .communication-nav { display: none !important; }
 }
 </style>
 

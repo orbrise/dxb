@@ -1,5 +1,76 @@
 {{-- Evoory Theme Header - Optimized --}}
-<header class="ev-header">
+@php
+    $currentRoute = request()->route() ? request()->route()->getName() : '';
+    $currentPath = request()->path();
+    $citySlug = function_exists('getFeaturedCitySlug') ? getFeaturedCitySlug() : 'dubai';
+    // Listings (home) pages: /, /{gender}-escorts-in-{city}, /{gender}-escorts-in-{city}/page/{n}
+    $isHomePage = $currentRoute === 'home' || $currentRoute === 'home.paginated' || $currentRoute === 'newhome' || $currentPath === '/' || (bool) preg_match('#^(female|male|shemale)-escorts-in-[^/]+(/page/\d+)?$#', $currentPath);
+    // News / What's new pages
+    $isNewsPage = in_array($currentRoute, ['news.all', 'news.page']) || str_contains($currentPath, 'escort-news-in-');
+    // Auth pages keep their own layout
+    $isAuthPage = in_array($currentRoute, ['sign-in', 'register', 'login', 'forgot-password']);
+    // Profile details: /{gender}-escorts-in-{city}/{id}/{slug}
+    $isProfileDetails = (bool) preg_match('#^(female|male|shemale)-escorts-in-[^/]+/\d+/[^/]+#', $currentPath);
+    // Listing create/edit
+    $isListingCreateEdit = in_array($currentRoute, ['new.profile', 'user.profile']);
+    // Listings (home) page other than /
+    $isListingsHome = ($currentRoute === 'home' || $currentRoute === 'home.paginated') || (bool) preg_match('#^(female|male|shemale)-escorts-in-[^/]+(/page/\d+)?$#', $currentPath);
+    // Account-related pages get a distinct header ("< Home" + title)
+    $accountPageTitles = [
+        'user.account' => 'My Account',
+        'user.account.edit' => 'Edit',
+        'user.account.password' => 'Password',
+        'user.account.newsletter' => 'Newsletter',
+        'user.chat' => 'Messages',
+        'user.chat.with' => 'Messages',
+        'user.questions' => 'Questions',
+        'user.reviews' => 'Reviews',
+        'purchase.credits' => 'Buy Credits',
+        'favorites.dashboard' => 'My Favorite Profiles',
+        'profile.archived' => 'Archived Profiles',
+        'profile.status' => 'Profile Status',
+    ];
+    $isAccountPage = array_key_exists($currentRoute, $accountPageTitles);
+    $accountPageTitle = $accountPageTitles[$currentRoute] ?? '';
+    // Simple header shown for: profile details, listing create/edit, what's new, listings page
+    $useSimpleHeader = !$isAccountPage && ($isProfileDetails || $isListingCreateEdit || $isNewsPage || $isListingsHome);
+@endphp
+
+{{-- Mobile Account Header ("< Home" + page title, no logo) --}}
+@if($isAccountPage)
+<header class="ev-header-account">
+    <div class="ev-header-account-inner">
+        <a href="javascript:history.back()" class="ev-header-account-home">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back</span>
+        </a>
+        <span class="ev-header-account-title">{{ $accountPageTitle }}</span>
+        <span class="ev-header-account-spacer"></span>
+    </div>
+</header>
+@endif
+
+{{-- Mobile Simple Header (non-home, non-auth pages) --}}
+@if($useSimpleHeader)
+<header class="ev-header-simple">
+    <div class="ev-header-simple-inner">
+        <a href="javascript:history.back()" class="ev-header-simple-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back</span>
+        </a>
+        <a href="/" class="ev-header-simple-logo">
+            @if(isset($setting) && $setting->app_logo)
+            <img src="{{ smart_asset($setting->app_logo) }}" alt="{{ $setting->app_name ?? 'evoory' }}" style="height:28px;width:auto;display:block;">
+            @else
+            <span>{{ $setting->app_name ?? 'evoory' }}</span>
+            @endif
+        </a>
+        <span class="ev-header-simple-spacer"></span>
+    </div>
+</header>
+@endif
+
+<header class="ev-header {{ $useSimpleHeader ? 'ev-header--has-simple' : '' }} {{ $isAccountPage ? 'ev-header--has-account' : '' }}">
     <div class="ev-container">
         <div class="ev-flex ev-items-center ev-justify-between">
             {{-- Logo + Tabs grouped together --}}
@@ -10,14 +81,6 @@
                 <a href="/" class="ev-logo">{{ $setting->app_name ?? 'evoory' }}</a>
                 @endif
 
-                {{-- Escorts / What's New Buttons --}}
-                @php
-                    $citySlug = function_exists('getFeaturedCitySlug') ? getFeaturedCitySlug() : 'dubai';
-                    $currentRoute = request()->route() ? request()->route()->getName() : '';
-                    $currentPath = request()->path();
-                    $isHomePage = $currentRoute === 'home' || $currentPath === '/' || str_contains($currentPath, 'female-escorts-in-');
-                    $isNewsPage = in_array($currentRoute, ['news.all', 'news.page']) || str_contains($currentPath, 'female-escort-news-in-');
-                @endphp
                 @if($isHomePage || $isNewsPage)
                 <div class="ev-header-tabs">
                     <a href="/female-escorts-in-{{ $citySlug }}" class="ev-header-tab {{ $isHomePage ? 'active' : '' }}" wire:navigate>ESCORTS</a>
