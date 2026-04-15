@@ -142,6 +142,14 @@
 
 @push('css')
 <style>
+@media (max-width: 768px){
+  body:has(.ev-register-page) .ev-header{display:none!important}
+  .ev-auth-topbar{background:transparent!important;border:0!important;padding-top:18px}
+  .ev-auth-topbar-inner{justify-content:flex-start!important;padding:4px 16px!important}
+  .ev-auth-back-link{position:static!important;left:auto!important;font-size:18px!important}
+  .ev-auth-topbar-title{display:none!important}
+  .hidden-xs-reg{display:block!important}
+}
 .ev-auth-topbar{background:#12191c;border-top:1px solid #1f262f;border-bottom:1px solid #1f262f}
 .ev-auth-topbar-inner{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:center;position:relative}
 .ev-auth-back-link{display:inline-flex;align-items:center;gap:4px;color:#b5df19;text-decoration:none;font-size:15px;position:absolute;left:16px}
@@ -210,8 +218,6 @@
 .ev-country-dropdown::-webkit-scrollbar-thumb{background:#364152;border-radius:3px}
 
 @media(max-width:768px){
-  .hidden-xs-reg{display:none !important}
-
   .ev-reg-mobile-header{
     display:flex;
     flex-direction:column;
