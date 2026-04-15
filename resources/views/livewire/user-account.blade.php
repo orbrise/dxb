@@ -552,7 +552,7 @@
             padding-bottom: max(10px, env(safe-area-inset-bottom));
             gap: 8px;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
         }
         .ev-mobile-bottom-nav a {
             display: inline-flex;

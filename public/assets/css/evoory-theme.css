@@ -14,6 +14,9 @@ body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Se
 .ev-grid{display:grid}.ev-grid-cols-2{grid-template-columns:repeat(2,1fr)}.ev-grid-cols-3{grid-template-columns:repeat(3,1fr)}.ev-grid-cols-4{grid-template-columns:repeat(4,1fr)}.ev-grid-cols-6{grid-template-columns:repeat(6,1fr)}.ev-grid-cols-8{grid-template-columns:repeat(8,1fr)}
 
 /* Header */
+.ev-mobile-auth-btn{display:none;align-items:center;justify-content:center;width:42px;height:42px;border-radius:5px;border:1px solid var(--border-color);background:transparent;color:var(--text-secondary);text-decoration:none;transition:var(--transition);flex-shrink:0}
+.ev-mobile-auth-btn:hover{color:var(--text-primary);background:var(--bg-card);border-color:var(--text-secondary);text-decoration:none}
+.ev-mobile-auth-btn svg{width:20px;height:20px}
 .ev-header{background:#0D1011;
 ;padding:12px 0;position:sticky;top:0;z-index:1000}
 .ev-logo{font-size:24px;font-weight:700;color:var(--accent);text-decoration:none;letter-spacing:-0.5px}
@@ -178,6 +181,7 @@ button.ev-nav-link{height:42px;padding:12px 20px;font-size:14px;font-family:inhe
   .ev-nav{display:none!important}
   .ev-header-tabs{display:none!important}
   .ev-mobile-menu-btn{display:flex!important}
+  .ev-mobile-auth-btn{display:inline-flex!important}
   .ev-alpha-filter{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-inline:0;margin-top:1rem;justify-content:flex-start;padding-bottom:4px}
   .ev-alpha-filter::-webkit-scrollbar{display:none}
   .ev-alpha-btn{flex-shrink:0;margin-inline:2px;margin-bottom:0}

@@ -97,41 +97,26 @@
                 @endauth
             </nav>
             
-            {{-- Mobile Menu Button --}}
-            <button class="ev-btn ev-btn-icon ev-btn-dark ev-mobile-menu-btn" type="button" aria-label="Menu" aria-expanded="false" style="display:none">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-    </div>
-    
-    {{-- Mobile Menu --}}
-    <div class="ev-mobile-menu" style="display:none">
-        <div class="ev-container">
-            <nav class="ev-flex ev-flex-col ev-gap-2" style="padding:16px 0">
-                <a href="/" class="ev-nav-link">Home</a>
-                <a href="{{ route('new.profile') }}" class="ev-nav-link">List Now</a>
-                @auth
-                    @if(Auth::user()->type != 1)
-                        @php
-                            $mobileUserProfile = auth()->user()->profiles->first();
-                        @endphp
-                        @if($mobileUserProfile)
-                        <a href="{{ url('my-profile/'.$mobileUserProfile->slug.'/'.$mobileUserProfile->id) }}" class="ev-nav-link" wire:navigate>My Profile</a>
-                        @endif
-                        <a href="{{ url('my-account') }}" class="ev-nav-link" wire:navigate>My Account</a>
-                    @endif
-                    <form method="post" action="{{ url('sign_out') }}">
-                        {{ csrf_field() }}
-                        <button type="submit" class="ev-nav-link" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:inherit;text-align:left;width:100%;">Sign Out</button>
-                    </form>
-                @else
-                    <a href="{{ route('sign-in') }}" class="ev-nav-link">Sign In</a>
-                @endauth
-            </nav>
+            {{-- Mobile Auth/Dashboard Button --}}
+            @auth
+                @php
+                    $mobileAuthHref = Auth::user()->type == 1 ? url('admin/dashboard') : url('my-account');
+                @endphp
+                <a href="{{ $mobileAuthHref }}" class="ev-mobile-auth-btn" aria-label="My Account" wire:navigate>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </a>
+            @else
+                <a href="{{ route('sign-in') }}" class="ev-mobile-auth-btn" aria-label="Sign in">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </a>
+            @endauth
+
         </div>
     </div>
 </header>

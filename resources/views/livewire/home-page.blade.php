@@ -1988,8 +1988,7 @@ overflow: hidden;
                 @if($auction->status == 'ended' && $auction->winnerProfile)
                   {{-- For ended auctions with winners, show the winner's profile content --}}
                   <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
-                    <p class="d-none d-md-block">{{ str()->of($auction->winnerProfile->about)->limit(400) }}</p>
-                    <p class="d-md-none">{{ str()->of($auction->winnerProfile->about)->limit(140) }}</p>
+                    <p>{{ str()->of($auction->winnerProfile->about)->stripTags()->squish()->limit(290) }}</p>
                   </a>
                   <p class="no-margin see-more">
                     <a class="btn btn-dark" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
@@ -2210,8 +2209,7 @@ overflow: hidden;
                 </a>
               </h2>
               <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
-                <p class="d-none d-md-block">{{str()->of($profile->about)->limit(400)}}</p>
-                <p class="d-md-none">{{str()->of($profile->about)->limit(140)}}</p>
+                <p>{{str()->of($profile->about)->stripTags()->squish()->limit(400)}}</p>
               </a>
               <p class="no-margin see-more">
                 <a class="btn btn-dark" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
@@ -2280,8 +2278,7 @@ overflow: hidden;
                 <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}} </a>
               </h2>
               <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
-                <p class="d-none d-md-block">{{str()->of($profile->about)->limit(250)}}</p>
-                <p class="d-md-none">{{str()->of($profile->about)->limit(120)}}</p>
+                <p>{{str()->of($profile->about)->stripTags()->squish()->limit(150)}}</p>
               </a>
               <p class="no-margin see-more">
                 <a class="btn btn-dark" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
@@ -2332,8 +2329,7 @@ overflow: hidden;
                 </a>
               </h2>
               <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
-                <p class="d-none d-md-block">{{str()->of($profile->about)->limit(150)}}</p>
-                <p class="d-md-none">{{str()->of($profile->about)->limit(80)}}</p>
+                <p>{{str()->of($profile->about)->stripTags()->squish()->limit(70)}}</p>
               </a>
               <p class="no-margin see-more">
                 <a class="btn btn-dark" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
@@ -2377,8 +2373,7 @@ overflow: hidden;
                 <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
               </h2>
               <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
-                <p class="d-none d-md-block">{{str()->of($profile->about)->limit(150)}}</p>
-                <p class="d-md-none">{{str()->of($profile->about)->limit(80)}}</p>
+                <p>{{str()->of($profile->about)->stripTags()->squish()->limit(70)}}</p>
               </a>
               <p class="no-margin see-more">
                 <a class="btn btn-dark" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>

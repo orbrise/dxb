@@ -3,40 +3,49 @@
 <style>
   /* Lightbox Play Button - clean circular style */
   #lightboxPlay {
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     position: absolute !important;
-    top: 16px !important;
-    left: 16px !important;
+    top: 12px !important;
+    left: 12px !important;
     width: 44px !important;
     height: 44px !important;
     z-index: 999;
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: all 0.2s ease;
+    background: rgba(0,0,0,0.6) !important;
+    border-radius: 50% !important;
+    border: 2px solid rgba(255,255,255,0.5) !important;
+    padding: 0 !important;
   }
 
-  #lightboxPlay::before {
-    content: '';
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.6);
-    background: rgba(0,0,0,0.4);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='white' stroke='none'%3E%3Cpolygon points='5 3 19 12 5 21 5 3'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 18px;
-  }
-
-  .on #lightboxPlay::before,
-  #lightboxPlay:not(.play)::before {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='white' stroke='none'%3E%3Crect x='6' y='4' width='4' height='16'/%3E%3Crect x='14' y='4' width='4' height='16'/%3E%3C/svg%3E");
+  #lightboxPlay::before,
+  #lightboxPlay::after {
+    display: none !important;
+    content: none !important;
   }
 
   #lightboxPlay:hover {
     opacity: 0.8;
+    border-color: rgba(255,255,255,0.8) !important;
+  }
+
+  /* Lightbox image fade transition */
+  #lightboxImage {
+    transition: opacity 0.4s ease-in-out !important;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%) !important;
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%) !important;
+  }
+  #lightboxImage.fade-out {
+    opacity: 0 !important;
+  }
+  /* Desktop: remove top/bottom fade on lightbox image */
+  @media (min-width: 768px) {
+    #lightboxImage {
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+    }
   }
 
   /* Close button - clean circular style */
@@ -235,6 +244,12 @@
     height: 100% !important;
     object-fit: cover !important;
     display: block !important;
+    border: 0 !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+  .listing-photos-sm-plus .img-wrapper {
+    padding: 0 !important;
   }
 
   .listing-photos-sm-plus .img-wrapper:before,
@@ -285,6 +300,12 @@
 
 .listing-photos-xs img.img-responsive {
     object-fit: cover;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+.listing-photos-xs .img-wrapper {
+    padding: 0 !important;
+    box-shadow: none !important;
 }
 
 .listing-photos-xs {
@@ -8140,14 +8161,37 @@ div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link .image-wrap
     display: block !important;
     padding: 0 !important;
 }
-div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link img.img-responsive {
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 3 / 4 !important;
-    object-fit: cover !important;
-    border-radius: 8px !important;
-    min-height: 0 !important;
-    max-width: 100% !important;
+/* Mobile-only (< 768px): fade effect + styling on the mobile thumbnail gallery */
+@media (max-width: 767.98px) {
+    div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link img.img-responsive {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 3 / 4 !important;
+        object-fit: cover !important;
+        border-radius: 12px !important;
+        min-height: 0 !important;
+        max-width: 100% !important;
+    }
+    div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link .image-wrapper {
+        position: relative !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+    }
+    div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link .image-wrapper::after {
+        content: none !important;
+        display: none !important;
+        background: none !important;
+    }
+}
+/* Desktop (≥ 768px): no fade overlay on any thumbnails */
+@media (min-width: 768px) {
+    div.pb-thumbnails .image-wrapper::after,
+    div.listing-photos-sm-plus .image-wrapper::after,
+    div.listing-photos-xs .image-wrapper::after {
+        content: none !important;
+        display: none !important;
+        background: none !important;
+    }
 }
 
 @media (min-width: 768px) and (max-width:1199px) {
@@ -14577,10 +14621,27 @@ form .btn-group-lg>.btn.btn-primary[data-btn-submit]::after,form .btn-lg.btn-pri
     overflow: hidden
 }
 
+.navbar-top-nav > .container-fluid {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px;
+}
+
+.navbar-top-nav .back-link {
+    float: none !important;
+    margin-right: auto;
+}
+
+.navbar-top-nav .next {
+    float: none !important;
+    margin-left: auto;
+}
+
 .navbar-top-nav .title {
     text-align: center;
     margin-top: -8px;
-
+    flex: 1;
 }
 
 .navbar-top-nav .title h1 {
@@ -23571,12 +23632,18 @@ document.querySelectorAll('.report-link').forEach(function(link) {
                       background: rgba(0,0,0,0.9) !important;
                     }
                     #lightboxImageContainer {
-                      top: 80px !important;
+                      top: 56px !important;
                       left: 0px !important;
                       right: 0px !important;
-                      bottom: 140px !important;
+                      bottom: 90px !important;
                       background: #000 !important;
                       overflow: hidden !important;
+                      height: auto !important;
+                      padding: 0 !important;
+                    }
+                    #lightboxImageContainer::before,
+                    #lightboxImageContainer::after {
+                      display: none !important;
                     }
                     #lightboxImage {
                       width: 100% !important;
@@ -23584,6 +23651,45 @@ document.querySelectorAll('.report-link').forEach(function(link) {
                       object-fit: cover !important;
                       max-width: 100% !important;
                       max-height: 100% !important;
+                      -webkit-mask-image: none !important;
+                      mask-image: none !important;
+                      border-radius: 12px !important;
+                    }
+                    #lightboxImageContainer {
+                      position: relative !important;
+                    }
+                    /* Dark gradient overlay at bottom of image */
+                    #lightboxImageContainer::after {
+                      content: '' !important;
+                      display: block !important;
+                      position: absolute !important;
+                      bottom: 0 !important;
+                      left: 0 !important;
+                      right: 0 !important;
+                      height: 45% !important;
+                      background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.85) 100%) !important;
+                      pointer-events: none !important;
+                      z-index: 2 !important;
+                      border-radius: 0 0 12px 12px !important;
+                    }
+                    /* Profile text overlay */
+                    #lightboxProfileText {
+                      display: block !important;
+                      position: absolute !important;
+                      bottom: 12px !important;
+                      left: 16px !important;
+                      right: 16px !important;
+                      z-index: 3 !important;
+                      color: #fff !important;
+                      font-size: 14px !important;
+                      line-height: 1.4 !important;
+                      text-shadow: 0 1px 4px rgba(0,0,0,0.6) !important;
+                      white-space: normal !important;
+                      overflow: hidden !important;
+                      text-overflow: ellipsis !important;
+                      display: -webkit-box !important;
+                      -webkit-line-clamp: 2 !important;
+                      -webkit-box-orient: vertical !important;
                     }
                     #lightboxPrev, #lightboxNext {
                       display: none !important;
@@ -23605,17 +23711,32 @@ document.querySelectorAll('.report-link').forEach(function(link) {
                     }
                     #lightboxCounter {
                       bottom: 95px !important;
-                      background: rgba(0,0,0,0.7) !important;
-                      padding: 5px 15px !important;
-                      border-radius: 15px !important;
-                      font-size: 14px !important;
+                      background: rgba(0,0,0,0.5) !important;
+                      padding: 4px 12px !important;
+                      border-radius: 12px !important;
+                      font-size: 13px !important;
                     }
                     #lightboxPlay {
-                      display: none !important;
+                      display: flex !important;
+                      top: 10px !important;
+                      left: 10px !important;
+                      width: 36px !important;
+                      height: 36px !important;
+                      border-width: 1.5px !important;
+                    }
+                    #lightboxPlay svg {
+                      width: 16px !important;
+                      height: 16px !important;
                     }
                     #lightboxClose {
                       top: 10px !important;
                       right: 10px !important;
+                    }
+                    #lightboxImage {
+                      transition: opacity 0.4s ease-in-out !important;
+                    }
+                    #lightboxImage.fade-out {
+                      opacity: 0 !important;
                     }
                   }
                 </style>
@@ -23626,12 +23747,18 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             const lightboxHTML = `
               <div id="customLightbox" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999;">
                 <div id="lightboxImageContainer" style="position: absolute; top: 10%; left: 0; right: 0; bottom: 140px; display: flex; align-items: center; justify-content: center; padding: 0px; width: 100%; height: 36rem;">
-                  <img id="lightboxImage" style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; box-shadow: 0 4px 20px rgba(0,0,0,0.5); object-fit: cover;">
+                  <img id="lightboxImage" style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; box-shadow: 0 4px 20px rgba(0,0,0,0.5); object-fit: cover; opacity: 1; transition: opacity 0.4s ease-in-out;">
+                  <div id="lightboxProfileText" style="display: none; position: absolute; bottom: 12px; left: 16px; right: 16px; z-index: 3; color: #fff; font-size: 14px; line-height: 1.4;">{{ ucfirst($profile->name) }}, {{ $user->getcountry->nationality ?? '' }} escort in {{ $user->gcity->name }}</div>
                 </div>
                 
-                <!-- Play button -->
-                <div id="lightboxPlay" class="play" style="position: absolute; top: 0; left: 0; z-index: 999; text-align: center; cursor: pointer; color: #fff; width: 48px; height: 60px; padding: 0; transition: 0.3s 0.3s ease-out;" title="Click to toggle slideshow">
-                  <div class="pbProgress"></div>
+                <!-- Play/Stop button -->
+                <div id="lightboxPlay" class="play" style="position: absolute; top: 12px; left: 12px; z-index: 999; text-align: center; cursor: pointer; color: #fff; width: 44px; height: 44px; padding: 0; transition: all 0.2s ease; background: rgba(0,0,0,0.6); border-radius: 50%; display: flex; align-items: center; justify-content: center;" title="Click to toggle slideshow">
+                  <svg id="playIconSvg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none">
+                    <polygon points="5,3 19,12 5,21"/>
+                  </svg>
+                  <svg id="stopIconSvg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none" style="display:none;">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                  </svg>
                 </div>
                 <!-- Close button -->
                 <div id="lightboxClose"></div>
@@ -23704,12 +23831,14 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             function startSlideshow() {
               if (slideshowInterval) return;
               isPlaying = true;
-              $('#playIcon').html('&#9646;&#9646;'); // Pause icon
+              $('#playIconSvg').hide();
+              $('#stopIconSvg').show();
+              $('#lightboxPlay').removeClass('play').css('background', 'rgba(193,241,29,0.3)');
               slideshowInterval = setInterval(() => {
                 showImage(currentImageIndex + 1);
               }, 3000); // Change image every 3 seconds
             }
-            
+
             // Function to stop slideshow
             function stopSlideshow() {
               if (slideshowInterval) {
@@ -23717,7 +23846,9 @@ document.querySelectorAll('.report-link').forEach(function(link) {
                 slideshowInterval = null;
               }
               isPlaying = false;
-              $('#playIcon').html('&#9654;'); // Play icon
+              $('#stopIconSvg').hide();
+              $('#playIconSvg').show();
+              $('#lightboxPlay').addClass('play').css('background', 'rgba(0,0,0,0.6)');
             }
             
             // Function to toggle slideshow
@@ -23729,18 +23860,42 @@ document.querySelectorAll('.report-link').forEach(function(link) {
               }
             }
             
-            // Function to show image
+            // Function to show image with fade effect
             function showImage(index) {
               if (index < 0) index = galleryImages.length - 1;
               if (index >= galleryImages.length) index = 0;
+
+              const isFirstOpen = !$('#customLightbox').is(':visible');
+              const isSameImage = (index === currentImageIndex && !isFirstOpen);
               currentImageIndex = index;
-              
-              $('#lightboxImage').attr('src', galleryImages[index]);
-              updateThumbnailSelection();
-              
-              if (!$('#customLightbox').is(':visible')) {
-                $('#customLightbox').fadeIn(300);
-                $('body').css('overflow', 'hidden');
+
+              if (isFirstOpen || isSameImage) {
+                // First open or same image - no fade needed
+                $('#lightboxImage').attr('src', galleryImages[index]);
+                updateThumbnailSelection();
+                if (isFirstOpen) {
+                  $('#customLightbox').fadeIn(300);
+                  $('body').css('overflow', 'hidden');
+                }
+              } else {
+                // Transition between images - fade out, swap, fade in
+                var $img = $('#lightboxImage');
+                $img.addClass('fade-out');
+                setTimeout(function() {
+                  var imgEl = $img[0];
+                  imgEl.onload = function() {
+                    // Small delay to ensure browser has painted the new image
+                    setTimeout(function() { $img.removeClass('fade-out'); }, 50);
+                  };
+                  $img.attr('src', galleryImages[index]);
+                  updateThumbnailSelection();
+                  // Fallback: if image was cached, onload may fire synchronously or not at all
+                  setTimeout(function() {
+                    if ($img.hasClass('fade-out')) {
+                      $img.removeClass('fade-out');
+                    }
+                  }, 800);
+                }, 400);
               }
             }
             
@@ -23753,7 +23908,16 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             
             // Create thumbnails
             createThumbnails();
-            
+
+            // Force apply mask-image directly on the img element via JS (mobile only)
+            (function() {
+              var lbImg = document.getElementById('lightboxImage');
+              if (lbImg && window.matchMedia('(max-width: 767px)').matches) {
+                var fadeGradient = 'linear-gradient(to bottom, transparent 0%, black 6%, black 88%, transparent 100%)';
+                lbImg.style.cssText += '; -webkit-mask-image: ' + fadeGradient + ' !important; mask-image: ' + fadeGradient + ' !important;';
+              }
+            })();
+
             // Bind click events to gallery links
             $('.pb-photo-link').off('click.customGallery').on('click.customGallery', function(e) {
               e.preventDefault();

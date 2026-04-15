@@ -193,7 +193,7 @@
                         <div class="col-sm-12">
                           <div class="advanced-search-checkboxes" style="display: flex; gap: 15px; align-items: center; padding-top: 0;">
                             <div title="Verified profiles" data-toggle="tooltip" data-placement="top" class="form-group boolean optional q_verified_true" style="margin-bottom: 0;">
-                              <label for="q_verified_true" style="background-color: #C1F11D; color: #000000 !important; padding: 8px 16px; border-radius: 999px; margin: 0; font-weight: 600; display: inline-flex; align-items: center; cursor: pointer; font-size: 14px; border: 1px solid #C1F11D;">
+                              <label for="q_verified_true" style="background-color: #C1F11D; color: #000000 !important; padding: 5px 22px; border-radius: 999px; margin: 0; font-weight: 600; display: inline-flex; align-items: center; cursor: pointer; font-size: 14px; border: 1px solid #C1F11D;">
                                 <input style="margin-top: 0px;margin-right: 4px" wire:model.defer='verified' autocomplete="off" type="checkbox" value="1" name="q[verified_true]" id="q_verified_true" style="margin-right: 8px;" />VERIFIED</label>
                             </div>
                             <div title="At their place" data-toggle="tooltip" data-placement="top" class="form-group boolean optional q_incalls_true" style="margin-bottom: 0;">

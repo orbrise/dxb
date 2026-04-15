@@ -59,74 +59,302 @@ a:hover { color: var(--accent-hover, #d4f84d) !important; }
 /* Wrapper and Header Fixes */
 .content-wrapper { background: transparent !important; border: none !important; box-shadow: none !important; }
 
-/* Listing Items */
-.listings .listing-li {
+/* Bootstrap-style responsive display utilities (ensure d-* classes behave correctly) */
+.d-none { display: none !important; }
+@media (min-width: 768px) {
+    .d-md-none { display: none !important; }
+    .d-md-block { display: block !important; }
+}
+@media (max-width: 767.98px) {
+    .d-md-block { display: none !important; }
+}
+
+/* Listing Items - natural image height, equal bottom spacing for every listing */
+.listings .listing-li,
+.listings > .listing-li,
+div.listings div.listing-li {
+    position: relative !important;
     background: transparent !important;
     border: none !important;
-    border-bottom: 1px solid #2a2a2a !important;
     border-radius: 0 !important;
-    overflow: hidden;
+    overflow: visible !important;
+    margin-top: 0 !important;
     margin-bottom: 24px !important;
     padding-bottom: 24px !important;
+    padding-top: 0 !important;
+    box-shadow: none !important;
+    box-sizing: content-box !important;
+}
+/* Separator rendered as a pseudo-element so it can never be hidden by overflow/specificity */
+.listings .listing-li::after,
+.listings > .listing-li::after,
+div.listings div.listing-li::after {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 1px !important;
+    background: #4a4a4a !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+.listings .listing-li:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+.listings .listing-li:last-child::after {
+    display: none !important;
+}
+/* Clip info content so it never extends past the image and pushes the separator down */
+.listings .listing-li .listing-info,
+.listings .listing-li .listing-info-wrapper {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Lock each listing-li height to its image size - desktop/tablet */
+@media (min-width: 568px) {
+    .listings .listing-li.premium,
+    .listings > .listing-li.premium,
+    div.listings div.listing-li.premium {
+        height: 208px !important;
+        max-height: 208px !important;
+        min-height: 208px !important;
+    }
+    .listings .listing-li.featured,
+    .listings > .listing-li.featured,
+    div.listings div.listing-li.featured {
+        height: 140px !important;
+        max-height: 140px !important;
+        min-height: 140px !important;
+    }
+    .listings .listing-li.basic,
+    .listings .listing-li.free,
+    .listings > .listing-li.basic,
+    .listings > .listing-li.free {
+        height: 110px !important;
+        max-height: 110px !important;
+        min-height: 110px !important;
+    }
+    .listings .listing-li.mini,
+    .listings > .listing-li.mini {
+        height: 53px !important;
+        max-height: 53px !important;
+        min-height: 53px !important;
+    }
+
+    /* Pull the info column tight against the images (remove the big horizontal gap) */
+    .listings .listing-li.premium > .listing-info-wrapper {
+        padding-left: 15px !important;
+    }
+    .listings .listing-li.featured > .listing-info-wrapper {
+        padding-left: 10px !important;
+    }
+    .listings .listing-li.basic > .listing-info-wrapper,
+    .listings .listing-li.free > .listing-info-wrapper {
+        padding-left: 15px !important;
+    }
+    .listings .listing-li.mini > .listing-info-wrapper {
+        padding-left: 60px !important;
+    }
+    /* Vertical line on .thumbs – height matches the big image (main-thumbs) */
+    .listings .listing-li > .thumbs,
+    .listings .listing-li .thumbs {
+        position: relative !important;
+        border-right: none !important;
+        padding-right: 20px !important;
+    }
+    .listings .listing-li.premium > .thumbs::after,
+    .listings .listing-li.premium .thumbs::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 1px !important;
+        height: 208px !important;
+        background: #3a3a3a !important;
+        pointer-events: none !important;
+    }
+    .listings .listing-li.featured > .thumbs::after,
+    .listings .listing-li.featured .thumbs::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 1px !important;
+        height: 135px !important;
+        background: #3a3a3a !important;
+        pointer-events: none !important;
+    }
+    .listings .listing-li.basic > .thumbs::after,
+    .listings .listing-li.basic .thumbs::after,
+    .listings .listing-li.free > .thumbs::after,
+    .listings .listing-li.free .thumbs::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 1px !important;
+        height: 95px !important;
+        background: #3a3a3a !important;
+        pointer-events: none !important;
+    }
+    /* Vertical line heights unchanged (still match the image heights: featured 135px, basic 95px).
+       Listing container is taller (170 / 140) so the button has room to render below the image. */
+    /* Remove any lingering border on image-wrapper or listing-info */
+    .listings .listing-li .thumbs .image-wrapper,
+    .listings .listing-li .thumbs .other-thumbs .thumb .image-wrapper,
+    .listings .listing-li .thumbs .side-thumbs a .image-wrapper,
+    .listings .listing-li .thumbs .main-thumbs .image-wrapper {
+        border-right: none !important;
+    }
+    .listings .listing-li .listing-info {
+        margin-left: 16px !important;
+        padding-left: 0 !important;
+        border-left: none !important;
+    }
+
+    /* Constrain info text column so it can't outgrow the image */
+    .listings .listing-li.premium .listing-info-wrapper,
+    .listings .listing-li.premium .listing-info {
+        max-height: 208px !important;
+        overflow: hidden !important;
+    }
+    .listings .listing-li.featured .listing-info-wrapper,
+    .listings .listing-li.featured .listing-info {
+        max-height: 170px !important;
+        overflow: hidden !important;
+    }
+    .listings .listing-li.basic .listing-info-wrapper,
+    .listings .listing-li.basic .listing-info,
+    .listings .listing-li.free .listing-info-wrapper,
+    .listings .listing-li.free .listing-info {
+        max-height: 140px !important;
+        overflow: hidden !important;
+    }
+
+    /* Tier-specific description line clamping */
+    .listings .listing-li .listing-info p,
+    .listings .listing-li .listing-info .description {
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        word-break: break-word !important;
+    }
+    .listings .listing-li.premium .listing-info p,
+    .listings .listing-li.premium .listing-info .description {
+        -webkit-line-clamp: 4 !important;
+        line-clamp: 4 !important;
+    }
+    .listings .listing-li.featured .listing-info p,
+    .listings .listing-li.featured .listing-info .description {
+        -webkit-line-clamp: 2 !important;
+        line-clamp: 2 !important;
+    }
+    .listings .listing-li.basic .listing-info p,
+    .listings .listing-li.basic .listing-info .description,
+    .listings .listing-li.free .listing-info p,
+    .listings .listing-li.free .listing-info .description {
+        -webkit-line-clamp: 1 !important;
+        line-clamp: 1 !important;
+    }
+}
+
+/* Listing thumbnails - no borders, asymmetric corner rounding */
+.listing-li .thumbs .img-wrapper,
+.listing-li .thumbs .image-wrapper {
+    overflow: hidden !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+.listing-li .thumbs img,
+.listing-li .thumbs a img,
+.listing-li .thumbs .main-thumbs img,
+.listing-li .thumbs .other-thumbs img,
+.listing-li .thumbs .side-thumbs img {
+    border: none !important;
+    outline: none !important;
     box-shadow: none !important;
 }
 
-/* Listing thumbnail border radius - big image left, small images right */
-.listing-li .thumbs .img-wrapper,
-.listing-li .thumbs .image-wrapper { overflow: hidden !important; }
+/* Big main image - rounded LEFT side only (top-left + bottom-left) */
 .listing-li .thumbs .main-thumbs .img-wrapper,
 .listing-li .thumbs .main-thumbs .image-wrapper,
 .listing-li .thumbs .main-thumbs img {
     border-radius: 8px 0 0 8px !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
 }
+
+/* Small thumbs - rounded RIGHT side only (first = top-right, last = bottom-right) */
 .listing-li .thumbs .other-thumbs .thumb:first-child .img-wrapper,
 .listing-li .thumbs .other-thumbs .thumb:first-child .image-wrapper,
-.listing-li .thumbs .other-thumbs .thumb:first-child img {
-    border-radius: 0 8px 0 0 !important;
-}
-.listing-li .thumbs .other-thumbs .thumb:last-child .img-wrapper,
-.listing-li .thumbs .other-thumbs .thumb:last-child .image-wrapper,
-.listing-li .thumbs .other-thumbs .thumb:last-child img {
-    border-radius: 0 0 8px 0 !important;
-}
-/* When only one small thumb on the right */
-.listing-li .thumbs .other-thumbs .thumb:only-child .img-wrapper,
-.listing-li .thumbs .other-thumbs .thumb:only-child .image-wrapper,
-.listing-li .thumbs .other-thumbs .thumb:only-child img {
-    border-radius: 0 8px 8px 0 !important;
-}
-/* Side thumbs variant (thumbs-3 layout) */
-.listing-li .thumbs .side-thumbs .img-wrapper,
-.listing-li .thumbs .side-thumbs .image-wrapper,
-.listing-li .thumbs .side-thumbs img {
-    border-radius: 0 !important;
-}
+.listing-li .thumbs .other-thumbs .thumb:first-child img,
 .listing-li .thumbs .side-thumbs a:first-child .img-wrapper,
 .listing-li .thumbs .side-thumbs a:first-child .image-wrapper,
 .listing-li .thumbs .side-thumbs a:first-child img {
     border-radius: 0 8px 0 0 !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
 }
+.listing-li .thumbs .other-thumbs .thumb:last-child .img-wrapper,
+.listing-li .thumbs .other-thumbs .thumb:last-child .image-wrapper,
+.listing-li .thumbs .other-thumbs .thumb:last-child img,
 .listing-li .thumbs .side-thumbs a:last-child .img-wrapper,
 .listing-li .thumbs .side-thumbs a:last-child .image-wrapper,
 .listing-li .thumbs .side-thumbs a:last-child img {
     border-radius: 0 0 8px 0 !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
 }
+.listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) .img-wrapper,
+.listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) .image-wrapper,
+.listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) img,
+.listing-li .thumbs .side-thumbs a:not(:first-child):not(:last-child) .img-wrapper,
+.listing-li .thumbs .side-thumbs a:not(:first-child):not(:last-child) .image-wrapper,
+.listing-li .thumbs .side-thumbs a:not(:first-child):not(:last-child) img {
+    border-radius: 0 !important;
+}
+/* Single small thumb on the right - rounds both right corners */
+.listing-li .thumbs .other-thumbs .thumb:only-child .img-wrapper,
+.listing-li .thumbs .other-thumbs .thumb:only-child .image-wrapper,
+.listing-li .thumbs .other-thumbs .thumb:only-child img,
 .listing-li .thumbs .side-thumbs a:only-child .img-wrapper,
 .listing-li .thumbs .side-thumbs a:only-child .image-wrapper,
 .listing-li .thumbs .side-thumbs a:only-child img {
     border-radius: 0 8px 8px 0 !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
 }
-/* No side/other thumbs - full rounded on main image */
+/* Main image with no side thumbs - fully rounded */
 .listing-li .thumbs .main-thumbs:only-child .img-wrapper,
 .listing-li .thumbs .main-thumbs:only-child .image-wrapper,
 .listing-li .thumbs .main-thumbs:only-child img {
     border-radius: 8px !important;
+}
+
+/* Remove any gap so images join together as one rounded block */
+.listing-li .thumbs .other-thumbs {
+    margin-left: 0 !important;
+}
+.listing-li .thumbs .other-thumbs .thumb + .thumb,
+.listing-li .thumbs .side-thumbs a + a {
+    margin-top: 0 !important;
 }
 .listings .listing-li.premium {
     background: transparent !important;
     border: none !important;
     border-bottom: 1px solid #2a2a2a !important;
     box-shadow: none !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 22px !important;
 }
 .listing-info, .listing-info-wrapper { background: transparent !important; color: white !important; }
 .listing-li a, .listing-li a:hover { color: white !important; }
