@@ -786,19 +786,8 @@
         /* Delete profile link - centered */
         .ev-delete-link { margin-top: 16px !important; font-size: 14px !important; }
 
-        /* Sticky Add Profile button at bottom */
-        .ev-mobile-add-profile {
-            display: flex !important;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 12px 16px;
-            padding-bottom: max(12px, env(safe-area-inset-bottom));
-            background: #0a0a0a;
-            border-top: 1px solid #2a2a2a;
-        }
+        /* Hide sticky Add Profile button - global mobile bottom nav now handles navigation */
+        .ev-mobile-add-profile { display: none !important; }
         .ev-mobile-add-profile a {
             display: flex;
             align-items: center;
@@ -845,9 +834,11 @@
 <!-- Back Bar -->
 <div class="ev-back-bar">
     <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
-        <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;">
-            <span class="ev-desktop-back"><i class="fa fa-angle-left"></i> Escorts in Dubai</span>
-            <span class="ev-mobile-back" style="display:none;"><i class="fa fa-angle-left"></i> Home</span>
+        <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;" class="ev-desktop-back">
+            <i class="fa fa-angle-left"></i> Escorts in Dubai
+        </a>
+        <a href="javascript:history.back()" style="position:absolute; left:16px; display:none;" class="ev-mobile-back">
+            <i class="fa fa-angle-left"></i> Back
         </a>
         <h1><a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}">{{Auth::user()->name}}'s Dubai profile</a></h1>
     </div>

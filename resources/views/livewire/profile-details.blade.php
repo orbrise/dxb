@@ -22749,8 +22749,11 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                           <div class="review">
                             <div class="hidden" itemprop="itemReviewed" itemscope=""
                               itemtype="https://schema.org/AdultEntertainment">
+                              @php
+                                $firstImage = (isset($images) && $images && $images->count() > 0) ? $images->first() : null;
+                              @endphp
                               <meta
-                                content="{{ $profile->images->first() ? webp_asset('userimages/'.$profile->images->first()->user_id.'/'.$profile->images->first()->profile_id.'/'.$profile->images->first()->image) : '' }}"
+                                content="{{ $firstImage ? webp_asset('userimages/'.$firstImage->user_id.'/'.$firstImage->profile_id.'/'.$firstImage->image) : '' }}"
                                 itemprop="image" />
                               <meta content="{{ $profile->name }} - escort in {{ $user->gcity->name ?? 'Dubai' }}" itemprop="name" />
                               <meta content="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}/{{ $profile->slug }}" itemprop="url" />

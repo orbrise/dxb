@@ -32,8 +32,10 @@
     ];
     $isAccountPage = array_key_exists($currentRoute, $accountPageTitles);
     $accountPageTitle = $accountPageTitles[$currentRoute] ?? '';
-    // Simple header shown for: profile details, listing create/edit, what's new, listings page
-    $useSimpleHeader = !$isAccountPage && ($isProfileDetails || $isListingCreateEdit || $isNewsPage || $isListingsHome);
+    // Simple header shown for: listing create/edit, what's new, listings page (NOT profile details - it has its own nav)
+    $useSimpleHeader = !$isAccountPage && ($isListingCreateEdit || $isNewsPage || $isListingsHome);
+    // Profile details and user dashboard hide both headers on mobile (they have their own internal nav)
+    $hideAllHeadersMobile = $isProfileDetails || $currentRoute === 'user.dashboard';
 @endphp
 
 {{-- Mobile Account Header ("< Home" + page title, no logo) --}}
@@ -70,7 +72,7 @@
 </header>
 @endif
 
-<header class="ev-header {{ $useSimpleHeader ? 'ev-header--has-simple' : '' }} {{ $isAccountPage ? 'ev-header--has-account' : '' }}">
+<header class="ev-header {{ $useSimpleHeader ? 'ev-header--has-simple' : '' }} {{ $isAccountPage ? 'ev-header--has-account' : '' }} {{ $hideAllHeadersMobile ? 'ev-header--hide-mobile' : '' }}">
     <div class="ev-container">
         <div class="ev-flex ev-items-center ev-justify-between">
             {{-- Logo + Tabs grouped together --}}

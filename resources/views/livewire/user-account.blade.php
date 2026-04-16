@@ -895,23 +895,4 @@
 
     </div>
 
-    {{-- Mobile Bottom Nav --}}
-    <div class="ev-mobile-bottom-nav" style="display:none;">
-        <a href="{{ route('favorites.dashboard') }}" class="ev-nav-active">
-            <i class="fa fa-heart"></i>
-            <span>Favorite</span>
-        </a>
-        <a href="{{ route('user.chat') }}" class="ev-nav-active">
-            <i class="fa fa-comment"></i>
-            <span>Message</span>
-        </a>
-        <a href="{{ route('user.questions') }}">
-            <i class="fa fa-question-circle"></i>
-            <span>Ask</span>
-        </a>
-        <a href="{{ route('user.reviews') }}">
-            <i class="fa fa-star"></i>
-            <span>Reviews</span>
-        </a>
-    </div>
 </div>

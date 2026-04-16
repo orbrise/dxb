@@ -203,6 +203,8 @@ button.ev-nav-link{height:42px;padding:12px 20px;font-size:14px;font-family:inhe
   /* Account header takes over on mobile for account-related pages */
   .ev-header-account{display:block!important}
   .ev-header--has-account{display:none!important}
+  /* Pages with their own internal header (profile details) hide global header on mobile */
+  .ev-header--hide-mobile{display:none!important}
   .ev-alpha-filter{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-inline:0;margin-top:1rem;justify-content:flex-start;padding-bottom:4px}
   .ev-alpha-filter::-webkit-scrollbar{display:none}
   .ev-alpha-btn{flex-shrink:0;margin-inline:2px;margin-bottom:0}
