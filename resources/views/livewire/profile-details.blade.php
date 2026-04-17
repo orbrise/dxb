@@ -456,10 +456,6 @@ html {
 body {
     margin: 0;
     line-height: 1.42857143;
-    color: #fff;
-    background-color: #333;
-    font: 14px/1.7 Helvetica,Arial,sans-serif;
-    background: #333 url(https://mrassets.cc/assets/layout/texture-b9beac30c0dfa74797a20c4f2547cff4c3bc597319acc0c53a60c95abdba3e51.png) top left
 }
 
 article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section,summary {
