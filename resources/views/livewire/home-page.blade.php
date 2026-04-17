@@ -1641,13 +1641,13 @@ overflow: hidden;
         <span>{{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}</span>
     </div>
     <div class="ev-location-actions">
-        <a href="{{ route('new.profile') }}" class="ev-location-action-btn">
+        <a href="{{ route('mobile.search', ['gender' => $gender ?? 'female', 'city' => $selectedcity ?? 'Dubai']) }}" class="ev-location-action-btn" aria-label="Advanced Search">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
         </a>
-        <button type="button" class="ev-location-action-btn" onclick="document.querySelector('.mobile-search-modal') ? (document.querySelector('.mobile-search-modal').style.display='block') : (window.location.href='{{ route('mobile.search', ['gender' => $gender ?? 'female', 'city' => $selectedcity ?? 'Dubai']) }}')">
+        <button type="button" class="ev-location-action-btn" onclick="document.getElementById('evQuickFilters').style.display='flex'" aria-label="Filters">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="4" y1="6" x2="20" y2="6"></line>
                 <line x1="4" y1="12" x2="20" y2="12"></line>
@@ -1659,6 +1659,270 @@ overflow: hidden;
         </button>
     </div>
 </div>
+
+{{-- Mobile Quick Filters Popup --}}
+<div id="evQuickFilters" class="ev-qf-overlay visible-xs" style="display:none;" onclick="if(event.target===this)this.style.display='none';" wire:ignore>
+    <div class="ev-qf-panel" role="dialog" aria-label="Filters">
+        <div class="ev-qf-head">
+            <span class="ev-qf-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="8" cy="6" r="1.5" fill="#C1F11D"></circle><circle cx="16" cy="12" r="1.5" fill="#C1F11D"></circle><circle cx="10" cy="18" r="1.5" fill="#C1F11D"></circle></svg>
+                Filters
+            </span>
+            <button type="button" class="ev-qf-close" onclick="document.getElementById('evQuickFilters').style.display='none'" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="ev-qf-body">
+            <form id="evQuickFiltersForm" onsubmit="return false;">
+                {{-- Category --}}
+                <div class="ev-qf-group">
+                    <label>Category</label>
+                    <div class="ev-qf-custom-dd" data-qf-dd data-qf-name="gender">
+                        <button type="button" class="ev-qf-dd-trigger">
+                            <span class="ev-qf-dd-label" data-dd-label>{{ ucfirst($gender ?? 'female') }} escorts</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="ev-qf-dd-menu" role="listbox">
+                            <ul class="ev-qf-dd-options">
+                                <li data-val="female">Female escorts</li>
+                                <li data-val="male">Male escorts</li>
+                                <li data-val="shemale">Shemale escorts</li>
+                            </ul>
+                        </div>
+                        <input type="hidden" id="ev-qf-gender" value="{{ $gender ?? 'female' }}">
+                    </div>
+                </div>
+
+                {{-- Location --}}
+                <div class="ev-qf-group">
+                    <label>Location</label>
+                    <div class="ev-qf-city-wrap">
+                        <input type="text" id="ev-qf-city" class="ev-qf-input" placeholder="Enter city or area" value="{{ $selectedcity ?? '' }}" autocomplete="off">
+                        <input type="hidden" id="ev-qf-city-id" value="{{ $city ?? '' }}">
+                        <ul id="ev-qf-city-results" class="ev-qf-city-results" style="display:none;"></ul>
+                    </div>
+                </div>
+
+                {{-- Price Range --}}
+                <div class="ev-qf-group">
+                    <label>Price Range</label>
+                    <div class="ev-qf-price-row">
+                        <div class="ev-qf-custom-dd ev-qf-currency" data-qf-dd data-qf-name="currency" data-qf-searchable="1">
+                            <button type="button" class="ev-qf-dd-trigger">
+                                <span class="ev-qf-dd-label" data-dd-label>
+                                    @php
+                                        $curCode = optional($currencies->firstWhere('id', $currency))->code ?? ($currencies->first()->code ?? '');
+                                    @endphp
+                                    {{ $curCode }}
+                                </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                            <div class="ev-qf-dd-menu" role="listbox">
+                                <div class="ev-qf-dd-search-wrap">
+                                    <input type="text" class="ev-qf-dd-search" placeholder="Search currency..." autocomplete="off">
+                                </div>
+                                <ul class="ev-qf-dd-options">
+                                    @foreach($currencies as $cur)
+                                        <li data-val="{{ $cur->id }}">{{ $cur->code }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <input type="hidden" id="ev-qf-currency" value="{{ $currency }}">
+                        </div>
+                        <input type="number" id="ev-qf-min" class="ev-qf-input" placeholder="Min">
+                        <input type="number" id="ev-qf-max" class="ev-qf-input" placeholder="Max" value="{{ $rate }}">
+                    </div>
+                </div>
+
+                {{-- Services --}}
+                <div class="ev-qf-group">
+                    <label>Services</label>
+                    <div class="ev-qf-services">
+                        @foreach($services as $service)
+                            <label class="ev-qf-service-chip">
+                                <input type="checkbox"
+                                       class="ev-qf-service-cb"
+                                       value="{{ $service->id }}"
+                                       @if(is_array($sservices) && in_array($service->id, $sservices)) checked @elseif(is_string($sservices) && in_array((string)$service->id, explode(',', (string)$sservices))) checked @endif>
+                                <span>{{ $service->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="ev-qf-footer">
+            <button type="button" id="ev-qf-apply-btn" class="ev-qf-apply">Apply Filters</button>
+            <button type="button" id="ev-qf-reset-btn" class="ev-qf-reset">Reset All</button>
+        </div>
+    </div>
+</div>
+
+@push('js')
+<script>
+(function(){
+    // Wait for DOM ready
+    function initQuickFilters(){
+        var overlay = document.getElementById('evQuickFilters');
+        if(!overlay) return;
+
+        // Custom dropdowns
+        document.querySelectorAll('#evQuickFilters [data-qf-dd]').forEach(function(dd){
+            var trigger = dd.querySelector('.ev-qf-dd-trigger');
+            var menu = dd.querySelector('.ev-qf-dd-menu');
+            var hidden = dd.querySelector('input[type="hidden"]');
+            var labelSpan = dd.querySelector('[data-dd-label]');
+            var searchInput = dd.querySelector('.ev-qf-dd-search');
+            var options = dd.querySelectorAll('.ev-qf-dd-options li');
+
+            trigger.addEventListener('click', function(e){
+                e.stopPropagation();
+                document.querySelectorAll('#evQuickFilters [data-qf-dd].open').forEach(function(o){
+                    if(o !== dd) o.classList.remove('open');
+                });
+                dd.classList.toggle('open');
+                if(dd.classList.contains('open') && searchInput){
+                    setTimeout(function(){ searchInput.focus(); searchInput.select(); }, 50);
+                }
+            });
+            // Click inside menu should not close it
+            if(menu){
+                menu.addEventListener('click', function(e){ e.stopPropagation(); });
+            }
+            // Search filter for searchable dropdowns (currency)
+            if(searchInput){
+                searchInput.addEventListener('input', function(){
+                    var q = this.value.toLowerCase().trim();
+                    options.forEach(function(li){
+                        var text = li.textContent.toLowerCase();
+                        li.style.display = (q === '' || text.indexOf(q) !== -1) ? '' : 'none';
+                    });
+                });
+            }
+            options.forEach(function(li){
+                li.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    hidden.value = li.getAttribute('data-val');
+                    labelSpan.textContent = li.textContent.trim();
+                    dd.classList.remove('open');
+                    if(searchInput){ searchInput.value = ''; options.forEach(function(o){ o.style.display = ''; }); }
+                });
+            });
+        });
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', function(){
+            document.querySelectorAll('#evQuickFilters [data-qf-dd].open').forEach(function(o){ o.classList.remove('open'); });
+        });
+
+        // City autocomplete
+        var cityInput = document.getElementById('ev-qf-city');
+        var cityIdInput = document.getElementById('ev-qf-city-id');
+        var cityResults = document.getElementById('ev-qf-city-results');
+        var cityDebounce;
+        if(cityInput && cityResults){
+            function searchCitiesQF(query){
+                if(!query || query.length < 2){ cityResults.style.display = 'none'; cityResults.innerHTML = ''; return; }
+                fetch('{{ route("cities.search") }}', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest'},
+                    body: 'query='+encodeURIComponent(query)+'&_token={{ csrf_token() }}'
+                }).then(function(r){ return r.json(); }).then(function(data){
+                    cityResults.innerHTML = '';
+                    if(!data || data.length === 0){
+                        cityResults.innerHTML = '<li class="ev-qf-city-empty">No cities found</li>';
+                    }else{
+                        data.forEach(function(city){
+                            var li = document.createElement('li');
+                            li.textContent = city.name + (city.country ? ' ('+city.country+')' : '');
+                            li.setAttribute('data-id', city.id);
+                            li.setAttribute('data-name', city.name);
+                            li.addEventListener('click', function(){
+                                cityInput.value = city.name;
+                                if(cityIdInput) cityIdInput.value = city.id;
+                                cityResults.style.display = 'none';
+                            });
+                            cityResults.appendChild(li);
+                        });
+                    }
+                    cityResults.style.display = 'block';
+                }).catch(function(){
+                    cityResults.innerHTML = '<li class="ev-qf-city-empty">Error loading cities</li>';
+                    cityResults.style.display = 'block';
+                });
+            }
+            cityInput.addEventListener('input', function(){
+                clearTimeout(cityDebounce);
+                var val = this.value.trim();
+                if(cityIdInput) cityIdInput.value = '';
+                cityDebounce = setTimeout(function(){ searchCitiesQF(val); }, 250);
+            });
+            cityInput.addEventListener('focus', function(){
+                if(this.value.trim().length >= 2) searchCitiesQF(this.value.trim());
+            });
+            document.addEventListener('click', function(e){
+                if(cityInput && !cityResults.contains(e.target) && e.target !== cityInput){
+                    cityResults.style.display = 'none';
+                }
+            });
+        }
+
+        // Apply button — navigate to /{gender}-escorts-in-{citySlug}?filters...
+        var applyBtn = document.getElementById('ev-qf-apply-btn');
+        if(applyBtn){
+            applyBtn.addEventListener('click', function(){
+                var genderVal = document.getElementById('ev-qf-gender').value || 'female';
+                var cityVal   = (document.getElementById('ev-qf-city').value || '').trim();
+                var cityIdVal = (document.getElementById('ev-qf-city-id') || {}).value || '';
+                var currencyVal = document.getElementById('ev-qf-currency').value;
+                var rateVal   = document.getElementById('ev-qf-max').value;
+                var serviceIds = Array.from(document.querySelectorAll('#evQuickFilters .ev-qf-service-cb:checked')).map(function(cb){ return cb.value; });
+
+                // Build city slug from text
+                var citySlug = (cityVal || 'dubai')
+                    .toLowerCase()
+                    .replace(/['.]/g, '')
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+                if(!citySlug) citySlug = 'dubai';
+
+                // Build query params for filters
+                var params = new URLSearchParams();
+                if(cityVal) params.set('selectedcity', cityVal);
+                if(cityIdVal) params.set('city', cityIdVal);
+                if(currencyVal) params.set('currency', currencyVal);
+                if(rateVal) params.set('rate', rateVal);
+                serviceIds.forEach(function(id){ params.append('services[]', id); });
+
+                var url = '/' + genderVal + '-escorts-in-' + citySlug;
+                var qs = params.toString();
+                if(qs) url += '?' + qs;
+
+                overlay.style.display = 'none';
+                window.location.href = url;
+            });
+        }
+
+        // Reset button
+        var resetBtn = document.getElementById('ev-qf-reset-btn');
+        if(resetBtn){
+            resetBtn.addEventListener('click', function(){
+                document.getElementById('ev-qf-city').value = '';
+                document.getElementById('ev-qf-min').value = '';
+                document.getElementById('ev-qf-max').value = '';
+                document.querySelectorAll('#evQuickFilters .ev-qf-service-cb').forEach(function(cb){ cb.checked = false; });
+            });
+        }
+    }
+
+    if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', initQuickFilters);
+    }else{
+        initQuickFilters();
+    }
+})();
+</script>
+@endpush
 
 {{-- Mobile "What's New" Section --}}
 @if(isset($reviews) && $reviews->count() > 0)

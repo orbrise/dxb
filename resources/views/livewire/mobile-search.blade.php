@@ -2,6 +2,233 @@
 
 @push('css')
 <style>
+/* ===== Evoory theme for mobile advanced search ===== */
+html, body{
+    background:#0a0a0a !important;
+    background-image:none !important;
+    color:#fff;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important;
+}
+/* Hide legacy global header/footer while on this page */
+body > #header, .ev-header, .ev-footer, .ev-mobile-bottom-nav{display:none !important}
+
+/* Evoory-styled top bar */
+.ev-search-header{background:#0a0a0a;padding:14px 0;position:sticky;top:0;z-index:1000}
+.ev-search-header-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;position:relative;min-height:28px}
+.ev-search-header-back{display:inline-flex;align-items:center;gap:4px;color:#C1F11D !important;text-decoration:none !important;font-size:17px;font-weight:500;flex:1 1 0;min-width:0}
+.ev-search-header-back:hover{color:#C1F11D !important;opacity:.85}
+.ev-search-header-title{color:#fff;font-size:17px;font-weight:500;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap}
+.ev-search-header-spacer{flex:1 1 0}
+
+/* Page container */
+.search-form-container{padding:12px 0 80px !important}
+.container-fluid{padding-left:16px !important;padding-right:16px !important;max-width:640px;margin:0 auto}
+
+/* Section headings */
+.ev-section-heading{
+    color:#999;
+    font-size:13px;
+    font-weight:400;
+    margin:8px 0 0;
+    padding:0 4px;
+    text-transform:none;
+    letter-spacing:.2px;
+}
+.ev-section-heading:first-of-type{margin-top:0}
+
+/* Section cards around form-groups */
+.search-form-container form{display:flex;flex-direction:column;gap:14px}
+
+/* Group card wrapping multiple fields */
+.search-form-container .ev-section-card{
+    background:#121212;
+    border-radius:12px;
+    padding:16px;
+    border:0;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+/* Form groups inside a section-card have no background of their own */
+.search-form-container .ev-section-card .form-group{
+    background:transparent !important;
+    padding:0 !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:0 !important;
+}
+
+/* Standalone form-groups (not inside a section card) keep the card look */
+.search-form-container > form > .form-group{
+    background:#121212;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:0 !important;
+    border:0;
+}
+.search-form-container label{
+    color:#fff;
+    font-weight:500;
+    font-size:14px;
+    margin-bottom:8px;
+    display:block;
+}
+
+/* Inputs & selects — evoory pill style */
+.search-form-container .form-control,
+.search-form-container select.form-control,
+.search-form-container select.select-box,
+.search-form-container input.form-control,
+.search-form-container input[type="text"],
+.search-form-container input[type="number"]{
+    background:#0a0a0a !important;
+    color:#fff !important;
+    border:1px solid #2a2a2a !important;
+    border-radius:10px !important;
+    height:46px !important;
+    padding:10px 14px !important;
+    font-size:14px;
+    box-shadow:none !important;
+}
+.search-form-container input::placeholder,
+.search-form-container .form-control::placeholder{color:#666 !important}
+
+/* Dropdown caret for selects */
+.search-form-container select.form-control,
+.search-form-container select.select-box{
+    appearance:none !important;
+    -webkit-appearance:none !important;
+    -moz-appearance:none !important;
+    background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C1F11D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat:no-repeat !important;
+    background-position:right 14px center !important;
+    background-size:14px !important;
+    padding-right:40px !important;
+}
+
+/* City dropdown */
+.search-form-container #mobile_city_results.dropdown-menu{
+    background:#121212 !important;
+    border:1px solid #2a2a2a !important;
+    border-radius:10px !important;
+    color:#fff !important;
+    margin-top:4px;
+}
+.search-form-container small.form-text{color:#999 !important;font-size:12px;margin-top:6px}
+
+/* Gender pill select button */
+.search-form-container .primary-search-gender .btn{
+    background:#0a0a0a !important;
+    color:#fff !important;
+    border:1px solid #2a2a2a !important;
+    border-radius:10px !important;
+    height:46px;
+    padding:10px 14px !important;
+    text-align:left;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:14px;
+}
+.search-form-container .primary-search-gender .btn i.fa-caret-down,
+.search-form-container .primary-search-gender .btn i.fas.fa-caret-down{color:#C1F11D;right:auto;position:static;margin-left:auto}
+.search-form-container .dropdown-gender-menu{background:#121212 !important;border:1px solid #2a2a2a !important;border-radius:10px !important;margin-top:4px}
+.search-form-container .dropdown-gender-menu a{color:#fff !important;padding:12px 14px !important}
+.search-form-container .dropdown-gender-menu li.active a,
+.search-form-container .dropdown-gender-menu a:hover{background:rgba(193,241,29,.08) !important;color:#C1F11D !important}
+
+/* Services custom dropdown */
+#mobile-services-display-box{
+    background:#0a0a0a !important;
+    color:#fff !important;
+    border:1px solid #2a2a2a !important;
+    border-radius:10px !important;
+    height:46px !important;
+    padding:10px 14px !important;
+    font-size:14px !important;
+    font-weight:normal !important;
+}
+#mobile-services-dropdown-list{
+    background:#121212 !important;
+    border:1px solid #2a2a2a !important;
+    border-top:none !important;
+    border-radius:0 0 10px 10px !important;
+}
+.mobile-service-option{border-bottom:1px solid #1a1a1a !important;color:#fff !important}
+.mobile-service-option:hover{background:rgba(193,241,29,.08) !important}
+
+/* Price row: currency + amount side-by-side, same group */
+.search-form-container .form-group .d-flex{display:flex !important;gap:8px}
+.search-form-container .form-group .d-flex > *{flex:1}
+.search-form-container .form-group .d-flex select{width:auto !important;min-width:110px;max-width:130px}
+
+/* Checkboxes */
+.search-form-container .advanced-search-checkboxes{
+    background:#121212;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:0 !important;
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px !important;
+}
+.search-form-container .advanced-search-checkboxes label{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin:0;
+    color:#fff !important;
+    font-weight:400 !important;
+    font-size:14px;
+    cursor:pointer;
+    padding:0 !important;
+    background:transparent !important;
+}
+.search-form-container .advanced-search-checkboxes label.verified-label{
+    background:#C1F11D !important;
+    color:#000 !important;
+    border-radius:999px;
+    padding:6px 14px !important;
+    font-weight:600 !important;
+    text-transform:uppercase;
+    font-size:12px;
+}
+.search-form-container .advanced-search-checkboxes input[type="checkbox"]{
+    width:18px;height:18px;
+    accent-color:#C1F11D;
+    margin:0 !important;
+}
+.search-form-container .advanced-search-checkboxes .form-group{
+    background:transparent !important;
+    padding:0 !important;
+    margin:0 !important;
+    border:0 !important;
+}
+
+/* Search submit button */
+.search-form-container button[type="submit"],
+.search-form-container .btn-primary{
+    background:#C1F11D !important;
+    color:#000 !important;
+    border:0 !important;
+    border-radius:999px !important;
+    height:52px;
+    font-weight:700 !important;
+    font-size:16px !important;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin-top:8px;
+}
+.search-form-container button[type="submit"]:hover{background:#d4ff3a !important;color:#000 !important}
+
+/* Hide the 'nav-bar' legacy if any remnant */
+.nav-bar.navbar-top-nav{display:none !important}
+
 /* Force Font Awesome icons to display */
 .fa, .fas, .far, .fab, .fal {
     font-family: "Font Awesome 5 Free" !important;
@@ -2794,19 +3021,14 @@ textarea.form-control:disabled {
     </head>
 
 
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid">
-        <a class="back-link" href="https://massagerepublic.com/">
-            <i class="fa fa-angle-left fa-fw"></i>
-            <span class="hidden-xs">Back</span>
+<div class="ev-search-header">
+    <div class="ev-search-header-inner">
+        <a href="javascript:history.back()" class="ev-search-header-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back</span>
         </a>
-        <div class="title">
-            <h1>
-                <a href="/female-escorts-in-{{ strtolower($gender) }}-escorts">
-                    Search Escort {{ $selectedcity ? trim($selectedcity) : '' }}
-                </a>
-            </h1>
-        </div>
+        <span class="ev-search-header-title">Advanced Search</span>
+        <span class="ev-search-header-spacer"></span>
     </div>
 </div>
     <div class="container-fluid " style="margin-top:10px">
@@ -2819,7 +3041,8 @@ textarea.form-control:disabled {
                 <div class="search-form-container dark-form"  >
                  
                     <form action="{{ route('mobile.search.results', ['gender' => $gender]) }}" method="GET">
-                       
+                        <h3 class="ev-section-heading">Search</h3>
+                        <div class="ev-section-card" style="background:#121212;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;border:0;margin:0;">
                         <!-- Gender Selection -->
                         <div class="form-group dropdown primary-search-gender mb-2" style="position: relative; z-index: 10000;">
                             <button class="btn btn-dark search-bar--gender w-100" data-toggle="dropdown" type="button">
@@ -2911,8 +3134,11 @@ textarea.form-control:disabled {
                         </div>
                 </div>
             </div>
+            </div>{{-- /ev-section-card (Search) --}}
 
-            <!-- Bust Size --> 
+            <h3 class="ev-section-heading">Physical Attributes</h3>
+            <div class="ev-section-card" style="background:#121212;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;border:0;margin:0;">
+            <!-- Bust Size -->
             <div class="form-group mb-2 select ">
                 <label for="buts">Bust size</label>
                 <select wire:model="buts" id="buts" class="select required form-control select-box"
@@ -2924,10 +3150,107 @@ textarea.form-control:disabled {
                 </select>
             </div>
 
-          
+            <!-- Ethnicity -->
+            <div class="form-group mb-2">
+                <label for="ethnicity">Ethnicity</label>
+                <select wire:model="ethnicity" name="ethnicity" id="ethnicity" class="select required form-control select-box select2-single" >
+                    <option value="">Any</option>
+                    @foreach ($ethnicities as $eth)
+                        <option value="{{ $eth->id }}">{{ $eth->name }}</option>
+                    @endforeach
+                </select>
+            </div>
 
+            <!-- Hair Color -->
+            <div class="form-group mb-2">
+                <label for="haircolor">Hair color</label>
+                <select wire:model="haircolor" name="haircolor" id="haircolor" class="select required form-control select-box">
+                    <option value="">Any</option>
+                    @foreach ($hairs as $hair)
+                        <option value="{{ $hair->id }}">{{ $hair->name }}</option>
+                    @endforeach
+                </select>
+            </div>
 
+            <!-- Shaved -->
+            <div class="form-group mb-2">
+                <label for="isshaved">Shaved</label>
+                <select wire:model="isshaved" name="isshaved" id="isshaved" class="select required form-control select-box">
+                    <option value="">Any</option>
+                    <option value="no">No</option>
+                    <option value="partially">Partially</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div>
 
+            <!-- Height Range -->
+            <div class="form-group mb-2">
+                <label>Height (cm)</label>
+                <div class="d-flex">
+                    <select wire:model="heightfrom" name="heightfrom" class="select required form-control select-box mr-1">
+                        <option value="">from</option>
+                        <option value="140">140</option>
+                        <option value="150">150</option>
+                        <option value="160">160</option>
+                        <option value="170">170</option>
+                        <option value="180">180</option>
+                        <option value="190">190</option>
+                        <option value="200">200</option>
+                        <option value="210">210</option>
+                        <option value="220">220</option>
+                    </select>
+                    <select wire:model="heightto" name="heightto" class="select required form-control select-box">
+                        <option value="">to</option>
+                        <option value="140">140</option>
+                        <option value="150">150</option>
+                        <option value="160">160</option>
+                        <option value="170">170</option>
+                        <option value="180">180</option>
+                        <option value="190">190</option>
+                        <option value="200">200</option>
+                        <option value="210">210</option>
+                        <option value="220">220</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Age Range -->
+            <div class="form-group mb-2">
+                <label>Age</label>
+                <div class="d-flex">
+                    <select wire:model="agefrom" name="agefrom" class="select required form-control select-box mr-1">
+                        <option value="">from</option>
+                        <option value="18">18</option>
+                        <option value="21">21</option>
+                        <option value="25">25</option>
+                        <option value="30">30</option>
+                        <option value="35">35</option>
+                        <option value="40">40</option>
+                        <option value="45">45</option>
+                        <option value="50">50</option>
+                        <option value="55">55</option>
+                        <option value="60">60</option>
+                    </select>
+                    <select wire:model="ageto" name="ageto" class="select required form-control select-box">
+                        <option value="">to</option>
+                        <option value="18">18</option>
+                        <option value="21">21</option>
+                        <option value="25">25</option>
+                        <option value="30">30</option>
+                        <option value="35">35</option>
+                        <option value="40">40</option>
+                        <option value="45">45</option>
+                        <option value="50">50</option>
+                        <option value="55">55</option>
+                        <option value="60">60</option>
+                    </select>
+                </div>
+            </div>
+
+            </div>{{-- /ev-section-card (Physical Attributes) --}}
+
+            <h3 class="ev-section-heading">Personal Information</h3>
+            <div class="ev-section-card" style="background:#121212;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;border:0;margin:0;">
             <!-- Orientation -->
             <div class="form-group mb-2">
                 <label for="ori">Orientation</label>
@@ -2980,17 +3303,6 @@ textarea.form-control:disabled {
                 </div>
             </div>
 
-            <!-- Ethnicity -->
-            <div class="form-group mb-2">
-                <label for="ethnicity">Ethnicity</label>
-                <select wire:model="ethnicity" name="ethnicity" id="ethnicity" class="select required form-control select-box select2-single" >
-                    <option value="">Any</option>
-                    @foreach ($ethnicities as $eth)
-                        <option value="{{ $eth->id }}">{{ $eth->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
             <!-- Nationality -->
             <div class="form-group mb-2">
                 <label for="nationality">Nationality</label>
@@ -3000,77 +3312,6 @@ textarea.form-control:disabled {
                         <option value="{{ $country->id }}">{{ $country->nicename }}</option>
                     @endforeach
                 </select>
-            </div>
-
-            <!-- Age Range -->
-            <div class="form-group mb-2">
-                <label>Age</label>
-                <div class="d-flex">
-                    <select wire:model="agefrom" name="agefrom" class="select required form-control select-box mr-1">
-                        <option value="">from</option>
-                        <option value="18">18</option>
-                        <option value="21">21</option>
-                        <option value="25">25</option>
-                        <option value="30">30</option>
-                        <option value="35">35</option>
-                        <option value="40">40</option>
-                        <option value="45">45</option>
-                        <option value="50">50</option>
-                        <option value="55">55</option>
-                        <option value="60">60</option>
-                    </select>
-                    <select wire:model="ageto" name="ageto" class="select required form-control select-box">
-                        <option value="">to</option>
-                        <option value="18">18</option>
-                        <option value="21">21</option>
-                        <option value="25">25</option>
-                        <option value="30">30</option>
-                        <option value="35">35</option>
-                        <option value="40">40</option>
-                        <option value="45">45</option>
-                        <option value="50">50</option>
-                        <option value="55">55</option>
-                        <option value="60">60</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Height Range -->
-            <div class="form-group mb-2">
-                <label>Height (cm)</label>
-                <div class="d-flex">
-                    <select wire:model="heightfrom" name="heightfrom" class="select required form-control select-box mr-1">
-                        <option value="">from</option>
-                        <option value="140">140</option>
-                        <option value="150">150</option>
-                        <option value="160">160</option>
-                        <option value="170">170</option>
-                        <option value="180">180</option>
-                        <option value="190">190</option>
-                        <option value="200">200</option>
-                        <option value="210">210</option>
-                        <option value="220">220</option>
-                    </select>
-                    <select wire:model="heightto" name="heightto" class="select required form-control select-box">
-                        <option value="">to</option>
-                        <option value="140">140</option>
-                        <option value="150">150</option>
-                        <option value="160">160</option>
-                        <option value="170">170</option>
-                        <option value="180">180</option>
-                        <option value="190">190</option>
-                        <option value="200">200</option>
-                        <option value="210">210</option>
-                        <option value="220">220</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Name -->
-            <div class="form-group mb-2">
-                <label for="name">Name</label>
-                <input wire:model="name" name="name" type="text" class="form-control" id="name"
-                    placeholder="Search by name">
             </div>
 
             <!-- Languages -->
@@ -3084,27 +3325,14 @@ textarea.form-control:disabled {
                 </select>
             </div>
 
-            <!-- Shaved -->
+            <!-- Name -->
             <div class="form-group mb-2">
-                <label for="isshaved">Shaved</label>
-                <select wire:model="isshaved" name="isshaved" id="isshaved" class="select required form-control select-box">
-                    <option value="">Any</option>
-                    <option value="no">No</option>
-                    <option value="partially">Partially</option>
-                    <option value="yes">Yes</option>
-                </select>
+                <label for="name">Name</label>
+                <input wire:model="name" name="name" type="text" class="form-control" id="name"
+                    placeholder="Search by name">
             </div>
 
-            <!-- Hair Color -->
-            <div class="form-group mb-2">
-                <label for="haircolor">Hair color</label>
-                <select wire:model="haircolor" name="haircolor" id="haircolor" class="select required form-control select-box">
-                    <option value="">Any</option>
-                    @foreach ($hairs as $hair)
-                        <option value="{{ $hair->id }}">{{ $hair->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+            </div>{{-- /ev-section-card (Personal Information) --}}
 
             <!-- Search Button -->
             <div class="form-group">
@@ -3120,6 +3348,93 @@ textarea.form-control:disabled {
 
 @push('css')
     <style>
+        /* Footer / misc links — evoory green */
+        html body a,
+        html body #footer a,
+        html body footer a{
+            color:#C1F11D !important;
+        }
+        html body a:hover,
+        html body a:focus{
+            color:#d4ff3a !important;
+            text-decoration:none !important;
+        }
+
+        /* ===== Evoory section card overrides (loaded last) ===== */
+        html body .search-form-container .ev-section-card{
+            background:#121212 !important;
+            border-radius:12px !important;
+            padding:16px !important;
+            border:0 !important;
+            display:flex !important;
+            flex-direction:column !important;
+            gap:14px !important;
+            margin:0 !important;
+        }
+        html body .search-form-container .ev-section-card .form-group{
+            background:transparent !important;
+            padding:0 !important;
+            margin:0 !important;
+            border:0 !important;
+            border-radius:0 !important;
+            box-shadow:none !important;
+        }
+        html body .search-form-container .ev-section-heading{
+            color:#999 !important;
+            font-size:13px !important;
+            font-weight:400 !important;
+            margin:8px 0 0 !important;
+            padding:0 4px !important;
+            text-transform:none !important;
+        }
+        html body .search-form-container .ev-section-heading:first-of-type{margin-top:0 !important}
+        html body .search-form-container form{display:flex !important;flex-direction:column !important;gap:14px !important}
+
+        /* Inputs/selects inside section cards: slightly lighter pill so they stand out from card */
+        html body .search-form-container .ev-section-card .form-control,
+        html body .search-form-container .ev-section-card select.form-control,
+        html body .search-form-container .ev-section-card select.select-box,
+        html body .search-form-container .ev-section-card input.form-control,
+        html body .search-form-container .ev-section-card input[type="text"],
+        html body .search-form-container .ev-section-card input[type="number"],
+        html body .search-form-container .ev-section-card #mobile-services-display-box,
+        html body .search-form-container .ev-section-card .primary-search-gender .btn{
+            background:#1a1c1d !important;
+            color:#fff !important;
+            border:1px solid #2a2a2a !important;
+            border-radius:10px !important;
+            height:46px !important;
+            box-shadow:none !important;
+        }
+
+        /* ===== Evoory theme color overrides (loaded last to beat inline yellow) ===== */
+        html body .verified-label,
+        html body .search-form-container .verified-label,
+        html body .search-form-container .advanced-search-checkboxes label.verified-label{
+            background:#C1F11D !important;
+            background-image:none !important;
+            color:#000 !important;
+            border-radius:999px !important;
+        }
+        html body .btn-primary,
+        html body .search-form-container .btn-primary,
+        html body .search-form-container button[type="submit"]{
+            background:#C1F11D !important;
+            background-image:none !important;
+            border-color:#C1F11D !important;
+            color:#000 !important;
+            border-radius:999px !important;
+        }
+        html body .btn-primary:hover,
+        html body .btn-primary:focus,
+        html body .btn-primary:active,
+        html body .search-form-container .btn-primary:hover,
+        html body .search-form-container button[type="submit"]:hover{
+            background:#d4ff3a !important;
+            background-image:none !important;
+            border-color:#d4ff3a !important;
+            color:#000 !important;
+        }
         /* Custom styles for mobile search */
         .search-form-container {
             padding: 0px 0;

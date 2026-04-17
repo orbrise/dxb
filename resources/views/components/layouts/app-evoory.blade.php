@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @if(!empty($setting->favicon))
+    <link href="{{ smart_asset($setting->favicon) }}" rel="shortcut icon" type="image/x-icon" />
+    @endif
     <title>{{ $seoTitle ?? 'Evoory - Premium Escort Directory' }}</title>
     <meta name="description" content="{{ $seoDescription ?? 'Connect with escorts from Dubai and around the world. Premium escort directory with verified listings.' }}">
     @if(!empty($seoKeywords))

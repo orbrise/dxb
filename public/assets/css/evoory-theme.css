@@ -37,7 +37,7 @@ body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Se
 .ev-logo{font-size:24px;font-weight:700;color:var(--accent);text-decoration:none;letter-spacing:-0.5px}
 .ev-logo:hover{color:var(--accent-hover)}
 .ev-nav{display:flex;align-items:center;gap:16px}
-.ev-nav-link{color:var(--text-secondary);text-decoration:none;font-size:14px;font-family:inherit;font-weight:300;line-height:1;padding:12px 20px;border-radius:var(--radius);transition:var(--transition);display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border-color);background:transparent;cursor:pointer;box-sizing:border-box;height:42px}
+.ev-nav-link{color:var(--text-secondary);text-decoration:none !important;font-size:14px;font-family:inherit;font-weight:300;line-height:1;padding:12px 20px;border-radius:var(--radius);transition:var(--transition);display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border-color);background:transparent;cursor:pointer;box-sizing:border-box;height:42px}
 .ev-nav-link:hover{color:var(--text-primary);background:var(--bg-card);border-color:var(--text-secondary)}
 .ev-nav-link svg{width:18px;height:18px;flex-shrink:0}
 button.ev-nav-link{height:42px;padding:12px 20px;font-size:14px;font-family:inherit;font-weight:300;line-height:1;margin:0;box-sizing:border-box;border:1px solid var(--border-color);-webkit-appearance:none;appearance:none}

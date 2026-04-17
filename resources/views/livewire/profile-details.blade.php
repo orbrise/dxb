@@ -8202,7 +8202,7 @@ div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link .image-wrap
 
 @media (min-width: 1200px) {
     .listing-photos-sm-plus .img-wrapper {
-        margin-bottom:30px
+        margin-bottom:0px
     }
 }
 
@@ -8251,18 +8251,65 @@ div.visible-xs.pb-thumbnails div.listing-photos-xs > a.pb-photo-link .image-wrap
 }
 
 @media (max-width: 767px) {
-    .listing-title {
+    .listing-title.visible-xs {
         text-align:left;
-        padding-left: 0px;
+        padding: 14px 16px;
         height: auto;
-        position: relative
+        position: relative;
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        background: #0a0a0a;
+        border-bottom: 1px solid #1a1a1a;
+        margin: 0 !important;
     }
-
-    .listing-title>.listing-bookmark-toggle {
-        position: absolute;
-        left: 0;
-        top: 0
+    /* Title link + h1 on the left */
+    .listing-title.visible-xs > a {
+        flex: 1 1 auto;
+        min-width: 0;
+        order: 1;
     }
+    .listing-title.visible-xs > a > h1 {
+        margin: 0 !important;
+        max-width: 100% !important;
+        font-size: 15px !important;
+        font-weight: 500 !important;
+        line-height: 1.35 !important;
+        color: #fff;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden !important;
+        text-overflow: ellipsis;
+        white-space: normal !important;
+    }
+    /* The favorite-profile Livewire wrapper <div> is the first child — push it to the right */
+    .listing-title.visible-xs > div:first-child {
+        order: 2 !important;
+        flex: 0 0 auto !important;
+        margin: 0 !important;
+    }
+    /* Bookmark button inside the wrapper — circular dark pill */
+    .listing-title.visible-xs .favorite-bookmark-btn {
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        background: #1a1a1a !important;
+        border: 1px solid #2a2a2a !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #fff !important;
+    }
+    .listing-title.visible-xs .favorite-bookmark-btn.bookmarked {
+        background: #1a1a1a !important;
+        color: #fff !important;
+        border-color: #2a2a2a !important;
+    }
+    .listing-title.visible-xs .favorite-bookmark-btn i { color: inherit !important; font-size: 14px !important; }
+    /* Hide clearfix so it doesn't occupy a flex slot */
+    .listing-title.visible-xs > .clearfix { display: none !important; }
 }
 
 .report-link {
@@ -22571,7 +22618,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="You can come to my place">
                   <div class="pull-left text-muted">
                     <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #333; border-radius: 50%; margin-right: 5px;padding: 7px;">
-                      <img src="https://assets.massagerepublic.com.co/assets/newtheme/incall.svg" width="12" height="16" alt="Message">
+                      <img src="https://assets.evoory.com/assets/newtheme/incall.png" width="12" height="16" alt="Message">
                     </span>
                   </div>
                   <div class="pull-left margin-right">
@@ -22584,7 +22631,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="I can come to your place">
                   <div class="pull-left text-muted">
                     <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #333; border-radius: 50%; margin-right: 5px;padding: 7px;">
-                      <img src="https://assets.massagerepublic.com.co/assets/newtheme/outcall.svg" width="12" height="16" alt="Message">
+                      <img src="https://assets.evoory.com/assets/newtheme/outcall.png" width="12" height="16" alt="Message">
                     </span>
                   </div>
                   <div class="pull-left margin-right">
