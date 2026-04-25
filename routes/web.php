@@ -167,7 +167,9 @@ Route::get("{gender}-escorts-in-{city}", HomePage::class)
     ->name("home")
     ->where('gender', 'female|male|shemale')
     ->middleware('page.cache');
-Route::get("{gender}-escorts-in-{city}/{id}/{username}", ProfileDetails::class)->where('gender', 'female|male|shemale');
+Route::get("{gender}-escorts-in-{city}/{id}/{username}", ProfileDetails::class)
+    ->where('gender', 'female|male|shemale')
+    ->middleware('page.cache');
 Route::get("sign-in", LoginController::class)->name('sign-in');
 Route::get("register", RegisterController::class)->name('register');
 Route::get("escort-sign-up", EscortRegister::class)->name('escort.signup');

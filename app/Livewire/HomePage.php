@@ -401,6 +401,36 @@ public function checkIfFavorited($profileId)
         return $seoModel ? $seoModel->content : null;
     }
 
+    /**
+     * Get cached SEO content for render method
+     */
+    private function getCachedSeoContent($currentCity)
+    {
+        if (!$currentCity) {
+            return null;
+        }
+        
+        $genderModel = CacheService::getGenderByName($this->gender ?: 'female');
+        
+        if (!$genderModel) {
+            return null;
+        }
+        
+        $cityId = (int) $currentCity->id;
+        $genderId = (int) $genderModel->id;
+        
+        return Cache::remember(
+            "cache:seo:{$genderId}:{$cityId}", 
+            CacheService::TTL_LOOKUP, 
+            function() use ($genderId, $cityId) {
+                $seoModel = \App\Models\SeoKeyword::where('gender_id', $genderId)
+                    ->where('city_id', $cityId)
+                    ->first();
+                return $seoModel ? $seoModel->content : null;
+            }
+        );
+    }
+
     public function updatedSelectedcity($city)
     {
         // Update URL without redirect
@@ -825,6 +855,9 @@ public function checkIfFavorited($profileId)
             $nearbyCities = CacheService::getFeaturedCities($currentCity->country, $currentCity->id);
         }
         
+        // Get SEO content (cached)
+        $seoContent = $this->getCachedSeoContent($currentCity);
+        
         return view('livewire.home-page', [
             'profiles' => $this->getProfiles(),
             // Use CacheService for all lookup data
@@ -847,7 +880,8 @@ public function checkIfFavorited($profileId)
             'currentCity' => $currentCity,
             'nearbyCities' => $nearbyCities,
             'sortInfo' => $this->getSortInfo(),
-            'cityCurrency' => $this->getCityCurrency($currentCity)
+            'cityCurrency' => $this->getCityCurrency($currentCity),
+            'seoContent' => $seoContent
         ]);
     }
 

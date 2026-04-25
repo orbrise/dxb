@@ -4,13 +4,19 @@
  
 @push('css')
 
-<!-- Font Awesome 5 -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+<!-- Font Awesome 5 - defer loading -->
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></noscript>
 
-<!-- Base Evoory Theme & Custom Single File for Homepage Layout -->
-<link rel="stylesheet" href="{{ asset('assets/css/app.css') }}" />
-<link rel="stylesheet" href="{{ asset('assets/css/site-inline.min.css') }}" />
-<link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}" />
+<!-- Base Evoory Theme & Custom Single File for Homepage Layout - defer loading -->
+<link rel="preload" href="{{ asset('assets/css/app.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="{{ asset('assets/css/site-inline.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/css/site-inline.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}" />
+</noscript>
 
 <!-- Preload first profile images for faster LCP -->
 @if(isset($profiles) && $profiles->count() > 0)
@@ -2658,9 +2664,6 @@ overflow: hidden;
       {{ $profiles->links('vendor.livewire.custom') }}
       
 <!-- SEO Content Section -->
-@php
-    $seoContent = $this->getSeoContent();
-@endphp
 @if(!empty($seoContent))
 <div class="container-fluid mt-2 mb-5">
     <div class="row">
@@ -2728,8 +2731,8 @@ overflow: hidden;
 
 
   @push('js')
-  <!-- jQuery (needed for chosen, select2, etc.) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <!-- jQuery (needed for chosen, select2, etc.) - deferred for better performance -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" defer></script>
 
   <!-- Optimized JavaScript Loading -->
   <script src="{{ smart_asset('chosen/chosen.jquery.js')}}" defer></script>

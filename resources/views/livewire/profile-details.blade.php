@@ -1,5 +1,9 @@
 @push('css')
-<link rel="stylesheet" href="{{ asset('assets/css/evoory-profile.css') }}?v={{ filemtime(public_path('assets/css/evoory-profile.css')) }}">
+@if(isset($images) && $images->count() > 0)
+    <link rel="preload" as="image" href="{{ webp_asset('userimages/'.$images->first()->user_id.'/'.$images->first()->profile_id.'/'.$images->first()->image) }}" fetchpriority="high">
+@endif
+<link rel="preload" href="{{ asset('assets/css/evoory-profile.css') }}?v={{ filemtime(public_path('assets/css/evoory-profile.css')) }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{{ asset('assets/css/evoory-profile.css') }}?v={{ filemtime(public_path('assets/css/evoory-profile.css')) }}"></noscript>
 <style>
   /* Lightbox Play Button - clean circular style */
   #lightboxPlay {
@@ -22499,7 +22503,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
                       </span>
                       @endif
                       <div class="image-wrapper">
-                        <img alt="{{ $user->name }} - escort in {{ $user->city }}" class="img-responsive" data-original-height="1499" data-original-width="1000" data-thumb-url="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" height="327" loading="lazy" decoding="async" src="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" width="238">
+                        <img alt="{{ $user->name }} - escort in {{ $user->city }}" class="img-responsive" data-original-height="1499" data-original-width="1000" data-thumb-url="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" height="327" loading="{{ $loop->first ? 'eager' : 'lazy' }}" fetchpriority="{{ $loop->first ? 'high' : 'auto' }}" decoding="async" src="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" width="238">
                       </div>
                     </span>
                   </a>
@@ -23499,9 +23503,9 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
     });
 })();
 </script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" defer></script>
 <script>
 /* Inject SVG close icons into all modal close buttons */
 document.querySelectorAll('.modal .close').forEach(function(btn) {
@@ -24096,8 +24100,8 @@ document.querySelectorAll('.report-link').forEach(function(link) {
   });
   
   // Also try with jQuery ready
-  $(document).ready(function() {
-    console.log('jQuery ready - initializing profile details');
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded event - initializing profile details');
     setTimeout(initProfileDetails, 500);
   });
 </script>

@@ -13,10 +13,10 @@ class CacheService
 {
     // Cache TTL constants (in seconds)
     const TTL_STATIC = 86400;      // 24 hours - for rarely changing data
-    const TTL_LOOKUP = 3600;       // 1 hour - for lookup tables
-    const TTL_PROFILES = 900;      // 15 minutes - for profile listings
-    const TTL_PROFILE_DETAIL = 600; // 10 minutes - for single profile
-    const TTL_REVIEWS = 300;       // 5 minutes - for reviews
+    const TTL_LOOKUP = 7200;       // 2 hours - for lookup tables
+    const TTL_PROFILES = 1800;     // 30 minutes - for profile listings
+    const TTL_PROFILE_DETAIL = 1200; // 20 minutes - for single profile
+    const TTL_REVIEWS = 600;       // 10 minutes - for reviews
 
     /**
      * Get static lookup data (services, currencies, etc.)

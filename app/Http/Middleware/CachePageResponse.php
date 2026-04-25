@@ -27,13 +27,13 @@ use Symfony\Component\HttpFoundation\Response;
 class CachePageResponse
 {
     /** Origin cache TTL — safety ceiling. Actual invalidation is observer-driven via listingScope version. */
-    protected const ORIGIN_TTL_SECONDS = 1800;
+    protected const ORIGIN_TTL_SECONDS = 3600;
 
     /** Edge TTL for CDN. Can be much longer than origin TTL because CDN gets purged on content change. */
-    protected const EDGE_TTL_SECONDS = 3600;
+    protected const EDGE_TTL_SECONDS = 7200;
 
     /** Browser TTL — keep short so users see admin-driven updates without a hard reload. */
-    protected const BROWSER_TTL_SECONDS = 60;
+    protected const BROWSER_TTL_SECONDS = 300;
 
     public function handle(Request $request, Closure $next)
     {
@@ -143,7 +143,7 @@ class CachePageResponse
         // Match patterns like /female-escorts-in-dubai or /female-escorts-in-dubai/page/2
         $path = $request->path();
         
-        if (preg_match('/^\w+-escorts-in-(\w+)(?:\/page\/\d+)?$/', $path, $matches)) {
+        if (preg_match('/^\w+-escorts-in-([\w-]+)(?:\/(?:page\/\d+|\d+\/[^\/]+))?$/', $path, $matches)) {
             $citySlug = $matches[1];
             // Use CacheService for consistent city lookups
             $city = \App\Services\CacheService::getCityBySlug($citySlug);
