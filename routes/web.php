@@ -114,6 +114,12 @@ Route::get('/csrf-refresh', function () {
     ]);
 })->name('csrf.refresh');
 
+// Async profile-view tracker (called from JS so visit counts still work
+// when the detail page is served from edge/page cache).
+Route::post('/profile/{id}/track-view', [\App\Http\Controllers\AjaxController::class, 'trackProfileView'])
+    ->where('id', '[0-9]+')
+    ->name('profile.track-view');
+
 // WhatsApp Webhook (outside admin middleware for Meta verification)
 Route::match(['get', 'post'], '/webhook/whatsapp', [\App\Http\Controllers\Admin\WhatsAppController::class, 'webhook'])->name('whatsapp.webhook');
 

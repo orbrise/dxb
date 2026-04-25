@@ -56,10 +56,8 @@ public $reportDescription;
         $up = CacheService::getProfileDetail($id);
         $this->user = $up;
 
-        // Track profile view (ProfileVisit::recordVisit handles IP/24h dedup internally)
-        if ($up) {
-            $this->trackProfileView($id);
-        }
+        // Visit tracking moved to async JS ping (POST /profile/{id}/track-view) so the
+        // page itself stays cacheable. See trackProfileView() below — kept for ad-hoc use.
 
         // Images are loaded in render() — don't double-load here.
         $this->code = "971";

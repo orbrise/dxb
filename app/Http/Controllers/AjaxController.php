@@ -7,9 +7,26 @@ use App\Models\City;
 use App\Models\Currency;
 use App\Models\Package;
 use App\Models\Country;
+use App\Models\ProfileVisit;
 
 class AjaxController extends Controller
 {
+    /**
+     * Async profile-view tracker. Called via fetch()/sendBeacon from the profile detail
+     * page so visit tracking still works when the page itself is served from page cache.
+     * IP-based dedup happens inside ProfileVisit::recordVisit (one count per IP per 24h).
+     */
+    public function trackProfileView($id, Request $request)
+    {
+        try {
+            ProfileVisit::recordVisit((int) $id, $request);
+        } catch (\Throwable $e) {
+            \Log::warning('trackProfileView failed', ['profile_id' => $id, 'error' => $e->getMessage()]);
+        }
+        // 204 keeps the response cheap and tells the browser there's no body to parse.
+        return response()->noContent();
+    }
+
     public function citySearch(Request $req){
         $val = $req->val;
         $cities = City::where('name', 'like', "%$val%")->take(5)->get();

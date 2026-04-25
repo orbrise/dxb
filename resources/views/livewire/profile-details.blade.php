@@ -23467,6 +23467,21 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica N
 
 @push('js')
 <script>
+/* Async profile-view tracker — fires once per page load, survives page caching.
+   sendBeacon is preferred (won't block page unload); fetch is a fallback. */
+(function() {
+    var pid = {{ (int) ($profile->id ?? 0) }};
+    if (!pid) return;
+    var url = '/profile/' + pid + '/track-view';
+    try {
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(url, new Blob([''], { type: 'application/x-www-form-urlencoded' }));
+        } else {
+            fetch(url, { method: 'POST', credentials: 'same-origin', keepalive: true });
+        }
+    } catch (e) { /* swallow — tracking is best-effort */ }
+})();
+
 /* Mobile Tab Switching */
 (function() {
     var tabs = document.querySelectorAll('.ev-mobile-tab');
