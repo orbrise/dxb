@@ -36,9 +36,6 @@ class ReviewObserver
             CacheVersion::bump(CacheVersion::listingScope($profile->city, $profile->gender));
         }
 
-        // Invalidate page cache since review counts appear on listing pages
-        CacheVersion::bump(CacheVersion::pageScope());
-
         Cache::forget('cache:recent_reviews:10');
         Cache::forget('cache:recent_reviews:30');
 

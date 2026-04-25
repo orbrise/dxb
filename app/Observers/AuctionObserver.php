@@ -33,7 +33,6 @@ class AuctionObserver
                 $auction->city_id,
                 $this->genderIdFor($auction->gender)
             ));
-            CacheVersion::bump(CacheVersion::pageScope());
         }
     }
 
@@ -44,13 +43,11 @@ class AuctionObserver
             $auction->city_id,
             $this->genderIdFor($auction->gender)
         ));
-        CacheVersion::bump(CacheVersion::pageScope());
     }
 
     protected function invalidate(Auction $auction): void
     {
         CacheVersion::bump(CacheVersion::auctionScope($auction->city_id, $auction->gender));
-        CacheVersion::bump(CacheVersion::pageScope());
 
         // Edge-purge: the listing page shows auction banners, so sweep that tree.
         $city = CacheService::getCityById($auction->city_id);

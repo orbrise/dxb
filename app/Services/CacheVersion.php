@@ -84,9 +84,4 @@ class CacheVersion
         $g = $gender !== null && $gender !== '' ? $gender : 'any';
         return "auctions:{$c}:{$g}";
     }
-
-    public static function pageScope(): string
-    {
-        return 'pages';
-    }
 }

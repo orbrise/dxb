@@ -24,7 +24,6 @@ class ProfileObserver
     {
         CacheVersion::bump(CacheVersion::profileScope($profile->id));
         CacheVersion::bump(CacheVersion::listingScope($profile->city, $profile->gender));
-        CacheVersion::bump(CacheVersion::pageScope());
         CacheService::clearHomepageCache($profile->city, $profile->gender);
 
         $this->purgeEdge($profile);
@@ -36,7 +35,6 @@ class ProfileObserver
 
         if ($profile->wasChanged($this->listingFields)) {
             CacheVersion::bump(CacheVersion::listingScope($profile->city, $profile->gender));
-            CacheVersion::bump(CacheVersion::pageScope());
 
             // If the profile moved between city/gender, also invalidate the old scope (origin + edge).
             if ($profile->wasChanged(['city', 'gender'])) {
@@ -59,7 +57,6 @@ class ProfileObserver
     {
         CacheVersion::bump(CacheVersion::profileScope($profile->id));
         CacheVersion::bump(CacheVersion::listingScope($profile->city, $profile->gender));
-        CacheVersion::bump(CacheVersion::pageScope());
         CacheService::clearHomepageCache($profile->city, $profile->gender);
         $this->purgeEdge($profile);
     }

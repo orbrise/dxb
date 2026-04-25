@@ -31,7 +31,6 @@ class AuctionBidObserver
         $auction = $bid->relationLoaded('auction') ? $bid->auction : $bid->auction()->first();
         if ($auction) {
             CacheVersion::bump(CacheVersion::auctionScope($auction->city_id, $auction->gender));
-            CacheVersion::bump(CacheVersion::pageScope());
         }
     }
 }

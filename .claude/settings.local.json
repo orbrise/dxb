@@ -5,7 +5,13 @@
       "Bash(php artisan tinker --execute=\"echo \\\\App\\\\Models\\\\City::where\\(''name'', ''like'', ''%bali%''\\)->count\\(\\);\")",
       "Bash(php artisan tinker --execute=\"print_r\\(\\\\App\\\\Models\\\\City::where\\(''name'', ''like'', ''%bali%''\\)->take\\(5\\)->get\\([''id'',''name'',''country'']\\)->toArray\\(\\)\\);\")",
       "Bash(grep -o \"\\\\.col-lg-[0-9]\\\\{1,2\\\\}\" \"c:/laragon/www/dxb/public/assets/css/app.css\")",
-      "Bash(grep -v \"^[0-9]*:\\\\s*<\\\\|^[0-9]*:\\\\s*//\")"
+      "Bash(grep -v \"^[0-9]*:\\\\s*<\\\\|^[0-9]*:\\\\s*//\")",
+      "Bash(php -r 'require '\\\\''vendor/autoload.php'\\\\''; $app = require '\\\\''bootstrap/app.php'\\\\''; $app->make\\(\\\\Illuminate\\\\Contracts\\\\Http\\\\Kernel::class\\); $conn = \\\\Illuminate\\\\Support\\\\Facades\\\\DB::connection\\(\\); $tables = $conn->getDoctrineSchemaManager\\(\\)->listTableIndexes\\('\\\\''users_profiles'\\\\''\\); foreach\\($tables as $idx\\) { echo $idx->getName\\(\\) . '\\\\'': '\\\\''; echo implode\\('\\\\'', '\\\\'', $idx->getColumns\\(\\)\\) . PHP_EOL; }')",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(sort -k1 -h)",
+      "Bash(awk '{print $5 \" \" $9}')",
+      "Bash(xargs wc *)",
+      "Bash(c:/laragon/bin/php/php-8.3.3-Win32-vs16-x64/php.exe c:/laragon/www/dxb/artisan migrate:status)"
     ]
   }
 }

@@ -2424,7 +2424,7 @@ overflow: hidden;
             
             <div class="other-thumbs pull-left">
             
-              @forelse($profile->multipleimgs as $imgs)
+              @forelse($profile->multipleimgs->take(3) as $imgs)
               <div class="thumb thumb-{{ $loop->index }}">
                 <a class="img img-responsive pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">

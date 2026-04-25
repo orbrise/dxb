@@ -235,7 +235,7 @@ public function submitMobileSearch()
                 return collect();
             }
 
-            return Auction::select('id', 'city_id', 'gender', 'status', 'spot_number', 'winner_profile_id', 'end_date', 'current_price')
+            $auctions = Auction::select('id', 'city_id', 'gender', 'status', 'spot_number', 'winner_profile_id', 'end_date', 'current_price')
                 ->where('city_id', $this->city)
                 ->where('gender', $this->gender)
                 ->where('status', 'active')
@@ -247,12 +247,16 @@ public function submitMobileSearch()
                             'singleimg:id,user_id,profile_id,image',
                             'coverimg:id,user_id,profile_id,image',
                             'photoverify:id,profile_id,status',
-                            'multipleimgs' => fn($q) => $q->select('id', 'user_id', 'profile_id', 'image')->limit(3),
+                            // Note: multipleimgs is attached manually below — eager-load with limit() is broken (LIMIT applies globally, not per-profile).
                         ]),
                     'winnerProfile.city:id,name',
                 ])
                 ->take(6)
                 ->get();
+
+            $this->attachThumbnailImages($auctions->pluck('winnerProfile')->filter()->values());
+
+            return $auctions;
         });
 
         // Time labels are time-sensitive — recompute on every request (cheap, no DB).
@@ -636,53 +640,92 @@ public function checkIfFavorited($profileId)
         return CacheVersion::remember($scope, $subkey, CacheService::TTL_PROFILES, function () use (
             $genderId, $auctionProfileIds, $packageOrderSql, $sortDirection, $page
         ) {
-            return UsersProfile::query()
-            ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'is_verified', 'created_at')
-            ->where('is_active', 1)
-            ->whereNull('archived_at')
-            ->when($this->city, fn($q) => $q->where('city', $this->city))
-            ->when($genderId, fn($q) => $q->where('gender', $genderId))
-            ->when($this->rate, fn($q) => $q->where('incallprice', '<=', $this->rate))
-            ->when($this->buts, fn($q) => $q->where('bust', $this->buts))
-            ->when($this->ori, fn($q) => $q->where('orientation', $this->ori))
-            ->when($this->incall, fn($q) => $q->where('incall', 1))
-            ->when($this->outcall, fn($q) => $q->where('outcall', 1))
-            ->when($this->nonsmoker, fn($q) => $q->where('smoke', 0))
-            ->when($this->withreviews, fn($q) => $q->whereHas('reviews'))
-            ->when($this->ethnicity, fn($q) => $q->where('ethnicity', $this->ethnicity))
-            ->when($this->nationality, fn($q) => $q->where('nationality', $this->nationality))
-            ->when($this->agefrom, fn($q) => $q->where('age', '>=', $this->agefrom))
-            ->when($this->ageto, fn($q) => $q->where('age', '<=', $this->ageto))
-            ->when($this->heightfrom, fn($q) => $q->where('height', '>=', $this->heightfrom))
-            ->when($this->heightto, fn($q) => $q->where('height', '<=', $this->heightto))
-            ->when($this->name, fn($q) => $q->where('name', 'like', '%' . $this->name . '%'))
-            ->when($this->language, function($q) {
-                return $q->whereHas('languages', fn($query) => $query->where('language_id', $this->language));
-            })
-            ->when($this->isshaved, fn($q) => $q->where('shaved', $this->isshaved))
-            ->when($this->haircolor, fn($q) => $q->where('haircolor', $this->haircolor))
-            ->when($this->verified, fn($q) => $q->where('is_verified', 1))
-            ->when($this->profiletype, function($q) {
-                return $q->whereHas('user', fn($query) => $query->where('type', $this->profiletype));
-            })
-            ->when($this->sservices && count($this->sservices) > 0, function($q) {
-                return $q->whereHas('services', fn($query) => $query->whereIn('service_id', $this->sservices));
-            })
-            ->when(!empty($auctionProfileIds), fn($q) => $q->whereNotIn('id', $auctionProfileIds))
-            ->with([
-                'singleimg:id,user_id,profile_id,image',
-                'coverimg:id,user_id,profile_id,image',
-                // Blade uses $profile->multipleimgs — eager-load that one directly to avoid N+1.
-                'multipleimgs' => fn($query) => $query->select('id', 'user_id', 'profile_id', 'image')->limit(6),
-                'multipleimgss' => fn($query) => $query->select('id', 'user_id', 'profile_id', 'image')->limit(6),
-                'photoverify:id,profile_id,status',
-                'package:id,name',
-            ])
-            ->withCount('reviews')
-            ->orderByRaw($packageOrderSql)
-            ->orderBy('created_at', $sortDirection)
-            ->paginate(36, ['*'], 'page', $page);
+            $paginator = UsersProfile::query()
+                ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'is_verified', 'created_at')
+                ->where('is_active', 1)
+                ->whereNull('archived_at')
+                ->when($this->city, fn($q) => $q->where('city', $this->city))
+                ->when($genderId, fn($q) => $q->where('gender', $genderId))
+                ->when($this->rate, fn($q) => $q->where('incallprice', '<=', $this->rate))
+                ->when($this->buts, fn($q) => $q->where('bust', $this->buts))
+                ->when($this->ori, fn($q) => $q->where('orientation', $this->ori))
+                ->when($this->incall, fn($q) => $q->where('incall', 1))
+                ->when($this->outcall, fn($q) => $q->where('outcall', 1))
+                ->when($this->nonsmoker, fn($q) => $q->where('smoke', 0))
+                ->when($this->withreviews, fn($q) => $q->whereHas('reviews'))
+                ->when($this->ethnicity, fn($q) => $q->where('ethnicity', $this->ethnicity))
+                ->when($this->nationality, fn($q) => $q->where('nationality', $this->nationality))
+                ->when($this->agefrom, fn($q) => $q->where('age', '>=', $this->agefrom))
+                ->when($this->ageto, fn($q) => $q->where('age', '<=', $this->ageto))
+                ->when($this->heightfrom, fn($q) => $q->where('height', '>=', $this->heightfrom))
+                ->when($this->heightto, fn($q) => $q->where('height', '<=', $this->heightto))
+                ->when($this->name, fn($q) => $q->where('name', 'like', '%' . $this->name . '%'))
+                ->when($this->language, function($q) {
+                    return $q->whereHas('languages', fn($query) => $query->where('language_id', $this->language));
+                })
+                ->when($this->isshaved, fn($q) => $q->where('shaved', $this->isshaved))
+                ->when($this->haircolor, fn($q) => $q->where('haircolor', $this->haircolor))
+                ->when($this->verified, fn($q) => $q->where('is_verified', 1))
+                ->when($this->profiletype, function($q) {
+                    return $q->whereHas('user', fn($query) => $query->where('type', $this->profiletype));
+                })
+                ->when($this->sservices && count($this->sservices) > 0, function($q) {
+                    return $q->whereHas('services', fn($query) => $query->whereIn('service_id', $this->sservices));
+                })
+                ->when(!empty($auctionProfileIds), fn($q) => $q->whereNotIn('id', $auctionProfileIds))
+                ->with([
+                    'singleimg:id,user_id,profile_id,image',
+                    'coverimg:id,user_id,profile_id,image',
+                    'photoverify:id,profile_id,status',
+                    'package:id,name',
+                    'reviews:id,profile_id',
+                ])
+                ->orderByRaw($packageOrderSql)
+                ->orderBy('created_at', $sortDirection)
+                ->paginate(36, ['*'], 'page', $page);
+
+            $this->attachThumbnailImages($paginator->getCollection());
+
+            return $paginator;
         });
+    }
+
+    /**
+     * Manually attach up to 3 thumbnail images per profile.
+     *
+     * Eloquent's `with('multipleimgs', fn($q) => $q->limit(3))` applies LIMIT 3 to the
+     * whole IN(...) result, not per profile — so the first profile takes all 3 images
+     * and every other profile shows zero. That manifests as floating thumbnails leaking
+     * into the wrong profile's grid cell.
+     *
+     * Instead we run one grouped query, slice in PHP, and setRelation() so the blade's
+     * $profile->multipleimgs / $profile->multipleimgss accessors return the correct set.
+     */
+    protected function attachThumbnailImages($profiles): void
+    {
+        if ($profiles->isEmpty()) {
+            return;
+        }
+
+        $profileIds = $profiles->pluck('id')->all();
+
+        $imagesByProfile = \App\Models\ProfileImage::query()
+            ->select('id', 'user_id', 'profile_id', 'image', 'is_main')
+            ->whereIn('profile_id', $profileIds)
+            ->where(function ($q) {
+                $q->whereNull('is_main')->orWhere('is_main', '!=', 1);
+            })
+            ->orderBy('profile_id')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('profile_id');
+
+        foreach ($profiles as $profile) {
+            $thumbs = $imagesByProfile->get($profile->id, collect())->take(3)->values();
+            // Both relationship names are referenced in the blade — set both to the same collection.
+            $profile->setRelation('multipleimgs', $thumbs);
+            $profile->setRelation('multipleimgss', $thumbs);
+        }
     }
 
 

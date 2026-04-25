@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Two-layer HTML cache:
  *  - Origin layer: caches the rendered body in Redis/file cache (keyed by versioned pageScope).
- *    Observer bumps of CacheVersion::pageScope() orphan all cached entries instantly.
+ *    Observer bumps of CacheVersion::listingScope() orphan cached entries for affected city/gender combinations.
  *  - Edge layer: emits Cache-Control / CDN-Cache-Control / s-maxage / Surrogate-Control so
  *    Cloudflare and any upstream CDN cache the response at the edge. The separate
  *    CDN-Cache-Control lets us use a long edge TTL while keeping a shorter browser TTL.
@@ -26,8 +26,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class CachePageResponse
 {
-    /** Origin cache TTL — safety ceiling. Actual invalidation is observer-driven via pageScope version. */
-    protected const ORIGIN_TTL_SECONDS = 600;
+    /** Origin cache TTL — safety ceiling. Actual invalidation is observer-driven via listingScope version. */
+    protected const ORIGIN_TTL_SECONDS = 1800;
 
     /** Edge TTL for CDN. Can be much longer than origin TTL because CDN gets purged on content change. */
     protected const EDGE_TTL_SECONDS = 3600;
@@ -123,12 +123,49 @@ class CachePageResponse
 
     protected function cacheKey(Request $request): string
     {
+        // Extract city and gender from URL for more granular caching
+        $cityId = $this->extractCityFromUrl($request);
+        $gender = $this->extractGenderFromUrl($request);
+        
+        // Use city+gender specific scope instead of global pageScope
+        $scope = CacheVersion::listingScope($cityId, $gender);
+        
         // fullUrl includes query string, so different filters get different keys.
-        // Version the key off pageScope so any content mutation instantly orphans this entry.
+        // Version the key off listingScope so only relevant pages get invalidated.
         return CacheVersion::versioned(
-            CacheVersion::pageScope(),
-            'html:' . md5($request->fullUrl())
+            $scope,
+            'page:html:' . md5($request->fullUrl())
         );
+    }
+
+    protected function extractCityFromUrl(Request $request): ?int
+    {
+        // Match patterns like /female-escorts-in-dubai or /female-escorts-in-dubai/page/2
+        $path = $request->path();
+        
+        if (preg_match('/^\w+-escorts-in-(\w+)(?:\/page\/\d+)?$/', $path, $matches)) {
+            $citySlug = $matches[1];
+            // Use CacheService for consistent city lookups
+            $city = \App\Services\CacheService::getCityBySlug($citySlug);
+            return $city ? $city->id : null;
+        }
+        
+        return null;
+    }
+
+    protected function extractGenderFromUrl(Request $request): ?int
+    {
+        // Match patterns like /female-escorts-in-dubai
+        $path = $request->path();
+        
+        if (preg_match('/^(\w+)-escorts-in-/', $path, $matches)) {
+            $genderName = $matches[1];
+            // Use CacheService for consistent gender lookups
+            $gender = \App\Services\CacheService::getGenderByName($genderName);
+            return $gender ? $gender->id : null;
+        }
+        
+        return null;
     }
 
     protected function storeResponse(string $cacheKey, Response $response): void

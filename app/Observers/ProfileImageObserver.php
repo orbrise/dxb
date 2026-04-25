@@ -42,8 +42,5 @@ class ProfileImageObserver
                 );
             }
         }
-
-        // Invalidate page cache since images appear on listing pages
-        CacheVersion::bump(CacheVersion::pageScope());
     }
 }
