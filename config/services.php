@@ -43,5 +43,18 @@ return [
         'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
         'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'your_verify_token'),
     ],
- 
+
+    'cloudflare' => [
+        // API token with Zone.Cache Purge permission. Leave empty to disable edge purging.
+        'api_token' => env('CLOUDFLARE_API_TOKEN'),
+        // Zone ID of the production site (Cloudflare dashboard → Overview → API section).
+        'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        // Site base URL (e.g. https://evoory.com) — used to build absolute URLs for purges.
+        'site_url' => env('CLOUDFLARE_SITE_URL', env('APP_URL')),
+        // Queue purges instead of calling the API inline. Recommended in production.
+        'queue' => env('CLOUDFLARE_PURGE_QUEUE', false),
+        // Skip purging in local/testing environments.
+        'enabled' => env('CLOUDFLARE_PURGE_ENABLED', false),
+    ],
+
 ];

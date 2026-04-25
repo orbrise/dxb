@@ -35,11 +35,13 @@ public $reportDescription;
         if(!empty($gender)){
           $this->gender = $gender;
         }
-     
+
         if(!empty($city)){
-            // Use cached city lookup
-            $c = Cache::remember("cache:city:name:" . strtolower($city), 3600, function() use ($city) {
-                return City::where('name', $city)->first();
+            // Cities table is utf8mb4_unicode_ci and has idx_cities_slug / idx_cities_name — prefer slug.
+            $cacheKey = 'cache:city:slug:' . strtolower($city);
+            $c = Cache::remember($cacheKey, 3600, function() use ($city) {
+                return City::where('slug', $city)->first()
+                    ?: City::where('name', $city)->first();
             });
             if ($c) {
                 $this->selectedcity = $city;
@@ -48,19 +50,18 @@ public $reportDescription;
             } else {
                 \Log::warning('City not found in ProfileDetails', ['city' => $city]);
             }
-        } 
+        }
 
         // Use cached profile data
         $up = CacheService::getProfileDetail($id);
         $this->user = $up;
-        
-        // Track profile view
+
+        // Track profile view (ProfileVisit::recordVisit handles IP/24h dedup internally)
         if ($up) {
             $this->trackProfileView($id);
         }
-        
-        // Get ALL images for this profile (cached)
-        $this->images = CacheService::getProfileImages($id);
+
+        // Images are loaded in render() — don't double-load here.
         $this->code = "971";
         $this->dispatch('profile-loaded');
     }
@@ -122,32 +123,21 @@ public $reportDescription;
     public function render()
     {
         $user = $this->user;
-        
-        // Use cached images
-        $images = CacheService::getProfileImages($this->profileid);
-            
-        // Use cached profile data
-        $profile = CacheService::getProfileDetail($this->profileid);
-      
-        if(auth()->check()){
-            // User's own review - not cached as it's user-specific
-            $review = Review::where("user_id", auth()->user()->id)
-                           ->where("profile_id", $this->profileid)
-                           ->first();
-        } else {
-            $review = '';
-        }
-        
-        $rev = !empty($review);
+        $profile = $this->user;
 
-        // Use cached countries
+        $images = CacheService::getProfileImages($this->profileid);
+        $this->images = $images;
+
+        // idx_reviews_user_profile (user_id, profile_id) makes this a 1-row indexed lookup.
+        $rev = auth()->check()
+            ? Review::where('user_id', auth()->id())->where('profile_id', $this->profileid)->exists()
+            : false;
+
         $countries = CacheService::getCountries();
-        
-        // Use cached reviews and questions
         $reviews = CacheService::getProfileReviews($this->profileid);
         $questions = CacheService::getProfileQuestions($this->profileid);
-        
-        return view('livewire.profile-details', compact("user", "images", "rev", "countries",'reviews','questions','profile'));
+
+        return view('livewire.profile-details', compact('user', 'images', 'rev', 'countries', 'reviews', 'questions', 'profile'));
     }
 
     public function postreview()
@@ -238,11 +228,41 @@ public $reportDescription;
     }
 
     public function nextescort() {
-       
-        $next = UsersProfile::where('id', '>', $this->profileid)->first();
+        // Same city/gender and active only — uses idx_profiles_active_city_gender + idx_profiles_auction_lookup.
+        $query = UsersProfile::query()
+            ->select('id', 'name', 'slug')
+            ->where('is_active', 1)
+            ->whereNull('archived_at')
+            ->where('id', '>', $this->profileid);
 
-        
-        return redirect($this->gender."-escorts-in-".$this->cityname."/".$next->id."/".$this->user->name);
+        if ($this->city) {
+            $query->where('city', $this->city);
+        }
+
+        if ($this->user && $this->user->gender) {
+            $query->where('gender', $this->user->gender);
+        }
+
+        $next = $query->orderBy('id')->first();
+
+        if (!$next) {
+            // Wrap around to the first profile in the same city/gender.
+            $wrap = UsersProfile::query()
+                ->select('id', 'name', 'slug')
+                ->where('is_active', 1)
+                ->whereNull('archived_at')
+                ->when($this->city, fn($q) => $q->where('city', $this->city))
+                ->when($this->user && $this->user->gender, fn($q) => $q->where('gender', $this->user->gender))
+                ->orderBy('id')
+                ->first();
+            if (!$wrap) {
+                return redirect()->route('home', ['gender' => $this->gender ?: 'female', 'city' => strtolower($this->cityname ?: 'dubai')]);
+            }
+            $next = $wrap;
+        }
+
+        $slug = $next->slug ?: str_replace(' ', '-', strtolower($next->name));
+        return redirect($this->gender . "-escorts-in-" . strtolower($this->cityname) . "/" . $next->id . "/" . $slug);
     }
 
     public function submitReport()

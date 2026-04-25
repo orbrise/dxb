@@ -2051,10 +2051,10 @@ overflow: hidden;
                   {{-- For ended auctions with winners, show the winner profile --}}
                   <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
                     {{ $auction->winnerProfile->name }}
-                    @if($auction->winnerProfile->reviews && $auction->winnerProfile->reviews->count() > 0)
-                      <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews->count() }} approved reviews">
+                    @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews_count > 0)
+                      <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews_count }} approved reviews">
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        <span>{{ $auction->winnerProfile->reviews->count() }}</span>
+                        <span>{{ $auction->winnerProfile->reviews_count }}</span>
                       </span>
                     @endif
                     @if($auction->winnerProfile->questions && $auction->winnerProfile->questions->count() > 0)
@@ -2068,10 +2068,10 @@ overflow: hidden;
                   {{-- For active auctions, show the current profile or "Available Spot" --}}
                   <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                     {{ $auction->winnerProfile->name ?? 'Available Spot' }}
-                    @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews && $auction->winnerProfile->reviews->count() > 0)
-                      <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews->count() }} approved reviews">
+                    @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews_count > 0)
+                      <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews_count }} approved reviews">
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        <span>{{ $auction->winnerProfile->reviews->count() }}</span>
+                        <span>{{ $auction->winnerProfile->reviews_count }}</span>
                       </span>
                     @endif
                     @if(isset($auction->winnerProfile) && $auction->winnerProfile->questions && $auction->winnerProfile->questions->count() > 0)
@@ -2216,10 +2216,10 @@ overflow: hidden;
                       {{-- For ended auctions with winners, link to the winner profile --}}
                       <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
                         {{ $auction->winnerProfile->name }}
-                        @if($auction->winnerProfile->reviews && $auction->winnerProfile->reviews->count() > 0)
-                          <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews->count() }} approved reviews">
+                        @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews_count > 0)
+                          <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews_count }} approved reviews">
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                            <span>{{ $auction->winnerProfile->reviews->count() }}</span>
+                            <span>{{ $auction->winnerProfile->reviews_count }}</span>
                           </span>
                         @endif
                         @if($auction->winnerProfile->questions && $auction->winnerProfile->questions->count() > 0)
@@ -2233,10 +2233,10 @@ overflow: hidden;
                       {{-- For active auctions, show current profile or "Available Spot" --}}
                       <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                         {{ $auction->winnerProfile->name ?? 'Available Spot' }}
-                        @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews && $auction->winnerProfile->reviews->count() > 0)
-                          <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews->count() }} approved reviews">
+                        @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews_count > 0)
+                          <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews_count }} approved reviews">
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                            <span>{{ $auction->winnerProfile->reviews->count() }}</span>
+                            <span>{{ $auction->winnerProfile->reviews_count }}</span>
                           </span>
                         @endif
                         @if(isset($auction->winnerProfile) && $auction->winnerProfile->questions && $auction->winnerProfile->questions->count() > 0)
@@ -2459,10 +2459,10 @@ overflow: hidden;
             <div class="listing-info">
               <h2>
                 <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}" title="Lea, Ukrainian escort in Dubai (3)">{{$profile->name}} 
-                  @if($profile->reviews->count() > 0)
-                  <span class="badge" data-placement="top" data-toggle="tooltip" title="{{$profile->reviews->count()}} Reviews">
+                  @if($profile->reviews_count > 0)
+                  <span class="badge" data-placement="top" data-toggle="tooltip" title="{{$profile->reviews_count}} Reviews">
                   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    <span>{{ $profile->reviews->count() }}</span>
+                    <span>{{ $profile->reviews_count }}</span>
                   </span>
                   @endif
 

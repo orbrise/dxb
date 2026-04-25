@@ -2,77 +2,123 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
-     * Run the migrations.
-     * These indexes dramatically improve homepage and profile listing performance
+     * Comprehensive performance indexes for listing/detail queries.
+     * Idempotent: safely skips any index that already exists.
      */
     public function up(): void
     {
-        Schema::table('users_profiles', function (Blueprint $table) {
-            // Composite index for main homepage query (most important!)
-            // Covers: WHERE is_active = 1 AND archived_at IS NULL AND city = X AND gender = Y
-            $table->index(['is_active', 'archived_at', 'city', 'gender'], 'idx_profiles_active_city_gender');
-            
-            // Index for package-based filtering (VIP, Featured, etc.)
-            $table->index(['package_id', 'is_active'], 'idx_profiles_package_active');
-            
-            // Index for auction winner lookups
-            $table->index(['id', 'city', 'gender', 'is_active'], 'idx_profiles_auction_lookup');
-            
-            // Index for profile slug lookups (detail page)
-            $table->index('slug', 'idx_profiles_slug');
-            
-            // Index for user's profiles
-            $table->index(['user_id', 'is_active'], 'idx_profiles_user_active');
-        });
+        $this->addIndex('users_profiles', ['is_active', 'archived_at', 'city', 'gender'], 'idx_profiles_active_city_gender');
+        $this->addIndex('users_profiles', ['package_id', 'is_active'], 'idx_profiles_package_active');
+        $this->addIndex('users_profiles', ['id', 'city', 'gender', 'is_active'], 'idx_profiles_auction_lookup');
+        $this->addIndex('users_profiles', ['slug'], 'idx_profiles_slug');
+        $this->addIndex('users_profiles', ['user_id', 'is_active'], 'idx_profiles_user_active');
+        $this->addIndex('users_profiles', ['is_verified'], 'idx_profiles_is_verified');
+        $this->addIndex('users_profiles', ['age'], 'idx_profiles_age');
+        $this->addIndex('users_profiles', ['height'], 'idx_profiles_height');
+        $this->addIndex('users_profiles', ['incallprice'], 'idx_profiles_incallprice');
+        $this->addIndex('users_profiles', ['ethnicity'], 'idx_profiles_ethnicity');
+        $this->addIndex('users_profiles', ['nationality'], 'idx_profiles_nationality');
+        $this->addIndex('users_profiles', ['created_at'], 'idx_profiles_created_at');
 
-        // Add indexes to profile_images for eager loading
-        Schema::table('profile_images', function (Blueprint $table) {
-            $table->index(['profile_id', 'id'], 'idx_profile_images_profile');
-            $table->index('user_id', 'idx_profile_images_user');
-        });
+        $this->addIndex('profile_images', ['profile_id', 'id'], 'idx_profile_images_profile');
+        $this->addIndex('profile_images', ['user_id'], 'idx_profile_images_user');
 
-        // Add indexes to reviews
-        Schema::table('reviews', function (Blueprint $table) {
-            $table->index(['profile_id', 'status', 'created_at'], 'idx_reviews_profile_status');
-            $table->index(['status', 'created_at'], 'idx_reviews_recent');
-        });
+        if (Schema::hasTable('reviews')) {
+            $this->addIndex('reviews', ['profile_id', 'status', 'created_at'], 'idx_reviews_profile_status');
+            $this->addIndex('reviews', ['status', 'created_at'], 'idx_reviews_recent');
+            if (Schema::hasColumn('reviews', 'user_id')) {
+                $this->addIndex('reviews', ['user_id', 'profile_id'], 'idx_reviews_user_profile');
+            }
+        }
 
-        // Add indexes to auctions
-        Schema::table('auctions', function (Blueprint $table) {
-            $table->index(['status', 'city', 'end_date'], 'idx_auctions_active_city');
-        });
+        if (Schema::hasTable('auctions')) {
+            $this->addIndex('auctions', ['status', 'city_id', 'gender', 'end_date'], 'idx_auctions_active_city');
+        }
+
+        if (Schema::hasTable('user_languages')) {
+            $this->addIndex('user_languages', ['language_id', 'user_id'], 'idx_user_languages_lang');
+            if (Schema::hasColumn('user_languages', 'profile_id')) {
+                $this->addIndex('user_languages', ['profile_id', 'language_id'], 'idx_user_languages_profile');
+            }
+        }
+
+        if (Schema::hasTable('user_services')) {
+            $this->addIndex('user_services', ['service_id', 'user_id'], 'idx_user_services_service');
+            if (Schema::hasColumn('user_services', 'profile_id')) {
+                $this->addIndex('user_services', ['profile_id', 'service_id'], 'idx_user_services_profile');
+            }
+        }
+
+        if (Schema::hasColumn('users', 'type')) {
+            $this->addIndex('users', ['type'], 'idx_users_type');
+        }
+
+        if (Schema::hasTable('cities')) {
+            if (Schema::hasColumn('cities', 'slug')) {
+                $this->addIndex('cities', ['slug'], 'idx_cities_slug');
+            }
+            if (Schema::hasColumn('cities', 'name')) {
+                $this->addIndex('cities', ['name'], 'idx_cities_name');
+            }
+            if (Schema::hasColumn('cities', 'country')) {
+                $this->addIndex('cities', ['country'], 'idx_cities_country');
+            }
+        }
+
+        if (Schema::hasTable('questions')) {
+            $this->addIndex('questions', ['profile_id', 'status'], 'idx_questions_profile_status');
+        }
+
+        if (Schema::hasTable('profile_visits')) {
+            $this->addIndex('profile_visits', ['profile_id', 'ip_address', 'visited_at'], 'idx_profile_visits_lookup');
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('users_profiles', function (Blueprint $table) {
-            $table->dropIndex('idx_profiles_active_city_gender');
-            $table->dropIndex('idx_profiles_package_active');
-            $table->dropIndex('idx_profiles_auction_lookup');
-            $table->dropIndex('idx_profiles_slug');
-            $table->dropIndex('idx_profiles_user_active');
-        });
+        // No-op: indexes are safe to keep; dropping them could regress performance.
+    }
 
-        Schema::table('profile_images', function (Blueprint $table) {
-            $table->dropIndex('idx_profile_images_profile');
-            $table->dropIndex('idx_profile_images_user');
-        });
+    protected function addIndex(string $table, array $columns, string $name): void
+    {
+        if (!Schema::hasTable($table)) {
+            return;
+        }
 
-        Schema::table('reviews', function (Blueprint $table) {
-            $table->dropIndex('idx_reviews_profile_status');
-            $table->dropIndex('idx_reviews_recent');
-        });
+        if ($this->indexExists($table, $name)) {
+            return;
+        }
 
-        Schema::table('auctions', function (Blueprint $table) {
-            $table->dropIndex('idx_auctions_active_city');
-        });
+        foreach ($columns as $col) {
+            if (!Schema::hasColumn($table, $col)) {
+                return;
+            }
+        }
+
+        try {
+            Schema::table($table, function (Blueprint $t) use ($columns, $name) {
+                $t->index($columns, $name);
+            });
+        } catch (\Throwable $e) {
+            // Swallow — index may have been created concurrently or there is a pre-existing incompatible one.
+        }
+    }
+
+    protected function indexExists(string $table, string $name): bool
+    {
+        $connection = DB::connection();
+        $database = $connection->getDatabaseName();
+        $result = $connection->select(
+            'SELECT COUNT(1) AS cnt FROM information_schema.statistics WHERE table_schema = ? AND table_name = ? AND index_name = ?',
+            [$database, $table, $name]
+        );
+
+        return !empty($result) && (int) $result[0]->cnt > 0;
     }
 };

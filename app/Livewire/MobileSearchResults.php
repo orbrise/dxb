@@ -9,6 +9,7 @@ use App\Models\Gender;
 use App\Models\Review;
 use App\Models\Auction;
 use App\Models\City;
+use App\Services\CacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -245,7 +246,7 @@ class MobileSearchResults extends Component
             ->whereNull('archived_at')
             ->when($this->city, fn($q) => $q->where('city', (int)$this->city))
             ->when($this->gender, function($q) {
-                $genderModel = Gender::whereRaw('LOWER(name) = ?', [strtolower($this->gender)])->first();
+                $genderModel = CacheService::getGenderByName($this->gender);
                 \Log::info('Gender lookup', ['gender_input' => $this->gender, 'gender_id' => $genderModel?->id]);
                 return $q->where('gender', $genderModel ? $genderModel->id : null);
             })

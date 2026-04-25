@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\{UsersProfile, Review, Question, City, Gender, Service, Currency, Bust, Ethnicity, HairColor, Language, Country};
+use App\Services\CacheService;
 use Carbon\Carbon;
 
 class NewsPage extends Component
@@ -125,7 +126,7 @@ class NewsPage extends Component
     
     public function getNewEscorts()
     {
-        $genderModel = Gender::whereRaw('LOWER(name) = ?', [strtolower($this->gender)])->first();
+        $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
         
         return UsersProfile::where('city', $this->city)
@@ -204,7 +205,7 @@ class NewsPage extends Component
     
     public function getNewReviews()
     {
-        $genderModel = Gender::whereRaw('LOWER(name) = ?', [strtolower($this->gender)])->first();
+        $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
         
         return Review::whereHas('profile', function($query) use ($genderId) {
@@ -234,7 +235,7 @@ class NewsPage extends Component
     
     public function getNewQuestions()
     {
-        $genderModel = Gender::whereRaw('LOWER(name) = ?', [strtolower($this->gender)])->first();
+        $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
         
         return Question::whereHas('profile', function($query) use ($genderId) {
@@ -266,7 +267,7 @@ class NewsPage extends Component
     
     public function getAllNews()
     {
-        $genderModel = Gender::whereRaw('LOWER(name) = ?', [strtolower($this->gender)])->first();
+        $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
         
         // Get escorts with item_type attribute

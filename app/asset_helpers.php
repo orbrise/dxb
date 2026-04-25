@@ -109,30 +109,26 @@ if (!function_exists('smart_asset')) {
 if (!function_exists('webp_asset')) {
     /**
      * Get WebP version of image if available, otherwise return original
-     * Usage: webp_asset('userimages/1/2/image.jpg') 
+     * Usage: webp_asset('userimages/1/2/image.jpg')
      * Returns: URL to image.webp from assets CDN
      */
     function webp_asset($path, $secure = null) {
-        // Get file extension
-        $pathInfo = pathinfo($path);
-        $extension = strtolower($pathInfo['extension'] ?? '');
-        
-        // Only process image files (jpg, jpeg, png)
-        $imageExtensions = ['jpg', 'jpeg', 'png'];
-        
-        // For user images, always serve WebP from assets CDN
-        if (strpos($path, 'userimages/') === 0) {
-            // Build WebP path
-            if (in_array($extension, $imageExtensions)) {
-                $webpPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.webp';
-            } else {
-                $webpPath = $path;
-            }
-            // Always use assets CDN for user images
-            return config('filesystems.disks.assets_external.url', 'https://assets.evoory.com') . '/' . $webpPath;
+        static $assetsBase = null;
+        if ($assetsBase === null) {
+            $assetsBase = rtrim(config('filesystems.disks.assets_external.url', 'https://assets.evoory.com'), '/');
         }
-        
-        // For other images, use external_asset
+
+        if (strncmp($path, 'userimages/', 11) === 0) {
+            $dot = strrpos($path, '.');
+            if ($dot !== false) {
+                $ext = strtolower(substr($path, $dot + 1));
+                if ($ext === 'jpg' || $ext === 'jpeg' || $ext === 'png') {
+                    return $assetsBase . '/' . substr($path, 0, $dot) . '.webp';
+                }
+            }
+            return $assetsBase . '/' . $path;
+        }
+
         return external_asset($path, $secure);
     }
 }

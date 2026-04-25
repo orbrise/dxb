@@ -450,7 +450,14 @@ class SeoService
      */
     public function getCurrentPageSeo()
     {
+        // Request-scoped memoization: the SeoComposer runs for every view compose,
+        // which on a listing page is ~10 times per request. The URL doesn't change
+        // mid-request, so cache once and reuse.
+        static $cache = [];
         $currentUrl = request()->getPathInfo();
-        return $this->getSeoFromUrl($currentUrl);
+        if (!array_key_exists($currentUrl, $cache)) {
+            $cache[$currentUrl] = $this->getSeoFromUrl($currentUrl);
+        }
+        return $cache[$currentUrl];
     }
 }

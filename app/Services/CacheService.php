@@ -4,16 +4,17 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use App\Models\{
-    UsersProfile, City, Service, Currency, Ethnicity, 
+    UsersProfile, City, Service, Currency, Ethnicity,
     Bust, HairColor, Language, Country, Review, Gender, Package
 };
+use App\Services\CacheVersion;
 
 class CacheService
 {
     // Cache TTL constants (in seconds)
     const TTL_STATIC = 86400;      // 24 hours - for rarely changing data
     const TTL_LOOKUP = 3600;       // 1 hour - for lookup tables
-    const TTL_PROFILES = 300;      // 5 minutes - for profile listings
+    const TTL_PROFILES = 900;      // 15 minutes - for profile listings
     const TTL_PROFILE_DETAIL = 600; // 10 minutes - for single profile
     const TTL_REVIEWS = 300;       // 5 minutes - for reviews
 
@@ -109,9 +110,30 @@ class CacheService
 
     public static function getGenderByName($name)
     {
-        return Cache::remember("cache:gender:{$name}", self::TTL_STATIC, function() use ($name) {
-            return Gender::whereRaw('LOWER(name) = ?', [strtolower($name)])->first();
+        // genders is a tiny table; cached for TTL_STATIC. Plain equality works because
+        // the column collation is *_ci (case-insensitive).
+        $key = 'cache:gender:' . strtolower((string) $name);
+        return Cache::remember($key, self::TTL_STATIC, function() use ($name) {
+            return Gender::where('name', $name)->first();
         });
+    }
+
+    /** Cached gender-by-id lookup — used when building URLs from profile.gender (int FK). */
+    public static function getGenderById($id)
+    {
+        if (!$id) {
+            return null;
+        }
+        return Cache::remember("cache:gender:id:{$id}", self::TTL_STATIC, fn() => Gender::find($id));
+    }
+
+    /** Cached city-by-id lookup — used when building URLs from profile.city (int FK). */
+    public static function getCityById($id)
+    {
+        if (!$id) {
+            return null;
+        }
+        return Cache::remember("cache:city:id:{$id}", self::TTL_LOOKUP, fn() => City::find($id));
     }
 
     /**
@@ -165,11 +187,13 @@ class CacheService
     }
 
     /**
-     * Get profile with all related data (for profile detail page)
+     * Get profile with all related data (for profile detail page).
+     * Versioned: invalidates automatically when the profile, its images, or its reviews change.
      */
     public static function getProfileDetail($profileId)
     {
-        return Cache::remember("cache:profile:detail:{$profileId}", self::TTL_PROFILE_DETAIL, function() use ($profileId) {
+        $scope = CacheVersion::profileScope($profileId);
+        return CacheVersion::remember($scope, 'detail', self::TTL_PROFILE_DETAIL, function() use ($profileId) {
             return UsersProfile::with([
                 'user:id,name,email,type',
                 'singleimg',
@@ -185,29 +209,25 @@ class CacheService
                 'ethi:id,name',
                 'gnat:id,nicename',
                 'ghair:id,name',
-                'ori:id,name'
+                'ori:id,name',
             ])->find($profileId);
         });
     }
 
-    /**
-     * Get profile images
-     */
     public static function getProfileImages($profileId)
     {
-        return Cache::remember("cache:profile:images:{$profileId}", self::TTL_PROFILE_DETAIL, function() use ($profileId) {
+        $scope = CacheVersion::profileScope($profileId);
+        return CacheVersion::remember($scope, 'images', self::TTL_PROFILE_DETAIL, function() use ($profileId) {
             return \App\Models\ProfileImage::where('profile_id', $profileId)
                 ->orderBy('id', 'asc')
                 ->get();
         });
     }
 
-    /**
-     * Get profile reviews
-     */
     public static function getProfileReviews($profileId)
     {
-        return Cache::remember("cache:profile:reviews:{$profileId}", self::TTL_REVIEWS, function() use ($profileId) {
+        $scope = CacheVersion::profileScope($profileId);
+        return CacheVersion::remember($scope, 'reviews', self::TTL_REVIEWS, function() use ($profileId) {
             return Review::where('profile_id', $profileId)
                 ->where('status', 'approved')
                 ->with('getuser:id,name')
@@ -216,12 +236,10 @@ class CacheService
         });
     }
 
-    /**
-     * Get profile questions
-     */
     public static function getProfileQuestions($profileId)
     {
-        return Cache::remember("cache:profile:questions:{$profileId}", self::TTL_REVIEWS, function() use ($profileId) {
+        $scope = CacheVersion::profileScope($profileId);
+        return CacheVersion::remember($scope, 'questions', self::TTL_REVIEWS, function() use ($profileId) {
             return \App\Models\Question::where('profile_id', $profileId)
                 ->where('status', 1)
                 ->latest()
@@ -234,54 +252,34 @@ class CacheService
     // =====================
 
     /**
-     * Clear all profile-related caches for a specific profile
+     * Clear all profile-related caches for a specific profile.
+     * With version-based keys the old entries simply become unreachable
+     * (they expire naturally). Observers should call CacheVersion::bump()
+     * directly; this method exists for ad-hoc admin flushes.
      */
     public static function clearProfileCache($profileId)
     {
-        Cache::forget("cache:profile:detail:{$profileId}");
-        Cache::forget("cache:profile:images:{$profileId}");
-        Cache::forget("cache:profile:reviews:{$profileId}");
-        Cache::forget("cache:profile:questions:{$profileId}");
-    } 
+        CacheVersion::bump(CacheVersion::profileScope($profileId));
+    }
 
     /**
-     * Clear homepage listing caches for a city/gender combination
-     * Note: Since we use MD5-hashed keys for profile listings, we use pattern matching
+     * Invalidate homepage listing for a city/gender scope plus some related
+     * non-versioned caches (recent reviews, per-request auction cache).
      */
     public static function clearHomepageCache($cityId = null, $gender = null)
     {
-        // Clear general caches
         Cache::forget('cache:recent_reviews:10');
         Cache::forget('cache:recent_reviews:30');
-        
-        // Clear auction caches for this city/gender
+
         if ($cityId && $gender) {
-            Cache::forget("auctions:{$cityId}:{$gender}:1");  // auth user
-            Cache::forget("auctions:{$cityId}:{$gender}:0");  // guest user
+            Cache::forget("auctions:{$cityId}:{$gender}:auth");
+            Cache::forget("auctions:{$cityId}:{$gender}:guest");
+            // Legacy numeric auth key names kept for backward compatibility:
+            Cache::forget("auctions:{$cityId}:{$gender}:1");
+            Cache::forget("auctions:{$cityId}:{$gender}:0");
         }
-        
-        // For Redis, we can use pattern-based deletion
-        // For file cache, the TTL (2 minutes) will handle it
-        $driver = config('cache.default');
-        if ($driver === 'redis') {
-            try {
-                $redis = Cache::getRedis();
-                $prefix = config('cache.prefix', 'laravel_cache');
-                
-                // Delete all profile listing caches
-                $keys = $redis->keys("{$prefix}:profiles:list:*");
-                if (!empty($keys)) {
-                    foreach ($keys as $key) {
-                        // Remove the prefix for Cache::forget
-                        $cacheKey = str_replace("{$prefix}:", '', $key);
-                        Cache::forget($cacheKey);
-                    }
-                }
-            } catch (\Exception $e) {
-                // Silently fail - the cache will expire naturally
-                \Log::warning("Failed to clear Redis cache keys: " . $e->getMessage());
-            }
-        }
+
+        CacheVersion::bump(CacheVersion::listingScope($cityId, $gender));
     }
 
     /**

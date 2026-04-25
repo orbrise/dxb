@@ -10,6 +10,7 @@ use App\Models\{Listing, Service, UserService, Gender, Currency, Ethnicity,
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\CacheService;
+use App\Services\CacheVersion;
 use Illuminate\Support\Facades\Cache;
  
 #[Layout('components.layouts.app-evoory')]
@@ -124,7 +125,7 @@ class HomePage extends Component
             }
         }
     }
-    $this->loadAuctions();
+    // loadAuctions() runs in render() — calling it here would double-run it on initial load.
     $this->loading = false;
 
     if (session('search_performed')) {
@@ -223,69 +224,41 @@ public function submitMobileSearch()
 
     protected function loadAuctions()
     {
-        // Cache key based on city, gender, and auth status
         $isLoggedIn = auth()->check();
-        $cacheKey = "auctions:{$this->city}:{$this->gender}:" . ($isLoggedIn ? 'auth' : 'guest');
-        
-        // Cache auctions for 60 seconds
-        $this->auctions = Cache::remember($cacheKey, 60, function() use ($isLoggedIn) {
-            $genderModel = CacheService::getGenderByName($this->gender);
-            $genderId = $genderModel ? $genderModel->id : null;
-            
-            $auctionsCollection = collect();
-            
-            if ($isLoggedIn) {
-                // Logged in users can see active auctions (to bid)
-                $auctionsCollection = Auction::select('id', 'city_id', 'gender', 'status', 'spot_number', 'winner_profile_id', 'end_date', 'current_price')
-                    ->where('city_id', $this->city)
-                    ->where('gender', $this->gender)
-                    ->where('status', 'active')
-                    ->orderBy('spot_number')
-                    ->with([
-                        'winnerProfile:id,name,user_id,city,gender,about,package_id,slug',
-                        'winnerProfile.singleimg:id,user_id,profile_id,image',
-                        'winnerProfile.coverimg:id,user_id,profile_id,image',
-                        'winnerProfile.photoverify:id,profile_id,status',
-                        'city:id,name'
-                    ])
-                    ->take(6)
-                    ->get();
-            } else {
-                // Guests don't see auctions (only active ones would show, but they can't bid)
-                $auctionsCollection = collect();
+        $scope = CacheVersion::auctionScope($this->city, $this->gender);
+        $subkey = $isLoggedIn ? 'auth' : 'guest';
+
+        // Version-based cache — invalidated by AuctionObserver / AuctionBidObserver.
+        // 5-min ceiling TTL keeps memory tidy; timeLeft is recomputed after the cache read.
+        $this->auctions = CacheVersion::remember($scope, $subkey, 300, function () use ($isLoggedIn) {
+            if (!$isLoggedIn) {
+                return collect();
             }
-            
-            return $auctionsCollection->take(6);
+
+            return Auction::select('id', 'city_id', 'gender', 'status', 'spot_number', 'winner_profile_id', 'end_date', 'current_price')
+                ->where('city_id', $this->city)
+                ->where('gender', $this->gender)
+                ->where('status', 'active')
+                ->orderBy('spot_number')
+                ->with([
+                    'winnerProfile' => fn($q) => $q->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug')
+                        ->withCount('reviews')
+                        ->with([
+                            'singleimg:id,user_id,profile_id,image',
+                            'coverimg:id,user_id,profile_id,image',
+                            'photoverify:id,profile_id,status',
+                            'multipleimgs' => fn($q) => $q->select('id', 'user_id', 'profile_id', 'image')->limit(3),
+                        ]),
+                    'winnerProfile.city:id,name',
+                ])
+                ->take(6)
+                ->get();
         });
-        
-        // Get gender ID for featured profile queries
-        $genderModel = CacheService::getGenderByName($this->gender);
-        $genderId = $genderModel ? $genderModel->id : null;
-        
-        // Calculate time-related fields (not cached as they change)
+
+        // Time labels are time-sensitive — recompute on every request (cheap, no DB).
         foreach ($this->auctions as $auction) {
             $auction->timeLeft = Carbon::now()->diffForHumans($auction->end_date, ['parts' => 1, 'short' => true]);
             $auction->daysLeft = Carbon::now()->diffInDays($auction->end_date);
-            
-            // If no winner profile, get a featured profile for display (only for active auctions)
-            if (!$auction->winnerProfile && $auction->status == 'active') {
-                // Get VIP/Premium package IDs from cache
-                $packageIds = CacheService::getPackageIdsByType();
-                $premiumPackageIds = $packageIds['vip'];
-                    
-                $auction->featuredProfile = UsersProfile::select('id', 'name', 'user_id', 'city', 'gender', 'package_id')
-                    ->where('gender', $genderId)
-                    ->where('city', $this->city)
-                    ->where('is_active', 1)
-                    ->whereNull('archived_at')
-                    ->when(!empty($premiumPackageIds), fn($q) => $q->whereIn('package_id', $premiumPackageIds))
-                    ->with([
-                        'singleimg:id,user_id,profile_id,image',
-                        'multipleimgs:id,user_id,profile_id,image'
-                    ])
-                    ->inRandomOrder()
-                    ->first();
-            }
         }
     }
 
@@ -450,8 +423,8 @@ public function checkIfFavorited($profileId)
 
     public function updateCityByName($cityName)
     {
-        // Find city by name (case insensitive)
-        $cityModel = \App\Models\City::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($cityName) . '%'])->first();
+        // Find city by name (collation is *_ci so plain LIKE matches case-insensitively and uses idx_cities_name)
+        $cityModel = \App\Models\City::where('name', 'like', '%' . $cityName . '%')->first();
         
         if ($cityModel) {
             // Update component properties
@@ -600,62 +573,75 @@ public function checkIfFavorited($profileId)
     }
 
     protected function getProfiles()
-{
-    $auctionProfileIds = $this->auctions
-        ->pluck('winner_profile_id')
-        ->filter()
-        ->toArray();
+    {
+        $auctionProfileIds = $this->auctions
+            ->pluck('winner_profile_id')
+            ->filter()
+            ->toArray();
 
-    // Get the dynamic sort direction
-    $sortDirection = $this->getSortDirection();
-    
-    // Get package IDs from cache
-    $packageIds = CacheService::getPackageIdsByType();
-    $vipPackageIds = $packageIds['vip'];
-    $featuredPackageIds = $packageIds['featured'];
-    $basicPackageIds = $packageIds['basic'];
-    
-    // Build cache key based on filters (excluding pagination and sort which we handle separately)
-    $filterHash = md5(json_encode([
-        'city' => $this->city,
-        'gender' => $this->gender,
-        'rate' => $this->rate,
-        'buts' => $this->buts,
-        'ori' => $this->ori,
-        'incall' => $this->incall,
-        'outcall' => $this->outcall,
-        'nonsmoker' => $this->nonsmoker,
-        'withreviews' => $this->withreviews,
-        'ethnicity' => $this->ethnicity,
-        'nationality' => $this->nationality,
-        'agefrom' => $this->agefrom,
-        'ageto' => $this->ageto,
-        'heightfrom' => $this->heightfrom,
-        'heightto' => $this->heightto,
-        'name' => $this->name,
-        'language' => $this->language,
-        'isshaved' => $this->isshaved,
-        'haircolor' => $this->haircolor,
-        'verified' => $this->verified,
-        'profiletype' => $this->profiletype,
-        'sservices' => $this->sservices,
-        'auction_excluded' => $auctionProfileIds,
-    ]));
-    
-    $cacheKey = "profiles:list:{$filterHash}";
-    
-    // Cache the query results for 2 minutes (120 seconds)
-    $allProfiles = Cache::remember($cacheKey, 120, function() use ($auctionProfileIds, $vipPackageIds, $featuredPackageIds, $basicPackageIds) {
-        // Get all profiles with filters applied
-        $query = UsersProfile::query()
+        $sortDirection = $this->getSortDirection();
+        $packageIds = CacheService::getPackageIdsByType();
+        $vipPackageIds = array_map('intval', $packageIds['vip'] ?? []);
+        $featuredPackageIds = array_map('intval', $packageIds['featured'] ?? []);
+        $basicPackageIds = array_map('intval', $packageIds['basic'] ?? []);
+
+        $vipPackageList = count($vipPackageIds) ? implode(',', $vipPackageIds) : '0';
+        $featuredPackageList = count($featuredPackageIds) ? implode(',', $featuredPackageIds) : '0';
+        $basicPackageList = count($basicPackageIds) ? implode(',', $basicPackageIds) : '0';
+
+        $packageOrderSql = "CASE"
+            . " WHEN package_id IN ({$vipPackageList}) THEN 1"
+            . " WHEN package_id IN ({$featuredPackageList}) THEN 2"
+            . " WHEN package_id IN ({$basicPackageList}) THEN 3"
+            . " ELSE 4"
+            . " END";
+
+        $genderId = null;
+        if ($this->gender) {
+            $genderModel = CacheService::getGenderByName($this->gender);
+            $genderId = $genderModel ? $genderModel->id : null;
+        }
+
+        // Versioned cache key. Scope is city+gender so profile observers bump just the
+        // affected listing; sub-key fingerprints all filters + pagination + auction winners.
+        $page = $this->getPage();
+        $filterFingerprint = md5(json_encode([
+            'rate' => $this->rate,
+            'buts' => $this->buts,
+            'ori' => $this->ori,
+            'incall' => $this->incall,
+            'outcall' => $this->outcall,
+            'nonsmoker' => $this->nonsmoker,
+            'withreviews' => $this->withreviews,
+            'ethnicity' => $this->ethnicity,
+            'nationality' => $this->nationality,
+            'agefrom' => $this->agefrom,
+            'ageto' => $this->ageto,
+            'heightfrom' => $this->heightfrom,
+            'heightto' => $this->heightto,
+            'name' => $this->name,
+            'language' => $this->language,
+            'isshaved' => $this->isshaved,
+            'haircolor' => $this->haircolor,
+            'verified' => $this->verified,
+            'profiletype' => $this->profiletype,
+            'sservices' => is_array($this->sservices) ? array_values(array_filter($this->sservices)) : [],
+            'sort' => $sortDirection,
+            'auctionProfileIds' => $auctionProfileIds,
+        ]));
+
+        $scope = CacheVersion::listingScope($this->city, $genderId);
+        $subkey = "p{$page}:{$filterFingerprint}";
+
+        return CacheVersion::remember($scope, $subkey, CacheService::TTL_PROFILES, function () use (
+            $genderId, $auctionProfileIds, $packageOrderSql, $sortDirection, $page
+        ) {
+            return UsersProfile::query()
             ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'is_verified', 'created_at')
             ->where('is_active', 1)
             ->whereNull('archived_at')
             ->when($this->city, fn($q) => $q->where('city', $this->city))
-            ->when($this->gender, function($q) {
-                $genderModel = CacheService::getGenderByName($this->gender);
-                return $q->where('gender', $genderModel ? $genderModel->id : null);
-            })
+            ->when($genderId, fn($q) => $q->where('gender', $genderId))
             ->when($this->rate, fn($q) => $q->where('incallprice', '<=', $this->rate))
             ->when($this->buts, fn($q) => $q->where('bust', $this->buts))
             ->when($this->ori, fn($q) => $q->where('orientation', $this->ori))
@@ -683,50 +669,21 @@ public function checkIfFavorited($profileId)
                 return $q->whereHas('services', fn($query) => $query->whereIn('service_id', $this->sservices));
             })
             ->when(!empty($auctionProfileIds), fn($q) => $q->whereNotIn('id', $auctionProfileIds))
-            // Optimized eager loading
             ->with([
                 'singleimg:id,user_id,profile_id,image',
                 'coverimg:id,user_id,profile_id,image',
+                // Blade uses $profile->multipleimgs — eager-load that one directly to avoid N+1.
+                'multipleimgs' => fn($query) => $query->select('id', 'user_id', 'profile_id', 'image')->limit(6),
                 'multipleimgss' => fn($query) => $query->select('id', 'user_id', 'profile_id', 'image')->limit(6),
                 'photoverify:id,profile_id,status',
-                'package:id,name'
+                'package:id,name',
             ])
-            ->get();
-
-        // Separate profiles by package type
-        return [
-            'vip' => $query->filter(fn($p) => in_array($p->package_id, $vipPackageIds))->values(),
-            'featured' => $query->filter(fn($p) => in_array($p->package_id, $featuredPackageIds))->values(),
-            'basic' => $query->filter(fn($p) => in_array($p->package_id, $basicPackageIds))->values(),
-            'free' => $query->filter(fn($p) => $p->package_id === null || (!in_array($p->package_id, $vipPackageIds) && !in_array($p->package_id, $featuredPackageIds) && !in_array($p->package_id, $basicPackageIds)))->values(),
-            'total' => $query->count(),
-        ];
-    });
-
-    // Sort each group with rotation (done outside cache as it changes every 30 min)
-    $vipProfiles = $this->sortProfilesWithDateBracketRotation(collect($allProfiles['vip']), $sortDirection);
-    $featuredProfiles = $this->sortProfilesWithDateBracketRotation(collect($allProfiles['featured']), $sortDirection);
-    $basicProfiles = $this->sortProfilesWithDateBracketRotation(collect($allProfiles['basic']), $sortDirection);
-    $freeProfiles = $this->sortProfilesWithDateBracketRotation(collect($allProfiles['free']), $sortDirection);
-
-    // Merge in order: VIP -> Featured -> Basic -> Free
-    $sortedProfiles = $vipProfiles->concat($featuredProfiles)->concat($basicProfiles)->concat($freeProfiles);
-
-    // Manual pagination using Livewire's page tracking
-    $page = $this->getPage();
-    $perPage = 36;
-    $offset = ($page - 1) * $perPage;
-    
-    $paginatedItems = $sortedProfiles->slice($offset, $perPage)->values();
-    
-    return new \Illuminate\Pagination\LengthAwarePaginator(
-        $paginatedItems,
-        $sortedProfiles->count(),
-        $perPage,
-        $page,
-        ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'pageName' => 'page']
-    );
-}
+            ->withCount('reviews')
+            ->orderByRaw($packageOrderSql)
+            ->orderBy('created_at', $sortDirection)
+            ->paginate(36, ['*'], 'page', $page);
+        });
+    }
 
 
     /**
@@ -781,47 +738,43 @@ public function checkIfFavorited($profileId)
         return $currencyMap[$currentCity->country] ?? $defaultCurrency;
     }
 
-    public function render()
+    protected function resolveCurrentCity()
     {
-        // Load auctions on every render to ensure they're fresh for pagination
-        $this->loadAuctions();
-        
-        // Get current city details - try city ID first as it's most reliable
-        $currentCity = null;
-        
-        // Priority 1: Use city ID if available (most reliable)
         if ($this->city && is_numeric($this->city)) {
-            $currentCity = Cache::remember("cache:city:id:{$this->city}", 3600, function() {
-                return City::find($this->city);
-            });
+            return Cache::remember("cache:city:id:{$this->city}", 3600, fn() => City::find($this->city));
         }
-        
-        // Priority 2: Try selectedcity as slug
-        if (!$currentCity && $this->selectedcity) {
+
+        if ($this->selectedcity) {
             $slug = strtolower(trim($this->selectedcity));
-            $currentCity = CacheService::getCityBySlug($slug);
-            
-            // Also try finding by name if slug doesn't work
-            if (!$currentCity) {
-                $currentCity = Cache::remember("cache:city:name:" . strtolower($this->selectedcity), 3600, function() {
-                    return City::whereRaw('LOWER(name) = ?', [strtolower($this->selectedcity)])->first();
-                });
+            $city = CacheService::getCityBySlug($slug);
+            if ($city) {
+                return $city;
+            }
+            // Fallback: look up by name (table collation is *_ci so this uses idx_cities_name)
+            $city = Cache::remember("cache:city:name:{$slug}", 3600, fn() => City::where('name', $this->selectedcity)->first());
+            if ($city) {
+                return $city;
             }
         }
-        
-        // Priority 3: Try cityname
-        if (!$currentCity && $this->cityname) {
-            $currentCity = Cache::remember("cache:city:name:" . strtolower($this->cityname), 3600, function() {
-                return City::whereRaw('LOWER(name) = ?', [strtolower($this->cityname)])->first();
-            });
+
+        if ($this->cityname) {
+            $nameKey = strtolower($this->cityname);
+            $city = Cache::remember("cache:city:name:{$nameKey}", 3600, fn() => City::where('name', $this->cityname)->first());
+            if ($city) {
+                return $city;
+            }
         }
-        
-        // Default fallback to Dubai
-        if (!$currentCity) {
-            $currentCity = Cache::remember("cache:city:id:229", 3600, function() {
-                return City::find(229);
-            });
-        }
+
+        return Cache::remember('cache:city:id:229', 3600, fn() => City::find(229));
+    }
+
+    public function render()
+    {
+        // Load auctions (internally cached for 60s). Required here so pagination/filter
+        // interactions (which skip mount()) still populate $this->auctions.
+        $this->loadAuctions();
+
+        $currentCity = $this->resolveCurrentCity();
         
         // Get nearby cities (cached)
         $nearbyCities = collect();

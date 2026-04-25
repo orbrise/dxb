@@ -5,8 +5,9 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Http\Request;
-use App\Models\{Listing, Service, UserService, Gender, Currency, Ethnicity, 
+use App\Models\{Listing, Service, UserService, Gender, Currency, Ethnicity,
     Bust, HairColor, Language, UserLanguage, UsersProfile, City, Country, Review, Auction};
+use App\Services\CacheService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -145,7 +146,7 @@ class ServicePage extends Component
 
     protected function loadAuctions()
     {
-        $genderModel = Gender::whereRaw('LOWER(name) = ?', [strtolower($this->gender)])->first();
+        $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
         
         $this->auctions = collect();
@@ -262,7 +263,7 @@ class ServicePage extends Component
             ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'created_at')
             ->when($this->city, fn($q) => $q->where('city', $this->city))
             ->when($this->gender, function($q) {
-                $genderModel = Gender::whereRaw('LOWER(name) = ?', [strtolower($this->gender)])->first();
+                $genderModel = CacheService::getGenderByName($this->gender);
                 return $q->where('gender', $genderModel ? $genderModel->id : null);
             })
             // Always filter by the service from URL
@@ -395,7 +396,7 @@ class ServicePage extends Component
             ->join('users_profiles', 'user_services.profile_id', '=', 'users_profiles.id')
             ->where('users_profiles.city', $this->city)
             ->when($this->gender, function($q) {
-                $genderModel = Gender::whereRaw('LOWER(name) = ?', [strtolower($this->gender)])->first();
+                $genderModel = CacheService::getGenderByName($this->gender);
                 return $q->where('users_profiles.gender', $genderModel ? $genderModel->id : null);
             })
             ->groupBy('services.id', 'services.name', 'services.slug')

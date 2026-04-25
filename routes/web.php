@@ -59,7 +59,7 @@ Route::get('admin', [AuthController::class, 'checkLogin']);
 Route::get('news', function(){
     return view('emails.newseletter');
 });
-Route::get("/", NewHomepage::class)->name("newhome");
+Route::get("/", NewHomepage::class)->name("newhome")->middleware('page.cache');
 
 Route::get('/search-{gender}-escorts', App\Livewire\MobileSearch::class)
     ->where('gender', 'female|male|shemale')
@@ -70,31 +70,40 @@ Route::get('/search-{gender}-escorts', App\Livewire\MobileSearch::class)
 Route::post('/cities/search', 'App\Http\Controllers\Api\CityController@search')->name('cities.search');
 
 Route::get('/countries/{code}/cities', function (string $code) {
-    $country = \App\Models\Country::query()
-        ->whereRaw('LOWER(iso) = ?', [strtolower($code)])
-        ->first();
+    $cacheKey = 'countries:' . strtolower($code) . ':cities';
 
-    if (!$country) {
-        return response()->json([
-            'country' => null,
-            'cities' => [],
-        ], 404);
+    $payload = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($code) {
+        // countries is latin1_swedish_ci and cities is utf8mb4_unicode_ci (both *_ci),
+        // so plain equality matches case-insensitively and uses the column indexes.
+        $country = \App\Models\Country::query()
+            ->where('iso', $code)
+            ->first();
+
+        if (!$country) {
+            return null;
+        }
+
+        $cities = \App\Models\City::query()
+            ->where('country', (string) $country->nicename)
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug']);
+
+        return [
+            'country' => [
+                'id' => $country->id,
+                'iso' => strtoupper((string) $country->iso),
+                'name' => $country->nicename,
+                'count' => $cities->count(),
+            ],
+            'cities' => $cities,
+        ];
+    });
+
+    if ($payload === null) {
+        return response()->json(['country' => null, 'cities' => []], 404);
     }
 
-    $cities = \App\Models\City::query()
-        ->whereRaw('LOWER(country) = ?', [strtolower((string) $country->nicename)])
-        ->orderBy('name')
-        ->get(['id', 'name', 'slug']);
-
-    return response()->json([
-        'country' => [
-            'id' => $country->id,
-            'iso' => strtoupper((string) $country->iso),
-            'name' => $country->nicename,
-            'count' => $cities->count(),
-        ],
-        'cities' => $cities,
-    ]);
+    return response()->json($payload);
 })->name('countries.cities');
 
 // CSRF Token Refresh Route - For automatic session recovery after idle
@@ -115,7 +124,8 @@ Route::get("{gender}-escort-news-in-{city}", NewsPage::class)
     ->where([
         'gender' => 'female|male|shemale',
         'city' => '[a-z0-9\-]+'
-    ]);
+    ])
+    ->middleware('page.cache');
 
 // Specific news type page
 Route::get("{gender}-escort-news-in-{city}/{type}", NewsPage::class)
@@ -124,7 +134,8 @@ Route::get("{gender}-escort-news-in-{city}/{type}", NewsPage::class)
         'gender' => 'female|male|shemale',
         'city' => '[a-z0-9\-]+',
         'type' => 'new-escorts|new-reviews|new-questions'
-    ]);
+    ])
+    ->middleware('page.cache');
 
 // Service page route - must be before the general escorts route
 // Important: Parameters are passed to mount($service, $gender, $city)
@@ -134,7 +145,8 @@ Route::get("{service}-{gender}-escorts-in-{city}", App\Livewire\ServicePage::cla
         'service' => '[a-z0-9\-]+',
         'gender' => 'female|male|shemale',
         'city' => '[a-z0-9\-]+'
-    ]);
+    ])
+    ->middleware('page.cache');
 
 // AMP Routes (for Google AMP Viewer - helps bypass blocked domains)
 Route::prefix('amp')->group(function () {
@@ -147,8 +159,14 @@ Route::prefix('amp')->group(function () {
         ->where('gender', 'female|male|shemale');
 });
 
-Route::get("{gender}-escorts-in-{city}/page/{page}", HomePage::class)->name("home.paginated")->where(['gender' => 'female|male|shemale', 'page' => '[0-9]+']);
-Route::get("{gender}-escorts-in-{city}", HomePage::class)->name("home")->where('gender', 'female|male|shemale');
+Route::get("{gender}-escorts-in-{city}/page/{page}", HomePage::class)
+    ->name("home.paginated")
+    ->where(['gender' => 'female|male|shemale', 'page' => '[0-9]+'])
+    ->middleware('page.cache');
+Route::get("{gender}-escorts-in-{city}", HomePage::class)
+    ->name("home")
+    ->where('gender', 'female|male|shemale')
+    ->middleware('page.cache');
 Route::get("{gender}-escorts-in-{city}/{id}/{username}", ProfileDetails::class)->where('gender', 'female|male|shemale');
 Route::get("sign-in", LoginController::class)->name('sign-in');
 Route::get("register", RegisterController::class)->name('register');
@@ -161,7 +179,7 @@ Route::get('auth/google/callback', [App\Http\Controllers\Auth\GoogleController::
 Route::get('activate-account/{email}/{code}', ActivateAccount::class);
 Route::get('forget-password', ForgetPassword::class);
 Route::get('change-password/{email}/{code}', ChangePassword::class);
-Route::get('/page/{slug}', \App\Livewire\PageDisplay::class);
+Route::get('/page/{slug}', \App\Livewire\PageDisplay::class)->middleware('page.cache');
 Route::get('/about', function () {
     return view('livewire.static.about');
 });
