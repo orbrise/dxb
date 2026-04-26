@@ -1676,7 +1676,7 @@
 
       .listing-li.featured>.thumbs>.other-thumbs>.thumb,
       .listing-li.premium>.thumbs>.other-thumbs>.thumb {
-        margin-bottom: 15px
+        margin-bottom: 0px
       }
 
       .listing-li.featured>.thumbs>.other-thumbs>.thumb:last-child,

@@ -189,20 +189,18 @@ class CacheService
     /**
      * Get profile with all related data (for profile detail page).
      * Versioned: invalidates automatically when the profile, its images, or its reviews change.
+     *
+     * Eager loads are restricted to relationships the blade actually reads (verified via
+     * grep for $user->{rel}). Dropped: user (User model), package, singleimg, coverimg,
+     * multipleimgs, services — none referenced. Saves ~6 queries on cold cache.
      */
     public static function getProfileDetail($profileId)
     {
         $scope = CacheVersion::profileScope($profileId);
         return CacheVersion::remember($scope, 'detail', self::TTL_PROFILE_DETAIL, function() use ($profileId) {
             return UsersProfile::with([
-                'user:id,name,email,type',
-                'singleimg',
-                'coverimg',
-                'multipleimgs',
                 'photoverify:id,profile_id,status',
-                'services',
                 'languages',
-                'package:id,name',
                 'gcity:id,name,country',
                 'ggender:id,name',
                 'gbust:id,name',

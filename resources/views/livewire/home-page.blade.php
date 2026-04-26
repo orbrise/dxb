@@ -4,19 +4,18 @@
  
 @push('css')
 
-<!-- Font Awesome 5 - defer loading -->
-<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></noscript>
+{{-- evoory-homepage.css is render-blocking on purpose: it carries the dark/lime theme
+     for the listing grid. Loading it async produced a Flash of Unstyled Content where
+     the orange (legacy MR) theme from app.css would render first, then get overridden
+     by evoory-homepage.css when it finished downloading.
 
-<!-- Base Evoory Theme & Custom Single File for Homepage Layout - defer loading -->
-<link rel="preload" href="{{ asset('assets/css/app.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+     The layout (app-evoory.blade.php) already loads app.css and Font Awesome — do NOT
+     re-load them here, that was the cause of the orange flash. --}}
+<link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}">
+
+{{-- site-inline is non-critical, keep async --}}
 <link rel="preload" href="{{ asset('assets/css/site-inline.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript>
-    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/css/site-inline.min.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}" />
-</noscript>
+<noscript><link rel="stylesheet" href="{{ asset('assets/css/site-inline.min.css') }}" /></noscript>
 
 <!-- Preload first profile images for faster LCP -->
 @if(isset($profiles) && $profiles->count() > 0)
@@ -1765,6 +1764,65 @@ overflow: hidden;
 </div>
 
 @push('js')
+<script>
+/* Hover-prefetch for profile detail links — primes the browser cache so the actual click
+   loads instantly (page is already downloaded by the time user releases the click).
+   Strategy:
+     - On mouseover/touchstart of a same-origin <a>, wait 65ms (debounce accidental hovers)
+     - If still hovering, inject <link rel="prefetch"> for that URL → browser fetches in background
+     - Each URL is prefetched at most once per page load
+     - Only prefetches GET requests, ignores external/anchor/JS links
+   ~80 lines, no library needed. Inspired by instant.page (MIT). */
+(function() {
+    if (!('IntersectionObserver' in window)) return; // very old browsers — skip
+
+    var prefetched = new Set();
+    var hoverTimer = null;
+    var DELAY_MS = 65;
+    var origin = location.origin;
+
+    function isPrefetchable(a) {
+        if (!a || a.tagName !== 'A' || !a.href) return false;
+        if (prefetched.has(a.href)) return false;
+        if (a.href.indexOf(origin) !== 0) return false;
+        var url = new URL(a.href);
+        if (url.pathname === location.pathname) return false; // same page
+        if (url.hash && url.pathname === location.pathname) return false;
+        if (a.hasAttribute('download')) return false;
+        if (a.target === '_blank') return false;
+        if (a.getAttribute('rel') && a.getAttribute('rel').indexOf('noprefetch') > -1) return false;
+        // Only prefetch profile-detail looking URLs to avoid wasteful global prefetch
+        if (!/-escorts-in-[a-z0-9\-]+\/\d+\//i.test(url.pathname)) return false;
+        return true;
+    }
+
+    function prefetch(href) {
+        if (prefetched.has(href)) return;
+        prefetched.add(href);
+        var l = document.createElement('link');
+        l.rel = 'prefetch';
+        l.href = href;
+        l.as = 'document';
+        document.head.appendChild(l);
+    }
+
+    function onHover(e) {
+        var a = e.target.closest('a');
+        if (!isPrefetchable(a)) return;
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(function() { prefetch(a.href); }, DELAY_MS);
+    }
+
+    function onTouch(e) {
+        var a = e.target.closest('a');
+        if (isPrefetchable(a)) prefetch(a.href);
+    }
+
+    document.addEventListener('mouseover', onHover, { passive: true });
+    document.addEventListener('touchstart', onTouch, { passive: true });
+    document.addEventListener('mouseout', function() { clearTimeout(hoverTimer); }, { passive: true });
+})();
+</script>
 <script>
 (function(){
     // Wait for DOM ready

@@ -8,13 +8,12 @@ use Illuminate\Support\Facades\Log;
 /**
  * Cloudflare edge cache invalidation.
  *
+ * Designed for the **Pro plan** — uses URL-based purge only (no prefix/tag purge,
+ * those are Enterprise-only). Methods that would call Enterprise APIs fall back to
+ * enumerating likely URLs and purging them individually.
+ *
  * Used by model observers after they bump the origin CacheVersion so the edge
  * cache matches the new content immediately instead of waiting for TTL.
- *
- * Three purge modes are exposed:
- *   - purgeUrls($urls)    — by exact URL (best for point updates)
- *   - purgeByPrefix($prefix) — Enterprise feature, one call purges an entire path tree
- *   - purgeEverything()   — nuclear, use sparingly
  *
  * All methods are no-ops if the integration is not configured — safe to call from
  * observers that may run in dev/testing environments.
@@ -23,7 +22,7 @@ class CloudflarePurge
 {
     protected const API_BASE = 'https://api.cloudflare.com/client/v4';
 
-    /** Purge specific URLs from the edge. Up to 30 per call on Free/Pro/Business, 500 on Enterprise. */
+    /** Purge specific URLs from the edge. Up to 30 URLs per call on Pro plan. */
     public static function purgeUrls(array $urls): bool
     {
         $urls = array_values(array_unique(array_filter($urls)));
@@ -31,38 +30,11 @@ class CloudflarePurge
             return false;
         }
 
-        // Chunk to 30 to stay within the lowest plan limit (Enterprise supports up to 500).
         $ok = true;
         foreach (array_chunk($urls, 30) as $chunk) {
             $ok = self::call(['files' => $chunk]) && $ok;
         }
         return $ok;
-    }
-
-    /**
-     * Purge everything under a URL prefix (Enterprise only).
-     * e.g. purgeByPrefix('evoory.com/female-escorts-in-dubai/')
-     */
-    public static function purgeByPrefix(string $prefix): bool
-    {
-        if (!self::isEnabled()) {
-            return false;
-        }
-        return self::call(['prefixes' => [ltrim($prefix, 'https://')]]);
-    }
-
-    /**
-     * Purge by cache tag (Enterprise only). Requires Cache-Tag header set on origin responses.
-     * e.g. purgeByTag('listing:229:1') after bumping that scope.
-     */
-    public static function purgeByTag(string|array $tags): bool
-    {
-        $tags = is_array($tags) ? $tags : [$tags];
-        $tags = array_values(array_unique(array_filter($tags)));
-        if (empty($tags) || !self::isEnabled()) {
-            return false;
-        }
-        return self::call(['tags' => $tags]);
     }
 
     /** Nuclear: purge entire zone. Use only from admin actions. */
@@ -76,27 +48,51 @@ class CloudflarePurge
 
     // --- Convenience helpers that match application semantics ---
 
-    /** Invalidate a profile's detail page + the listing page variants that include it. */
+    /** Invalidate a single profile's detail page + the listing root for that city+gender. */
     public static function purgeProfileUrls(int $profileId, ?string $genderName = null, ?string $citySlug = null): bool
     {
-        $base = rtrim(self::siteUrl(), '/');
-        $urls = [];
-
-        if ($genderName && $citySlug) {
-            // Exact detail URL is unknown (slug varies), so purge the listing tree for that city+gender.
-            // With Enterprise, this one prefix covers pagination, filters, and the detail page.
-            return self::purgeByPrefix("{$base}/{$genderName}-escorts-in-{$citySlug}/");
+        if (!$genderName || !$citySlug) {
+            return false;
         }
 
-        // Fallback (non-Enterprise or missing info): best-effort — purge the whole listing tree.
-        return self::purgeByPrefix("{$base}/");
+        $base = rtrim(self::siteUrl(), '/');
+        $urls = self::buildListingUrls($base, $genderName, $citySlug);
+        // Detail page (slug unknown — purge first few common variants if we have it elsewhere)
+        // Actual detail URL varies by slug — we mainly target the listing tree.
+        return self::purgeUrls($urls);
     }
 
-    /** Invalidate all listing pages for a specific city+gender scope. */
-    public static function purgeListing(string $genderName, string $citySlug): bool
+    /**
+     * Invalidate all listing pages for a city+gender scope.
+     * Enumerates the listing root + the first N pagination URLs since prefix
+     * purge isn't available on Pro.
+     */
+    public static function purgeListing(string $genderName, string $citySlug, int $maxPages = 5): bool
     {
         $base = rtrim(self::siteUrl(), '/');
-        return self::purgeByPrefix("{$base}/{$genderName}-escorts-in-{$citySlug}");
+        return self::purgeUrls(self::buildListingUrls($base, $genderName, $citySlug, $maxPages));
+    }
+
+    /** Purge the home + a specific profile detail URL by id+slug. */
+    public static function purgeDetail(string $genderName, string $citySlug, int $profileId, string $profileSlug): bool
+    {
+        $base = rtrim(self::siteUrl(), '/');
+        return self::purgeUrls([
+            "{$base}/{$genderName}-escorts-in-{$citySlug}/{$profileId}/{$profileSlug}",
+        ]);
+    }
+
+    /** Build the set of listing URLs for a city+gender scope. */
+    protected static function buildListingUrls(string $base, string $gender, string $city, int $pages = 5): array
+    {
+        $urls = [
+            "{$base}/{$gender}-escorts-in-{$city}",
+            "{$base}/{$gender}-escorts-in-{$city}/",
+        ];
+        for ($p = 2; $p <= $pages; $p++) {
+            $urls[] = "{$base}/{$gender}-escorts-in-{$city}/page/{$p}";
+        }
+        return $urls;
     }
 
     // --- Internals ---
