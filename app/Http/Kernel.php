@@ -14,6 +14,10 @@ class Kernel extends HttpKernel
      * @var array<int, class-string|string>
      */
     protected $middleware = [
+        // Must be FIRST so it runs LAST on the response path — after StartSession has
+        // added laravel_session / XSRF-TOKEN cookies. Strips Set-Cookie from responses
+        // marked edge-cacheable so Cloudflare actually caches them instead of bypassing.
+        \App\Http\Middleware\StripCookiesForEdgeCache::class,
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,

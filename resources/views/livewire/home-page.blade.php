@@ -1764,65 +1764,10 @@ overflow: hidden;
 </div>
 
 @push('js')
-<script>
-/* Hover-prefetch for profile detail links — primes the browser cache so the actual click
-   loads instantly (page is already downloaded by the time user releases the click).
-   Strategy:
-     - On mouseover/touchstart of a same-origin <a>, wait 65ms (debounce accidental hovers)
-     - If still hovering, inject <link rel="prefetch"> for that URL → browser fetches in background
-     - Each URL is prefetched at most once per page load
-     - Only prefetches GET requests, ignores external/anchor/JS links
-   ~80 lines, no library needed. Inspired by instant.page (MIT). */
-(function() {
-    if (!('IntersectionObserver' in window)) return; // very old browsers — skip
-
-    var prefetched = new Set();
-    var hoverTimer = null;
-    var DELAY_MS = 65;
-    var origin = location.origin;
-
-    function isPrefetchable(a) {
-        if (!a || a.tagName !== 'A' || !a.href) return false;
-        if (prefetched.has(a.href)) return false;
-        if (a.href.indexOf(origin) !== 0) return false;
-        var url = new URL(a.href);
-        if (url.pathname === location.pathname) return false; // same page
-        if (url.hash && url.pathname === location.pathname) return false;
-        if (a.hasAttribute('download')) return false;
-        if (a.target === '_blank') return false;
-        if (a.getAttribute('rel') && a.getAttribute('rel').indexOf('noprefetch') > -1) return false;
-        // Only prefetch profile-detail looking URLs to avoid wasteful global prefetch
-        if (!/-escorts-in-[a-z0-9\-]+\/\d+\//i.test(url.pathname)) return false;
-        return true;
-    }
-
-    function prefetch(href) {
-        if (prefetched.has(href)) return;
-        prefetched.add(href);
-        var l = document.createElement('link');
-        l.rel = 'prefetch';
-        l.href = href;
-        l.as = 'document';
-        document.head.appendChild(l);
-    }
-
-    function onHover(e) {
-        var a = e.target.closest('a');
-        if (!isPrefetchable(a)) return;
-        clearTimeout(hoverTimer);
-        hoverTimer = setTimeout(function() { prefetch(a.href); }, DELAY_MS);
-    }
-
-    function onTouch(e) {
-        var a = e.target.closest('a');
-        if (isPrefetchable(a)) prefetch(a.href);
-    }
-
-    document.addEventListener('mouseover', onHover, { passive: true });
-    document.addEventListener('touchstart', onTouch, { passive: true });
-    document.addEventListener('mouseout', function() { clearTimeout(hoverTimer); }, { passive: true });
-})();
-</script>
+{{-- Static listing-page bundle: hover-prefetch, dropdown/modal handler, what's-new
+     scroll, country-code map. Cached by Cloudflare independently — keeps inline
+     payload small. Loaded with defer so it doesn't block parsing. --}}
+<script src="{{ asset('assets/js/listing-page.js') }}?v={{ @filemtime(public_path('assets/js/listing-page.js')) ?: time() }}" defer></script>
 <script>
 (function(){
     // Wait for DOM ready
@@ -2797,76 +2742,7 @@ overflow: hidden;
   <script src="{{ smart_asset('chosen/docsupport/init.js')}}" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
   
-  <!-- Custom dropdown & modal handler (replaces Bootstrap JS dependency) -->
-  <script>
-  (function() {
-    // ===== GENDER DROPDOWN =====
-    document.addEventListener('click', function(e) {
-      var btn = e.target.closest('.search-bar--gender');
-      var allMenus = document.querySelectorAll('.dropdown-gender-menu');
-      
-      if (btn) {
-        e.preventDefault();
-        e.stopPropagation();
-        var menu = btn.parentElement.querySelector('.dropdown-gender-menu');
-        if (menu) {
-          var isVisible = menu.style.display === 'block';
-          // Close all first
-          allMenus.forEach(function(m) { m.style.display = 'none'; });
-          if (!isVisible) {
-            menu.style.display = 'block';
-          }
-        }
-        return;
-      }
-      
-      // Click outside — close all gender menus
-      if (!e.target.closest('.dropdown-gender-menu')) {
-        allMenus.forEach(function(m) { m.style.display = 'none'; });
-      }
-    });
-
-    // ===== ADVANCED SEARCH MODAL (+ button) =====
-    document.addEventListener('click', function(e) {
-      var toggleBtn = e.target.closest('#toggle-search-more, [data-target="#search-more"]');
-      if (toggleBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        var modal = document.getElementById('search-more');
-        if (modal) {
-          modal.style.display = 'block';
-          modal.classList.add('in');
-          document.body.classList.add('modal-open');
-          // Create backdrop
-          var existingBackdrop = document.querySelector('.modal-backdrop');
-          if (!existingBackdrop) {
-            var backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade in';
-            backdrop.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1040;';
-            document.body.appendChild(backdrop);
-            backdrop.addEventListener('click', function() { closeModal(modal); });
-          }
-        }
-      }
-      
-      // Close modal on X button or close button
-      var closeBtn = e.target.closest('#search-more .close, #search-more [data-dismiss="modal"]');
-      if (closeBtn) {
-        e.preventDefault();
-        var modal = document.getElementById('search-more');
-        if (modal) closeModal(modal);
-      }
-    });
-    
-    function closeModal(modal) {
-      modal.style.display = 'none';
-      modal.classList.remove('in');
-      document.body.classList.remove('modal-open');
-      var backdrop = document.querySelector('.modal-backdrop');
-      if (backdrop) backdrop.remove();
-    }
-  })();
-  </script>
+  {{-- Gender dropdown + advanced search modal handlers moved to /assets/js/listing-page.js --}}
   
   <!-- Remove prism.js as it's not needed for functionality -->
   
@@ -3088,116 +2964,16 @@ function initCitySearch() {
     console.log('✅ City input found');
     
     let searchTimeout = null;
-    
-    // Helper function to get country code from country name
+
+    // Country-name → ISO-2 code lookup. Backed by window.EvooryGetCountryCode (loaded
+    // from /assets/js/listing-page.js). Inline shim keeps this script working even if
+    // the external file hasn't loaded yet.
     function getCountryCode(countryName) {
         if (!countryName) return null;
-        
-        const countryMap = {
-            'United Arab Emirates': 'AE',
-            'Pakistan': 'PK',
-            'India': 'IN',
-            'United Kingdom': 'GB',
-            'United States': 'US',
-            'Brazil': 'BR',
-            'Philippines': 'PH',
-            'Thailand': 'TH',
-            'Singapore': 'SG',
-            'China': 'CN',
-            'Japan': 'JP',
-            'France': 'FR',
-            'Germany': 'DE',
-            'Italy': 'IT',
-            'Spain': 'ES',
-            'Canada': 'CA',
-            'Australia': 'AU',
-            'Netherlands': 'NL',
-            'Belgium': 'BE',
-            'Switzerland': 'CH',
-            'Austria': 'AT',
-            'Sweden': 'SE',
-            'Norway': 'NO',
-            'Denmark': 'DK',
-            'Finland': 'FI',
-            'Poland': 'PL',
-            'Czech Republic': 'CZ',
-            'Czechia': 'CZ',
-            'Hungary': 'HU',
-            'Turkey': 'TR',
-            'Egypt': 'EG',
-            'South Africa': 'ZA',
-            'Saudi Arabia': 'SA',
-            'Qatar': 'QA',
-            'Kuwait': 'KW',
-            'Bahrain': 'BH',
-            'Oman': 'OM',
-            'Lebanon': 'LB',
-            'Jordan': 'JO',
-            'Ireland': 'IE',
-            'Portugal': 'PT',
-            'Greece': 'GR',
-            'Russia': 'RU',
-            'Ukraine': 'UA',
-            'Romania': 'RO',
-            'Bulgaria': 'BG',
-            'Croatia': 'HR',
-            'Serbia': 'RS',
-            'Malaysia': 'MY',
-            'Indonesia': 'ID',
-            'Vietnam': 'VN',
-            'South Korea': 'KR',
-            'Hong Kong': 'HK',
-            'Taiwan': 'TW',
-            'New Zealand': 'NZ',
-            'Argentina': 'AR',
-            'Mexico': 'MX',
-            'Colombia': 'CO',
-            'Chile': 'CL',
-            'Peru': 'PE',
-            'Venezuela': 'VE',
-            'Honduras': 'HN',
-            'Morocco': 'MA',
-            'Tunisia': 'TN',
-            'Kenya': 'KE',
-            'Nigeria': 'NG',
-            'Ethiopia': 'ET',
-            'Sudan': 'SD',
-            'Israel': 'IL',
-            'Cyprus': 'CY',
-            'Malta': 'MT',
-            'Luxembourg': 'LU',
-            'Monaco': 'MC',
-            'Iceland': 'IS',
-            'Estonia': 'EE',
-            'Latvia': 'LV',
-            'Lithuania': 'LT',
-            'Slovenia': 'SI',
-            'Slovakia': 'SK',
-            'Bosnia and Herzegovina': 'BA',
-            'Albania': 'AL',
-            'North Macedonia': 'MK',
-            'Montenegro': 'ME',
-            'Armenia': 'AM',
-            'Georgia': 'GE',
-            'Azerbaijan': 'AZ',
-            'Kazakhstan': 'KZ',
-            'Uzbekistan': 'UZ',
-            'Bangladesh': 'BD',
-            'Sri Lanka': 'LK',
-            'Nepal': 'NP',
-            'Myanmar': 'MM',
-            'Cambodia': 'KH',
-            'Laos': 'LA',
-            'Brunei': 'BN',
-            'Maldives': 'MV',
-            'Afghanistan': 'AF',
-            'Iran': 'IR',
-            'Iraq': 'IQ'
-        };
-        
-        return countryMap[countryName] || null;
+        if (typeof window.EvooryGetCountryCode === 'function') return window.EvooryGetCountryCode(countryName);
+        return null;
     }
-    
+
     // Helper function to convert country code to flag emoji
     function getFlagEmoji(countryCode) {
         if (!countryCode || countryCode.length !== 2) return '';
@@ -3415,34 +3191,14 @@ function initMobileCitySearch() {
     console.log('✅ Mobile city input found');
     
     let searchTimeout = null;
-    
-    // Helper function to get country code from country name
+
+    // Country-name → ISO-2 code lookup. See window.EvooryGetCountryCode in /assets/js/listing-page.js.
     function getCountryCode(countryName) {
         if (!countryName) return null;
-        
-        const countryMap = {
-            'United Arab Emirates': 'AE',
-            'Pakistan': 'PK',
-            'India': 'IN',
-            'United Kingdom': 'GB',
-            'United States': 'US',
-            'Brazil': 'BR',
-            'Philippines': 'PH',
-            'Thailand': 'TH',
-            'Singapore': 'SG',
-            'China': 'CN',
-            'Japan': 'JP',
-            'France': 'FR',
-            'Germany': 'DE',
-            'Italy': 'IT',
-            'Spain': 'ES',
-            'Canada': 'CA',
-            'Australia': 'AU'
-        };
-        
-        return countryMap[countryName] || null;
+        if (typeof window.EvooryGetCountryCode === 'function') return window.EvooryGetCountryCode(countryName);
+        return null;
     }
-    
+
     // Function to search cities from database
     function searchCities(query) {
         clearTimeout(searchTimeout);
@@ -3673,23 +3429,5 @@ setTimeout(() => {
 }, 3000);
   </script>
 
-  {{-- What's New scroll indicator --}}
-  <script>
-  (function() {
-      var scroll = document.querySelector('.ev-whatsnew-scroll');
-      if (!scroll) return;
-      var thumb = document.querySelector('.ev-scroll-thumb');
-      var leftBtn = document.querySelector('.ev-scroll-left');
-      var rightBtn = document.querySelector('.ev-scroll-right');
-
-      if (thumb) {
-          scroll.addEventListener('scroll', function() {
-              var pct = scroll.scrollLeft / (scroll.scrollWidth - scroll.clientWidth);
-              thumb.style.transform = 'translateX(' + (pct * 30) + 'px)';
-          });
-      }
-      if (leftBtn) leftBtn.addEventListener('click', function() { scroll.scrollBy({left: -210, behavior: 'smooth'}); });
-      if (rightBtn) rightBtn.addEventListener('click', function() { scroll.scrollBy({left: 210, behavior: 'smooth'}); });
-  })();
-  </script>
+  {{-- What's New scroll indicator moved to /assets/js/listing-page.js --}}
   @endpush
