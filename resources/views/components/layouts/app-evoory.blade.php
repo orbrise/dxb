@@ -30,8 +30,9 @@
         .ev-flex{display:flex}.ev-items-center{align-items:center}.ev-justify-between{justify-content:space-between}
     </style>
     
-    {{-- Bootstrap 4 CSS + Font Awesome (required for grid, components, icons) --}}
-    <link rel="stylesheet" href="{{smart_asset('assets/css/app.css')}}" />
+    {{-- Bootstrap 4 CSS + Font Awesome (required for grid, components, icons).
+         Use the minified build (~15 KB smaller, identical content). --}}
+    <link rel="stylesheet" href="{{smart_asset('assets/css/app.min.css')}}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 
     {{-- Main theme CSS (loaded after Bootstrap to override) --}}
