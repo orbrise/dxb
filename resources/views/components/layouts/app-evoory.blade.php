@@ -18,7 +18,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {{-- display=optional avoids the layout shift caused by a late font swap.
+         Browsers use the system fallback if Inter doesn't load within ~100ms;
+         on subsequent visits the font is cached and used immediately. Trade-off
+         is intentional: zero CLS at the cost of a one-time fallback render for
+         slow-connection visitors. --}}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" rel="stylesheet">
     
     {{-- Critical CSS inline for faster FCP --}}
     <style>

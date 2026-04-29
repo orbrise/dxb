@@ -3,11 +3,14 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
 use App\Models\{UsersProfile, Review, Question, City, Gender, Service, Currency, Bust, Ethnicity, HairColor, Language, Country};
 use App\Services\CacheService;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
+#[Layout('components.layouts.app-evoory')]
 class NewsPage extends Component
 {
     use WithPagination;
@@ -345,23 +348,31 @@ class NewsPage extends Component
                 $data['title'] = "{$this->cityname} Escort News";
         }
         
-        // Add search form data
-        $data['genders'] = Gender::all();
-        $data['cities'] = City::orderBy('name')->get();
-        $data['services'] = Service::orderBy('name')->get();
-        $data['currencies'] = Currency::select('id', 'code', 'symbol')
-            ->get()
-            ->unique('code')
-            ->sortBy('code')
-            ->values();
-        $data['busts'] = Bust::all();
-        $data['ethnicities'] = Ethnicity::all(); 
-        $data['haircolors'] = HairColor::all();
-        $data['hairs'] = HairColor::select('id', 'name')->get(); // Alias for haircolors
-        $data['languages'] = Language::all();
-        $data['countries'] = Country::orderBy('nicename')->get();
-        $data['nationalities'] = Country::orderBy('nicename')->get(); // Same as countries
-        
+        // Reference tables — cached so logged-in users (who bypass both CF edge
+        // cache and the origin page.cache via the evoory_auth cookie) don't pay
+        // for ~12 lookup queries on every render. These rarely change; admin
+        // edits to lookups can wait up to TTL_LOOKUP for the cache to refresh.
+        $haircolors = Cache::remember('news:haircolors', CacheService::TTL_LOOKUP, fn() => HairColor::all());
+        $countries = Cache::remember('news:countries', CacheService::TTL_LOOKUP, fn() => Country::orderBy('nicename')->get());
+
+        $data['genders'] = Cache::remember('news:genders', CacheService::TTL_STATIC, fn() => Gender::all());
+        $data['cities'] = Cache::remember('news:cities', CacheService::TTL_LOOKUP, fn() => City::orderBy('name')->get());
+        $data['services'] = Cache::remember('news:services', CacheService::TTL_LOOKUP, fn() => Service::orderBy('name')->get());
+        $data['currencies'] = Cache::remember('news:currencies', CacheService::TTL_LOOKUP, fn() =>
+            Currency::select('id', 'code', 'symbol')
+                ->get()
+                ->unique('code')
+                ->sortBy('code')
+                ->values()
+        );
+        $data['busts'] = Cache::remember('news:busts', CacheService::TTL_LOOKUP, fn() => Bust::all());
+        $data['ethnicities'] = Cache::remember('news:ethnicities', CacheService::TTL_LOOKUP, fn() => Ethnicity::all());
+        $data['haircolors'] = $haircolors;
+        $data['hairs'] = $haircolors;
+        $data['languages'] = Cache::remember('news:languages', CacheService::TTL_LOOKUP, fn() => Language::all());
+        $data['countries'] = $countries;
+        $data['nationalities'] = $countries;
+
         return view('livewire.news-page', $data);
     }
     

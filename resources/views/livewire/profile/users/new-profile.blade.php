@@ -1361,7 +1361,7 @@ div#basic {
                       </div>
                       <div class="form-group  listing_listed_as_id">
                         <label class="ev-mobile-label" style="display:none;">Category</label>
-                        <select data-radius="all" class="apply-custom-select2 form-control listinga" wire:model="listing" id="listing_listed_as_id">
+                        <select class="form-control listinga" wire:model="listing" id="listing_listed_as_id">
                           @foreach($listings as $listingOption)
                             <option value="{{$listingOption->id}}">{{$listingOption->name}}</option>
                           @endforeach

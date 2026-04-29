@@ -11,7 +11,8 @@
       "Bash(sort -k1 -h)",
       "Bash(awk '{print $5 \" \" $9}')",
       "Bash(xargs wc *)",
-      "Bash(c:/laragon/bin/php/php-8.3.3-Win32-vs16-x64/php.exe c:/laragon/www/dxb/artisan migrate:status)"
+      "Bash(c:/laragon/bin/php/php-8.3.3-Win32-vs16-x64/php.exe c:/laragon/www/dxb/artisan migrate:status)",
+      "Bash(php artisan *)"
     ]
   }
 }
