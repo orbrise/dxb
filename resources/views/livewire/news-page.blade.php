@@ -130,7 +130,17 @@ body { background: #000 !important; }
 /* Content area */
 .body { background: #000 !important; }
 .page-title h1 { color: #fff !important; }
+/* Green link color on the news page only.
+   Two rules:
+   1. .ev-news-root a — fallback for older browsers without :has() support.
+      Covers links inside the page content wrapper (header tabs, news items).
+   2. body:has(.ev-news-root) a — modern browsers (Chrome 105+, Safari 15.4+,
+      Firefox 121+). Matches any anchor when the body contains the news page
+      wrapper, so it also picks up the footer links that are rendered by the
+      layout outside .ev-news-root. Cannot leak to the homepage because the
+      selector only fires on pages whose DOM contains .ev-news-root. */
 .ev-news-root a { color: #C1F11D !important; }
+body:has(.ev-news-root) a { color: #C1F11D !important; }
 
 /* Activity stream items */
 .activity-stream { color: #fff; }
@@ -287,6 +297,13 @@ input.tt-hint,
 .typeahead-city-wrapper .tt-hint {
     display: none !important;
 }
+
+/* News page city search dropdown - themed scrollbar */
+#news_cityappend::-webkit-scrollbar { width: 6px; }
+#news_cityappend::-webkit-scrollbar-track { background: transparent; }
+#news_cityappend::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+#news_cityappend::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+#news_cityappend { scrollbar-width: thin; scrollbar-color: #2a2a2a transparent; }
 
 /* Show country flags in dropdown */
 .tt-suggestion .flag-icon {
@@ -502,7 +519,7 @@ input.tt-hint,
                                value="{{ $cityname }}" 
                                autocomplete="off"
                                style="background-color: #333; color: white; border: 1px solid #555; padding-left: 38px;">
-                        <div id="news_cityappend" class="citys" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #2c2c2c; border: 1px solid #555; border-top: none; max-height: 300px; overflow-y: auto; z-index: 9999;"></div>
+                        <div id="news_cityappend" class="citys" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #1D2224; border: 1px solid #2a2a2a; border-radius: 8px; max-height: 320px; overflow-y: auto; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.5); padding: 4px 0;"></div>
                     </div>
                 </div>
             </form>
@@ -1076,195 +1093,163 @@ input.tt-hint,
 
 @push('js')
 <script>
-// City Search Functionality for News Page
+// News page city search — uses document-level event delegation so it survives
+// Livewire morphs and runs even if this script loads before the input.
 (function() {
     'use strict';
-    
-    function initNewsCitySearch() {
-        console.log('🏙️ Initializing news page city search...');
-        
-        const cityInput = document.getElementById('news_citysearch');
-        const cityAppend = document.getElementById('news_cityappend');
-        
-        if (!cityInput) {
-            console.log('❌ News city input not found');
-            return false;
+    if (window.__newsCitySearchBound) return;
+    window.__newsCitySearchBound = true;
+    console.log('🏙️ News page city search delegation bound');
+
+    var INPUT_ID = 'news_citysearch';
+    var APPEND_ID = 'news_cityappend';
+    var GENDER = @json($gender ?? 'female');
+    var TYPE = @json($type ?? 'all');
+    var CSRF = @json(csrf_token());
+    var searchTimeout = null;
+
+    var COUNTRY_MAP = {
+        'United Arab Emirates': 'AE', 'Pakistan': 'PK', 'India': 'IN',
+        'United Kingdom': 'GB', 'United States': 'US', 'Brazil': 'BR',
+        'Philippines': 'PH', 'Thailand': 'TH', 'Singapore': 'SG',
+        'China': 'CN', 'Japan': 'JP', 'France': 'FR', 'Germany': 'DE',
+        'Italy': 'IT', 'Spain': 'ES', 'Canada': 'CA', 'Australia': 'AU',
+        'Netherlands': 'NL', 'Belgium': 'BE', 'Switzerland': 'CH',
+        'Austria': 'AT', 'Sweden': 'SE', 'Norway': 'NO', 'Denmark': 'DK',
+        'Finland': 'FI', 'Poland': 'PL', 'Czech Republic': 'CZ',
+        'Turkey': 'TR', 'Egypt': 'EG', 'South Africa': 'ZA',
+        'Saudi Arabia': 'SA', 'Qatar': 'QA', 'Kuwait': 'KW',
+        'Bahrain': 'BH', 'Oman': 'OM', 'Lebanon': 'LB', 'Jordan': 'JO',
+        'Ireland': 'IE', 'Portugal': 'PT', 'Greece': 'GR', 'Russia': 'RU',
+        'Malaysia': 'MY', 'Indonesia': 'ID', 'Vietnam': 'VN',
+        'South Korea': 'KR', 'Hong Kong': 'HK', 'New Zealand': 'NZ',
+        'Argentina': 'AR', 'Mexico': 'MX', 'Colombia': 'CO'
+    };
+
+    function getInput()  { return document.getElementById(INPUT_ID); }
+    function getAppend() { return document.getElementById(APPEND_ID); }
+
+    function searchCities(query) {
+        var cityAppend = getAppend();
+        if (!cityAppend) return;
+        clearTimeout(searchTimeout);
+
+        if (query.length < 2) {
+            cityAppend.style.display = 'none';
+            cityAppend.innerHTML = '';
+            return;
         }
-        
-        console.log('✅ News city input found');
-        
-        let searchTimeout = null;
-        
-        // Helper function to get country code from country name
-        function getCountryCode(countryName) {
-            if (!countryName) return null;
-            
-            const countryMap = {
-                'United Arab Emirates': 'AE', 'Pakistan': 'PK', 'India': 'IN',
-                'United Kingdom': 'GB', 'United States': 'US', 'Brazil': 'BR',
-                'Philippines': 'PH', 'Thailand': 'TH', 'Singapore': 'SG',
-                'China': 'CN', 'Japan': 'JP', 'France': 'FR', 'Germany': 'DE',
-                'Italy': 'IT', 'Spain': 'ES', 'Canada': 'CA', 'Australia': 'AU',
-                'Netherlands': 'NL', 'Belgium': 'BE', 'Switzerland': 'CH',
-                'Austria': 'AT', 'Sweden': 'SE', 'Norway': 'NO', 'Denmark': 'DK',
-                'Finland': 'FI', 'Poland': 'PL', 'Czech Republic': 'CZ',
-                'Turkey': 'TR', 'Egypt': 'EG', 'South Africa': 'ZA',
-                'Saudi Arabia': 'SA', 'Qatar': 'QA', 'Kuwait': 'KW',
-                'Bahrain': 'BH', 'Oman': 'OM', 'Lebanon': 'LB', 'Jordan': 'JO',
-                'Ireland': 'IE', 'Portugal': 'PT', 'Greece': 'GR', 'Russia': 'RU',
-                'Malaysia': 'MY', 'Indonesia': 'ID', 'Vietnam': 'VN',
-                'South Korea': 'KR', 'Hong Kong': 'HK', 'New Zealand': 'NZ',
-                'Argentina': 'AR', 'Mexico': 'MX', 'Colombia': 'CO'
-            };
-            
-            return countryMap[countryName] || null;
-        }
-        
-        // Function to search cities from database
-        function searchCities(query) {
-            clearTimeout(searchTimeout);
-            
-            if (query.length < 2) {
-                cityAppend.style.display = 'none';
-                cityAppend.innerHTML = '';
-                return;
-            }
-            
-            searchTimeout = setTimeout(function() {
-                console.log('🔍 Searching for city:', query);
-                
-                // Use SessionRecovery.fetch for automatic token refresh on session expiry
-                var fetchFn = window.SessionRecovery ? window.SessionRecovery.fetch.bind(window.SessionRecovery) : fetch;
-                
-                fetchFn('/cities/search?_=' + Date.now(), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': window.SessionRecovery ? window.SessionRecovery.getToken() : '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                        'Cache-Control': 'no-cache'
-                    },
-                    body: JSON.stringify({ query: query })
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Network error: ' + response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('✅ City search results:', data);
-                    cityAppend.innerHTML = '';
-                    
-                    if (data.length === 0) {
-                        cityAppend.innerHTML = '<div style="padding: 10px; color: #999;">No cities found</div>';
-                        cityAppend.style.display = 'block';
-                    } else {
-                        data.forEach(function(city) {
-                            const citySlug = city.name.toLowerCase().replace(/\s+/g, '-');
-                            const countryCode = getCountryCode(city.country);
-                            
-                            const opt = document.createElement('div');
-                            opt.style.cssText = 'padding: 10px 15px; cursor: pointer; color: #fff; display: flex; align-items: center; transition: background 0.2s;';
-                            
-                            // Add flag
-                            if (countryCode) {
-                                const flagSpan = document.createElement('span');
-                                flagSpan.style.cssText = 'margin-right: 10px; width: 20px; height: 14px; background-size: cover; background-position: center; display: inline-block;';
-                                flagSpan.style.backgroundImage = `url(https://flagcdn.com/w40/${countryCode.toLowerCase()}.png)`;
-                                opt.appendChild(flagSpan);
-                            }
-                            
-                            // City name
-                            const nameSpan = document.createElement('span');
-                            nameSpan.textContent = city.name;
-                            nameSpan.style.flex = '1';
-                            opt.appendChild(nameSpan);
-                            
-                            // Profile count
-                            if (city.profile_count !== undefined) {
-                                const countSpan = document.createElement('span');
-                                countSpan.textContent = city.profile_count;
-                                countSpan.style.cssText = 'color: #999; font-size: 12px; margin-left: auto;';
-                                opt.appendChild(countSpan);
-                            }
-                            
-                            opt.addEventListener('mouseenter', function() {
-                                this.style.backgroundColor = '#444';
-                            });
-                            opt.addEventListener('mouseleave', function() {
-                                this.style.backgroundColor = 'transparent';
-                            });
-                            
-                            opt.addEventListener('click', function() {
-                                console.log('🎯 City selected:', city.name);
-                                cityInput.value = city.name;
-                                cityAppend.style.display = 'none';
-                                
-                                // Redirect to the news page for selected city
-                                const currentGender = '{{ $gender ?? "female" }}';
-                                const currentType = '{{ $type ?? "all" }}';
-                                let urlPath = `/${currentGender}-escort-news-in-${citySlug}`;
-                                if (currentType && currentType !== 'all') {
-                                    urlPath += `/${currentType}`;
-                                }
-                                console.log('🚀 Redirecting to:', urlPath);
-                                window.location.href = urlPath;
-                            });
-                            
-                            cityAppend.appendChild(opt);
-                        });
-                        cityAppend.style.display = 'block';
+
+        searchTimeout = setTimeout(function() {
+            console.log('🔍 Searching for city:', query);
+            var fetchFn = window.SessionRecovery ? window.SessionRecovery.fetch.bind(window.SessionRecovery) : fetch;
+            fetchFn('/cities/search?_=' + Date.now(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.SessionRecovery ? window.SessionRecovery.getToken() : CSRF,
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function(data) {
+                var ca = getAppend();
+                if (!ca) return;
+                ca.innerHTML = '';
+                if (!data.length) {
+                    ca.innerHTML = '<div style="padding:12px 16px;color:#999;font-size:13px;">No cities found</div>';
+                    ca.style.display = 'block';
+                    return;
+                }
+                data.forEach(function(city) {
+                    var citySlug = city.name.toLowerCase().replace(/\s+/g, '-');
+                    var countryCode = COUNTRY_MAP[city.country] || null;
+                    var opt = document.createElement('div');
+                    opt.className = 'news-city-opt';
+                    opt.style.cssText = 'padding:10px 16px;margin:0 4px;border-radius:6px;cursor:pointer;color:#fff;display:flex;align-items:center;transition:background 0.15s,color 0.15s;font-size:14px;';
+                    opt.dataset.slug = citySlug;
+                    if (countryCode) {
+                        var flag = document.createElement('span');
+                        flag.style.cssText = 'margin-right:10px;width:20px;height:14px;background-size:cover;background-position:center;display:inline-block;';
+                        flag.style.backgroundImage = 'url(https://flagcdn.com/w40/' + countryCode.toLowerCase() + '.png)';
+                        opt.appendChild(flag);
                     }
-                })
-                .catch(error => {
-                    console.error('❌ City search error:', error);
-                    // Show user-friendly error with retry hint
-                    cityAppend.innerHTML = '<div style="padding: 10px; color: #dc3545;">Connection error. Please try again.</div>';
-                    cityAppend.style.display = 'block';
-                    
-                    // Auto-retry after a short delay
-                    setTimeout(function() {
-                        if (cityInput.value.trim().length >= 2) {
-                            console.log('🔄 Auto-retrying city search...');
-                            searchCities(cityInput.value.trim());
-                        }
-                    }, 2000);
+                    var nameSpan = document.createElement('span');
+                    nameSpan.textContent = city.name;
+                    nameSpan.style.flex = '1';
+                    opt.appendChild(nameSpan);
+                    if (city.profile_count !== undefined) {
+                        var countSpan = document.createElement('span');
+                        countSpan.textContent = city.profile_count;
+                        countSpan.style.cssText = 'color:#999;font-size:12px;margin-left:auto;';
+                        opt.appendChild(countSpan);
+                    }
+                    ca.appendChild(opt);
                 });
-            }, 300);
-        }
-        
-        // Input event listener
-        cityInput.addEventListener('input', function(e) {
+                ca.style.display = 'block';
+            })
+            .catch(function(err) {
+                console.error('❌ City search error:', err);
+                var ca = getAppend();
+                if (ca) {
+                    ca.innerHTML = '<div style="padding:12px 16px;color:#dc3545;font-size:13px;">Connection error. Please try again.</div>';
+                    ca.style.display = 'block';
+                }
+            });
+        }, 300);
+    }
+
+    // input → trigger search
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.id === INPUT_ID) {
             searchCities(e.target.value.trim());
-        });
-        
-        // Click outside to close dropdown
-        document.addEventListener('click', function(e) {
-            if (!cityInput.contains(e.target) && !cityAppend.contains(e.target)) {
-                cityAppend.style.display = 'none';
-            }
-        });
-        
-        // Focus event
-        cityInput.addEventListener('focus', function() {
-            if (this.value.trim().length >= 2) {
-                searchCities(this.value.trim());
-            }
-        });
-        
-        console.log('🏙️ News page city search initialized successfully');
-        return true;
-    }
-    
-    // Initialize on page load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initNewsCitySearch);
-    } else {
-        initNewsCitySearch();
-    }
-    
-    // Handle Livewire navigation
-    document.addEventListener('livewire:navigated', initNewsCitySearch);
+        }
+    });
+
+    // focus → if value >= 2, show results (focus doesn't bubble, use focusin)
+    document.addEventListener('focusin', function(e) {
+        if (e.target && e.target.id === INPUT_ID) {
+            var v = e.target.value.trim();
+            if (v.length >= 2) searchCities(v);
+        }
+    });
+
+    // mouseover/mouseout on dropdown items
+    document.addEventListener('mouseover', function(e) {
+        var opt = e.target.closest && e.target.closest('.news-city-opt');
+        if (opt && getAppend() && getAppend().contains(opt)) {
+            opt.style.backgroundColor = '#262C2F';
+            opt.style.color = '#C1F11D';
+        }
+    });
+    document.addEventListener('mouseout', function(e) {
+        var opt = e.target.closest && e.target.closest('.news-city-opt');
+        if (opt && getAppend() && getAppend().contains(opt)) {
+            opt.style.backgroundColor = 'transparent';
+            opt.style.color = '#fff';
+        }
+    });
+
+    // click on a dropdown item → navigate
+    document.addEventListener('click', function(e) {
+        var opt = e.target.closest && e.target.closest('.news-city-opt');
+        if (opt && getAppend() && getAppend().contains(opt)) {
+            var slug = opt.dataset.slug;
+            var url = '/' + GENDER + '-escort-news-in-' + slug;
+            if (TYPE && TYPE !== 'all') url += '/' + TYPE;
+            console.log('🚀 Redirecting to:', url);
+            window.location.href = url;
+            return;
+        }
+        // outside click → close dropdown
+        var input = getInput();
+        var ca = getAppend();
+        if (input && ca && !input.contains(e.target) && !ca.contains(e.target)) {
+            ca.style.display = 'none';
+        }
+    });
 })();
 </script>
 @endpush
-</div>

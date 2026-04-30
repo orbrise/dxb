@@ -113,6 +113,43 @@
             background-size: 200% 100% !important;
             animation: shimmer 1.5s ease-in-out infinite !important;
         }
+
+        /* === Themed city search dropdown (overrides .citys/.opt from listing-page-inline.css) === */
+        #cityappend.citys {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 320px !important;
+            overflow-y: auto !important;
+            top: calc(100% + 4px) !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: #1D2224 !important;
+            border: 1px solid #2a2a2a !important;
+            border-radius: 8px !important;
+            padding: 4px 0 !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+            z-index: 9999 !important;
+        }
+        #cityappend .opt {
+            display: flex !important;
+            align-items: center !important;
+            padding: 10px 16px !important;
+            margin: 0 4px !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+            color: #fff !important;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        #cityappend .opt:hover {
+            background: #262C2F !important;
+            color: #C1F11D !important;
+        }
+        #cityappend::-webkit-scrollbar { width: 6px; }
+        #cityappend::-webkit-scrollbar-track { background: transparent; }
+        #cityappend::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+        #cityappend::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+        #cityappend { scrollbar-width: thin; scrollbar-color: #2a2a2a transparent; }
     </style>
 
     <!-- Load non-critical styles asynchronously -->
@@ -1860,25 +1897,19 @@ function initCitySearch() {
                 cityAppend.innerHTML = '';
                 
                 if (data.length === 0) {
-                    cityAppend.innerHTML = '<div class="opt" style="color: #999;">No cities found</div>';
+                    cityAppend.innerHTML = '<div class="opt" style="color: #999; cursor: default;">No cities found</div>';
                     cityAppend.style.display = 'block';
                 } else {
                     // Add each city to the results
                     data.forEach(function(city) {
                         console.log('Processing city:', city.name, 'Count:', city.profile_count);
                         const citySlug = city.name.toLowerCase().replace(/\s+/g, '-');
-                        
+
                         // Get country code for flag
                         const countryCode = getCountryCode(city.country);
-                        
+
                         const opt = document.createElement('div');
                         opt.className = 'opt';
-                        opt.style.cursor = 'pointer';
-                        opt.style.color = '#fff';
-                        opt.style.padding = '1px 1spx';
-                        opt.style.transition = 'background-color 0.2s';
-                        opt.style.display = 'flex';
-                        opt.style.alignItems = 'center';
                         
                         // Add flag if country code exists
                         if (countryCode) {
@@ -1910,13 +1941,6 @@ function initCitySearch() {
                             opt.appendChild(countSpan);
                         }
                         
-                        opt.addEventListener('mouseenter', function() {
-                            this.style.backgroundColor = '#5a5a5a';
-                        });
-                        
-                        opt.addEventListener('mouseleave', function() {
-                            this.style.backgroundColor = 'transparent';
-                        });
                         
                         opt.addEventListener('click', function() {
                             console.log('🎯 City selected:', city.name);
@@ -1943,7 +1967,7 @@ function initCitySearch() {
             .catch(error => {
                 console.error('❌ City search error:', error);
                 // Show user-friendly error with retry hint
-                cityAppend.innerHTML = '<div class="opt" style="color: #dc3545;">Connection error. Please try again.</div>';
+                cityAppend.innerHTML = '<div class="opt" style="color: #dc3545; cursor: default;">Connection error. Please try again.</div>';
                 cityAppend.style.display = 'block';
                 
                 // Auto-retry after a short delay
