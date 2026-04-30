@@ -86,7 +86,13 @@
                 @if($isHomePage || $isNewsPage)
                 <div class="ev-header-tabs">
                     <a href="/female-escorts-in-{{ $citySlug }}" class="ev-header-tab {{ $isHomePage ? 'active' : '' }}" wire:navigate>ESCORTS</a>
-                    <a href="/female-escort-news-in-{{ $citySlug }}" class="ev-header-tab {{ $isNewsPage ? 'active' : '' }}" wire:navigate>WHAT'S NEW</a>
+                    {{-- WHAT'S NEW must be a full navigation (no wire:navigate). The
+                         news page uses the legacy `components.layouts.app` layout
+                         while the rest of the site uses `app-evoory`; wire:navigate
+                         swaps the body but keeps the source layout's <head>, so the
+                         news page's CSS/JS bundle is missing and hydration breaks
+                         intermittently → blank screen until a hard refresh. --}}
+                    <a href="/female-escort-news-in-{{ $citySlug }}" class="ev-header-tab {{ $isNewsPage ? 'active' : '' }}">WHAT'S NEW</a>
                 </div>
                 @endif
             </div>

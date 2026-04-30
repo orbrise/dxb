@@ -235,7 +235,12 @@
                          str_contains($currentPath, '/new-questions'));
         @endphp
         @if($showButtons)
-        <a class="btn btn-dark lead {{ $isEscortsPage ? 'selected' : '' }}" href="/female-escorts-in-{{ $citySlug }}" wire:navigate>Escorts</a>
+        {{-- No wire:navigate on Escorts: this header is rendered on the news
+             page (legacy `app` layout) and the listing page uses `app-evoory`.
+             wire:navigate keeps the source layout's <head> when swapping bodies,
+             so cross-layout transitions render with the wrong CSS/JS bundle and
+             can blank out until a hard refresh. --}}
+        <a class="btn btn-dark lead {{ $isEscortsPage ? 'selected' : '' }}" href="/female-escorts-in-{{ $citySlug }}">Escorts</a>
         <a class="btn btn-dark lead {{ $isNewsPage ? 'selected' : '' }}" href="/female-escort-news-in-{{ $citySlug }}" wire:navigate>What's new</a>
         @endif
       </div>

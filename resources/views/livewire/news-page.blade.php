@@ -130,7 +130,7 @@ body { background: #000 !important; }
 /* Content area */
 .body { background: #000 !important; }
 .page-title h1 { color: #fff !important; }
-a { color: #C1F11D !important; }
+.ev-news-root a { color: #C1F11D !important; }
 
 /* Activity stream items */
 .activity-stream { color: #fff; }
@@ -430,7 +430,7 @@ input.tt-hint,
 </style>
 @endpush
 
-<div>
+<div class="ev-news-root">
 {{-- Mobile Back Bar --}}
 <div class="ev-news-back-bar" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:center;position:relative;padding:12px 16px;background:#131616;">

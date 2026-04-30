@@ -124,14 +124,20 @@ Route::post('/profile/{id}/track-view', [\App\Http\Controllers\AjaxController::c
 Route::match(['get', 'post'], '/webhook/whatsapp', [\App\Http\Controllers\Admin\WhatsAppController::class, 'webhook'])->name('whatsapp.webhook');
 
 // News page routes - must be before the general escorts route
-// All news page (without type)
+// page.cache is intentionally OFF here: NewsPage is an interactive Livewire
+// component (loadMore intersection-observer pagination + city search XHR),
+// and caching its HTML stores Livewire's wire:snapshot signed with the first
+// renderer's session secret. Subsequent visitors inherit that snapshot and
+// any Livewire interaction returns 419 ("This page has expired"), which
+// shows up as Livewire's confirm() dialog. Reference-table queries inside
+// NewsPage::render() are individually cached so this still hits Redis for
+// the heavy lookups, just not the full HTML.
 Route::get("{gender}-escort-news-in-{city}", NewsPage::class)
     ->name("news.all")
     ->where([
         'gender' => 'female|male|shemale',
         'city' => '[a-z0-9\-]+'
-    ])
-    ->middleware('page.cache');
+    ]);
 
 // Specific news type page
 Route::get("{gender}-escort-news-in-{city}/{type}", NewsPage::class)
@@ -140,8 +146,7 @@ Route::get("{gender}-escort-news-in-{city}/{type}", NewsPage::class)
         'gender' => 'female|male|shemale',
         'city' => '[a-z0-9\-]+',
         'type' => 'new-escorts|new-reviews|new-questions'
-    ])
-    ->middleware('page.cache');
+    ]);
 
 // Service page route - must be before the general escorts route
 // Important: Parameters are passed to mount($service, $gender, $city)
