@@ -3,14 +3,12 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
 use App\Models\{UsersProfile, Review, Question, City, Gender, Service, Currency, Bust, Ethnicity, HairColor, Language, Country};
 use App\Services\CacheService;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
-#[Layout('components.layouts.app-evoory')]
 class NewsPage extends Component
 {
     use WithPagination;

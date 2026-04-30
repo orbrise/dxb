@@ -79,7 +79,7 @@ body { background: #000 !important; }
     gap: 0;
     border: none !important;
     position: absolute;
-    left: 130px;
+    left: 220px;
     top: 50%;
     transform: translateY(-50%);
 }
