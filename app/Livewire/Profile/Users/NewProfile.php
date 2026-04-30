@@ -3,6 +3,7 @@ namespace App\Livewire\Profile\Users;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use App\Models\{Listing, Service, Country, User, ProfileImage, UserService, 
     Gender, Currency, Ethnicity, Bust, HairColor, Language, UserLanguage, UsersProfile};
 use Illuminate\Support\Facades\Auth;
@@ -109,9 +110,9 @@ class NewProfile extends Component
         'age' => 'required|numeric|between:18,60',
         'height' => 'nullable|numeric|between:140,200', // Height must be 140-200
         'mphoto' => 'nullable|array',
-        'mphoto.*' => 'image|mimes:jpeg,png,jpg|max:5120',
- 'tempImages' => 'array',
-    'tempImages.*' => 'image|mimes:jpeg,png,jpg|max:5120'
+        'mphoto.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192',
+        'tempImages' => 'array',
+        'tempImages.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192'
     ];
 
     protected $messages = [
@@ -157,7 +158,7 @@ class NewProfile extends Component
     public function updatedMphoto()
 {
     $this->validate([
-        'mphoto.*' => 'image|mimes:jpeg,png,jpg|max:5120'
+        'mphoto.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192'
     ]);
 
     // Handle multiple files
@@ -168,12 +169,35 @@ class NewProfile extends Component
     } else {
         $this->tempImages[] = $this->mphoto;
     }
-    
+
     $this->mphoto = null; // Reset the input
     $this->dispatch('fileUploaded');
 }
 
 
+
+/**
+ * Adds an image to $tempImages from a filename that was already uploaded to
+ * storage/app/livewire-tmp/<filename> by the AjaxController fallback route.
+ * Used when this Livewire build's client-side file upload pipeline is broken
+ * and we have to upload via a plain Laravel POST first.
+ */
+public function addUploadedTempFile($filename)
+{
+    if (!is_string($filename) || $filename === '') {
+        return;
+    }
+
+    // Defense in depth: only accept basenames, no path traversal.
+    $safe = basename($filename);
+    if ($safe !== $filename) {
+        return;
+    }
+
+    $tempFile = TemporaryUploadedFile::createFromLivewire($safe);
+    $this->tempImages[] = $tempFile;
+    $this->dispatch('fileUploaded');
+}
 
 public function removeTemporaryImage($index)
 {
@@ -203,7 +227,7 @@ public function reorderImages($orderedIndexes)
 public function updatedTempImages()
 {
     $this->validate([
-        'tempImages.*' => 'image|mimes:jpeg,png,jpg|max:5120'
+        'tempImages.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192'
     ]);
 }
 public function updateProfile()

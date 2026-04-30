@@ -210,6 +210,13 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get('edit-profile/{username}/{id}', UserProfile::class)->name('user.profile');
     Route::get('action/listings/new', NewProfile::class)->name('new.profile');
 
+    // Fallback temp image upload (used when this Livewire build's wire:model
+    // file upload pipeline is not available on the client). The file is saved
+    // into Livewire's livewire-tmp directory using its filename convention so
+    // a TemporaryUploadedFile can be hydrated from it later.
+    Route::post('action/listings/temp-image', [App\Http\Controllers\AjaxController::class, 'uploadTempImage'])
+        ->name('listings.temp-image');
+
     Route::post('sign_out', function(){
         \Auth::logout();
         return redirect()->route('sign-in');

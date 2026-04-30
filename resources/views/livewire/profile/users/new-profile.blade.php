@@ -8,6 +8,11 @@
   </div>
 @endsection
 
+{{-- Single root element required by Livewire 3. Without it, Livewire picks
+     the first child (the <style> tag) as the component root and every
+     wire:* directive on the form ends up outside the tracked DOM, which
+     breaks wire:model on the file input (silent uploads). --}}
+<div>
 <style>
         /* ===== EVOORY DARK THEME FOR NEW PROFILE ===== */
         body, .content-wrapper, #content {
@@ -356,9 +361,64 @@
 
         /* Image records */
         .record.image {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            padding: 0 !important;
             background: #1a1b1e !important;
             border: 1px solid #2e3033 !important;
             border-radius: 6px !important;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+        .record.image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .record.image .delete {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            background: rgba(255, 0, 0, 0.85);
+            color: #fff;
+            padding: 4px 7px;
+            border-radius: 50%;
+            font-size: 11px;
+            line-height: 1;
+            z-index: 10;
+        }
+        .record.image .delete:hover {
+            background: rgba(255, 0, 0, 1);
+        }
+        .record.image .img-footer {
+            position: absolute;
+            left: 0 !important;
+            right: 0;
+            bottom: 0 !important;
+            width: 100% !important;
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.65);
+            text-align: center;
+        }
+        .record.image .img-footer .badge-success {
+            font-size: 10px;
+            padding: 2px 6px;
+        }
+        .record.image .img-footer .text-muted.small {
+            font-size: 9px;
+            color: #ddd !important;
+        }
+        .record.image .img-pending {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 4px;
+            padding: 2px 4px;
         }
         .record.image:hover {
             box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
@@ -1276,8 +1336,29 @@ div#basic {
     }
 
     /* Image previews */
+    #image-container {
+        gap: 8px !important;
+    }
     .record.image {
+        width: calc(33.33% - 6px) !important;
+        height: auto !important;
+        aspect-ratio: 1 / 1;
         border-radius: 5px !important;
+    }
+    .record.image img {
+        max-height: 100% !important;
+    }
+    .record.image .delete {
+        top: 2px !important;
+        right: 2px !important;
+        padding: 3px 5px !important;
+        font-size: 9px !important;
+    }
+    .record.image .img-footer .text-muted.small {
+        display: none !important;
+    }
+    .record.image .img-pending {
+        display: none !important;
     }
 
     /* Terms text at bottom */
@@ -1419,27 +1500,10 @@ div#basic {
                                 @endif
                             </label>
                         </div>
-                          <div class="img-pending p-1">
-                            <details data-popover="up">
-                              <summary class="d-flex align-items-center justify-content-between">
-                                <span class="small text-uppercase fw-bold">Pending</span>
-                                <svg id="query" data-icon="query" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="#000000">
-                                  <path d="M0,0h24v24H0V0z" fill="none"></path>
-                                  <path d="M12,2C6.48,2,2,6.48,2,12c0,5.52,4.48,10,10,10s10-4.48,10-10C22,6.48,17.52,2,12,2z M11.85,18c-0.7,0-1.26-0.56-1.26-1.26 c0-0.71,0.56-1.25,1.26-1.25c0.71,0,1.25,0.54,1.25,1.25C13.1,17.43,12.56,18,11.85,18z M14.86,10.6 c-0.76,1.11-1.48,1.46-1.87,2.17c-0.09,0.17-0.15,0.31-0.19,0.59c-0.06,0.46-0.43,0.82-0.9,0.82h-0.04c-0.53,0-0.95-0.45-0.9-0.98 c0.03-0.33,0.11-0.68,0.3-1c0.49-0.87,1.42-1.39,1.96-2.16c0.57-0.81,0.25-2.33-1.37-2.33c-0.74,0-1.21,0.39-1.51,0.85 C10.12,8.9,9.66,9.02,9.27,8.86c-0.5-0.21-0.72-0.83-0.41-1.29C9.47,6.66,10.49,6,11.83,6c1.48,0,2.49,0.67,3.01,1.52 C15.28,8.24,15.54,9.59,14.86,10.6z"></path>
-                                </svg>
-                              </summary>
-                              <div class="popover-content p-1 mb-0">New photos need to be reviewed by a moderator.</div>
-                            </details>
-                          </div>
-                         
                         </div>
                         @endforeach
                         @endif
                         </div>
-                        <div wire:loading wire:target="mphoto" class="spinner">
-                          <i class="fas fa-spinner fa-spin"></i>
-                        </div>
-                        
                         <div class="record image-input new-img">
                           <div class="file optional add-img">
                             <label class="modern-upload-label" for="mphoto" style="cursor: pointer;">
@@ -1461,9 +1525,20 @@ div#basic {
                             <input class="file optional" wire:model='mphoto' type="file" accept="image/*" id="mphoto" multiple style="display: none;">
                           </div>
                         </div>
-                     
+
+                        <div wire:loading.flex wire:target="mphoto" style="align-items:center;gap:8px;color:#c8ff00;margin-top:10px;font-size:13px;">
+                            <i class="fas fa-spinner fa-spin"></i> Uploading...
+                        </div>
+
+                        @error('mphoto')
+                            <div class="alert alert-danger" style="margin-top:10px;">{{ $message }}</div>
+                        @enderror
+                        @error('mphoto.*')
+                            <div class="alert alert-danger" style="margin-top:10px;">{{ $message }}</div>
+                        @enderror
+
                       </div>
-                      
+
                     </div>
                   </div>
 
@@ -3265,81 +3340,8 @@ if (typeof Livewire !== 'undefined') {
     @this.set('num', num);
    });
 
-// Simple approach - just handle the basics
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded');
-    
-    // Initialize drag and drop after a delay
-    setTimeout(function() {
-        initDragDrop();
-    }, 500);
-});
-
-function initDragDrop() {
-    const dragDropArea = document.getElementById('drag-drop-area');
-    const fileInput = document.getElementById('mphoto');
-
-    if (!dragDropArea || !fileInput) {
-        console.log('Elements not found, retrying...');
-        setTimeout(initDragDrop, 500);
-        return;
-    }
-
-    console.log('Drag and drop elements found');
-
-    // Prevent defaults only on the drag area, not globally
-    dragDropArea.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.classList.add('dragover');
-    });
-
-    dragDropArea.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.classList.remove('dragover');
-    });
-
-    dragDropArea.addEventListener('drop', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.classList.remove('dragover');
-        
-        const files = e.dataTransfer.files;
-        console.log('Files dropped:', files.length);
-        
-        if (files.length > 0 && files[0].type.startsWith('image/')) {
-            console.log('Image file detected:', files[0].name);
-            
-            // Assign files to input
-            fileInput.files = e.dataTransfer.files;
-            
-            // Trigger Livewire update
-            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-            
-            console.log('Upload initiated');
-        }
-    });
-
-    // Click handler for drag-drop area (backup for non-label clicks)
-    dragDropArea.addEventListener('click', function(e) {
-        // If clicking the button, let the inline onclick handle it
-        if (e.target.closest('.btn-primary')) {
-            return;
-        }
-        // For clicks on other areas, trigger file input
-        console.log('Area clicked - opening file dialog');
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Use setTimeout for iOS Safari compatibility
-        setTimeout(function() {
-            fileInput.click();
-        }, 0);
-    });
-
-    console.log('Drag and drop ready');
-}
+// Drag-drop init lives in a regular <script> tag below @endscript so any
+// bug here cannot break Livewire's @script eval. See bottom of this file.
 
 // Phone button with jQuery (if available)
 if (typeof jQuery !== 'undefined') {
@@ -3856,3 +3858,171 @@ if (typeof Livewire !== 'undefined') {
 }
             </script>
           @endscript
+
+          {{-- Plain script (NOT @script) so any error here cannot break Livewire's eval. --}}
+          <script>
+          (function () {
+              function initMphotoUpload() {
+                  var dragDropArea = document.getElementById('drag-drop-area');
+                  var fileInput = document.getElementById('mphoto');
+                  if (!dragDropArea || !fileInput) {
+                      setTimeout(initMphotoUpload, 300);
+                      return;
+                  }
+                  if (fileInput.dataset.mphotoBound === '1') return;
+                  fileInput.dataset.mphotoBound = '1';
+
+                  console.log('[mphoto] init - Livewire?', typeof window.Livewire);
+                  console.log('[mphoto] Livewire keys:', window.Livewire ? Object.keys(window.Livewire) : 'N/A');
+                  console.log('[mphoto] livewire (lower) keys:', window.livewire ? Object.keys(window.livewire) : 'N/A');
+                  var anyWireId = document.querySelector('[wire\\:id]');
+                  console.log('[mphoto] any [wire\\:id] on page?', anyWireId, anyWireId ? anyWireId.getAttribute('wire:id') : null);
+                  console.log('[mphoto] file input closest wire:id:', fileInput.closest('[wire\\:id]'));
+
+                  function findComponent() {
+                      var lw = window.Livewire || window.livewire;
+                      if (!lw) return null;
+                      var root = fileInput.closest('[wire\\:id]');
+                      if (root && typeof lw.find === 'function') {
+                          var c = lw.find(root.getAttribute('wire:id'));
+                          if (c) return c;
+                      }
+                      try {
+                          if (typeof lw.all === 'function') {
+                              var all = lw.all();
+                              console.log('[mphoto] Livewire.all() returned:', all);
+                              if (all && all.length) return all[0];
+                          }
+                      } catch (e) { console.warn('[mphoto] all() threw', e); }
+                      try {
+                          if (typeof lw.first === 'function') {
+                              var f = lw.first();
+                              console.log('[mphoto] Livewire.first() returned:', f);
+                              if (f) return f;
+                          }
+                      } catch (e) { console.warn('[mphoto] first() threw', e); }
+                      // Last resort: any wire:id on page
+                      if (anyWireId && typeof lw.find === 'function') {
+                          var c2 = lw.find(anyWireId.getAttribute('wire:id'));
+                          console.log('[mphoto] Livewire.find(anyWireId) returned:', c2);
+                          if (c2) return c2;
+                      }
+                      return null;
+                  }
+
+                  // Resolve the CSRF token once.
+                  var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                  var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+                  function postToFallbackRoute(file) {
+                      var fd = new FormData();
+                      fd.append('file', file);
+                      return fetch({!! json_encode(route('listings.temp-image')) !!}, {
+                          method: 'POST',
+                          headers: {
+                              'X-CSRF-TOKEN': csrfToken,
+                              'Accept': 'application/json',
+                              'X-Requested-With': 'XMLHttpRequest'
+                          },
+                          credentials: 'same-origin',
+                          body: fd
+                      }).then(function (r) {
+                          if (!r.ok) {
+                              return r.text().then(function (t) {
+                                  throw new Error('upload http ' + r.status + ': ' + t.slice(0, 200));
+                              });
+                          }
+                          return r.json();
+                      });
+                  }
+
+                  function callLivewire(method, arg) {
+                      var component = findComponent();
+                      if (!component) return Promise.reject(new Error('no Livewire component'));
+                      // Try the modern .call() API first, then fall back.
+                      if (typeof component.call === 'function') {
+                          return Promise.resolve(component.call(method, arg));
+                      }
+                      if (typeof component.$call === 'function') {
+                          return Promise.resolve(component.$call(method, arg));
+                      }
+                      return Promise.reject(new Error('component has no call() method'));
+                  }
+
+                  function uploadFiles(fileList) {
+                      var files = [];
+                      for (var i = 0; i < (fileList ? fileList.length : 0); i++) {
+                          var f = fileList[i];
+                          if (f && f.type && f.type.indexOf('image/') === 0) files.push(f);
+                      }
+                      console.log('[mphoto] uploadFiles count:', files.length);
+                      if (!files.length) return;
+
+                      // If Livewire's native upload pipeline is wired up (wire:model
+                      // works), let it handle the upload via its own bubble-phase
+                      // change listener. We are in capture phase, so doing nothing
+                      // here means the event still reaches Livewire normally.
+                      var component = findComponent();
+                      if (component && typeof component.uploadMultiple === 'function') {
+                          console.log('[mphoto] native wire:model pipeline available, deferring to it');
+                          return;
+                      }
+
+                      console.log('[mphoto] native pipeline missing, using fallback route');
+
+                      // Fallback: post each file to the custom route, then tell the
+                      // Livewire component to attach the resulting temp filename to
+                      // $tempImages.
+                      var i2 = 0;
+                      function next() {
+                          if (i2 >= files.length) {
+                              try { fileInput.value = ''; } catch (e) {}
+                              return;
+                          }
+                          var f = files[i2++];
+                          console.log('[mphoto] posting file', f.name, f.size);
+                          postToFallbackRoute(f)
+                              .then(function (data) {
+                                  console.log('[mphoto] uploaded, filename:', data.filename);
+                                  return callLivewire('addUploadedTempFile', data.filename);
+                              })
+                              .then(function () {
+                                  console.log('[mphoto] addUploadedTempFile done');
+                                  next();
+                              })
+                              .catch(function (err) {
+                                  console.error('[mphoto] upload chain failed:', err);
+                                  next();
+                              });
+                      }
+                      next();
+                  }
+
+                  fileInput.addEventListener('change', function (e) {
+                      console.log('[mphoto] change fired, files:', e.target.files);
+                      uploadFiles(e.target.files);
+                  }, true);
+
+                  dragDropArea.addEventListener('dragover', function (e) {
+                      e.preventDefault(); e.stopPropagation();
+                      this.classList.add('dragover');
+                  });
+                  dragDropArea.addEventListener('dragleave', function (e) {
+                      e.preventDefault(); e.stopPropagation();
+                      this.classList.remove('dragover');
+                  });
+                  dragDropArea.addEventListener('drop', function (e) {
+                      e.preventDefault(); e.stopPropagation();
+                      this.classList.remove('dragover');
+                      uploadFiles(e.dataTransfer.files);
+                  });
+              }
+
+              if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', initMphotoUpload);
+              } else {
+                  initMphotoUpload();
+              }
+          })();
+          </script>
+</div>{{-- /single-root --}}

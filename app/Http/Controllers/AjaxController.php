@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use App\Models\City;
 use App\Models\Currency;
 use App\Models\Package;
@@ -82,5 +84,37 @@ class AjaxController extends Controller
         }
         
         return response()->json($package);
+    }
+
+    /**
+     * Fallback temp image upload used by the new-profile / edit-profile pages
+     * when this Livewire build's wire:model file upload pipeline is missing
+     * client-side. Saves the file into Livewire's livewire-tmp directory using
+     * its filename convention ("<extension>-<random40>.tmp" — what
+     * TemporaryUploadedFile::generateHashNameWithOriginalNameEmbedded produces),
+     * then returns the filename so the Livewire component can hydrate a
+     * TemporaryUploadedFile from it via createFromLivewire().
+     */
+    public function uploadTempImage(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:8192',
+        ]);
+
+        $file = $request->file('file');
+        $original = $file->getClientOriginalName();
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+
+        // Livewire's TemporaryUploadedFile::createFromLivewire accepts a bare
+        // filename and resolves it relative to the configured upload directory
+        // (livewire-tmp/). Random 40 chars is the same convention Livewire uses.
+        $filename = Str::random(40) . '.' . $extension;
+
+        $file->storeAs('livewire-tmp', $filename, 'local');
+
+        return response()->json([
+            'filename' => $filename,
+            'original' => $original,
+        ]);
     }
 }
