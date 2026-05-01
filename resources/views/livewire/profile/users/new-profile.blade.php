@@ -361,22 +361,30 @@
 
         /* Image records */
         .record.image {
-            position: relative;
-            width: 120px;
-            height: 120px;
+            position: relative !important;
+            width: 140px !important;
+            height: 140px !important;
+            min-height: 140px !important;
+            max-height: 140px !important;
             padding: 0 !important;
+            margin: 0 !important;
             background: #1a1b1e !important;
             border: 1px solid #2e3033 !important;
             border-radius: 6px !important;
-            overflow: hidden;
-            flex-shrink: 0;
-            box-sizing: border-box;
+            overflow: hidden !important;
+            flex-shrink: 0 !important;
+            box-sizing: border-box !important;
         }
         .record.image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100% !important;
+            max-height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         .record.image .delete {
             position: absolute;
@@ -884,15 +892,13 @@ div#basic {
     margin-top: 15px;
 }
 
-.img-footer {
-  position: absolute;
-    bottom: 30px;
-    width: 100%;
-    left: -20px;
-}
-
-form.listing .image {
-  padding: 15px 20px 5px;
+/* Legacy .img-footer + form.listing .image padding rules from app2.css would
+   push the footer label off-screen and add 20px gutters inside each preview
+   card. Reset both — the per-card layout is fully handled by .record.image
+   rules above. */
+form.listing .image,
+form.listing .record.image {
+    padding: 0 !important;
 }
 
 .wrappper{
@@ -1484,6 +1490,11 @@ div#basic {
                     <div class="ad-images string optional listing_listing_images">
                       <div class="multi-image-uploader1" >
                         <p>Please upload high quality images only. Only post pictures of yourself or of a person who has given you explicit permission to do so. If you post fake photos, your profile will be deleted and your account blocked - <a href="/help-for-advertisers#fake" target="_blank">more information</a>. <br /> Photos with full frontal nudity, genitalia or sexually explicit conduct are prohibited. </p>
+
+                        <div wire:loading.flex wire:target="mphoto" style="align-items:center;justify-content:center;gap:10px;color:#0a0b0d;background:#c8ff00;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:14px;font-weight:600;">
+                            <i class="fas fa-spinner fa-spin"></i> Uploading photo…
+                        </div>
+
                         <div id="image-container">
                         @if($tempImages)
                         @foreach($tempImages  as $key => $image)
@@ -1524,10 +1535,6 @@ div#basic {
                             </label>
                             <input class="file optional" wire:model='mphoto' type="file" accept="image/*" id="mphoto" multiple style="display: none;">
                           </div>
-                        </div>
-
-                        <div wire:loading.flex wire:target="mphoto" style="align-items:center;gap:8px;color:#c8ff00;margin-top:10px;font-size:13px;">
-                            <i class="fas fa-spinner fa-spin"></i> Uploading...
                         </div>
 
                         @error('mphoto')
@@ -4023,6 +4030,105 @@ if (typeof Livewire !== 'undefined') {
               } else {
                   initMphotoUpload();
               }
+          })();
+          </script>
+
+          {{-- Isolated drag-to-reorder using event delegation on document.
+               Single set of listeners, never needs re-binding when Livewire
+               morphs the DOM, works for cards added/removed after upload.
+               Plain <script> (NOT @script) so any error here cannot break
+               Livewire's eval. Uses Livewire.dispatch paired with
+               #[On('reorderImages')] on the PHP side. All names prefixed
+               evDrag* to avoid colliding with anything else. --}}
+          <script>
+          (function () {
+              var dragged = null;
+
+              function findCard(target) {
+                  while (target && target.nodeType === 1) {
+                      if (target.classList && target.classList.contains('record') && target.classList.contains('image')) {
+                          // Exclude .record.image-input (the upload widget) which has class
+                          // "record image-input new-img" - it lacks the bare "image" class
+                          // because token matching in classList is by full token. Safe.
+                          return target;
+                      }
+                      target = target.parentNode;
+                  }
+                  return null;
+              }
+
+              document.addEventListener('dragstart', function (e) {
+                  var card = findCard(e.target);
+                  if (!card) return;
+                  // Only allow drag for cards inside our image container.
+                  if (!card.parentNode || card.parentNode.id !== 'image-container') return;
+                  dragged = card;
+                  card.style.opacity = '0.5';
+                  if (e.dataTransfer) {
+                      e.dataTransfer.effectAllowed = 'move';
+                      try { e.dataTransfer.setData('text/plain', card.getAttribute('data-index') || ''); } catch (err) {}
+                  }
+                  console.log('[evDrag] start', card.getAttribute('data-index'));
+              }, true);
+
+              document.addEventListener('dragend', function (e) {
+                  var card = findCard(e.target);
+                  if (card) card.style.opacity = '';
+                  var container = document.getElementById('image-container');
+                  if (container) {
+                      container.querySelectorAll('.record.image').forEach(function (c) {
+                          c.classList.remove('drag-over');
+                      });
+                  }
+                  dragged = null;
+              }, true);
+
+              document.addEventListener('dragover', function (e) {
+                  if (!dragged) return;
+                  var card = findCard(e.target);
+                  if (!card || card.parentNode.id !== 'image-container') return;
+                  e.preventDefault();
+                  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                  if (card !== dragged) card.classList.add('drag-over');
+              }, true);
+
+              document.addEventListener('dragleave', function (e) {
+                  var card = findCard(e.target);
+                  if (card) card.classList.remove('drag-over');
+              }, true);
+
+              document.addEventListener('drop', function (e) {
+                  if (!dragged) return;
+                  var card = findCard(e.target);
+                  if (!card || card.parentNode.id !== 'image-container') return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  card.classList.remove('drag-over');
+                  if (dragged === card) { dragged = null; return; }
+
+                  var container = card.parentNode;
+                  var all = Array.prototype.slice.call(container.querySelectorAll('.record.image'));
+                  var order = all.map(function (c) { return parseInt(c.getAttribute('data-index'), 10); });
+                  var fromIdx = parseInt(dragged.getAttribute('data-index'), 10);
+                  var toIdx = parseInt(card.getAttribute('data-index'), 10);
+
+                  var fromPos = order.indexOf(fromIdx);
+                  if (fromPos > -1) order.splice(fromPos, 1);
+                  var toPos = order.indexOf(toIdx);
+                  if (toPos < 0) toPos = order.length;
+                  order.splice(toPos, 0, fromIdx);
+
+                  console.log('[evDrag] drop', { from: fromIdx, to: toIdx, order: order });
+
+                  if (window.Livewire && typeof window.Livewire.dispatch === 'function') {
+                      window.Livewire.dispatch('reorderImages', { orderedIndexes: order });
+                  } else {
+                      console.warn('[evDrag] Livewire.dispatch not available');
+                  }
+                  dragged = null;
+              }, true);
+
+              console.log('[evDrag] delegated listeners attached');
           })();
           </script>
 </div>{{-- /single-root --}}

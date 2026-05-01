@@ -143,7 +143,15 @@ return [
     |
     */
 
-    'inject_morph_markers' => true,
+    // Disabled: this Blade pre-compiler scans the entire view source with a
+    // regex + token_get_all loop to wrap @if/@foreach/@error/etc. with morph
+    // markers. On the new-profile / user-profile blades (4000+ lines, dozens
+    // of @foreach + @error + @this.set/call) the loop hits PHP's 60s
+    // max_execution_time at SupportMorphAwareIfStatement::hasEvenNumberOfParentheses
+    // (line 180, token_get_all). Turning it off only loses a minor DOM-diff
+    // optimization for @if toggles — uploads, drag reorder, and form
+    // submission keep working normally.
+    'inject_morph_markers' => false,
 
     /*
     |---------------------------------------------------------------------------

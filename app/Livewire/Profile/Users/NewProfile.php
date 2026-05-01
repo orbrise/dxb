@@ -3,6 +3,7 @@ namespace App\Livewire\Profile\Users;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\Attributes\On;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use App\Models\{Listing, Service, Country, User, ProfileImage, UserService, 
     Gender, Currency, Ethnicity, Bust, HairColor, Language, UserLanguage, UsersProfile};
@@ -179,9 +180,12 @@ class NewProfile extends Component
 /**
  * Adds an image to $tempImages from a filename that was already uploaded to
  * storage/app/livewire-tmp/<filename> by the AjaxController fallback route.
- * Used when this Livewire build's client-side file upload pipeline is broken
- * and we have to upload via a plain Laravel POST first.
+ * Reachable two ways: direct call (component.call/$wire) and a global event
+ * via Livewire.dispatch('addUploadedTempFile', { filename: '...' }) - the
+ * dispatch path is what actually works on this Livewire build because the
+ * component instance does not expose .call() / $call() to JS.
  */
+#[On('addUploadedTempFile')]
 public function addUploadedTempFile($filename)
 {
     if (!is_string($filename) || $filename === '') {
@@ -210,6 +214,7 @@ public function removeTemporaryImage($index)
     }
 }
 
+#[On('reorderImages')]
 public function reorderImages($orderedIndexes)
 {
     $newOrder = [];
