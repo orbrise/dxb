@@ -8,6 +8,11 @@
   </div>
 @endsection
 
+{{-- Single root element required by Livewire 3. Without it, Livewire picks
+     the first child (the <style> tag) as the component root and every
+     wire:* directive on the form ends up outside the tracked DOM, which
+     breaks wire:model on the file input (silent uploads). --}}
+<div>
 <style>
         /* ===== EVOORY DARK THEME FOR EDIT PROFILE ===== */
         body, .container, .container-fluid, .content-wrapper, #content {
@@ -964,10 +969,14 @@ div#basic {
         }
 
         .record.image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 100% !important;
+            min-height: 100% !important;
+            max-width: none !important;
+            max-height: 100% !important;
+            object-fit: cover !important;
+            display: block !important;
         }
 
         .record.image .delete {
@@ -4934,3 +4943,241 @@ $(document).ready(function() {
 
             </script>
           @endscript
+
+          {{-- Plain script (NOT @script) so any error here cannot break Livewire's eval.
+               Mirrors the upload fallback in new-profile.blade.php. --}}
+          <script>
+          (function () {
+              function initMphotoUpload() {
+                  var dragDropArea = document.getElementById('drag-drop-area');
+                  var fileInput = document.getElementById('mphoto');
+                  if (!dragDropArea || !fileInput) {
+                      setTimeout(initMphotoUpload, 300);
+                      return;
+                  }
+                  if (fileInput.dataset.mphotoBound === '1') return;
+                  fileInput.dataset.mphotoBound = '1';
+
+                  function findComponent() {
+                      var lw = window.Livewire || window.livewire;
+                      if (!lw) return null;
+                      var root = fileInput.closest('[wire\\:id]');
+                      if (root && typeof lw.find === 'function') {
+                          var c = lw.find(root.getAttribute('wire:id'));
+                          if (c) return c;
+                      }
+                      try {
+                          if (typeof lw.all === 'function') {
+                              var all = lw.all();
+                              if (all && all.length) return all[0];
+                          }
+                      } catch (e) {}
+                      try {
+                          if (typeof lw.first === 'function') {
+                              var f = lw.first();
+                              if (f) return f;
+                          }
+                      } catch (e) {}
+                      return null;
+                  }
+
+                  var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                  var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+                  function postToFallbackRoute(file) {
+                      var fd = new FormData();
+                      fd.append('file', file);
+                      return fetch({!! json_encode(route('listings.temp-image')) !!}, {
+                          method: 'POST',
+                          headers: {
+                              'X-CSRF-TOKEN': csrfToken,
+                              'Accept': 'application/json',
+                              'X-Requested-With': 'XMLHttpRequest'
+                          },
+                          credentials: 'same-origin',
+                          body: fd
+                      }).then(function (r) {
+                          if (!r.ok) {
+                              return r.text().then(function (t) {
+                                  throw new Error('upload http ' + r.status + ': ' + t.slice(0, 200));
+                              });
+                          }
+                          return r.json();
+                      });
+                  }
+
+                  function dispatchAdd(filename) {
+                      // Prefer global dispatch since component.call() is unreliable
+                      // on this Livewire build (handled server-side by #[On]).
+                      var lw = window.Livewire || window.livewire;
+                      if (lw && typeof lw.dispatch === 'function') {
+                          lw.dispatch('addUploadedTempFile', { filename: filename });
+                          return Promise.resolve();
+                      }
+                      // Last-resort fallback
+                      var component = findComponent();
+                      if (component && typeof component.call === 'function') {
+                          return Promise.resolve(component.call('addUploadedTempFile', filename));
+                      }
+                      return Promise.reject(new Error('no Livewire transport'));
+                  }
+
+                  function uploadFiles(fileList) {
+                      var files = [];
+                      for (var i = 0; i < (fileList ? fileList.length : 0); i++) {
+                          var f = fileList[i];
+                          if (f && f.type && f.type.indexOf('image/') === 0) files.push(f);
+                      }
+                      if (!files.length) return;
+
+                      var component = findComponent();
+                      if (component && typeof component.uploadMultiple === 'function') {
+                          // Native pipeline available - let wire:model handle it.
+                          return;
+                      }
+
+                      var i2 = 0;
+                      function next() {
+                          if (i2 >= files.length) {
+                              try { fileInput.value = ''; } catch (e) {}
+                              return;
+                          }
+                          var f = files[i2++];
+                          postToFallbackRoute(f)
+                              .then(function (data) {
+                                  return dispatchAdd(data.filename);
+                              })
+                              .then(function () { next(); })
+                              .catch(function (err) {
+                                  console.error('[mphoto] upload chain failed:', err);
+                                  next();
+                              });
+                      }
+                      next();
+                  }
+
+                  fileInput.addEventListener('change', function (e) {
+                      uploadFiles(e.target.files);
+                  }, true);
+
+                  dragDropArea.addEventListener('dragover', function (e) {
+                      e.preventDefault(); e.stopPropagation();
+                      this.classList.add('dragover');
+                  });
+                  dragDropArea.addEventListener('dragleave', function (e) {
+                      e.preventDefault(); e.stopPropagation();
+                      this.classList.remove('dragover');
+                  });
+                  dragDropArea.addEventListener('drop', function (e) {
+                      e.preventDefault(); e.stopPropagation();
+                      this.classList.remove('dragover');
+                      uploadFiles(e.dataTransfer.files);
+                  });
+              }
+
+              if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', initMphotoUpload);
+              } else {
+                  initMphotoUpload();
+              }
+          })();
+          </script>
+
+          {{-- Isolated drag-to-reorder using event delegation on document.
+               Single set of listeners, never needs re-binding when Livewire
+               morphs the DOM. Only fires for cards with data-index (temp
+               images); existing-image cards (data-id) are skipped because
+               their reorder is a different code path. --}}
+          <script>
+          (function () {
+              var dragged = null;
+
+              function findCard(target) {
+                  while (target && target.nodeType === 1) {
+                      if (target.classList && target.classList.contains('record') && target.classList.contains('image')) {
+                          return target;
+                      }
+                      target = target.parentNode;
+                  }
+                  return null;
+              }
+
+              function isTempCard(card) {
+                  return card && card.parentNode && card.parentNode.id === 'image-container'
+                      && card.hasAttribute('data-index');
+              }
+
+              document.addEventListener('dragstart', function (e) {
+                  var card = findCard(e.target);
+                  if (!isTempCard(card)) return;
+                  dragged = card;
+                  card.style.opacity = '0.5';
+                  if (e.dataTransfer) {
+                      e.dataTransfer.effectAllowed = 'move';
+                      try { e.dataTransfer.setData('text/plain', card.getAttribute('data-index') || ''); } catch (err) {}
+                  }
+                  console.log('[evDrag] start', card.getAttribute('data-index'));
+              }, true);
+
+              document.addEventListener('dragend', function (e) {
+                  var card = findCard(e.target);
+                  if (card) card.style.opacity = '';
+                  var container = document.getElementById('image-container');
+                  if (container) {
+                      container.querySelectorAll('.record.image').forEach(function (c) {
+                          c.classList.remove('drag-over');
+                      });
+                  }
+                  dragged = null;
+              }, true);
+
+              document.addEventListener('dragover', function (e) {
+                  if (!dragged) return;
+                  var card = findCard(e.target);
+                  if (!isTempCard(card)) return;
+                  e.preventDefault();
+                  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                  if (card !== dragged) card.classList.add('drag-over');
+              }, true);
+
+              document.addEventListener('dragleave', function (e) {
+                  var card = findCard(e.target);
+                  if (card) card.classList.remove('drag-over');
+              }, true);
+
+              document.addEventListener('drop', function (e) {
+                  if (!dragged) return;
+                  var card = findCard(e.target);
+                  if (!isTempCard(card)) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  card.classList.remove('drag-over');
+                  if (dragged === card) { dragged = null; return; }
+
+                  var container = card.parentNode;
+                  // Only collect temp cards (data-index) - existing cards are managed separately.
+                  var all = Array.prototype.slice.call(container.querySelectorAll('.record.image[data-index]'));
+                  var order = all.map(function (c) { return parseInt(c.getAttribute('data-index'), 10); });
+                  var fromIdx = parseInt(dragged.getAttribute('data-index'), 10);
+                  var toIdx = parseInt(card.getAttribute('data-index'), 10);
+
+                  var fromPos = order.indexOf(fromIdx);
+                  if (fromPos > -1) order.splice(fromPos, 1);
+                  var toPos = order.indexOf(toIdx);
+                  if (toPos < 0) toPos = order.length;
+                  order.splice(toPos, 0, fromIdx);
+
+                  console.log('[evDrag] drop', { from: fromIdx, to: toIdx, order: order });
+
+                  if (window.Livewire && typeof window.Livewire.dispatch === 'function') {
+                      window.Livewire.dispatch('reorderImages', { orderedIndexes: order });
+                  } else {
+                      console.warn('[evDrag] Livewire.dispatch not available');
+                  }
+                  dragged = null;
+              }, true);
+
+              console.log('[evDrag] delegated listeners attached (user-profile)');
+          })();
+          </script>
+</div>{{-- /single-root --}}

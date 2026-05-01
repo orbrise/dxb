@@ -4,6 +4,8 @@ namespace App\Livewire\Profile\Users;
 use Livewire\WithFileUploads;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use App\Models\Listing;
 use App\Models\Service;
 use App\Models\Country;
@@ -424,6 +426,29 @@ public function removeTemporaryImage($index)
     $this->tempImages = array_values($this->tempImages);
 }
 
+/**
+ * Bridge method for the JS upload-fallback chain. Called via global
+ * Livewire.dispatch('addUploadedTempFile', { filename }) when the file
+ * was already POSTed to AjaxController@uploadTempImage and saved into
+ * livewire-tmp/. Hydrates a TemporaryUploadedFile from the filename so
+ * later validation + processing in updateProfile work normally.
+ */
+#[On('addUploadedTempFile')]
+public function addUploadedTempFile($filename)
+{
+    if (!is_string($filename) || $filename === '') {
+        return;
+    }
+    $safe = basename($filename);
+    if ($safe !== $filename) {
+        return;
+    }
+    $tempFile = TemporaryUploadedFile::createFromLivewire($safe);
+    $this->tempImages[] = $tempFile;
+    $this->dispatch('fileUploaded');
+}
+
+#[On('reorderImages')]
 public function reorderImages($orderedIndexes)
 {
     $newOrder = [];

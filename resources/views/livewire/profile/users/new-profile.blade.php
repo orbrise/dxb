@@ -378,7 +378,9 @@
         .record.image img {
             width: 100% !important;
             height: 100% !important;
+            min-width: 100% !important;
             min-height: 100% !important;
+            max-width: none !important;
             max-height: 100% !important;
             object-fit: cover !important;
             object-position: center !important;
@@ -838,6 +840,10 @@
     padding-bottom: 5px;
     padding-left: 37px;
 
+}
+
+.typeahead-city-wrapper {
+    position: relative;
 }
 
 .typeahead-city-wrapper::before {
@@ -3347,8 +3353,8 @@ if (typeof Livewire !== 'undefined') {
     @this.set('num', num);
    });
 
-// Drag-drop init lives in a regular <script> tag below @endscript so any
-// bug here cannot break Livewire's @script eval. See bottom of this file.
+// Drag-drop init lives in a regular script tag at the bottom of this file
+// (outside the Livewire script block) so any bug there cannot break the eval.
 
 // Phone button with jQuery (if available)
 if (typeof jQuery !== 'undefined') {
@@ -3866,7 +3872,7 @@ if (typeof Livewire !== 'undefined') {
             </script>
           @endscript
 
-          {{-- Plain script (NOT @script) so any error here cannot break Livewire's eval. --}}
+          {{-- Plain script tag (outside the Livewire script block) so any error here cannot break the eval. --}}
           <script>
           (function () {
               function initMphotoUpload() {
@@ -4036,10 +4042,10 @@ if (typeof Livewire !== 'undefined') {
           {{-- Isolated drag-to-reorder using event delegation on document.
                Single set of listeners, never needs re-binding when Livewire
                morphs the DOM, works for cards added/removed after upload.
-               Plain <script> (NOT @script) so any error here cannot break
-               Livewire's eval. Uses Livewire.dispatch paired with
-               #[On('reorderImages')] on the PHP side. All names prefixed
-               evDrag* to avoid colliding with anything else. --}}
+               Plain script tag outside the Livewire block so any error here
+               cannot break the eval. Uses Livewire.dispatch paired with
+               an On listener on the PHP side. All names prefixed evDrag*
+               to avoid colliding with anything else. --}}
           <script>
           (function () {
               var dragged = null;
