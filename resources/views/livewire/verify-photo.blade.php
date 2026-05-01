@@ -257,7 +257,7 @@
     font-weight: 600;
 }
 #camVerifyModal .btn-primary:disabled {
-    background: #333;
+    background: #0D1011;
     color: #666;
 }
 #camVerifyModal .btn-default {

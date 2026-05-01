@@ -184,12 +184,12 @@
 
 .service-list a:hover {
     background: #444;
-    color: #f4b827;
+    color: #C1F11D;
 }
 
 .service-list a.active {
     background: #4a4a4a;
-    color: #f4b827;
+    color: #C1F11D;
     font-weight: 500;
 }
 
@@ -549,8 +549,8 @@ min-width: 222px;
 }
 
 #search-more .btn-primary:hover {
-    background-color: #f4b827 !important;
-    border-color: #f4b827 !important;
+    background-color: #C1F11D !important;
+    border-color: #C1F11D !important;
 }
 
 /* Main Navigation Tabs - ESCORTS / WHAT'S NEW */

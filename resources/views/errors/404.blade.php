@@ -31,7 +31,7 @@
         .error-code {
             font-size: 150px;
             font-weight: 900;
-            background: linear-gradient(45deg, #f4b827, #d3980b);
+            background: linear-gradient(45deg, #C1F11D, #d3980b);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -77,7 +77,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #f4b827, #d3980b);
+            background: linear-gradient(135deg, #C1F11D, #d3980b);
             color: #333;
             box-shadow: 0 4px 15px rgba(244, 184, 39, 0.3);
         }
@@ -94,8 +94,8 @@
         }
 
         .btn-secondary:hover {
-            border-color: #f4b827;
-            color: #f4b827;
+            border-color: #C1F11D;
+            color: #C1F11D;
             transform: translateY(-2px);
         }
 

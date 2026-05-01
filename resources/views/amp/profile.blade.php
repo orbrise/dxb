@@ -65,7 +65,7 @@
                 </div>
                 
                 <!-- Name -->
-                <h1 style="color: #f4b827; font-size: 28px; margin: 0 0 10px 0;">{{ $profile->name }}</h1>
+                <h1 style="color: #C1F11D; font-size: 28px; margin: 0 0 10px 0;">{{ $profile->name }}</h1>
                 
                 <!-- Location -->
                 <div style="color: #999; margin-bottom: 15px;">
@@ -105,7 +105,7 @@
                 
                 <!-- Prices -->
                 <div style="margin-top: 20px; padding: 15px; background: #1a1a1a; border-radius: 8px;">
-                    <div style="color: #f4b827; font-weight: bold; margin-bottom: 10px;">💰 Rates</div>
+                    <div style="color: #C1F11D; font-weight: bold; margin-bottom: 10px;">💰 Rates</div>
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                         @if($profile->incall_price)
                         <div>

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Services\NotificationService;
 use App\Models\MailSettings;
 use App\Mail\ProfileUpgraded;
- 
+
 class UpgradeController extends Component
 {
     public $selectedPaymentMethod;

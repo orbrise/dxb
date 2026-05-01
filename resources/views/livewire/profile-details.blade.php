@@ -210,7 +210,7 @@
                 @if(!empty($user->incall))
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="You can come to my place">
                   <div class="pull-left text-muted">
-                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #333; border-radius: 50%; margin-right: 5px;padding: 7px;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #0D1011; border-radius: 50%; margin-right: 5px;padding: 7px;">
                       <img src="https://assets.evoory.com/assets/newtheme/incall.png" width="12" height="16" alt="Message">
                     </span>
                   </div>
@@ -223,7 +223,7 @@
                 @if(!empty($user->outcall))
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="I can come to your place">
                   <div class="pull-left text-muted">
-                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #333; border-radius: 50%; margin-right: 5px;padding: 7px;">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #0D1011; border-radius: 50%; margin-right: 5px;padding: 7px;">
                       <img src="https://assets.evoory.com/assets/newtheme/outcall.png" width="12" height="16" alt="Message">
                     </span>
                   </div>
@@ -1471,7 +1471,7 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             function updateThumbnailSelection() {
               $('#lightboxThumbnails img').each(function(index) {
                 if (index === currentImageIndex) {
-                  $(this).css('border', '2px solid #f4b827');
+                  $(this).css('border', '2px solid #C1F11D');
                   $(this).css('opacity', '1');
                 } else {
                   $(this).css('border', '2px solid transparent');

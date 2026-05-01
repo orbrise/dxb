@@ -14,16 +14,16 @@
   </div>
 @endsection
 
+<div class="evoory-upgrade-page">
 <style>
-.upgrade-listing-form-init { visibility: visible; }
-#allpackages { display: block; }
-.checkout-fields { display: none; }
-#paypal-button-container { margin-top: 20px; width: 100%; }
-.payment-options li label.selected { border-left: 3px solid #C1F11D; }
+.evoory-upgrade-page .upgrade-listing-form-init { visibility: visible; }
+.evoory-upgrade-page #allpackages { display: block; }
+.evoory-upgrade-page .checkout-fields { display: none; }
+.evoory-upgrade-page #paypal-button-container { margin-top: 20px; width: 100%; }
+.evoory-upgrade-page .payment-options li label.selected { border-left: 3px solid #C1F11D; }
 
 /* Evoory Theme Upgrade Page */
-.content-wrapper, #content, .container-fluid { background: #000 !important; }
-.upgrade-type-selector { padding: 20px 0; }
+.evoory-upgrade-page .upgrade-type-selector { padding: 20px 0; }
 
 .upgrade-type {
     position: relative;
@@ -331,7 +331,6 @@ a.text-warning:focus, a.text-warning {
 }
 </style>
 
-<div>
   <div class="container-fluid">
         <div class="content-wrapper no-sidebar">
           <div id="content">
@@ -407,7 +406,7 @@ a.text-warning:focus, a.text-warning {
                                           $sideImageSize = $package->name == 'VIP' ? '25px' : '25px';
                                       @endphp
                                       @for($i = 0; $i < $showSideImages; $i++)
-                                      <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #333; overflow: hidden;">
+                                      <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #0D1011; overflow: hidden;">
                                           <img src="/admin/assets1/images/default-avatar.png" alt="Side Image Slot" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5;">
                                       </div>
                                       @endfor

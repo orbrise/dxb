@@ -42,14 +42,14 @@
                             <span>
                                 Posted by 
                                 @if($post->author)
-                                    <a href="#" style="color: #f4b827;">{{ $post->author->name ?? 'Claire Republique' }}</a>
+                                    <a href="#" style="color: #C1F11D;">{{ $post->author->name ?? 'Claire Republique' }}</a>
                                 @else
-                                    <a href="#" style="color: #f4b827;">Claire Republique</a>
+                                    <a href="#" style="color: #C1F11D;">Claire Republique</a>
                                 @endif
                                 at <a href="#" style="color: #888;">{{ $post->published_at->format('H:i') }}</a>
                             </span>
                             <span>
-                                <a href="#comments" style="color: #f4b827;">0 comments</a>
+                                <a href="#comments" style="color: #C1F11D;">0 comments</a>
                             </span>
                         </div>
                         <div class="share-icons">

@@ -133,7 +133,7 @@
                         <i class="fa fa-clock"></i> Archived ({{ $archivedCount ?? 0 }})
                       </a>
                     </div>
-                     <a style="color: #333; float:right; background: #f4b827 linear-gradient(#f4b827, #d3980b) repeat-x;
+                     <a style="color: #333; float:right; background: #C1F11D linear-gradient(#C1F11D, #d3980b) repeat-x;
     border-color: #c9910a;" class="btn my-listing-new-link " href="{{ route('new.profile') }}" data-turbolinks="false">
               Add Profile <i class="fa fa-plus fa-text-default"></i>
           </a>

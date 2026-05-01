@@ -362,7 +362,7 @@ select.select-box option {
 
         body {
             font: 14px/1.7 Helvetica, Arial, sans-serif;
-            background: #333 url({{smart_asset('assets/images/web/pic.png')}}) top left;
+            background: #0D1011 url({{smart_asset('assets/images/web/pic.png')}}) top left;
             margin: 0;
             color: #fff;
             background-color: #333
@@ -376,7 +376,7 @@ select.select-box option {
 
         a {
             background-color: transparent;
-            color: #f4b827;
+            color: #C1F11D;
             text-decoration: none
         }
 
@@ -711,7 +711,7 @@ select.select-box option {
 
         .btn-primary {
             color: #333;
-            background-color: #f4b827
+            background-color: #C1F11D
         }
 
         .btn-primary:focus {
@@ -793,7 +793,7 @@ select.select-box option {
             color: #fff;
             text-decoration: none;
             outline: 0;
-            background-color: #f4b827
+            background-color: #C1F11D
         }
 
         .nav:after,
@@ -844,7 +844,7 @@ select.select-box option {
         .nav-pills>li.active>a:focus,
         .nav-pills>li.active>a:hover {
             color: #fff;
-            background-color: #f4b827
+            background-color: #C1F11D
         }
 
         .nav-stacked>li {
@@ -1087,7 +1087,7 @@ select.select-box option {
         .dark-form .select-box:active,
         .dark-form .select-box:focus,
         .dark-form .select-box:hover {
-            background: #333;
+            background: #0D1011;
             -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
             box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125)
         }
@@ -1134,7 +1134,7 @@ select.select-box option {
         .dark-form .select2-container .select2-input:active,
         .dark-form .select2-container .select2-input:focus,
         .dark-form .select2-container .select2-input:hover {
-            background: #333;
+            background: #0D1011;
             -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
             box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125)
         }
@@ -1213,7 +1213,7 @@ select.select-box option {
         .dark-form .tt-input:active,
         .dark-form .tt-input:focus,
         .dark-form .tt-input:hover {
-            background: #333;
+            background: #0D1011;
             -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
             box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125)
         }
@@ -1865,7 +1865,7 @@ select.select-box option {
         .listings-search-advanced-fields .form-control[multiple]:active,
         .listings-search-advanced-fields .form-control[multiple]:focus,
         .listings-search-advanced-fields .form-control[multiple]:hover {
-            background: #333;
+            background: #0D1011;
             -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
             box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125)
         }
@@ -1963,7 +1963,7 @@ select.select-box option {
 
         .tt-dropdown-menu {
             min-width: 300px;
-            background: #333;
+            background: #0D1011;
             border: 1px solid #555;
             z-index: 1002;
             opacity: 0;
@@ -2069,8 +2069,8 @@ select.select-box option {
         }
 
         .btn-primary {
-            background: #f4b827 -webkit-gradient(linear, left top, left bottom, from(#f4b827), to(#d3980b)) repeat-x;
-            background: #f4b827 linear-gradient(#f4b827, #d3980b) repeat-x;
+            background: #C1F11D -webkit-gradient(linear, left top, left bottom, from(#C1F11D), to(#d3980b)) repeat-x;
+            background: #C1F11D linear-gradient(#C1F11D, #d3980b) repeat-x;
             border-color: #c9910a
         }
 
@@ -2556,7 +2556,7 @@ select.select-box option {
 }
 
 .mobile-search-modal .chosen-container .chosen-drop {
-    background: #333 !important;
+    background: #0D1011 !important;
     color: white !important;
     border: 1px solid #555 !important;
     z-index: 1061 !important;
@@ -2679,7 +2679,7 @@ select.select-box option {
 .select2-choice {
     background-color: #333 !important;
     background-image: none !important;
-    background: #333 !important;
+    background: #0D1011 !important;
     color: #e6e6e6 !important;
     border: 1px solid #555 !important;
     box-shadow: none !important;
@@ -2899,8 +2899,8 @@ textarea.form-control:disabled {
 
 
 .verified-label {
-    background: -webkit-gradient(linear, left bottom, right top, from(#f4b827), to(#c3931f));
-    background: linear-gradient(to top right, #f4b827, #c3931f);
+    background: -webkit-gradient(linear, left bottom, right top, from(#C1F11D), to(#c3931f));
+    background: linear-gradient(to top right, #C1F11D, #c3931f);
     color: #333;
     font-weight: 700;
     text-transform: uppercase;
@@ -2925,8 +2925,8 @@ textarea.form-control:disabled {
 
 
 .btn-primary {
-    background-color: #f4b827 ;
-    border-color: #f4b827 ;
+    background-color: #C1F11D ;
+    border-color: #C1F11D ;
 }
 }
 

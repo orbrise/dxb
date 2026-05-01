@@ -179,7 +179,7 @@
         color: #fff;
         border: 1px solid #3a3a3a;
     }
-    .ev-btn-dark:hover { background: #333; color: #fff; text-decoration: none; }
+    .ev-btn-dark:hover { background: #0D1011; color: #fff; text-decoration: none; }
 
     /* Archived time */
     .ev-archived-time {

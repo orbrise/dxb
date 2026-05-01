@@ -414,7 +414,7 @@ body { background: #0a0a0a !important; }
     cursor: pointer;
 }
 #verificationCameraModal .btn-primary:disabled {
-    background: #333;
+    background: #0D1011;
     color: #666;
     cursor: not-allowed;
 }

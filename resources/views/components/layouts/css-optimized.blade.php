@@ -16,7 +16,7 @@
       } 
       /* Critical base styles to prevent white flash */
       body {
-        background: #333 !important;
+        background: #0D1011 !important;
         margin: 0;
         color: #fff;
       }

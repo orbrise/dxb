@@ -97,7 +97,7 @@
 
       body {
         font: 14px/1.7 Helvetica, Arial, sans-serif;
-        background: #333 url({{smart_asset('assets/images/web/pic1.png')}}) top left;
+        background: #0D1011 url({{smart_asset('assets/images/web/pic1.png')}}) top left;
         margin: 0;
         color: #fff;
         background-color: #333
@@ -111,7 +111,7 @@
 
       a {
         background-color: transparent;
-        color: #f4b827;
+        color: #C1F11D;
         text-decoration: none
       }
 
@@ -553,7 +553,7 @@
 
       .btn-primary {
         color: #333;
-        background-color: #f4b827
+        background-color: #C1F11D
       }
 
       .btn-primary:focus {
@@ -642,7 +642,7 @@
         color: #fff;
         text-decoration: none;
         outline: 0;
-        background-color: #f4b827
+        background-color: #C1F11D
       }
 
       .btn-group {
@@ -728,7 +728,7 @@
       .nav-pills>li.active>a:focus,
       .nav-pills>li.active>a:hover {
         color: #fff;
-        background-color: #f4b827
+        background-color: #C1F11D
       }
 
       .nav-stacked>li {
@@ -963,9 +963,9 @@
         bottom: 0;
         left: 0;
         z-index: 1;
-        background: #f4b827;
-        background: -webkit-gradient(linear, left bottom, right top, color-stop(1%, #f4b827), color-stop(50%, #c3931f), color-stop(51%, transparent));
-        background: linear-gradient(to top right, #f4b827 1%, #c3931f 50%, transparent 51%);
+        background: #C1F11D;
+        background: -webkit-gradient(linear, left bottom, right top, color-stop(1%, #C1F11D), color-stop(50%, #c3931f), color-stop(51%, transparent));
+        background: linear-gradient(to top right, #C1F11D 1%, #c3931f 50%, transparent 51%);
         width: 30px;
         height: 30px;
         line-height: 30px;
@@ -983,13 +983,13 @@
         float: left;
         margin: 0 2px;
         color: #333;
-        text-shadow: 0 0 2px #f4b827
+        text-shadow: 0 0 2px #C1F11D
       }
 
       span.verified-image:hover {
         width: 140px;
-        background: -webkit-gradient(linear, left bottom, right top, from(#f4b827), to(#c3931f));
-        background: linear-gradient(to top right, #f4b827, #c3931f);
+        background: -webkit-gradient(linear, left bottom, right top, from(#C1F11D), to(#c3931f));
+        background: linear-gradient(to top right, #C1F11D, #c3931f);
         padding-right: 2px
       }
 
@@ -1185,7 +1185,7 @@
       .dark-form .form-control:active,
       .dark-form .form-control:focus,
       .dark-form .form-control:hover {
-        background: #333;
+        background: #0D1011;
         -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
         box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125)
       }
@@ -1231,7 +1231,7 @@
       .dark-form .select2-container .select2-input:active,
       .dark-form .select2-container .select2-input:focus,
       .dark-form .select2-container .select2-input:hover {
-        background: #333;
+        background: #0D1011;
         -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
         box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125)
       }
@@ -1310,7 +1310,7 @@
       .dark-form .tt-input:active,
       .dark-form .tt-input:focus,
       .dark-form .tt-input:hover {
-        background: #333;
+        background: #0D1011;
         -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
         box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125)
       }
@@ -2133,7 +2133,7 @@
       }
 
       a.btn-dark {
-        color: #f4b827
+        color: #C1F11D
       }
 
       .dropdown--lang .btn {
@@ -2254,7 +2254,7 @@
       .listings-search-advanced-fields .form-control[multiple]:active,
       .listings-search-advanced-fields .form-control[multiple]:focus,
       .listings-search-advanced-fields .form-control[multiple]:hover {
-        background: #333;
+        background: #0D1011;
         -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
         box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125)
       }
@@ -2344,7 +2344,7 @@
 
       .tt-dropdown-menu {
         min-width: 300px;
-        background: #333;
+        background: #0D1011;
         border: 1px solid #555;
         z-index: 1002;
         opacity: 0;
@@ -2449,8 +2449,8 @@
       }
 
       .btn-primary {
-        background: #f4b827 -webkit-gradient(linear, left top, left bottom, from(#f4b827), to(#d3980b)) repeat-x;
-        background: #f4b827 linear-gradient(#f4b827, #d3980b) repeat-x;
+        background: #C1F11D -webkit-gradient(linear, left top, left bottom, from(#C1F11D), to(#d3980b)) repeat-x;
+        background: #C1F11D linear-gradient(#C1F11D, #d3980b) repeat-x;
         border-color: #c9910a
       }
 

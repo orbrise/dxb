@@ -283,7 +283,7 @@ i.fa::before, i.fas::before, i.far::before, i.fab::before {
 
 #mobile-loading-spinner {
     border: 3px solid rgba(244, 184, 39, 0.2);
-    border-top: 3px solid #f4b827;
+    border-top: 3px solid #C1F11D;
     border-radius: 50%;
     width: 32px;
     height: 32px;

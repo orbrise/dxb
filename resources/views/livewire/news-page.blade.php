@@ -1073,7 +1073,7 @@ input.tt-hint,
         }" x-init="observe()">
             <div class="text-center" style="padding: 20px;">
                 <div wire:loading wire:target="loadMore">
-                    <i class="fa fa-spinner fa-spin" style="font-size: 24px; color: #f4b827;"></i>
+                    <i class="fa fa-spinner fa-spin" style="font-size: 24px; color: #C1F11D;"></i>
                     <p style="color: #999; margin-top: 10px;">Loading more...</p>
                 </div>
                 <div wire:loading.remove wire:target="loadMore">

@@ -35,12 +35,12 @@
 
         .chat-sidebar-header {
             padding: 15px;
-            background: #333;
+            background: #0D1011;
             border-bottom: 1px solid #444;
         }
 
         .chat-sidebar-header h4 {
-            color: #f4b827;
+            color: #C1F11D;
             margin: 0 0 10px 0;
             font-size: 18px;
             display: flex;
@@ -82,7 +82,7 @@
 
         .chat-search input:focus {
             outline: none;
-            border-color: #f4b827;
+            border-color: #C1F11D;
         }
 
         .chat-search input::placeholder {
@@ -108,7 +108,7 @@
 
         .chat-filter:focus {
             outline: none;
-            border-color: #f4b827;
+            border-color: #C1F11D;
         }
 
         /* Conversation List */
@@ -127,19 +127,19 @@
         }
 
         .conversation-item:hover {
-            background: #333;
+            background: #0D1011;
         }
 
         .conversation-item.active {
             background: #3d3d3d;
-            border-left: 3px solid #f4b827;
+            border-left: 3px solid #C1F11D;
         }
 
         .conversation-avatar {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f4b827, #d4a017);
+            background: linear-gradient(135deg, #C1F11D, #d4a017);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -186,11 +186,11 @@
         }
 
         .conversation-item.unread .conversation-time {
-            color: #f4b827;
+            color: #C1F11D;
         }
 
         .unread-badge {
-            background: #f4b827;
+            background: #C1F11D;
             color: #1a1a1a;
             font-size: 11px;
             font-weight: bold;
@@ -209,7 +209,7 @@
 
         .chat-header {
             padding: 15px 20px;
-            background: #333;
+            background: #0D1011;
             border-bottom: 1px solid #444;
             display: flex;
             align-items: center;
@@ -225,7 +225,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f4b827, #d4a017);
+            background: linear-gradient(135deg, #C1F11D, #d4a017);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -259,7 +259,7 @@
         }
 
         .chat-header-actions button:hover {
-            color: #f4b827;
+            color: #C1F11D;
             background: rgba(244, 184, 39, 0.1);
         }
 
@@ -286,7 +286,7 @@
         }
 
         .message-date span {
-            background: #333;
+            background: #0D1011;
             color: #888;
             padding: 5px 15px;
             border-radius: 10px;
@@ -312,7 +312,7 @@
 
         /* Outgoing messages - Right side (our replies) */
         .message-outgoing {
-            background: #f4b827;
+            background: #C1F11D;
             color: #1a1a1a;
             margin-left: auto;
             border-bottom-right-radius: 4px;
@@ -349,7 +349,7 @@
 
         .message-profile {
             font-size: 11px;
-            color: #f4b827;
+            color: #C1F11D;
             margin-bottom: 3px;
         }
 
@@ -382,7 +382,7 @@
 
         .chat-input textarea:focus {
             outline: none;
-            border-color: #f4b827;
+            border-color: #C1F11D;
         }
 
         .chat-input textarea::placeholder {
@@ -393,7 +393,7 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: #f4b827;
+            background: #C1F11D;
             border: none;
             color: #1a1a1a;
             font-size: 18px;
@@ -466,7 +466,7 @@
             color: #fff;
         }
 
-        .stat-card h3.text-warning { color: #f4b827; }
+        .stat-card h3.text-warning { color: #C1F11D; }
         .stat-card h3.text-success { color: #28a745; }
 
         .stat-card p {
@@ -549,9 +549,9 @@
 
         .mobile-back-btn {
             display: none;
-            background: #333;
+            background: #0D1011;
             border: none;
-            color: #f4b827;
+            color: #C1F11D;
             font-size: 20px;
             cursor: pointer;
             padding: 5px 10px;

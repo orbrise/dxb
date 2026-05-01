@@ -11,7 +11,7 @@
             
             <!-- Header -->
             <div style="border-bottom: 2px solid #333333; padding-bottom: 5px; margin-bottom: 20px;">
-                <a href="{{ url('/') }}" title="Massage Republic" style="color: #F4B827; text-decoration: none; outline: 0;">
+                <a href="{{ url('/') }}" title="Massage Republic" style="color: #C1F11D; text-decoration: none; outline: 0;">
                     <img alt="Massage Republic" src="https://assets.massagerepublic.com.co/assets/images/web/maillogo.gif" width="309">
                 </a>
             </div>
@@ -38,9 +38,9 @@
             <!-- Action Link -->
             <p style="font-size: 14px; line-height: 1.5; color: #ffffff; margin-bottom: 15px;">
                 @if($actionLink)
-                <a href="{{ $actionLink }}" style="color: #F4B827; text-decoration: none; outline: 0;">Click here</a> to fix your listing and reapply for approval. You can read our <a href="{{ url('/help-for-advertisers') }}" style="color: #F4B827; text-decoration: none; outline: 0;">advice here</a> on creating a good listing.
+                <a href="{{ $actionLink }}" style="color: #C1F11D; text-decoration: none; outline: 0;">Click here</a> to fix your listing and reapply for approval. You can read our <a href="{{ url('/help-for-advertisers') }}" style="color: #C1F11D; text-decoration: none; outline: 0;">advice here</a> on creating a good listing.
                 @else
-                Please fix the issues mentioned above and reapply for approval. You can read our <a href="{{ url('/help-for-advertisers') }}" style="color: #F4B827; text-decoration: none; outline: 0;">advice here</a> on creating a good listing.
+                Please fix the issues mentioned above and reapply for approval. You can read our <a href="{{ url('/help-for-advertisers') }}" style="color: #C1F11D; text-decoration: none; outline: 0;">advice here</a> on creating a good listing.
                 @endif
             </p>
             
@@ -50,11 +50,11 @@
             
             <!-- Footer -->
             <div style="border-top: 2px solid #333333; margin-top: 30px; padding-top: 15px; text-align: center;">
-                <a href="{{ url('/') }}" style="color: #F4B827; outline: 0; text-decoration: underline; font-size: 12px;">Go to MassageRepublic.com</a>
+                <a href="{{ url('/') }}" style="color: #C1F11D; outline: 0; text-decoration: underline; font-size: 12px;">Go to MassageRepublic.com</a>
                 <span style="color: #bebebe; font-size: 12px;"> - Site blocked? Try: </span>
-                <a href="https://escorts.ninja" style="color: #F4B827; outline: 0; text-decoration: underline; font-size: 12px;">Escorts.ninja</a>
+                <a href="https://escorts.ninja" style="color: #C1F11D; outline: 0; text-decoration: underline; font-size: 12px;">Escorts.ninja</a>
                 <span style="color: #bebebe; font-size: 12px;"> or </span>
-                <a href="https://massagerepublic.tk" style="color: #F4B827; outline: 0; text-decoration: underline; font-size: 12px;">MassageRepublic.tk</a>
+                <a href="https://massagerepublic.tk" style="color: #C1F11D; outline: 0; text-decoration: underline; font-size: 12px;">MassageRepublic.tk</a>
             </div>
             
         </div>

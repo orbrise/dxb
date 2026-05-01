@@ -151,7 +151,7 @@
     }
 
     .favorite-card-actions a:hover {
-        background: #333;
+        background: #0D1011;
         color: #C1F11D;
     }
 

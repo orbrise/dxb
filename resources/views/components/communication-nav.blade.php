@@ -84,7 +84,7 @@
 }
 
 .communication-nav-link:hover {
-    background: #333;
+    background: #0D1011;
     border-color: #555;
     color: #fff;
     text-decoration: none;

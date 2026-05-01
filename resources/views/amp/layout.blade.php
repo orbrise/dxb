@@ -35,7 +35,7 @@
         }
         
         a {
-            color: #f4b827;
+            color: #C1F11D;
             text-decoration: none;
         }
         
@@ -62,7 +62,7 @@
         }
         
         .amp-logo {
-            color: #f4b827;
+            color: #C1F11D;
             font-size: 20px;
             font-weight: bold;
         }
@@ -93,7 +93,7 @@
         
         /* Page Title */
         .amp-page-title {
-            color: #f4b827;
+            color: #C1F11D;
             font-size: 24px;
             margin-bottom: 20px;
             padding-bottom: 10px;
@@ -110,7 +110,7 @@
         }
         
         .amp-card:hover {
-            border-color: #f4b827;
+            border-color: #C1F11D;
         }
         
         /* Profile Listing */
@@ -141,7 +141,7 @@
         }
         
         .amp-profile-name {
-            color: #f4b827;
+            color: #C1F11D;
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 8px;
@@ -168,7 +168,7 @@
         }
         
         .amp-badge-premium {
-            background-color: #f4b827;
+            background-color: #C1F11D;
             color: #000;
         }
         
@@ -186,7 +186,7 @@
         .amp-btn {
             display: inline-block;
             padding: 10px 20px;
-            background-color: #f4b827;
+            background-color: #C1F11D;
             color: #000;
             border-radius: 5px;
             font-weight: bold;
@@ -200,12 +200,12 @@
         
         .amp-btn-outline {
             background-color: transparent;
-            border: 2px solid #f4b827;
-            color: #f4b827;
+            border: 2px solid #C1F11D;
+            color: #C1F11D;
         }
         
         .amp-btn-outline:hover {
-            background-color: #f4b827;
+            background-color: #C1F11D;
             color: #000;
         }
         
@@ -272,7 +272,7 @@
         }
         
         .amp-pagination .active {
-            background-color: #f4b827;
+            background-color: #C1F11D;
             color: #000;
         }
         
@@ -307,7 +307,7 @@
         }
         
         .amp-review-author {
-            color: #f4b827;
+            color: #C1F11D;
             font-weight: bold;
             margin-bottom: 5px;
         }
@@ -318,19 +318,19 @@
         }
         
         .amp-stars {
-            color: #f4b827;
+            color: #C1F11D;
         }
         
         /* Notice Box */
         .amp-notice {
             background-color: #2c2c2c;
-            border-left: 4px solid #f4b827;
+            border-left: 4px solid #C1F11D;
             padding: 15px;
             margin-bottom: 20px;
         }
         
         .amp-notice-title {
-            color: #f4b827;
+            color: #C1F11D;
             font-weight: bold;
             margin-bottom: 5px;
         }

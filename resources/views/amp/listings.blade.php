@@ -22,7 +22,7 @@
     <!-- Stats -->
     <div class="amp-card" style="display: flex; justify-content: space-around; text-align: center;">
         <div>
-            <div style="color: #f4b827; font-size: 24px; font-weight: bold;">{{ $profiles->total() }}</div>
+            <div style="color: #C1F11D; font-size: 24px; font-weight: bold;">{{ $profiles->total() }}</div>
             <div style="color: #999; font-size: 12px;">Total Profiles</div>
         </div>
         <div>

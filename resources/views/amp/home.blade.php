@@ -59,21 +59,21 @@
         <div class="amp-col amp-col-md-4">
             <a href="/amp/female-escorts-in-dubai" class="amp-card" style="display: block; text-align: center;">
                 <div style="font-size: 40px; margin-bottom: 10px;">👩</div>
-                <div style="color: #f4b827; font-weight: bold;">Female Escorts</div>
+                <div style="color: #C1F11D; font-weight: bold;">Female Escorts</div>
                 <div style="color: #999; font-size: 12px;">Browse female profiles</div>
             </a>
         </div>
         <div class="amp-col amp-col-md-4">
             <a href="/amp/male-escorts-in-dubai" class="amp-card" style="display: block; text-align: center;">
                 <div style="font-size: 40px; margin-bottom: 10px;">👨</div>
-                <div style="color: #f4b827; font-weight: bold;">Male Escorts</div>
+                <div style="color: #C1F11D; font-weight: bold;">Male Escorts</div>
                 <div style="color: #999; font-size: 12px;">Browse male profiles</div>
             </a>
         </div>
         <div class="amp-col amp-col-md-4">
             <a href="/amp/shemale-escorts-in-dubai" class="amp-card" style="display: block; text-align: center;">
                 <div style="font-size: 40px; margin-bottom: 10px;">⚧</div>
-                <div style="color: #f4b827; font-weight: bold;">Trans Escorts</div>
+                <div style="color: #C1F11D; font-weight: bold;">Trans Escorts</div>
                 <div style="color: #999; font-size: 12px;">Browse trans profiles</div>
             </a>
         </div>
@@ -81,7 +81,7 @@
     
     <!-- CTA Section -->
     <div class="amp-card amp-text-center amp-mt-20" style="padding: 30px;">
-        <h3 style="color: #f4b827; margin-bottom: 15px;">Want to Advertise?</h3>
+        <h3 style="color: #C1F11D; margin-bottom: 15px;">Want to Advertise?</h3>
         <p style="color: #ccc; margin-bottom: 20px;">
             Create your profile and reach thousands of potential clients
         </p>

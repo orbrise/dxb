@@ -114,7 +114,7 @@
         }
 
         .search-result-item:hover {
-            background: #333;
+            background: #0D1011;
         }
 
         .search-result-item:last-child {
@@ -139,7 +139,7 @@
         }
 
         .conversation-item:hover {
-            background: #333;
+            background: #0D1011;
         }
 
         .conversation-item.active {
@@ -230,7 +230,7 @@
 
         .chat-header {
             padding: 15px 20px;
-            background: #333;
+            background: #0D1011;
             border-bottom: 1px solid #444;
             display: flex;
             align-items: center;

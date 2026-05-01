@@ -33,7 +33,7 @@ img[src*="loading"],
 .spinner {
     width: 24px !important;
     height: 24px !important;
-    border-color: #f4b827 !important;
+    border-color: #C1F11D !important;
     border-right-color: transparent !important;
 }
 
@@ -42,7 +42,7 @@ img[src*="loading"],
     width: 24px !important;
     height: 24px !important;
     border-width: 2px !important;
-    border-color: #f4b827 !important;
+    border-color: #C1F11D !important;
     border-right-color: transparent !important;
 }
 
@@ -50,7 +50,7 @@ img[src*="loading"],
 .loading,
 .lazy-load-placeholder::before,
 .img-loading::after {
-    border-color: #f4b827 !important;
+    border-color: #C1F11D !important;
     border-right-color: transparent !important;
 }
   </style>
@@ -609,7 +609,7 @@ img[src*="loading"],
     
       </div>
 
-      <div class="direct-navigation" style="text-align: center; margin: 20px 0; padding: 15px; background: #333; border-radius: 8px; display: flex; justify-content: center; align-items: center; flex-wrap: nowrap;">
+      <div class="direct-navigation" style="text-align: center; margin: 20px 0; padding: 15px; background: #0D1011; border-radius: 8px; display: flex; justify-content: center; align-items: center; flex-wrap: nowrap;">
         
         
         <div style="display: flex; align-items: center; flex-wrap: nowrap;">

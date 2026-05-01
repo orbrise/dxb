@@ -11,7 +11,7 @@
             
             <!-- Header -->
             <div style="border-bottom: 2px solid #333333; padding-bottom: 5px; margin-bottom: 20px;">
-                <a href="{{ url('/') }}" title="Massage Republic" style="color: #F4B827; text-decoration: none; outline: 0;">
+                <a href="{{ url('/') }}" title="Massage Republic" style="color: #C1F11D; text-decoration: none; outline: 0;">
                     <img alt="Massage Republic" src="https://assets.massagerepublic.com.co/assets/images/web/maillogo.gif" width="309">
                 </a>
             </div>
@@ -24,13 +24,13 @@
             </p>
             
             <!-- Profile Info Box -->
-            <div style="background-color: #2c2c2c; border: 2px solid #F4B827; border-radius: 5px; padding: 20px; margin: 25px 0;">
+            <div style="background-color: #2c2c2c; border: 2px solid #C1F11D; border-radius: 5px; padding: 20px; margin: 25px 0;">
                 <p style="font-size: 14px; color: #bebebe; margin: 0 0 10px 0;">Profile Details:</p>
-                <p style="font-size: 18px; font-weight: bold; color: #F4B827; margin: 0 0 10px 0;">{{ $profileName }}</p>
+                <p style="font-size: 18px; font-weight: bold; color: #C1F11D; margin: 0 0 10px 0;">{{ $profileName }}</p>
                 @if($packageName)
-                <p style="font-size: 14px; color: #ffffff; margin: 0;">Package: <strong style="color: #F4B827;">{{ $packageName }}</strong></p>
+                <p style="font-size: 14px; color: #ffffff; margin: 0;">Package: <strong style="color: #C1F11D;">{{ $packageName }}</strong></p>
                 @else
-                <p style="font-size: 14px; color: #ffffff; margin: 0;">Package: <strong style="color: #F4B827;">Free Profile</strong></p>
+                <p style="font-size: 14px; color: #ffffff; margin: 0;">Package: <strong style="color: #C1F11D;">Free Profile</strong></p>
                 @endif
             </div>
             
@@ -42,7 +42,7 @@
             <table cellpadding="0" cellspacing="0" style="display: inline-block; margin: 20px 0;">
                 <tbody>
                     <tr>
-                        <td style="border-radius: 3px; background-color: #F4B827; text-align: center;">
+                        <td style="border-radius: 3px; background-color: #C1F11D; text-align: center;">
                             <a href="{{ $profileUrl }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 20px; font-family: Arial, Helvetica, sans-serif; font-weight: bold; line-height: 20px; padding: 12px 30px; display: block; text-shadow: #FDE877 0px 1px 0px;">
                                 View Your Profile
                             </a>
@@ -64,16 +64,16 @@
             <p style="font-size: 10pt; line-height: 1.5; color: #bebebe; border-top: 2px solid #333333; margin-top: 20px; padding-top: 15px; text-align: justify;">
                 You're receiving this email because you recently created a new profile on Massage Republic. 
                 If you have any questions or need assistance, please contact our support team at 
-                <a href="mailto:support@massagerepublic.com.co" style="color: #F4B827; text-decoration: none; outline: 0;">support@massagerepublic.com.co</a>
+                <a href="mailto:support@massagerepublic.com.co" style="color: #C1F11D; text-decoration: none; outline: 0;">support@massagerepublic.com.co</a>
             </p>
             
             <!-- Bottom Links -->
             <div style="text-align: center; padding-top: 5px; margin-top: 15px; border-top: 2px solid #333333; font-size: 9pt;">
-                <a href="{{ url('/') }}" style="color: #F4B827; outline: 0; text-decoration: underline;">Go to Massage Republic</a>
+                <a href="{{ url('/') }}" style="color: #C1F11D; outline: 0; text-decoration: underline;">Go to Massage Republic</a>
                 <span style="color: #bebebe;"> | </span>
-                <a href="{{ url('/help') }}" style="color: #F4B827; outline: 0; text-decoration: underline;">Help Center</a>
+                <a href="{{ url('/help') }}" style="color: #C1F11D; outline: 0; text-decoration: underline;">Help Center</a>
                 <span style="color: #bebebe;"> | </span>
-                <a href="{{ url('/contact') }}" style="color: #F4B827; outline: 0; text-decoration: underline;">Contact Us</a>
+                <a href="{{ url('/contact') }}" style="color: #C1F11D; outline: 0; text-decoration: underline;">Contact Us</a>
             </div>
             
         </div>

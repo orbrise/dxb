@@ -40,7 +40,7 @@
         }
         
         a {
-            color: #f4b827;
+            color: #C1F11D;
             text-decoration: none;
         }
         
@@ -111,7 +111,7 @@
         .btn-primary {
             display: inline-flex;
             align-items: center;
-            background-color: #f4b827;
+            background-color: #C1F11D;
             padding: 0.5rem 1rem;
             color: #000000;
             text-decoration: none;
@@ -193,7 +193,7 @@
         }
         
         h1.post-title a:hover {
-            color: #f4b827;
+            color: #C1F11D;
             text-decoration: underline;
         }
         
@@ -251,7 +251,7 @@
         }
         
         .post-body a {
-            color: #f4b827;
+            color: #C1F11D;
             text-decoration: underline;
         }
         
@@ -263,13 +263,13 @@
             font-style: italic;
             margin: 1.5em 10px;
             padding: 0.5em 15px;
-            border-left: 4px solid #f4b827;
+            border-left: 4px solid #C1F11D;
             color: #999;
             background: rgba(0,0,0,0.2);
         }
         
         .read-more-link {
-            color: #f4b827;
+            color: #C1F11D;
             text-decoration: underline;
         }
         
@@ -312,7 +312,7 @@
             justify-content: center;
             width: 15px;
             height: 15px;
-            background: #333;
+            background: #0D1011;
             border-radius: 3px;
             color: #fff;
             text-decoration: none;
@@ -470,7 +470,7 @@
         /* Category/Tag Links */
         .category-link {
             display: inline-block;
-            background: #f4b827;
+            background: #C1F11D;
             color: #000;
             padding: 2px 10px;
             border-radius: 4px;
@@ -486,8 +486,8 @@
         
         .tag-link {
             display: inline-block;
-            background: #333;
-            color: #f4b827;
+            background: #0D1011;
+            color: #C1F11D;
             padding: 3px 10px;
             border-radius: 4px;
             font-size: 12px;
@@ -528,7 +528,7 @@
         
         .search-form button {
             padding: 8px 15px;
-            background: #f4b827;
+            background: #C1F11D;
             color: #000;
             border: none;
             border-radius: 5px;

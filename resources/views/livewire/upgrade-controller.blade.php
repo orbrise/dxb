@@ -13,25 +13,29 @@
   </div>
 @endsection
 
+<div class="evoory-upgrade-controller">
 <style>
 /* === Evoory Dark Theme === */
 
-/* Page background */
-body { background: #000 !important; }
-#header .nav-bar { background: #131616 !important; }
-#header { margin-bottom: 0px !important; }
-#header .nav-bar .back-link { color: #C1F11D !important; text-decoration: none; }
-#header .nav-bar .title h1 a { color: #fff !important; }
-#footer { background: #0D1011 !important; border-top: 0px !important; }
-#footer .list-inline li { margin-bottom: 0px !important; }
+/* Page background — scoped to body when this page is rendered.
+   We add `evoory-upgrade-controller-active` to <body> via JS and remove it on
+   navigation away, so this rule cannot leak into other pages via wire:navigate. */
+body.evoory-upgrade-controller-active { background: #000 !important; }
+body.evoory-upgrade-controller-active #header .nav-bar { background: #131616 !important; }
+body.evoory-upgrade-controller-active #header { margin-bottom: 0px !important; }
+body.evoory-upgrade-controller-active #header .nav-bar .back-link { color: #C1F11D !important; text-decoration: none; }
+body.evoory-upgrade-controller-active #header .nav-bar .title h1 a { color: #fff !important; }
+body.evoory-upgrade-controller-active #footer { background: #0D1011 !important; border-top: 0px !important; }
+body.evoory-upgrade-controller-active #footer .list-inline li { margin-bottom: 0px !important; }
 
 /* Header - Evoory style buttons */
-.navbar.navbar-inverse { background: #0D1011 !important; border: none !important; }
-.logo.navbar-brand, .logo2.navbar-brand { display: none !important; }
-.navbar-header::before { display: none !important; }
-.auth-button-group { gap: 10px !important; }
-.auth-button-group .btn-navbar-header,
-.auth-button-group .button_to .btn-navbar-header {
+body.evoory-upgrade-controller-active .navbar.navbar-inverse { background: #0D1011 !important; border: none !important; }
+body.evoory-upgrade-controller-active .logo.navbar-brand,
+body.evoory-upgrade-controller-active .logo2.navbar-brand { display: none !important; }
+body.evoory-upgrade-controller-active .navbar-header::before { display: none !important; }
+body.evoory-upgrade-controller-active .auth-button-group { gap: 10px !important; }
+body.evoory-upgrade-controller-active .auth-button-group .btn-navbar-header,
+body.evoory-upgrade-controller-active .auth-button-group .button_to .btn-navbar-header {
     border-radius: 8px !important;
     border: 1px solid #2a2a2a !important;
     border-right: 1px solid #2a2a2a !important;
@@ -43,19 +47,19 @@ body { background: #000 !important; }
     transition: all 0.2s ease;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
-.auth-button-group .btn-navbar-header:hover,
-.auth-button-group .button_to .btn-navbar-header:hover {
+body.evoory-upgrade-controller-active .auth-button-group .btn-navbar-header:hover,
+body.evoory-upgrade-controller-active .auth-button-group .button_to .btn-navbar-header:hover {
     color: #fff !important;
     background: #1a1a1a !important;
     border-color: #ccc !important;
 }
-.auth-button-group .btn-navbar-header:first-child {
+body.evoory-upgrade-controller-active .auth-button-group .btn-navbar-header:first-child {
     border-top-left-radius: 8px !important;
     border-bottom-left-radius: 8px !important;
     border-top-right-radius: 8px !important;
     border-bottom-right-radius: 8px !important;
 }
-#main-nav { display: none !important; }
+body.evoory-upgrade-controller-active #main-nav { display: none !important; }
 
 /* Base functional styles */
 .upgrade-listing-form-init { visibility: visible; }
@@ -249,10 +253,9 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
     .package-text-content { height: auto !important; }
 }
 
-a {color: #C1F11D !important;}
+.evoory-upgrade-controller a { color: #C1F11D !important; }
 </style>
 
-<div>
   <div class="container-fluid">
         <div class="content-wrapper no-sidebar">
           <div id="content">
@@ -334,12 +337,12 @@ a {color: #C1F11D !important;}
                                           $sideImageSize = $package->name == 'VIP' ? '30px' : '30px';
                                       @endphp
                                       @foreach($sideImages as $sideImage)
-                                      <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #333; overflow: hidden;">
+                                      <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #0D1011; overflow: hidden;">
                                           <img src="{{ webp_asset('userimages/'.$sideImage->user_id.'/'.$sideImage->profile_id.'/'.$sideImage->image) }}" alt="Side Image" style="width: 100%; height: 100%; object-fit: cover;">
                                       </div>
                                       @endforeach
                                       @for($i = $sideImages->count(); $i < $showSideImages; $i++)
-                                      <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #333; overflow: hidden;">
+                                      <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #0D1011; overflow: hidden;">
                                           <img src="{{ smart_asset('assets/images/default-avatar.png') }}" alt="Placeholder" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5;">
                                       </div>
                                       @endfor
@@ -527,6 +530,54 @@ a {color: #C1F11D !important;}
 </div>
 
 @push('js')
+<script>
+// Two things to do here, both triggered by `wire:navigate` keeping <head>/<body>
+// across pages:
+//
+// 1. Toggle a body class so this page's body/header/footer overrides only apply
+//    while the upgrade page is mounted.
+// 2. Detach app2.css when leaving the upgrade page. The legacy layout
+//    (components.layouts.app) loads app2.css which sets `body { background: #0D1011
+//    !important; url(...) }` and beats the evoory layout's body bg when both
+//    stylesheets sit in <head> after navigation. Stash it on a data attribute
+//    so we can re-attach it if the user navigates back to upgrade.
+(function() {
+    function syncBodyClass() {
+        if (document.querySelector('.evoory-upgrade-controller')) {
+            document.body.classList.add('evoory-upgrade-controller-active');
+        } else {
+            document.body.classList.remove('evoory-upgrade-controller-active');
+        }
+    }
+
+    function syncApp2Css() {
+        var onUpgrade = !!document.querySelector('.evoory-upgrade-controller');
+        var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/app2.css"]');
+        var stashed = window.__evooryStashedApp2Css;
+
+        if (!onUpgrade && live) {
+            window.__evooryStashedApp2Css = live.getAttribute('href');
+            live.parentNode.removeChild(live);
+        } else if (onUpgrade && !live && stashed) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = stashed;
+            document.head.appendChild(link);
+        }
+    }
+
+    syncBodyClass();
+    syncApp2Css();
+
+    if (!window.evooryUpgradeNavListener) {
+        window.evooryUpgradeNavListener = true;
+        document.addEventListener('livewire:navigated', function () {
+            syncBodyClass();
+            syncApp2Css();
+        });
+    }
+})();
+</script>
 <script>
 (function() {
     // Prevent multiple initializations

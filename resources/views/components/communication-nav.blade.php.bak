@@ -28,7 +28,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #f4b827;
+    color: #C1F11D;
     font-size: 20px;
     font-weight: 600;
     margin: 0;
@@ -49,7 +49,7 @@
 }
 
 .communication-nav-back:hover {
-    color: #f4b827;
+    color: #C1F11D;
     text-decoration: none;
 }
 
@@ -84,15 +84,15 @@
 }
 
 .communication-nav-link:hover {
-    background: #333;
+    background: #0D1011;
     border-color: #555;
     color: #fff;
     text-decoration: none;
 }
 
 .communication-nav-link.active {
-    background: linear-gradient(135deg, #f4b827, #d4a017);
-    border-color: #f4b827;
+    background: linear-gradient(135deg, #C1F11D, #d4a017);
+    border-color: #C1F11D;
     color: #1a1a1a;
     font-weight: 600;
 }
@@ -118,7 +118,7 @@
 
 .communication-nav-link.active .communication-nav-badge {
     background: #1a1a1a;
-    color: #f4b827;
+    color: #C1F11D;
 }
 
 /* Mobile Responsiveness */

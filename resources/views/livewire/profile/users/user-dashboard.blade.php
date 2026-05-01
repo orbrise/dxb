@@ -203,7 +203,7 @@
         color: #fff;
         border: 1px solid #3a3a3a;
     }
-    .ev-btn-dark:hover { background: #333; color: #fff; text-decoration: none; }
+    .ev-btn-dark:hover { background: #0D1011; color: #fff; text-decoration: none; }
     .ev-btn-outline {
         background: transparent;
         color: #aaa;
@@ -238,7 +238,7 @@
         font-size: 14px;
         transition: all 0.2s;
     }
-    .ev-share-icon:hover { background: #333; color: #fff; text-decoration: none; }
+    .ev-share-icon:hover { background: #0D1011; color: #fff; text-decoration: none; }
     .ev-need-help {
         margin-left: auto;
         display: inline-flex;
@@ -303,7 +303,7 @@
         width: 100%;
         padding: 6px 10px;
         border-radius: 8px;
-        background: #333;
+        background: #0D1011;
         color: #888;
         font-size: 13px;
         text-align: center;
@@ -815,7 +815,7 @@
         }
         .ev-sidebar-accent p { color: #ccc !important; }
         .ev-sidebar-accent .ev-sub-text { color: #777 !important; }
-        .ev-sidebar-accent .ev-unavailable { background: #333 !important; color: #888 !important; border: 1px solid #3a3a3a !important; }
+        .ev-sidebar-accent .ev-unavailable { background: #0D1011 !important; color: #888 !important; border: 1px solid #3a3a3a !important; }
         .ev-sidebar-accent .ev-btn-dark-solid {
             background: transparent !important;
             border: 1px solid #C1F11D !important;

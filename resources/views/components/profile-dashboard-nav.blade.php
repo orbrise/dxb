@@ -48,7 +48,7 @@
 .profile-dashboard-nav .my-listing-new-link {
     color: #333;
     float: right;
-    background: #f4b827 linear-gradient(#f4b827, #d3980b) repeat-x;
+    background: #C1F11D linear-gradient(#C1F11D, #d3980b) repeat-x;
     border-color: #c9910a;
 }
 

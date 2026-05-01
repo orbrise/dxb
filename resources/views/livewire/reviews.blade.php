@@ -51,7 +51,7 @@
             flex: 1;
             min-width: 100px;
             padding: 8px 12px;
-            background: #333;
+            background: #0D1011;
             border: 1px solid #444;
             border-radius: 5px;
             color: #fff;
@@ -62,7 +62,7 @@
             flex: 1;
             min-width: 100px;
             padding: 8px 35px 8px 12px;
-            background: #333;
+            background: #0D1011;
             border: 1px solid #444;
             border-radius: 5px;
             color: #fff;
@@ -106,7 +106,7 @@
         }
 
         .review-item.active {
-            background: #333;
+            background: #0D1011;
         }
 
         .review-item-avatar {
@@ -241,7 +241,7 @@
         }
 
         .review-detail-actions button {
-            background: #333;
+            background: #0D1011;
             border: none;
             color: #fff;
             width: 40px;
@@ -331,7 +331,7 @@
 
         .reply-input textarea {
             flex: 1;
-            background: #333;
+            background: #0D1011;
             border: none;
             border-radius: 20px;
             padding: 12px 18px;

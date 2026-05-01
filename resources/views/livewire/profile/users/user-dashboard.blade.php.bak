@@ -292,7 +292,7 @@
     }
     
     .btn-group .btn-primary {
-        background: linear-gradient(135deg, #f4b827 0%, #d3980b 100%);
+        background: linear-gradient(135deg, #C1F11D 0%, #d3980b 100%);
         border-color: #c9910a;
         color: #333;
         font-weight: 600;
@@ -306,7 +306,7 @@
     }
     
     .btn-group .nbtn:active {
-        background: #333;
+        background: #0D1011;
         color: #fff;
     }
     
@@ -530,7 +530,7 @@
                      
           
                     </div>
-                     <a style="color: #333; float:right; background: #f4b827 linear-gradient(#f4b827, #d3980b) repeat-x;
+                     <a style="color: #333; float:right; background: #C1F11D linear-gradient(#C1F11D, #d3980b) repeat-x;
     border-color: #c9910a;" class="btn my-listing-new-link " href="{{ route('new.profile') }}" data-turbolinks="false">
               Add Profile <i class="fa fa-plus fa-text-default"></i>
           </a>
