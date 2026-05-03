@@ -169,5 +169,78 @@
             </div>
         </div>
     </section>
+
+    {{-- Strip leaked legacy stylesheets when this page is mounted. The legacy
+         `app` layout's css-optimized bundle loads app.css/app2.css/app3.css/app4.css.
+         wire:navigate keeps those <link>s in <head> when arriving here from a
+         legacy-layout page (news-page, profile-details, etc.). Their global rules
+         (`a:hover { color:#dca623 }`, FA4 @font-face, etc.) leak into this page.
+         Detect by `body > main` (only present on app-evoory) and strip; re-attach
+         when navigating back to a legacy page. --}}
+    <script>
+    (function () {
+        var LEGACY_CSS = ['app.css', 'app2.css', 'app3.css', 'app4.css'];
+
+        function syncLegacyCss() {
+            var onEvooryLayout = !!document.querySelector('body > main');
+            window.__evooryStashedLegacyCss = window.__evooryStashedLegacyCss || {};
+            var stash = window.__evooryStashedLegacyCss;
+
+            LEGACY_CSS.forEach(function (name) {
+                var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/' + name + '"]');
+
+                if (onEvooryLayout && live) {
+                    stash[name] = live.getAttribute('href');
+                    live.parentNode.removeChild(live);
+                } else if (!onEvooryLayout && !live && stash[name]) {
+                    var link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = stash[name];
+                    document.head.appendChild(link);
+                }
+            });
+        }
+
+        // Only strip on real navigations. On initial script load the body
+        // content may not be fully swapped in via wire:navigate yet.
+        if (!window.__evooryHomepageLegacyListener) {
+            window.__evooryHomepageLegacyListener = true;
+            document.addEventListener('livewire:navigated', syncLegacyCss);
+        }
+    })();
+    </script>
+
+    {{-- Also strip the listing page's evoory-homepage.css / listing-page-inline.css
+         (same legacy bundle as above, just renamed) when arriving here. --}}
+    <script>
+    (function () {
+        var LISTING_CSS = ['evoory-homepage.css', 'listing-page-inline.css'];
+
+        function syncListingCss() {
+            var onListing = !!document.querySelector('.ev-listing-page');
+            window.__evooryStashedListingCss = window.__evooryStashedListingCss || {};
+            var stash = window.__evooryStashedListingCss;
+
+            LISTING_CSS.forEach(function (name) {
+                var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/' + name + '"]');
+
+                if (!onListing && live) {
+                    stash[name] = live.getAttribute('href');
+                    live.parentNode.removeChild(live);
+                } else if (onListing && !live && stash[name]) {
+                    var link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = stash[name];
+                    document.head.appendChild(link);
+                }
+            });
+        }
+
+        if (!window.__evooryHomepageListingListener) {
+            window.__evooryHomepageListingListener = true;
+            document.addEventListener('livewire:navigated', syncListingCss);
+        }
+    })();
+    </script>
 </div>
 

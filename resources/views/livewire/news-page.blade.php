@@ -3,9 +3,20 @@
 @endsection
 
 @push('css')
+{{-- evoory-theme.css carries the .ev-header / .ev-logo / .ev-header-tab styles
+     used by the included `components.layouts.header-evoory` below. Loaded here
+     because this page renders on the legacy `app` layout (which does not load
+     evoory-theme.css by default), but we still want the same top header bar
+     as the home-page evoory layout. --}}
+<link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260416-1">
 <style>
 /* === Evoory Dark Theme === */
 body { background: #000 !important; }
+/* Hide the legacy layout's top <header id="header"> on this page so we don't
+   render two headers (legacy layout one + evoory inline one). News-page also
+   has its own <header id="header"> further down for the city/filters bar — we
+   target only the legacy layout one (direct child of <body>). */
+body > header#header { display: none !important; }
 #header { margin-bottom: 0px !important; }
 #footer { background: #0D1011 !important; border-top: 0px !important; }
 #footer .list-inline li { margin-bottom: 0px !important; }
@@ -159,7 +170,6 @@ body:has(.ev-news-root) a { color: #C1F11D !important; }
 .subscribe-btn-wrapper .btn-primary:hover { background: #d4f84d !important; }
 
 /* Text colors */
-p, span, strong, .text-muted { color: #ccc !important; }
 h1, h2, h3, h4, .h3 { color: #fff !important; }
 
 .nav-bar {
@@ -448,6 +458,75 @@ input.tt-hint,
 @endpush
 
 <div class="ev-news-root">
+{{-- Evoory top header bar (logo + ESCORTS/WHAT'S NEW tabs + Language + Sign in).
+     Inlined here because this page is rendered with the legacy `app` layout
+     (which loads Bootstrap 3 styles needed for the city dropdown / activity
+     stream below). The legacy layout has its own header — we hide it via CSS
+     in @push('css') above and render this evoory-styled bar in its place. --}}
+@php
+    $newsCitySlug = strtolower($selectedcity ?? 'dubai');
+    $newsGender = $gender ?? 'female';
+@endphp
+<header class="ev-header">
+    <div class="ev-container">
+        <div class="ev-flex ev-items-center ev-justify-between">
+            <div class="ev-flex ev-items-center">
+                @if(isset($setting) && $setting->app_logo)
+                    <a href="/" class="ev-logo"><img src="{{ smart_asset($setting->app_logo) }}" alt="{{ $setting->app_name ?? 'evoory' }}" style="height:36px;width:auto;display:block;"></a>
+                @else
+                    <a href="/" class="ev-logo">{{ ($setting->app_name ?? null) ?: 'evoory' }}</a>
+                @endif
+                <div class="ev-header-tabs">
+                    <a href="/{{ $newsGender }}-escorts-in-{{ $newsCitySlug }}" class="ev-header-tab">ESCORTS</a>
+                    <a href="/{{ $newsGender }}-escort-news-in-{{ $newsCitySlug }}" class="ev-header-tab active">WHAT'S NEW</a>
+                </div>
+            </div>
+            <nav class="ev-nav">
+                @guest
+                <div class="ev-relative">
+                    <button class="ev-nav-link ev-lang-btn" type="button" aria-label="Select Language">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 8l6 6"></path><path d="M4 14l6-6 2-3"></path><path d="M2 5h12"></path>
+                            <path d="M7 2h1"></path><path d="M22 22l-5-10-5 10"></path><path d="M14 18h6"></path>
+                        </svg>
+                        Language
+                    </button>
+                </div>
+                <a href="{{ route('sign-in') }}" class="ev-nav-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Sign in
+                </a>
+                @endguest
+                @auth
+                    @if(Auth::user()->type != 1)
+                        @php $userProfile = auth()->user()->profiles->first(); @endphp
+                        @if($userProfile)
+                        <a href="{{ url('my-profile/'.$userProfile->slug.'/'.$userProfile->id) }}" class="ev-nav-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            My Profile
+                        </a>
+                        @endif
+                        <a href="{{ url('my-account') }}" class="ev-nav-link">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                            My Account
+                        </a>
+                    @endif
+                @endauth
+            </nav>
+        </div>
+    </div>
+</header>
+
 {{-- Mobile Back Bar --}}
 <div class="ev-news-back-bar" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:center;position:relative;padding:12px 16px;background:#131616;">
@@ -1092,6 +1171,45 @@ input.tt-hint,
 </div>
 
 @push('js')
+<script>
+// The news-page renders on the legacy `app` layout which loads css-optimized.blade.php
+// — that bundle pulls in app.css, app2.css, app3.css, AND app4.css, all of which
+// carry Bootstrap-flavoured anchor + button rules and an inline FontAwesome 4
+// @font-face. Once `wire:navigate` puts them in <head> they stay there and leak
+// onto the next evoory-layout page (home `/`, listing, dashboard). Strip them
+// when navigating into an evoory-layout page (marker: `body > main`); re-attach
+// when going back to a legacy page.
+(function() {
+    var LEGACY_CSS = ['app.css', 'app2.css', 'app3.css', 'app4.css'];
+
+    function syncLegacyCss() {
+        var onEvooryLayout = !!document.querySelector('body > main');
+        window.__evooryStashedLegacyCss = window.__evooryStashedLegacyCss || {};
+        var stash = window.__evooryStashedLegacyCss;
+
+        LEGACY_CSS.forEach(function (name) {
+            var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/' + name + '"]');
+
+            if (onEvooryLayout && live) {
+                stash[name] = live.getAttribute('href');
+                live.parentNode.removeChild(live);
+            } else if (!onEvooryLayout && !live && stash[name]) {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = stash[name];
+                document.head.appendChild(link);
+            }
+        });
+    }
+
+    // Only strip on actual navigations, not on initial script load — the
+    // initial load can race with body swap and produce an unstyled flash.
+    if (!window.__evooryNewsLegacyListener) {
+        window.__evooryNewsLegacyListener = true;
+        document.addEventListener('livewire:navigated', syncLegacyCss);
+    }
+})();
+</script>
 <script>
 // News page city search — uses document-level event delegation so it survives
 // Livewire morphs and runs even if this script loads before the input.

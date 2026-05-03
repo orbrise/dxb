@@ -4,19 +4,17 @@
  
 @push('css')
 
-{{-- evoory-homepage.css is render-blocking on purpose: it carries the dark/lime theme
-     for the listing grid. Loading it async produced a Flash of Unstyled Content where
-     the orange (legacy MR) theme from app.css would render first, then get overridden
-     by evoory-homepage.css when it finished downloading.
-
-     The layout (app-evoory.blade.php) already loads app.css and Font Awesome — do NOT
-     re-load them here, that was the cause of the orange flash. --}}
+{{-- evoory-homepage.css carries the dark/lime theme for the listing grid. It is
+     a render-blocking load on purpose — async loading produced a Flash of
+     Unstyled Content. NOTE: it is literally an "auto-generated legacy bundle:
+     app2 + app3 + app4" dump that contains global rules (`body { background:
+     #333 url(...) }`, `.fa { font-family:'FontAwesome' !important }`, `a
+     { color:#C1F11D }`) — see the JS strip below in @push('js') which removes
+     this stylesheet from <head> when the user wire:navigates to a page that
+     doesn't need it. --}}
 <link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}">
 
-{{-- Page-specific styles previously inlined in this template's <style> blocks.
-     Extracted to a static file so the HTML payload stays small and the CSS gets
-     its own long-lived cache entry at the edge. Load synchronously alongside
-     evoory-homepage.css to keep the same render order as before. --}}
+{{-- Page-specific styles previously inlined in this template's <style> blocks. --}}
 <link rel="stylesheet" href="{{ asset('assets/css/listing-page-inline.css') }}?v={{ @filemtime(public_path('assets/css/listing-page-inline.css')) ?: time() }}">
 
 {{-- site-inline is non-critical, keep async --}}
@@ -150,6 +148,39 @@
         #cityappend::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
         #cityappend::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
         #cityappend { scrollbar-width: thin; scrollbar-color: #2a2a2a transparent; }
+
+        /* Empty-state Subscribe button (shown when a city has no profiles).
+           Targets both the new `.ev-empty-subscribe-btn` class AND the legacy
+           `.subscribe-btn-wrapper .btn-primary` selector so the override works
+           against page-cached HTML that still has the old class names, and to
+           beat evoory-homepage.css's `.btn-primary { background:#C1F11D
+           linear-gradient(#C1F11D,#d3980b) repeat-x }` lime→orange gradient. */
+        .ev-empty-subscribe-btn,
+        .subscribe-btn-wrapper .btn,
+        .subscribe-btn-wrapper .btn-primary {
+            display: inline-block !important;
+            background: #C1F11D !important;
+            background-image: none !important;
+            color: #000 !important;
+            border: none !important;
+            padding: 7px 22px !important;
+            border-radius: 24px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            transition: background 0.15s ease !important;
+        }
+        .ev-empty-subscribe-btn:hover,
+        .ev-empty-subscribe-btn:focus,
+        .subscribe-btn-wrapper .btn:hover,
+        .subscribe-btn-wrapper .btn:focus,
+        .subscribe-btn-wrapper .btn-primary:hover,
+        .subscribe-btn-wrapper .btn-primary:focus {
+            background: #d4f84d !important;
+            background-image: none !important;
+            color: #000 !important;
+            text-decoration: none !important;
+        }
     </style>
 
     <!-- Load non-critical styles asynchronously -->
@@ -195,8 +226,8 @@
     </script>
 
 @endpush
-    
-<div class="">
+
+<div class="ev-listing-page">
 
 {{-- Include common search header (includes ESCORTS/WHAT'S NEW tabs) --}}
 @include('components.search-header')
@@ -634,6 +665,46 @@
      scroll, country-code map. Cached by Cloudflare independently — keeps inline
      payload small. Loaded with defer so it doesn't block parsing. --}}
 <script src="{{ asset('assets/js/listing-page.js') }}?v={{ @filemtime(public_path('assets/js/listing-page.js')) ?: time() }}" defer></script>
+<script>
+// evoory-homepage.css and listing-page-inline.css carry global rules
+// (`body { background:#333 url(...) }`, `.fa { font-family:'FontAwesome'!important }`,
+// `a { color:#C1F11D !important }`) plus an inline FontAwesome 4 @font-face.
+// Once wire:navigate adds them to <head> they stay there and leak onto the
+// next page (homepage `/`, dashboard, etc.). Strip whenever we're not on a
+// listing page; re-attach when coming back.
+(function() {
+    var LISTING_CSS = ['evoory-homepage.css', 'listing-page-inline.css'];
+
+    function syncListingCss() {
+        var onListing = !!document.querySelector('.ev-listing-page');
+        window.__evooryStashedListingCss = window.__evooryStashedListingCss || {};
+        var stash = window.__evooryStashedListingCss;
+
+        LISTING_CSS.forEach(function (name) {
+            var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/' + name + '"]');
+
+            if (!onListing && live) {
+                stash[name] = live.getAttribute('href');
+                live.parentNode.removeChild(live);
+            } else if (onListing && !live && stash[name]) {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = stash[name];
+                document.head.appendChild(link);
+            }
+        });
+    }
+
+    // Don't run on initial script load — at that moment the body content may
+    // not be fully swapped in yet on a wire:navigate, and we'd risk stripping
+    // the listing CSS while the user is actually on the listing page (which
+    // produced an intermittent broken layout).
+    if (!window.__evooryListingNavListener) {
+        window.__evooryListingNavListener = true;
+        document.addEventListener('livewire:navigated', syncListingCss);
+    }
+})();
+</script>
 <script>
 (function(){
     // Wait for DOM ready
@@ -1523,7 +1594,7 @@
         @endif
 
         @empty
-        <div class="col-md-12 mb-2"><h2>No Escorts in {{$selectedcity}} yet</h2><p>Register today and we will send you updates with new listings in {{$selectedcity}}</p><p></p><div class="subscribe-btn-wrapper"><a class="btn btn-primary btn-lg btn-lg" data-btn-link="" href="/register">Subscribe</a></div><p></p></div>
+        <div class="col-md-12 mb-2"><h2>No Escorts in {{$selectedcity}} yet</h2><p>Register today and we will send you updates with new listings in {{$selectedcity}}</p><p></p><div class="subscribe-btn-wrapper"><a class="ev-empty-subscribe-btn" data-btn-link="" href="/register">Subscribe</a></div><p></p></div>
         @endforelse
         
         

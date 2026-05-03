@@ -47,20 +47,29 @@ class CachePageResponse
 
         if (Cache::has($cacheKey)) {
             $cached = Cache::get($cacheKey);
-            $response = response($cached['body'], $cached['status'], $cached['headers']);
-            $response->headers->set('X-Page-Cache', 'HIT');
-            $this->markPublic($response);
 
-            // Livewire injects its runtime (<style> + <script> with per-session CSRF) via
-            // a RequestHandled listener that normally only fires when a component is rendered.
-            // On a cache HIT no component renders, so without this flag the cached page ships
-            // without Livewire → nothing interactive, layout-breaking missing styles.
-            // Forcing injection makes Livewire inject fresh assets on every cached response.
-            if (class_exists(\Livewire\Features\SupportAutoInjectedAssets\SupportAutoInjectedAssets::class)) {
-                \Livewire\Features\SupportAutoInjectedAssets\SupportAutoInjectedAssets::$forceAssetInjection = true;
+            // Orphan stale entries that should never have been written:
+            //  - empty body (e.g. an old HEAD response that snuck past the request filter)
+            //  - body with Livewire content (would 419 on first wire:submit)
+            $cachedBody = $cached['body'] ?? '';
+            if ($cachedBody === '' || $this->bodyHasLivewire($cachedBody)) {
+                Cache::forget($cacheKey);
+            } else {
+                $response = response($cached['body'], $cached['status'], $cached['headers']);
+                $response->headers->set('X-Page-Cache', 'HIT');
+                $this->markPublic($response);
+
+                // Livewire injects its runtime (<style> + <script> with per-session CSRF) via
+                // a RequestHandled listener that normally only fires when a component is rendered.
+                // On a cache HIT no component renders, so without this flag the cached page ships
+                // without Livewire → nothing interactive, layout-breaking missing styles.
+                // Forcing injection makes Livewire inject fresh assets on every cached response.
+                if (class_exists(\Livewire\Features\SupportAutoInjectedAssets\SupportAutoInjectedAssets::class)) {
+                    \Livewire\Features\SupportAutoInjectedAssets\SupportAutoInjectedAssets::$forceAssetInjection = true;
+                }
+
+                return $response;
             }
-
-            return $response;
         }
 
         $response = $next($request);
@@ -78,7 +87,9 @@ class CachePageResponse
 
     protected function shouldCacheRequest(Request $request): bool
     {
-        if (!$request->isMethod('GET') && !$request->isMethod('HEAD')) {
+        // GET only. HEAD responses have empty bodies in Symfony; caching one and
+        // serving it back to a GET produces a Content-Length: 0 page.
+        if (!$request->isMethod('GET')) {
             return false;
         }
 
@@ -118,7 +129,35 @@ class CachePageResponse
             return false;
         }
 
+        $body = (string) $response->getContent();
+
+        // Defensive: never cache an empty body. Some upstream paths (HEAD handling,
+        // streamed responses, content-emptied error renders) can leave getContent()
+        // empty even when status=200, and a cached blank page is worse than a miss.
+        if ($body === '') {
+            return false;
+        }
+
+        // Pages with interactive Livewire components embed a per-session CSRF token
+        // and an encrypted wire:snapshot. Caching freezes both, so any visitor who
+        // gets the cached HTML will hit a 419 on their first wire:submit/wire:click.
+        if ($this->bodyHasLivewire($body)) {
+            return false;
+        }
+
         return true;
+    }
+
+    protected function bodyHasLivewire(string $body): bool
+    {
+        if ($body === '') {
+            return false;
+        }
+
+        return str_contains($body, 'wire:snapshot')
+            || str_contains($body, 'wire:submit')
+            || str_contains($body, 'wire:click')
+            || str_contains($body, 'wire:model');
     }
 
     protected function cacheKey(Request $request): string

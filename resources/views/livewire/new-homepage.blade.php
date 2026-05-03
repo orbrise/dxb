@@ -70,6 +70,11 @@
     }
 }
 
+a {
+    color: #000 !important;
+    text-decoration: none !important;
+}
+
 </style>
 @endpush
 <div class="container-fluid">
@@ -3777,6 +3782,50 @@
   </div>
 
   @push('js')
+
+<script>
+// Defensive cleanup: this page (new-homepage) uses the evoory layout, which
+// does NOT load app.css/app2.css/app3.css/app4.css. But if the user arrives
+// here via wire:navigate from a legacy-layout page (news-page, profile-details,
+// etc.), all four <link>s stay in <head> and their Bootstrap-flavoured
+// `.btn-primary:hover{background:#dd9f0b}` / `a.text-primary:hover{color:#dd9f0b}`
+// hover rules + inline FA 4 @font-face leak into this page. Strip them all on
+// arrival; re-attach if the user navigates back to a legacy-layout page.
+//
+// app.min.css is intentionally NOT in this list — the substring match
+// `assets/css/app.css` does not match `assets/css/app.min.css`, so the evoory
+// layout's own stylesheet is left alone.
+(function () {
+    var LEGACY_CSS = ['app.css', 'app2.css', 'app3.css', 'app4.css'];
+
+    function syncLegacyCss() {
+        var onEvooryLayout = !!document.querySelector('body > main');
+        window.__evooryStashedLegacyCss = window.__evooryStashedLegacyCss || {};
+        var stash = window.__evooryStashedLegacyCss;
+
+        LEGACY_CSS.forEach(function (name) {
+            var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/' + name + '"]');
+
+            if (onEvooryLayout && live) {
+                stash[name] = live.getAttribute('href');
+                live.parentNode.removeChild(live);
+            } else if (!onEvooryLayout && !live && stash[name]) {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = stash[name];
+                document.head.appendChild(link);
+            }
+        });
+    }
+
+    syncLegacyCss();
+
+    if (!window.__evooryHomeLegacyListener) {
+        window.__evooryHomeLegacyListener = true;
+        document.addEventListener('livewire:navigated', syncLegacyCss);
+    }
+})();
+</script>
 
 <script>
   // Wait for jQuery to be available (handles deferred loading)

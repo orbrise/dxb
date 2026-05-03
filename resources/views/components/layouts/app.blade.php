@@ -354,7 +354,7 @@ label {color:white !important;}
 .pagination>li>a:focus, .pagination>li>a:hover, .pagination>li>span:focus, .pagination>li>span:hover
  {
     z-index: 2;
-    color: #dca623;
+    color: #000;
     background-color: #474747;
     border-color: rgba(255, 255, 255, .1);
 }

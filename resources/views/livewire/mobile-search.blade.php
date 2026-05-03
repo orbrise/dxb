@@ -468,7 +468,7 @@ select.select-box option {
 
         a:focus,
         a:hover {
-            color: #dca623;
+            color: #000;
             text-decoration: underline
         }
 

@@ -178,13 +178,13 @@
 
 .pagination li a:hover {
     background-color: #333;
-    color: #dca623;
+    color: #000;
     border-color: #333;
 }
 
 .pagination li.active span {
     background-color: #333;
-    color: #dca623;
+    color: #000;
     border-color: #333;
 }
 
