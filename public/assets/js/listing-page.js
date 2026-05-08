@@ -68,12 +68,64 @@
     // 2. Gender dropdown + advanced search modal
     // -----------------------------------------------------------------------
     (function () {
+        // Inline-style positioning for the modal and its dialog. We force these
+        // via element.style instead of trusting the cascade because Livewire's
+        // wire:navigate head merge can drop Bootstrap 4's stylesheet
+        // (app.min.css) when the user transitions between layouts (e.g.
+        // news → listing). Without those rules, .modal renders as a regular
+        // block element and the user sees a black backdrop with no popup.
+        // Inline styles always win over missing/stale stylesheets.
+        var MODAL_OPEN_STYLE =
+            'display:block !important;' +
+            'position:fixed !important;' +
+            'top:0 !important;' +
+            'right:0 !important;' +
+            'bottom:0 !important;' +
+            'left:0 !important;' +
+            'z-index:1050 !important;' +
+            'overflow-x:hidden !important;' +
+            'overflow-y:auto !important;' +
+            'outline:0 !important;';
+        var DIALOG_STYLE =
+            'position:relative !important;' +
+            'width:auto !important;' +
+            'max-width:800px !important;' +
+            'margin:30px auto !important;' +
+            'pointer-events:auto !important;';
+        var CONTENT_STYLE =
+            'position:relative !important;' +
+            'background-color:#fff !important;' +
+            'border-radius:6px !important;' +
+            'pointer-events:auto !important;';
+
         function closeModal(modal) {
-            modal.style.display = 'none';
-            modal.classList.remove('in');
+            modal.removeAttribute('style');
+            modal.classList.remove('in', 'show');
             document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
             var backdrop = document.querySelector('.modal-backdrop');
             if (backdrop) backdrop.remove();
+        }
+
+        function openModal(modal) {
+            modal.setAttribute('style', MODAL_OPEN_STYLE);
+            modal.classList.add('in', 'show');
+            // Force the dialog/content too — on small screens a missing
+            // .modal-dialog rule pins the popup width to viewport, and a
+            // missing .modal-content makes it transparent over the backdrop.
+            var dialog = modal.querySelector('.modal-dialog');
+            if (dialog) dialog.setAttribute('style', DIALOG_STYLE);
+            var content = modal.querySelector('.modal-content');
+            if (content) content.setAttribute('style', CONTENT_STYLE);
+            document.body.classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+            if (!document.querySelector('.modal-backdrop')) {
+                var backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade in show';
+                backdrop.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1040;';
+                document.body.appendChild(backdrop);
+                backdrop.addEventListener('click', function () { closeModal(modal); });
+            }
         }
 
         document.addEventListener('click', function (e) {
@@ -101,18 +153,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 var modal = document.getElementById('search-more');
-                if (modal) {
-                    modal.style.display = 'block';
-                    modal.classList.add('in');
-                    document.body.classList.add('modal-open');
-                    if (!document.querySelector('.modal-backdrop')) {
-                        var backdrop = document.createElement('div');
-                        backdrop.className = 'modal-backdrop fade in';
-                        backdrop.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1040;';
-                        document.body.appendChild(backdrop);
-                        backdrop.addEventListener('click', function () { closeModal(modal); });
-                    }
-                }
+                if (modal) openModal(modal);
             }
             var closeBtn = e.target.closest('#search-more .close, #search-more [data-dismiss="modal"]');
             if (closeBtn) {

@@ -547,37 +547,15 @@ label {color:white !important;}
                     window.fixAllIcons();
                 }
                 
-                // Run on ALL Livewire events - NO CSS reload
-                ['livewire:navigating', 'livewire:navigated', 'livewire:load', 'livewire:update'].forEach(function(event) {
-                    document.addEventListener(event, function() {
-                        // Fix icons multiple times with different delays
-                        window.fixAllIcons();
-                        setTimeout(window.fixAllIcons, 10);
-                        setTimeout(window.fixAllIcons, 50);
-                        setTimeout(window.fixAllIcons, 100);
-                        setTimeout(window.fixAllIcons, 200);
-                        setTimeout(window.fixAllIcons, 500);
-                    });
-                });
-                
-                // Also on Turbolinks events
-                ['turbolinks:load', 'turbolinks:render'].forEach(function(event) {
-                    document.addEventListener(event, function() {
-                        window.fixAllIcons();
-                        setTimeout(window.fixAllIcons, 50);
-                        setTimeout(window.fixAllIcons, 150);
-                    });
-                });
-                
-                // MutationObserver - start IMMEDIATELY
-                var observer = new MutationObserver(function(mutations) {
-                    window.fixAllIcons();
-                });
-                observer.observe(document.documentElement, {
-                    childList: true,
-                    subtree: true
-                });
-                
+                // Run once after Livewire/Turbolinks navigates — the inline @font-face
+                // above already loads FA correctly, so a single pass handles late-mounted
+                // icons. The previous setup ran fixAllIcons() on every DOM mutation via
+                // MutationObserver and at 5 staggered timeouts per Livewire event, which
+                // scanned the entire DOM and forced a reflow per icon — heavy enough to
+                // dominate LCP on news/listing pages.
+                document.addEventListener('livewire:navigated', window.fixAllIcons);
+                document.addEventListener('turbolinks:load', window.fixAllIcons);
+
             })();
         </script>
         

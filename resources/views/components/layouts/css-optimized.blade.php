@@ -1,11 +1,5 @@
 <link href="{{smart_asset('assets/images/web/icon3.png')}}" rel="apple-touch-icon" />
      
-    <!-- FOUC Prevention: Hide body until styles are loaded -->
-    <style id="fouc-prevention">
-      html { visibility: hidden; }
-      html.styles-loaded { visibility: visible; }
-    </style>
-    
     <!-- CSS Variables for dynamic asset URLs -->
     <style>
       :root {
@@ -22,8 +16,8 @@
       }
     </style>
     
-    <!-- Critical CSS - Load synchronously -->
-    <link rel="stylesheet" href="{{smart_asset('assets/css/app.css')}}" />
+    <!-- Critical CSS - Load synchronously (minified: ~80KB vs 95KB unminified) -->
+    <link rel="stylesheet" href="{{smart_asset('assets/css/app.min.css')}}" />
     
     <!-- Site inline styles (extracted from blade, now cached by browser) -->
     <link rel="stylesheet" href="{{smart_asset('assets/css/site-inline.min.css')}}" />
@@ -33,9 +27,6 @@
     <link rel="stylesheet" href="{{smart_asset('assets/css/app3.css')}}" />
     <link rel="stylesheet" href="{{smart_asset('assets/css/app4.css')}}" />
     
-    <!-- Reveal page immediately after CSS loads -->
-    <script>document.documentElement.classList.add('styles-loaded');</script>
-     
     <!-- Font Awesome 5.15.3 - Load async -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" 
           integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" 

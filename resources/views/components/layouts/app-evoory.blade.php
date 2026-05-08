@@ -45,53 +45,6 @@
 
     {{-- Additional page-specific CSS --}}
     @stack('css')
-    {{-- Cross-layout wire:navigate cleanup.
-         When the user arrives at an app-evoory page (homepage, listing,
-         profile details) via wire:navigate from a legacy-app page (news,
-         etc.), Livewire's head morph leaves /assets/css/app.css | app2.css
-         | app3.css | app4.css attached in <head>. Those bundles carry
-         global rules (`body { background:#333 url(...) }`, `.fa
-         { font-family:… !important }`, `a { color:#C1F11D !important }`)
-         that fight the evoory-theme rules and break the layout — footer
-         wraps wrong, modal positions wrong, advanced search shows a black
-         backdrop. They are never needed on app-evoory, so strip them on
-         every transition INTO an app-evoory route. The route check is
-         essential — this listener stays alive across wire:navigate, so
-         without it, leaving for a legacy page (e.g. /female-escort-news-in-X)
-         would delete the legacy bundles that page actually loads. --}}
-    <script>
-    (function () {
-        var LEGACY_HREF = /\/assets\/css\/app[2-4]?\.css(\?|$)/;
-        function isAppEvooryRoute() {
-            var path = location.pathname;
-            // Homepage
-            if (path === '/' || path === '') return true;
-            // News pages render on legacy `app` layout — need the legacy CSS.
-            // Match BEFORE the listing check because both paths contain
-            // "-escorts" / "escort-" substrings.
-            if (/escort-news-in-/.test(path)) return false;
-            // Listing pages and profile detail pages render on app-evoory.
-            // Patterns: /{gender}-escorts-in-{city}, /{...}/page/{n},
-            // /{...}/{id}/{slug}.
-            if (/^\/(female|male|shemale)-escorts-in-/.test(path)) return true;
-            // Anything else: don't touch — could be on a legacy-layout page
-            // that legitimately loads app.css / app2-4.css.
-            return false;
-        }
-        function stripLegacyCss() {
-            if (!isAppEvooryRoute()) return;
-            document
-                .querySelectorAll('link[rel="stylesheet"]')
-                .forEach(function (link) {
-                    if (LEGACY_HREF.test(link.getAttribute('href') || '')) {
-                        link.parentNode.removeChild(link);
-                    }
-                });
-        }
-        stripLegacyCss();
-        document.addEventListener('livewire:navigated', stripLegacyCss);
-    })();
-    </script>
 </head>
 <body>
     {{-- Header --}}

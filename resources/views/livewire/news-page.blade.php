@@ -2,6 +2,30 @@
 @include('components.layouts.headerform')
 @endsection
 
+@push('js')
+{{-- Disable Turbolinks on this page.
+     `app2.js` (loaded by the legacy `app` layout) bundles Turbolinks, which
+     intercepts every internal link click and does its own SPA navigation by
+     swapping <body> only — leaving this page's <head> (Bootstrap 3 + app2/3/4
+     stylesheets, news-specific scripts) attached when the user clicks
+     ESCORTS to leave for the listing page. The listing page then renders
+     with the wrong stylesheet set: Bootstrap 4 (app.min.css) is missing,
+     and the Advanced Search modal has no `position:fixed` rule, so it
+     renders as an unstyled black backdrop. The "Detected multiple
+     instances of Livewire/Alpine" warnings in the console are the same
+     symptom — old instances stay alive in the leftover head.
+
+     Setting data-turbolinks="false" on <body> opts every link on this
+     page out of Turbolinks, forcing real browser navigation (full reload).
+     We do it as early as possible so it lands before the user can click. --}}
+<script>
+    if (document.body) document.body.setAttribute('data-turbolinks', 'false');
+    else document.addEventListener('DOMContentLoaded', function () {
+        document.body.setAttribute('data-turbolinks', 'false');
+    });
+</script>
+@endpush
+
 @push('css')
 {{-- evoory-theme.css carries the .ev-header / .ev-logo / .ev-header-tab styles
      used by the included `components.layouts.header-evoory` below. Loaded here
@@ -634,7 +658,13 @@ input.tt-hint,
     </a>
   
     <ul class="activity-stream activity-stream-full ">
-        @if($type === 'all')
+        {{-- Activity items are pre-rendered (and cached when no filters are active)
+             in NewsPage::render() and injected here. The fallback below renders
+             inline if $activityItemsHtml ever isn't passed in (defensive only —
+             render() always sets it). --}}
+        @if(isset($activityItemsHtml))
+            {!! $activityItemsHtml !!}
+        @elseif($type === 'all')
             @foreach($items as $item)
             @if(isset($item->item_type) && $item->item_type === 'escort')
                 @php $profile = $item; @endphp

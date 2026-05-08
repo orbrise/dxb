@@ -56,6 +56,47 @@ class NewsPage extends Component
     {
         $this->perPage += 4;
     }
+
+    /**
+     * True when no user-specific filter is set, so the query result depends
+     * only on (type, gender, city, perPage, page) and is safe to share across
+     * visitors via a short-TTL cache. Filtered queries skip the cache so each
+     * search/refinement still hits the DB and returns fresh data.
+     */
+    protected function isCacheable(): bool
+    {
+        return empty($this->sservices)
+            && empty($this->rate)
+            && empty($this->buts)
+            && empty($this->ori)
+            && empty($this->nonsmoker)
+            && empty($this->incall)
+            && empty($this->outcall)
+            && empty($this->withreviews)
+            && empty($this->ethnicity)
+            && empty($this->nationality)
+            && empty($this->agefrom)
+            && empty($this->ageto)
+            && empty($this->heightfrom)
+            && empty($this->heightto)
+            && empty($this->name)
+            && empty($this->language)
+            && empty($this->isshaved)
+            && empty($this->haircolor);
+    }
+
+    protected function cacheKey(string $bucket): string
+    {
+        $page = (int) request()->query('page', 1);
+        return "news:{$bucket}:{$this->gender}:{$this->city}:{$this->perPage}:p{$page}";
+    }
+
+    /**
+     * 5 min — short enough that newly created profiles/reviews/questions show
+     * up promptly, long enough that consecutive visitors share a cached payload
+     * on the hot default views (e.g. /female-escort-news-in-dubai).
+     */
+    const NEWS_CACHE_TTL = 300;
     
     public function updatedSservices($value)
     {
@@ -127,9 +168,17 @@ class NewsPage extends Component
     
     public function getNewEscorts()
     {
+        if ($this->isCacheable()) {
+            return Cache::remember($this->cacheKey('escorts'), self::NEWS_CACHE_TTL, fn() => $this->fetchNewEscorts());
+        }
+        return $this->fetchNewEscorts();
+    }
+
+    protected function fetchNewEscorts()
+    {
         $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
-        
+
         return UsersProfile::where('city', $this->city)
             ->where('gender', $genderId)
             ->where('is_active', 1)
@@ -206,9 +255,17 @@ class NewsPage extends Component
     
     public function getNewReviews()
     {
+        if ($this->isCacheable()) {
+            return Cache::remember($this->cacheKey('reviews'), self::NEWS_CACHE_TTL, fn() => $this->fetchNewReviews());
+        }
+        return $this->fetchNewReviews();
+    }
+
+    protected function fetchNewReviews()
+    {
         $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
-        
+
         return Review::whereHas('profile', function($query) use ($genderId) {
                 $query->where('city', $this->city)
                       ->where('gender', $genderId)
@@ -236,9 +293,17 @@ class NewsPage extends Component
     
     public function getNewQuestions()
     {
+        if ($this->isCacheable()) {
+            return Cache::remember($this->cacheKey('questions'), self::NEWS_CACHE_TTL, fn() => $this->fetchNewQuestions());
+        }
+        return $this->fetchNewQuestions();
+    }
+
+    protected function fetchNewQuestions()
+    {
         $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
-        
+
         return Question::whereHas('profile', function($query) use ($genderId) {
                 $query->where('city', $this->city)
                       ->where('gender', $genderId)
@@ -268,9 +333,17 @@ class NewsPage extends Component
     
     public function getAllNews()
     {
+        if ($this->isCacheable()) {
+            return Cache::remember($this->cacheKey('all'), self::NEWS_CACHE_TTL, fn() => $this->fetchAllNews());
+        }
+        return $this->fetchAllNews();
+    }
+
+    protected function fetchAllNews()
+    {
         $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
-        
+
         // Get escorts with item_type attribute
         $escorts = UsersProfile::where('city', $this->city)
             ->where('gender', $genderId)
@@ -370,6 +443,31 @@ class NewsPage extends Component
         $data['languages'] = Cache::remember('news:languages', CacheService::TTL_LOOKUP, fn() => Language::all());
         $data['countries'] = $countries;
         $data['nationalities'] = $countries;
+
+        // Pre-render the heavy activity-items foreach into a string. On Redis
+        // (prod) we cache the rendered HTML so subsequent hits skip both Blade
+        // compilation and template rendering — a clear win because Redis reads
+        // are ~sub-ms. On the file cache driver (local dev) we render fresh
+        // every request: a 50-100KB cache file read can cost more disk I/O than
+        // the Blade render saves, and the eloquent collection cache further up
+        // already eliminates the slow DB queries.
+        $itemsViewData = [
+            'items' => $data['items'],
+            'type' => $this->type,
+            'gender' => $this->gender,
+            'selectedcity' => $this->selectedcity,
+            'cityname' => $this->cityname,
+        ];
+        $useHtmlCache = $this->isCacheable() && config('cache.default') === 'redis';
+        if ($useHtmlCache) {
+            $data['activityItemsHtml'] = Cache::remember(
+                $this->cacheKey('itemshtml'),
+                self::NEWS_CACHE_TTL,
+                fn() => view('livewire.partials.news-activity-items', $itemsViewData)->render()
+            );
+        } else {
+            $data['activityItemsHtml'] = view('livewire.partials.news-activity-items', $itemsViewData)->render();
+        }
 
         return view('livewire.news-page', $data);
     }

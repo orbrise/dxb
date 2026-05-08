@@ -121,7 +121,7 @@
   .ev-auth-topbar-title{display:none!important}
 }
 .ev-auth-topbar{background:#12191c;border-top:1px solid #1f262f;border-bottom:1px solid #1f262f}
-.ev-auth-topbar-inner{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:center;position:relative}
+.ev-auth-topbar-inner{max-width:1300px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:center;position:relative}
 .ev-auth-back-link{display:inline-flex;align-items:center;gap:4px;color:#b5df19;text-decoration:none;font-size:15px;position:absolute;left:16px}
 .ev-auth-topbar-title{color:#d6dbe6;font-size:22px;font-weight:400;line-height:1}
 
