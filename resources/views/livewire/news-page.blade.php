@@ -659,10 +659,10 @@ input.tt-hint,
   
     <ul class="activity-stream activity-stream-full ">
         {{-- Activity items are pre-rendered (and cached when no filters are active)
-             in NewsPage::render() and injected here. The fallback below renders
-             inline if $activityItemsHtml ever isn't passed in (defensive only —
-             render() always sets it). --}}
-        @if(isset($activityItemsHtml))
+             in NewsPage::render() and injected here. Falls back to the legacy
+             inline foreach below when the cached HTML is missing or empty —
+             prevents a stale/empty Redis entry from rendering a blank page. --}}
+        @if(!empty(trim($activityItemsHtml ?? '')))
             {!! $activityItemsHtml !!}
         @elseif($type === 'all')
             @foreach($items as $item)
@@ -1167,16 +1167,21 @@ input.tt-hint,
         @endif
         
         @if($items->hasMorePages() || $items->count() >= 3)
-        <li class="activity-footer" id="load-more-trigger" x-data="{ 
+        {{-- IntersectionObserver fires loadMore() when the trigger is within
+             100px of the viewport. Reduced from 500px which made the trigger
+             "visible" on initial render of short pages and fired loadMore
+             before the user scrolled. Combined with the failure handler in
+             the script below, this prevents Livewire's full-screen error
+             overlay from blocking the page on /livewire/update errors. --}}
+        <li class="activity-footer" id="load-more-trigger" x-data="{
             observe() {
                 let observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            console.log('Trigger visible - loading more');
                             $wire.loadMore();
                         }
                     });
-                }, { rootMargin: '500px' });
+                }, { rootMargin: '100px' });
                 observer.observe(this.$el);
             }
         }" x-init="observe()">
@@ -1201,6 +1206,30 @@ input.tt-hint,
 </div>
 
 @push('js')
+<script>
+// Suppress Livewire's full-screen error overlay (the black <div id="livewire-error">
+// with an iframe inside that fills the viewport when a Livewire request fails).
+// On the news page the IntersectionObserver fires loadMore() automatically, so
+// any 500 from /livewire/update would otherwise blanket the page on first paint
+// before the user even scrolled. The actual error still goes to the JS console
+// via Livewire.hook('request') — search the console for "[livewire]" if loadMore
+// stops working and you need to debug.
+document.addEventListener('livewire:init', function () {
+    if (!window.Livewire) return;
+    Livewire.hook('request', ({ fail }) => {
+        fail(({ status, content, preventDefault }) => {
+            console.warn('[livewire] request failed (status=' + status + ')', content);
+            preventDefault();
+        });
+    });
+    // Belt-and-braces: if the overlay still slips through (older Livewire
+    // versions render it before hooks run), kill it on sight.
+    new MutationObserver(function () {
+        var el = document.getElementById('livewire-error');
+        if (el) el.remove();
+    }).observe(document.body, { childList: true });
+});
+</script>
 <script>
 // The news-page renders on the legacy `app` layout which loads css-optimized.blade.php
 // — that bundle pulls in app.css, app2.css, app3.css, AND app4.css, all of which

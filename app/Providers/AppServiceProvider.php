@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Cache;
 use View;
 use App\Models\Setting;
 use App\Models\UsersProfile;
@@ -36,7 +37,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::share('setting', Setting::find(1));
+        // Cache Setting::find(1) for 24h. Used in nearly every layout/view via
+        // $setting->favicon, $setting->app_logo, $setting->app_name, etc. Without
+        // the cache this fired on every web request AND every artisan command,
+        // adding a DB roundtrip and crashing the whole app when MySQL was down.
+        // Settings change rarely; admins can run `php artisan cache:forget app:setting`
+        // (or clear the cache) to refresh sooner.
+        View::share('setting', Cache::remember('app:setting', 86400, fn() => Setting::find(1)));
         
         // Register SEO View Composer for all views
         View::composer('*', SeoComposer::class);
