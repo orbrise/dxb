@@ -168,9 +168,11 @@ class NewsPage extends Component
     
     public function getNewEscorts()
     {
-        if ($this->isCacheable()) {
-            return Cache::remember($this->cacheKey('escorts'), self::NEWS_CACHE_TTL, fn() => $this->fetchNewEscorts());
-        }
+        // Caching the LengthAwarePaginator was rolled back — it caused 500s on
+        // prod (Redis) when Livewire's loadMore() tried to deserialize the
+        // cached Eloquent paginator with eager-loaded relations. Local file
+        // cache survived the roundtrip; Redis didn't. The HTML fragment cache
+        // in render() still gives us a fast path on prod for repeat visitors.
         return $this->fetchNewEscorts();
     }
 
@@ -255,9 +257,6 @@ class NewsPage extends Component
     
     public function getNewReviews()
     {
-        if ($this->isCacheable()) {
-            return Cache::remember($this->cacheKey('reviews'), self::NEWS_CACHE_TTL, fn() => $this->fetchNewReviews());
-        }
         return $this->fetchNewReviews();
     }
 
@@ -293,9 +292,6 @@ class NewsPage extends Component
     
     public function getNewQuestions()
     {
-        if ($this->isCacheable()) {
-            return Cache::remember($this->cacheKey('questions'), self::NEWS_CACHE_TTL, fn() => $this->fetchNewQuestions());
-        }
         return $this->fetchNewQuestions();
     }
 
@@ -333,9 +329,6 @@ class NewsPage extends Component
     
     public function getAllNews()
     {
-        if ($this->isCacheable()) {
-            return Cache::remember($this->cacheKey('all'), self::NEWS_CACHE_TTL, fn() => $this->fetchAllNews());
-        }
         return $this->fetchAllNews();
     }
 
