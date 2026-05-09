@@ -1767,20 +1767,19 @@ function initServicesDropdown() {
                 newCheckbox.checked = !newCheckbox.checked;
                 
                 if (newCheckbox.checked) {
-                    newOption.style.backgroundColor = '#464646';
+                    newOption.classList.add('is-selected');
                     // Add checkmark indicator
                     if (!newOption.querySelector('.checkmark')) {
                         const checkmark = document.createElement('span');
                         checkmark.className = 'checkmark';
                         checkmark.innerHTML = ' ✓';
-                        checkmark.style.color = '#4CAF50';
                         checkmark.style.fontWeight = 'bold';
                         checkmark.style.marginLeft = 'auto';
                         newOption.appendChild(checkmark);
                     }
                     console.log('✅ Selected:', serviceName);
                 } else {
-                    newOption.style.backgroundColor = '';
+                    newOption.classList.remove('is-selected');
                     // Remove checkmark indicator
                     const checkmark = newOption.querySelector('.checkmark');
                     if (checkmark) {

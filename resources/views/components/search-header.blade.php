@@ -98,26 +98,63 @@
                         </div>
             </div>
             <div class="form-group" wire:ignore>
+                <style>
+                    /* Force theme colors on services dropdown — overrides legacy/Bootstrap label styling that paints text purple. */
+                    .services-dropdown-container #services-display-box {
+                        background-color: #1a1a1a !important;
+                        color: #fff !important;
+                        border: 1px solid #2a2a2a !important;
+                    }
+                    .services-dropdown-container #services-display-text {
+                        color: #fff !important;
+                    }
+                    .services-dropdown-container #services-dropdown-list {
+                        background-color: #1a1a1a !important;
+                        border: 1px solid #2a2a2a !important;
+                        border-top: none !important;
+                    }
+                    .services-dropdown-container .service-option,
+                    .services-dropdown-container .service-option label {
+                        color: #fff !important;
+                        background-color: transparent;
+                    }
+                    .services-dropdown-container .service-option {
+                        border-bottom: 1px solid #2a2a2a !important;
+                    }
+                    .services-dropdown-container .service-option:hover,
+                    .services-dropdown-container .service-option:hover label {
+                        background-color: #C1F11D !important;
+                        color: #000 !important;
+                    }
+                    .services-dropdown-container .service-option.is-selected,
+                    .services-dropdown-container .service-option.is-selected label {
+                        background-color: #C1F11D !important;
+                        color: #000 !important;
+                    }
+                    .services-dropdown-container .service-option.is-selected .checkmark {
+                        color: #000 !important;
+                    }
+                </style>
                 <div class="services-dropdown-container" style="position: relative;">
                     <!-- The display box that looks like an input -->
-                    <div id="services-display-box" 
-                         style="background-color: #2c2c2c; color: white; border: 1px solid rgb(68 68 68); cursor: pointer; font-size: 13px; height: 32px; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; font-weight: bold; border-radius: 4px; width: 100%; min-width: 200px; box-sizing: border-box;">
+                    <div id="services-display-box"
+                         style="cursor: pointer; font-size: 13px; height: 32px; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; font-weight: bold; border-radius: 4px; width: 100%; min-width: 200px; box-sizing: border-box;">
                         <span id="services-display-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: calc(100% - 20px);">All Services</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
-                    
+
                     <!-- The dropdown list -->
-                    <div id="services-dropdown-list" 
-                         style="display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: #2c2c2c; border: 1px solid rgb(68 68 68); border-top: none; border-radius: 0 0 4px 4px; max-height: 200px; min-width: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                    <div id="services-dropdown-list"
+                         style="display: none; position: absolute; top: 100%; left: 0; right: 0; border-radius: 0 0 4px 4px; max-height: 200px; min-width: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
                         @foreach($services as $service)
-                            <div class="service-option" 
-                                 data-id="{{ $service->id }}" 
+                            <div class="service-option"
+                                 data-id="{{ $service->id }}"
                                  data-name="{{ $service->name }}"
-                                 style="padding: 10px 12px; color: white; cursor: pointer; border-bottom: 1px solid #404040; display: flex; align-items: center; font-size: 13px;">
-                                <input type="checkbox" 
-                                       id="service-{{ $service->id }}" 
+                                 style="padding: 10px 12px; cursor: pointer; display: flex; align-items: center; font-size: 13px;">
+                                <input type="checkbox"
+                                       id="service-{{ $service->id }}"
                                        style="display: none;"
-                                       @if(is_array($sservices) && in_array($service->id, $sservices)) checked 
+                                       @if(is_array($sservices) && in_array($service->id, $sservices)) checked
                                        @elseif(is_string($sservices) && in_array($service->id, explode(',', $sservices))) checked @endif>
                                 <label for="service-{{ $service->id }}" style="margin: 0; cursor: pointer;">
                                     {{ $service->name }}
@@ -125,7 +162,7 @@
                             </div>
                         @endforeach
                     </div>
-                    
+
                     <!-- Hidden input for Livewire -->
                     <input type="hidden" wire:model="sservices" id="services-hidden-input">
                 </div>
