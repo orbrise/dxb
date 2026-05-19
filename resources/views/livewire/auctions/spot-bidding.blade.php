@@ -642,37 +642,44 @@ ul.list-inline > li > a {
             </div>
             @endif
 
-            {{-- Bid History --}}
+            {{-- Bid History — only the logged-in user's own bids on this spot. --}}
             <div class="bid-history">
-                <h3>Bid History</h3>
-                @if($auction->bids->count() > 0)
-                    @foreach($auction->bids->sortByDesc('created_at') as $bid)
-                    <div class="bid-history-item {{ $auction->winner_profile_id == $bid->profile_id ? 'winning-bid' : '' }}">
-                        <div class="row align-items-center">
-                            <div class="col-md-3">
-                                <strong>{{ $bid->profile->name ?? 'Unknown Profile' }}</strong>
-                            </div>
-                            <div class="col-md-3">
-                                ${{ number_format($bid->amount, 2) }}
-                            </div>
-                            <div class="col-md-3">
-                                {{ $bid->created_at->format('M d,Y H:i') }}
-                            </div>
-                            <div class="col-md-3 text-right">
-                                @if($bid->status === 'won')
-                                <span class="bid-status-badge bid-status-approved">Approved</span>
-                                @elseif($bid->status === 'lost')
-                                <span class="bid-status-badge bid-status-rejected">Rejected</span>
-                                @else
-                                <span class="bid-status-badge bid-status-review">In Review</span>
-                                @endif
+                <h3>Your Bid History</h3>
+                @auth
+                    @php
+                        $myBids = $auction->bids->where('user_id', auth()->id())->sortByDesc('created_at');
+                    @endphp
+                    @if($myBids->count() > 0)
+                        @foreach($myBids as $bid)
+                        <div class="bid-history-item {{ $auction->winner_profile_id == $bid->profile_id ? 'winning-bid' : '' }}">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <strong>{{ $bid->profile->name ?? 'Unknown Profile' }}</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    ${{ number_format($bid->amount, 2) }}
+                                </div>
+                                <div class="col-md-3">
+                                    {{ $bid->created_at->format('M d,Y H:i') }}
+                                </div>
+                                <div class="col-md-3 text-right">
+                                    @if($bid->status === 'won')
+                                    <span class="bid-status-badge bid-status-approved">Approved</span>
+                                    @elseif($bid->status === 'lost')
+                                    <span class="bid-status-badge bid-status-rejected">Rejected</span>
+                                    @else
+                                    <span class="bid-status-badge bid-status-review">In Review</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    @endforeach
+                        @endforeach
+                    @else
+                    <p>You haven't placed any bids on this spot yet.</p>
+                    @endif
                 @else
-                <p>No bids yet. Be the first to bid!</p>
-                @endif
+                    <p>Please <a href="{{ route('sign-in') }}">sign in</a> to see your bid history.</p>
+                @endauth
             </div>
 
             {{-- Bottom info sections --}}

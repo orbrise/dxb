@@ -21,12 +21,6 @@
         </div>
     @endif
 
-    @if ($errorMessage)
-        <div class="alert alert-danger">
-            {{ $errorMessage }}
-        </div>
-    @endif
-
     <div class="ev-login-page">
         {{-- Mobile Logo & Welcome --}}
         <div class="ev-login-mobile-header">
@@ -83,6 +77,13 @@
                     @enderror
                 </div>
 
+                @if ($errorMessage)
+                    <div class="ev-login-error" role="alert" aria-live="polite">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span>{{ $errorMessage }}</span>
+                    </div>
+                @endif
+
                 <div class="ev-login-row">
                     <label class="ev-remember" for="account_remember_me">
                         <input wire:model="remember" type="checkbox" id="account_remember_me"/>
@@ -129,6 +130,19 @@
 .ev-login-page .alert-success{background:rgba(193,241,29,.12);border:1px solid rgba(193,241,29,.3);color:#c1f11d}
 .ev-login-page .alert-danger{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171}
 .validation-error{color:#f87171;font-size:13px;margin-top:4px;display:block}
+.ev-login-error{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(239,68,68,.10);
+    border:1px solid rgba(239,68,68,.35);
+    color:#f87171;
+    border-radius:5px;
+    padding:10px 12px;
+    font-size:14px;
+    margin:4px 0 14px;
+}
+.ev-login-error svg{flex-shrink:0}
 
 .ev-login-page{max-width:1180px;margin:0 auto;padding:36px 16px 60px}
 .ev-login-card{max-width:420px;margin:0 auto}

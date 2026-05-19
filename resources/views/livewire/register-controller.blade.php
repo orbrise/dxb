@@ -85,7 +85,7 @@
                 <div class="ev-form-group">
                     <label for="account_phone">Phone Number <span class="ev-required">*</span></label>
                     <div class="ev-phone-row">
-                        <div class="ev-country-code-wrapper">
+                        <div class="ev-country-code-wrapper" wire:ignore>
                             <button class="ev-country-code-display ev-auth-input" id="countryCodeDisplay" type="button">
                                 <span class="ev-country-selected">
                                     <img id="selectedFlag" src="https://flagcdn.com/w40/ae.png" alt="Flag" />
@@ -457,76 +457,94 @@ function updatePhoneMask(countryCode, phoneInputId) {
     }
 }
 
-function initCountryDropdown() {
-    const display = document.getElementById('countryCodeDisplay');
-    const dropdown = document.getElementById('countryDropdown');
-    const searchInput = document.getElementById('countrySearch');
-    const countryList = document.getElementById('countryList');
-    const hiddenInput = document.getElementById('account_countrycode');
-    const selectedFlag = document.getElementById('selectedFlag');
-    const selectedCode = document.getElementById('selectedCode');
-    
-    if (!display || !dropdown || display.dataset.initialized) return;
-    display.dataset.initialized = 'true';
-    
-    // Toggle dropdown
-    display.addEventListener('click', function(e) {
-        e.stopPropagation();
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        if (dropdown.style.display === 'block') {
-            searchInput.focus();
+// Event-delegated country dropdown — handlers bind once to `document` so they
+// survive Livewire morph cycles (e.g. when validation errors re-render the form).
+(function () {
+    if (window.__evCountryDropdownBound) return;
+    window.__evCountryDropdownBound = true;
+
+    function $(id) { return document.getElementById(id); }
+
+    function closeDropdown() {
+        var dd = $('countryDropdown');
+        if (dd) dd.style.display = 'none';
+    }
+
+    document.addEventListener('click', function (e) {
+        // 1) Toggle dropdown when the country trigger button is clicked
+        var trigger = e.target.closest('#countryCodeDisplay');
+        if (trigger) {
+            e.stopPropagation();
+            var dd = $('countryDropdown');
+            if (!dd) return;
+            var isOpen = dd.style.display === 'block';
+            dd.style.display = isOpen ? 'none' : 'block';
+            if (!isOpen) {
+                var s = $('countrySearch');
+                if (s) { try { s.focus(); } catch (_) {} }
+            }
+            return;
+        }
+
+        // 2) Pick a country
+        var option = e.target.closest('#countryList .country-option');
+        if (option) {
+            var code = option.dataset.code;
+            var iso = option.dataset.iso;
+            var flag = $('selectedFlag');
+            var label = $('selectedCode');
+            var hidden = $('account_countrycode');
+            if (flag) {
+                flag.src = 'https://flagcdn.com/w40/' + iso + '.png';
+                flag.style.display = 'block';
+            }
+            if (label) label.textContent = '+' + code;
+            if (hidden) {
+                hidden.value = code;
+                // Notify Livewire so wire:model="countrycode" picks up the value.
+                hidden.dispatchEvent(new Event('input',  { bubbles: true }));
+                hidden.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            if (typeof updatePhoneMask === 'function') {
+                updatePhoneMask(code, 'account_phone');
+            }
+            closeDropdown();
+            var search = $('countrySearch');
+            if (search) search.value = '';
+            document.querySelectorAll('#countryList .country-option').forEach(function (o) {
+                o.style.display = 'flex';
+            });
+            return;
+        }
+
+        // 3) Click outside the dropdown / trigger → close
+        var dd = $('countryDropdown');
+        var trigBtn = $('countryCodeDisplay');
+        if (dd && trigBtn && !dd.contains(e.target) && !trigBtn.contains(e.target)) {
+            dd.style.display = 'none';
         }
     });
-    
-    // Search functionality
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const options = countryList.querySelectorAll('.country-option');
-        options.forEach(function(option) {
-            const name = option.dataset.name.toLowerCase();
-            const code = option.dataset.code;
-            if (name.includes(searchTerm) || code.includes(searchTerm)) {
-                option.style.display = 'flex';
-            } else {
-                option.style.display = 'none';
-            }
+
+    // Search filter (input event is also delegated)
+    document.addEventListener('input', function (e) {
+        if (!e.target || e.target.id !== 'countrySearch') return;
+        var term = (e.target.value || '').toLowerCase();
+        document.querySelectorAll('#countryList .country-option').forEach(function (opt) {
+            var name = (opt.dataset.name || '').toLowerCase();
+            var phoneCode = (opt.dataset.code || '');
+            opt.style.display = (name.indexOf(term) !== -1 || phoneCode.indexOf(term) !== -1) ? 'flex' : 'none';
         });
     });
-    
-    // Select country
-    countryList.addEventListener('click', function(e) {
-        const option = e.target.closest('.country-option');
-        if (option) {
-            const code = option.dataset.code;
-            const iso = option.dataset.iso;
-            
-            selectedFlag.src = 'https://flagcdn.com/w40/' + iso + '.png';
-            selectedFlag.style.display = 'block';
-            selectedCode.textContent = '+' + code;
-            
-            hiddenInput.value = code;
-            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-            
-            // Apply phone mask for selected country
-            updatePhoneMask(code, 'account_phone');
-            
-            dropdown.style.display = 'none';
-            searchInput.value = '';
-            countryList.querySelectorAll('.country-option').forEach(opt => opt.style.display = 'flex');
-        }
-    });
-    
-    // Close dropdown on outside click
-    document.addEventListener('click', function(e) {
-        if (!display.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
-}
 
-document.addEventListener('DOMContentLoaded', initCountryDropdown);
-document.addEventListener('livewire:navigated', initCountryDropdown);
-document.addEventListener('livewire:initialized', initCountryDropdown);
-setTimeout(initCountryDropdown, 100);
+    // Re-apply the phone mask after Livewire morphs the phone input back into the DOM.
+    function reapplyPhoneMaskAfterMorph() {
+        var hidden = $('account_countrycode');
+        if (hidden && hidden.value && typeof updatePhoneMask === 'function') {
+            updatePhoneMask(hidden.value, 'account_phone');
+        }
+    }
+    document.addEventListener('livewire:morph.updated', reapplyPhoneMaskAfterMorph);
+    document.addEventListener('livewire:update', reapplyPhoneMaskAfterMorph);
+})();
 </script>
 @endpush

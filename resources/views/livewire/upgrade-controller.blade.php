@@ -319,16 +319,19 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
                                   $profileImages = $profile->multipleimgs ?? collect();
                               @endphp
                               
+                              @php
+                                  $defaultAvatar = smart_asset('assets/images/defaultprofile.png');
+                              @endphp
                               <div class="profile-preview" style="background: #000; padding: 10px; margin: 10px 0; min-height: {{ $minHeight }}; display: flex; align-items: flex-start; gap: 10px;">
                                   <!-- Main Image -->
-                                  <div style="width: {{ $imageSize }}; height: {{ $imageSize }}; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                  <div style="width: {{ $imageSize }}; height: {{ $imageSize }}; background: #1a1a1a; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                       @if($profile->coverimg && $profile->coverimg->image)
-                                          <img src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}" alt="Profile Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                          <img src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}" alt="Profile Preview" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='{{ $defaultAvatar }}';this.style.opacity='0.5';">
                                       @else
-                                          <img src="{{ smart_asset('assets/images/default-avatar.png') }}" alt="Profile Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                          <img src="{{ $defaultAvatar }}" alt="Profile Preview" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5;">
                                       @endif
                                   </div>
-                                  
+
                                   @if($showSideImages > 0)
                                   <!-- Side Images Column -->
                                   <div style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;">
@@ -338,12 +341,12 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
                                       @endphp
                                       @foreach($sideImages as $sideImage)
                                       <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #0D1011; overflow: hidden;">
-                                          <img src="{{ webp_asset('userimages/'.$sideImage->user_id.'/'.$sideImage->profile_id.'/'.$sideImage->image) }}" alt="Side Image" style="width: 100%; height: 100%; object-fit: cover;">
+                                          <img src="{{ webp_asset('userimages/'.$sideImage->user_id.'/'.$sideImage->profile_id.'/'.$sideImage->image) }}" alt="Side Image" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='{{ $defaultAvatar }}';this.style.opacity='0.5';">
                                       </div>
                                       @endforeach
                                       @for($i = $sideImages->count(); $i < $showSideImages; $i++)
                                       <div style="width: {{ $sideImageSize }}; height: {{ $sideImageSize }}; background: #0D1011; overflow: hidden;">
-                                          <img src="{{ smart_asset('assets/images/default-avatar.png') }}" alt="Placeholder" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5;">
+                                          <img src="{{ $defaultAvatar }}" alt="Placeholder" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.5;">
                                       </div>
                                       @endfor
                                   </div>

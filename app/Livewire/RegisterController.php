@@ -23,7 +23,7 @@ class RegisterController extends Component
     public $errorMessage = '';
 
     protected $rules = [
-        'name' => 'required|min:5|unique:users,name',
+        'name' => 'required|string|min:2|max:100',
         'email' => 'required|email|unique:users,email',
         'password' => 'required|min:6|max:100',
         'countrycode' => 'required',

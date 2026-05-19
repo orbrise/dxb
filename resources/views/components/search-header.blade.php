@@ -76,14 +76,96 @@
           <div class="listings-search-main-fields-secondary">
             <div class="form-group">
               <div class="price-control" title="Price / hour">
-                <div class="custom-select-wrapper" style="position:relative;display:inline-block;">
-                <select wire:model='currency' data-currency-combobox="true"  class="price-currency form-control" style="-webkit-appearance:none;-moz-appearance:none;appearance:none;padding-right:28px;">
-                  @foreach($currencies as $cur)
-                  <option value="{{$cur->id}}" @if($cur->id == $currency) selected @endif>{{$cur->code}}</option>
-                  @endforeach
-                </select>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                @php
+                    $currentCurrencyCode = optional($currencies->firstWhere('id', $currency))->code ?? ($currencies->first()->code ?? '');
+                @endphp
+                <style>
+                    .currency-dd-container { position: relative; display: inline-block; vertical-align: middle; }
+                    .currency-dd-trigger {
+                        background-color: #1a1a1a !important;
+                        color: #fff !important;
+                        border: 1px solid #2a2a2a !important;
+                        height: 32px;
+                        min-width: 90px;
+                        padding: 6px 28px 6px 12px;
+                        font-size: 13px;
+                        font-weight: bold;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        text-align: left;
+                        position: relative;
+                        white-space: nowrap;
+                    }
+                    .currency-dd-trigger .currency-dd-chevron {
+                        position: absolute; right: 8px; top: 50%;
+                        transform: translateY(-50%); pointer-events: none;
+                    }
+                    .currency-dd-panel {
+                        display: none;
+                        position: absolute; top: calc(100% + 4px); left: 0;
+                        min-width: 180px;
+                        background-color: #1a1a1a !important;
+                        border: 1px solid #2a2a2a !important;
+                        border-radius: 6px;
+                        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+                        z-index: 9999;
+                        overflow: hidden;
+                    }
+                    .currency-dd-panel.is-open { display: block; }
+                    .currency-dd-search-wrap { padding: 8px; border-bottom: 1px solid #2a2a2a; }
+                    .currency-dd-search {
+                        width: 100%;
+                        background-color: #0f0f0f !important;
+                        color: #fff !important;
+                        border: 1px solid #2a2a2a !important;
+                        border-radius: 4px;
+                        padding: 6px 10px;
+                        font-size: 13px;
+                        outline: none;
+                    }
+                    .currency-dd-search:focus { border-color: #C1F11D !important; }
+                    .currency-dd-list {
+                        list-style: none;
+                        margin: 0;
+                        padding: 4px 0;
+                        max-height: 220px;
+                        overflow-y: auto;
+                    }
+                    .currency-dd-list li {
+                        padding: 8px 14px;
+                        color: #fff !important;
+                        font-size: 13px;
+                        cursor: pointer;
+                        transition: background 0.12s ease, color 0.12s ease;
+                    }
+                    .currency-dd-list li:hover,
+                    .currency-dd-list li.is-active {
+                        background-color: #C1F11D !important;
+                        color: #000 !important;
+                    }
+                    .currency-dd-list li.is-empty { color: #999 !important; cursor: default; }
+                    .currency-dd-list li.is-empty:hover { background: transparent !important; color: #999 !important; }
+                    .currency-dd-list::-webkit-scrollbar { width: 6px; }
+                    .currency-dd-list::-webkit-scrollbar-track { background: transparent; }
+                    .currency-dd-list::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+                </style>
+                <div class="currency-dd-container" wire:ignore>
+                    <button type="button" class="currency-dd-trigger" id="currency-dd-trigger" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="currency-dd-label">{{ $currentCurrencyCode }}</span>
+                        <svg class="currency-dd-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="currency-dd-panel" id="currency-dd-panel" role="listbox">
+                        <div class="currency-dd-search-wrap">
+                            <input type="text" class="currency-dd-search" id="currency-dd-search" placeholder="Search currency..." autocomplete="off">
+                        </div>
+                        <ul class="currency-dd-list" id="currency-dd-list">
+                            @foreach($currencies as $cur)
+                                <li data-id="{{ $cur->id }}" data-code="{{ $cur->code }}" data-search="{{ strtolower($cur->code) }}" @if($cur->id == $currency) class="is-active" @endif>{{ $cur->code }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
+                <input type="hidden" wire:model="currency" data-currency-combobox="true" id="currency-hidden-input" value="{{ $currency }}">
              
                 <input tabindex="7" 
                 wire:model.live="rate" 
@@ -598,4 +680,122 @@ document.addEventListener('livewire:init', () => {
         }
     });
 });
+
+// Themed currency dropdown — replaces the native <select> so options render in
+// theme colors (white-on-dark) and adds an in-panel search filter.
+(function() {
+    function initCurrencyDropdown() {
+        var trigger = document.getElementById('currency-dd-trigger');
+        var panel   = document.getElementById('currency-dd-panel');
+        var label   = document.getElementById('currency-dd-label');
+        var search  = document.getElementById('currency-dd-search');
+        var list    = document.getElementById('currency-dd-list');
+        var hidden  = document.getElementById('currency-hidden-input');
+        if (!trigger || !panel || !label || !list || !hidden) return false;
+        if (trigger.dataset.bound === '1') return true;
+        trigger.dataset.bound = '1';
+
+        function open() {
+            panel.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+            if (search) {
+                search.value = '';
+                Array.prototype.forEach.call(list.querySelectorAll('li'), function (li) { li.style.display = ''; });
+                setTimeout(function () { search.focus(); }, 30);
+            }
+        }
+        function close() {
+            panel.classList.remove('is-open');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            panel.classList.contains('is-open') ? close() : open();
+        });
+
+        panel.addEventListener('click', function (e) { e.stopPropagation(); });
+
+        if (search) {
+            search.addEventListener('input', function () {
+                var q = this.value.toLowerCase().trim();
+                var any = false;
+                Array.prototype.forEach.call(list.querySelectorAll('li:not(.is-empty)'), function (li) {
+                    var match = q === '' || (li.getAttribute('data-search') || '').indexOf(q) !== -1;
+                    li.style.display = match ? '' : 'none';
+                    if (match) any = true;
+                });
+                var emptyRow = list.querySelector('li.is-empty');
+                if (!any) {
+                    if (!emptyRow) {
+                        emptyRow = document.createElement('li');
+                        emptyRow.className = 'is-empty';
+                        emptyRow.textContent = 'No matches';
+                        list.appendChild(emptyRow);
+                    }
+                    emptyRow.style.display = '';
+                } else if (emptyRow) {
+                    emptyRow.style.display = 'none';
+                }
+            });
+        }
+
+        list.addEventListener('click', function (e) {
+            var li = e.target.closest('li');
+            if (!li || li.classList.contains('is-empty')) return;
+            var id = li.getAttribute('data-id');
+            var code = li.getAttribute('data-code');
+            if (!id) return;
+
+            Array.prototype.forEach.call(list.querySelectorAll('li'), function (other) {
+                other.classList.remove('is-active');
+            });
+            li.classList.add('is-active');
+
+            label.textContent = code;
+            hidden.value = id;
+            // Notify Livewire so wire:model picks up the change.
+            hidden.dispatchEvent(new Event('input',  { bubbles: true }));
+            hidden.dispatchEvent(new Event('change', { bubbles: true }));
+
+            close();
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!panel.contains(e.target) && e.target !== trigger) close();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && panel.classList.contains('is-open')) close();
+        });
+
+        // Listen for currency-updated events fired by Livewire on city change.
+        if (window.Livewire && !window.__currencyDdLivewireBound) {
+            window.__currencyDdLivewireBound = true;
+            try {
+                Livewire.on('currency-updated', function (data) {
+                    var ev = Array.isArray(data) ? data[0] : data;
+                    if (!ev || !ev.currencyId) return;
+                    var match = list.querySelector('li[data-id="' + ev.currencyId + '"]');
+                    if (!match) return;
+                    Array.prototype.forEach.call(list.querySelectorAll('li'), function (other) {
+                        other.classList.remove('is-active');
+                    });
+                    match.classList.add('is-active');
+                    label.textContent = match.getAttribute('data-code');
+                    hidden.value = ev.currencyId;
+                });
+            } catch (e) { /* Livewire not ready yet; binding will retry on next init */ }
+        }
+
+        return true;
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCurrencyDropdown);
+    } else {
+        initCurrencyDropdown();
+    }
+    document.addEventListener('livewire:navigated', initCurrencyDropdown);
+    document.addEventListener('livewire:initialized', initCurrencyDropdown);
+})();
 </script>
