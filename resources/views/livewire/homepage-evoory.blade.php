@@ -210,37 +210,8 @@
     })();
     </script>
 
-    {{-- Also strip the listing page's evoory-homepage.css / listing-page-inline.css
-         (same legacy bundle as above, just renamed) when arriving here. --}}
-    <script>
-    (function () {
-        var LISTING_CSS = ['evoory-homepage.css', 'listing-page-inline.css'];
-
-        function syncListingCss() {
-            var onListing = !!document.querySelector('.ev-listing-page');
-            window.__evooryStashedListingCss = window.__evooryStashedListingCss || {};
-            var stash = window.__evooryStashedListingCss;
-
-            LISTING_CSS.forEach(function (name) {
-                var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/' + name + '"]');
-
-                if (!onListing && live) {
-                    stash[name] = live.getAttribute('href');
-                    live.parentNode.removeChild(live);
-                } else if (onListing && !live && stash[name]) {
-                    var link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = stash[name];
-                    document.head.appendChild(link);
-                }
-            });
-        }
-
-        if (!window.__evooryHomepageListingListener) {
-            window.__evooryHomepageListingListener = true;
-            document.addEventListener('livewire:navigated', syncListingCss);
-        }
-    })();
-    </script>
+    {{-- Listing CSS strip/restore script removed — layout now keeps the
+         <link> in head permanently and toggles media="all"/"print" on
+         wire:navigate. See components/layouts/app-evoory.blade.php. --}}
 </div>
 

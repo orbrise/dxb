@@ -4,18 +4,13 @@
  
 @push('css')
 
-{{-- evoory-homepage.css carries the dark/lime theme for the listing grid. It is
-     a render-blocking load on purpose — async loading produced a Flash of
-     Unstyled Content. NOTE: it is literally an "auto-generated legacy bundle:
-     app2 + app3 + app4" dump that contains global rules (`body { background:
-     #333 url(...) }`, `.fa { font-family:'FontAwesome' !important }`, `a
-     { color:#C1F11D }`) — see the JS strip below in @push('js') which removes
-     this stylesheet from <head> when the user wire:navigates to a page that
-     doesn't need it. --}}
-<link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: time() }}">
-
-{{-- Page-specific styles previously inlined in this template's <style> blocks. --}}
-<link rel="stylesheet" href="{{ asset('assets/css/listing-page-inline.css') }}?v={{ @filemtime(public_path('assets/css/listing-page-inline.css')) ?: time() }}">
+{{-- evoory-homepage.css and listing-page-inline.css are now loaded by the
+     layout (components/layouts/app-evoory.blade.php) with media="print" on
+     non-listing pages. Loading them there — instead of via @push — means the
+     <link> elements survive wire:navigate, so navigating away and back never
+     re-creates them, never re-parses 369 KB of CSS, and never re-flickers.
+     The media attribute is toggled by a tiny script in the layout on every
+     livewire:navigated event. --}}
 
 {{-- site-inline is non-critical, keep async --}}
 <link rel="preload" href="{{ asset('assets/css/site-inline.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -665,46 +660,8 @@
      scroll, country-code map. Cached by Cloudflare independently — keeps inline
      payload small. Loaded with defer so it doesn't block parsing. --}}
 <script src="{{ asset('assets/js/listing-page.js') }}?v={{ @filemtime(public_path('assets/js/listing-page.js')) ?: time() }}" defer></script>
-<script>
-// evoory-homepage.css and listing-page-inline.css carry global rules
-// (`body { background:#333 url(...) }`, `.fa { font-family:'FontAwesome'!important }`,
-// `a { color:#C1F11D !important }`) plus an inline FontAwesome 4 @font-face.
-// Once wire:navigate adds them to <head> they stay there and leak onto the
-// next page (homepage `/`, dashboard, etc.). Strip whenever we're not on a
-// listing page; re-attach when coming back.
-(function() {
-    var LISTING_CSS = ['evoory-homepage.css', 'listing-page-inline.css'];
-
-    function syncListingCss() {
-        var onListing = !!document.querySelector('.ev-listing-page');
-        window.__evooryStashedListingCss = window.__evooryStashedListingCss || {};
-        var stash = window.__evooryStashedListingCss;
-
-        LISTING_CSS.forEach(function (name) {
-            var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/' + name + '"]');
-
-            if (!onListing && live) {
-                stash[name] = live.getAttribute('href');
-                live.parentNode.removeChild(live);
-            } else if (onListing && !live && stash[name]) {
-                var link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = stash[name];
-                document.head.appendChild(link);
-            }
-        });
-    }
-
-    // Don't run on initial script load — at that moment the body content may
-    // not be fully swapped in yet on a wire:navigate, and we'd risk stripping
-    // the listing CSS while the user is actually on the listing page (which
-    // produced an intermittent broken layout).
-    if (!window.__evooryListingNavListener) {
-        window.__evooryListingNavListener = true;
-        document.addEventListener('livewire:navigated', syncListingCss);
-    }
-})();
-</script>
+{{-- Listing CSS strip/restore script removed — now handled by the layout
+     via media-attribute toggling. See components/layouts/app-evoory.blade.php. --}}
 <script>
 (function(){
     // Wait for DOM ready

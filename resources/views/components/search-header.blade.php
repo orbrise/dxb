@@ -24,7 +24,7 @@
       </div>
         <div class="action-group hidden-xs">
           <div class="form-group dropdown primary-search-gender">
-            <button class="btn btn-dark search-bar--gender" data-toggle="dropdown" tabindex="2" type="button">{{ucfirst($gender)?? "Female"}} escorts <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px;vertical-align:middle;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <button class="btn btn-dark search-bar--gender" data-toggle="dropdown" data-display="static" tabindex="2" type="button">{{ucfirst($gender)?? "Female"}} escorts <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px;vertical-align:middle;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
             <ul class="dropdown-menu nav nav-pills nav-stacked nav-dark dropdown-gender-menu">
               <li class="@if(empty($gender) or $gender=='female') active @endif">

@@ -33,6 +33,27 @@
         .ev-container{max-width:1200px;margin:0 auto;padding:0 16px}
         .ev-logo{font-size:24px;font-weight:700;color:var(--accent);text-decoration:none}
         .ev-flex{display:flex}.ev-items-center{align-items:center}.ev-justify-between{justify-content:space-between}
+
+        /* Anti-FOUC: mirrors the Bootstrap 3 visibility/dropdown/modal rules and
+           the global link-color rule that live inside the 1.3 MB
+           evoory-homepage.css bundle. Without these, a cold-cache load briefly
+           shows the modal contents, dropdown items as a flat list, mobile-only
+           controls on desktop, and every link as default-blue underlined text
+           until the big bundle finishes downloading. */
+        .modal{display:none}
+        .dropdown-menu{display:none;position:absolute}
+        .visible-xs,.visible-xs-block,.visible-xs-inline,.visible-xs-inline-block{display:none !important}
+        @media (max-width:767px){
+            .visible-xs,.visible-xs-block{display:block !important}
+            .visible-xs-inline{display:inline !important}
+            .visible-xs-inline-block{display:inline-block !important}
+            .hidden-xs{display:none !important}
+        }
+        @media (min-width:768px){
+            .form-inline .form-group{display:inline-block;margin-bottom:0;vertical-align:middle}
+        }
+        a{color:var(--accent);text-decoration:none}
+        .nostyle-link,.nostyle-link *{color:inherit;text-decoration:none}
     </style>
     
     {{-- Bootstrap 4 CSS + Font Awesome (required for grid, components, icons).
@@ -42,6 +63,37 @@
 
     {{-- Main theme CSS (loaded after Bootstrap to override) --}}
     <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260416-1">
+
+    {{-- Listing-page CSS lives in the layout (not in @push) so the <link>
+         elements survive wire:navigate. Pushing them caused Livewire's head
+         merger to destroy + recreate the element on every back-to-listings
+         navigation, forcing a fresh CSS parse and a visible reflicker.
+         media="print" initially keeps the rules from applying on non-listing
+         pages (preventing the legacy bundle's body/a/.fa rules from leaking
+         onto homepage etc.). PHP picks the initial value from the current
+         route so server-rendered listing pages are styled immediately; the
+         small JS at the bottom of <head> flips it on wire:navigate. --}}
+    @php
+        $__isListingPage = request()->is('*-escorts-in-*');
+    @endphp
+    <link rel="stylesheet" id="evoory-listing-css"
+          href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: 1 }}"
+          media="{{ $__isListingPage ? 'all' : 'print' }}">
+    <link rel="stylesheet" id="evoory-listing-inline-css"
+          href="{{ asset('assets/css/listing-page-inline.css') }}?v={{ @filemtime(public_path('assets/css/listing-page-inline.css')) ?: 1 }}"
+          media="{{ $__isListingPage ? 'all' : 'print' }}">
+    <script>
+    (function(){
+        function syncListingCss(){
+            var on = !!document.querySelector('.ev-listing-page');
+            var a = document.getElementById('evoory-listing-css');
+            var b = document.getElementById('evoory-listing-inline-css');
+            if (a) a.media = on ? 'all' : 'print';
+            if (b) b.media = on ? 'all' : 'print';
+        }
+        document.addEventListener('livewire:navigated', syncListingCss);
+    })();
+    </script>
 
     {{-- Additional page-specific CSS --}}
     @stack('css')
