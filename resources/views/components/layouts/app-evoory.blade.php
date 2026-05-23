@@ -5,6 +5,84 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    {{-- Edge-cache CSRF workaround.
+         Cloudflare caches listing HTML, so the inline meta csrf-token above may
+         be a stale token from another visitor's session. Fetch a fresh token
+         from /csrf-refresh (no-store) and overwrite the meta tag before any
+         Livewire request fires. We also intercept Livewire 'request' events to
+         inject the latest token into the X-CSRF-TOKEN / X-XSRF-TOKEN headers,
+         and retry once on 419 after re-fetching. --}}
+    <script>
+    (function () {
+        var REFRESH_URL = '/csrf-refresh';
+        var latestToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+        var refreshing = null;
+
+        function setToken(token) {
+            if (!token) return;
+            latestToken = token;
+            var m = document.querySelector('meta[name="csrf-token"]');
+            if (m) m.setAttribute('content', token);
+            if (window.jQuery) {
+                window.jQuery.ajaxSetup({ headers: { 'X-CSRF-TOKEN': token } });
+            }
+        }
+
+        function refresh() {
+            if (refreshing) return refreshing;
+            // Cache-busting query param: Cloudflare's "Cache Everything" rule
+            // is what caused this whole problem in the first place. A unique
+            // URL per request guarantees we always hit the origin, regardless
+            // of whether the Cache-Control headers are honored.
+            var url = REFRESH_URL + '?t=' + Date.now() + '_' + Math.random().toString(36).slice(2);
+            refreshing = fetch(url, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                cache: 'no-store'
+            })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    if (data && data.token) setToken(data.token);
+                    return data && data.token;
+                })
+                .catch(function () { return null; })
+                .finally(function () { refreshing = null; });
+            return refreshing;
+        }
+
+        // Refresh once on initial load. Runs in parallel with Livewire init —
+        // most users won't reach the form before the fetch resolves.
+        refresh();
+
+        // Refresh again after Livewire is ready, and hook every outgoing
+        // Livewire request to use the freshest token + retry once on 419.
+        document.addEventListener('livewire:init', function () {
+            if (!window.Livewire || typeof window.Livewire.hook !== 'function') return;
+
+            window.Livewire.hook('request', function (payload) {
+                var options = payload && payload.options;
+                if (!options) return;
+                options.headers = options.headers || {};
+                if (latestToken) {
+                    options.headers['X-CSRF-TOKEN'] = latestToken;
+                    options.headers['X-XSRF-TOKEN'] = latestToken;
+                }
+
+                if (typeof payload.respond === 'function') {
+                    payload.respond(function (resp) {
+                        if (resp && resp.status === 419) {
+                            // Token went stale mid-session — refresh and let
+                            // Livewire's built-in retry/refresh handle the user
+                            // flow. The next request will pick up the new token.
+                            refresh();
+                        }
+                    });
+                }
+            });
+        });
+    })();
+    </script>
     @if(!empty($setting->favicon))
     <link href="{{ smart_asset($setting->favicon) }}" rel="shortcut icon" type="image/x-icon" />
     @endif

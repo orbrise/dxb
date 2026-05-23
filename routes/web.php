@@ -59,6 +59,21 @@ Route::get('admin', [AuthController::class, 'checkLogin']);
 Route::get('news', function(){
     return view('emails.newseletter');
 });
+
+// CSRF refresh endpoint — used by the layout's edge-cache workaround.
+// Cloudflare caches listing HTML, so the inline <meta name="csrf-token"> can
+// be a stale token from a different visitor's session. This route is NEVER
+// cacheable (no-store), so each visitor reliably gets a fresh token tied to
+// their own session, which the layout JS writes back into the meta tag.
+Route::get('/csrf-refresh', function () {
+    return response()
+        ->json(['token' => csrf_token()])
+        ->header('Cache-Control', 'no-store, private, max-age=0, must-revalidate')
+        ->header('CDN-Cache-Control', 'no-store')
+        ->header('Pragma', 'no-cache')
+        ->header('Expires', '0');
+})->name('csrf.refresh');
+
 Route::get("/", NewHomepage::class)->name("newhome")->middleware('page.cache');
 
 Route::get('/search-{gender}-escorts', App\Livewire\MobileSearch::class)
@@ -105,14 +120,6 @@ Route::get('/countries/{code}/cities', function (string $code) {
 
     return response()->json($payload);
 })->name('countries.cities');
-
-// CSRF Token Refresh Route - For automatic session recovery after idle
-Route::get('/csrf-refresh', function () {
-    return response()->json([
-        'token' => csrf_token(),
-        'success' => true
-    ]);
-})->name('csrf.refresh');
 
 // Async profile-view tracker (called from JS so visit counts still work
 // when the detail page is served from edge/page cache).

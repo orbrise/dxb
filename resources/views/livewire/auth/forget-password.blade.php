@@ -27,13 +27,37 @@
         {{ session('error') }}
     </div>
 @endif
+        <style>
+          /* Override the legacy lime→gold gradient on .btn-primary for this page only */
+          .ev-forgetpw-send.btn,
+          .ev-forgetpw-send.btn.btn-primary {
+            background: #C1F11D !important;
+            background-image: none !important;
+            color: #000 !important;
+            border: none !important;
+            font-weight: 600 !important;
+            transition: background 0.15s ease !important;
+          }
+          .ev-forgetpw-send.btn:hover,
+          .ev-forgetpw-send.btn:focus,
+          .ev-forgetpw-send.btn.btn-primary:hover,
+          .ev-forgetpw-send.btn.btn-primary:focus {
+            background: #d4f84d !important;
+            background-image: none !important;
+            color: #000 !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+        </style>
         <form class="simple_form form-horizontal form-dark" id="new_account" wire:submit.prevent="forgetPassword">
           <input name="utf8" type="hidden" value="&#x2713;" />
-          <input type="hidden" name="authenticity_token" value="iDhrNIm1VQB4RbaxvMTcEl45UjvJPJAcz00IFmqUkOiPByv2EGHNXIE/lqn7evAhPQ3SZfPc3OUIA3nQC89eBQ==" />
           <div class="input-group input-group-lg">
             <input wire:model="email" class="string email optional form-control flat-bottom form-control" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: normal;" maxlength="191" placeholder="Your Email" type="email" size="191"  id="account_email" />
             <div class="input-group-btn">
-              <button class="btn btn-primary btn-lg" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;" data-btn-submit="" type="submit">Send</button>
+              <button class="btn btn-primary btn-lg ev-forgetpw-send" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;" data-btn-submit="" type="submit">
+                <span wire:loading.remove wire:target="forgetPassword">Send</span>
+                <span wire:loading wire:target="forgetPassword">Sending...</span>
+              </button>
             </div>
           </div>
         </form>

@@ -662,10 +662,24 @@
     } else {
         setTimeout(initAdvancedSearchModal, 100);
     }
-    
+
     window.addEventListener('load', () => setTimeout(initAdvancedSearchModal, 200));
     document.addEventListener('livewire:load', () => setTimeout(initAdvancedSearchModal, 100));
     document.addEventListener('livewire:initialized', () => setTimeout(initAdvancedSearchModal, 100));
+
+    // Re-init after every Livewire morph. wire:model.live="rate" (the price
+    // field) triggers a morph on every keystroke and replaces the toggle
+    // button + modal DOM, which wipes the click handler that boosts modal
+    // z-index. Without this hook, the modal opens via Bootstrap's default
+    // handler but sits BEHIND the backdrop because of ancestor stacking
+    // contexts in the search header.
+    document.addEventListener('livewire:init', () => {
+        if (window.Livewire && typeof window.Livewire.hook === 'function') {
+            window.Livewire.hook('morphed', () => {
+                setTimeout(initAdvancedSearchModal, 50);
+            });
+        }
+    });
 })();
 
 // Listen for the closeSearchModal event from Livewire
