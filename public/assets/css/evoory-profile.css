@@ -256,7 +256,7 @@
     font-weight: 500;
 }
 .listing-price-label {
-    color: #999 !important;
+    color: #fff !important;
     font-size: 13px;
     font-weight: 400;
     margin-bottom: 2px;
@@ -658,15 +658,30 @@ dl.languages dd {
     background-position: center;
 }
 
-/* Modal footer disclaimer */
+/* Clip the modal to its border-radius so nothing (e.g. the footer's border-top)
+   bleeds past the rounded corners. */
+.callnow .modal-content {
+    overflow: hidden;
+}
+
+/* Modal footer disclaimer — matches .ev-mobile-modal-footer so the desktop
+   "Call me now" modal's warning band looks identical to the mobile bottom
+   sheet (SVG warning icon left, light-gray copy right, top-aligned). The
+   slightly darker background turns it into a visually distinct band. */
 .modal-footer__disclaimer {
-    border-top: 1px solid #1a1a1a !important;
-    padding: 16px 24px !important;
-    background: transparent !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    border-top: 1px solid #2a2a2a !important;
+    padding: 16px 20px !important;
+    background: #1D2224 !important;
 }
 .modal-footer__disclaimer p {
-    color: #777 !important;
-    font-size: 12px;
+    margin: 0 !important;
+    color: #999 !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
 }
 
 /* ---- Custom Select2 (phone code dropdown) ---- */

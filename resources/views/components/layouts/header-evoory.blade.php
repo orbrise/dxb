@@ -115,9 +115,6 @@
                     </button>
                     <div class="ev-dropdown ev-lang-dropdown">
                         <a href="?lang=en" class="ev-dropdown-item">English</a>
-                        <a href="?lang=ar" class="ev-dropdown-item">العربية</a>
-                        <a href="?lang=ru" class="ev-dropdown-item">Русский</a>
-                        <a href="?lang=zh" class="ev-dropdown-item">中文</a>
                     </div>
                 </div>
                 @endguest

@@ -811,5 +811,27 @@ document.addEventListener('livewire:init', () => {
     }
     document.addEventListener('livewire:navigated', initCurrencyDropdown);
     document.addEventListener('livewire:initialized', initCurrencyDropdown);
+
+    // Re-bind after every Livewire morph. wire:model.live="rate" triggers a
+    // morph on every keystroke. Even though .currency-dd-container has
+    // wire:ignore, morphdom can still replace the trigger element through
+    // sibling-reorder edge cases; when that happens the click handler is
+    // lost. initCurrencyDropdown() guards itself with dataset.bound so it
+    // returns early when the existing element is still good.
+    document.addEventListener('livewire:init', function () {
+        if (window.Livewire && typeof window.Livewire.hook === 'function') {
+            window.Livewire.hook('morphed', function () {
+                // If the trigger was replaced, dataset.bound is gone — clear
+                // the flag on the new element so the binding re-runs.
+                var trigger = document.getElementById('currency-dd-trigger');
+                if (trigger && trigger.dataset.bound !== '1') {
+                    initCurrencyDropdown();
+                } else if (!trigger) {
+                    // Element disappeared entirely — try once when it's back.
+                    setTimeout(initCurrencyDropdown, 50);
+                }
+            });
+        }
+    });
 })();
 </script>

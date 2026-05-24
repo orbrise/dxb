@@ -187,8 +187,13 @@
 
       a:focus,
       input[type=checkbox]:focus {
-        outline: 5px auto -webkit-focus-ring-color;
-        outline-offset: -2px
+        outline: none;
+        outline-offset: 0
+      }
+      a:focus-visible,
+      input[type=checkbox]:focus-visible {
+        outline: 2px solid #C1F11D;
+        outline-offset: 2px
       }
 
       .img-responsive {

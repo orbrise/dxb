@@ -210,8 +210,11 @@
                 @if(!empty($user->incall))
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="You can come to my place">
                   <div class="pull-left text-muted">
-                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #0D1011; border-radius: 50%; margin-right: 5px;padding: 7px;">
-                      <img src="https://assets.evoory.com/assets/newtheme/incall.png" width="12" height="16" alt="Message">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; background: #0D1011; border-radius: 50%; margin-right: 5px;padding: 7px;">
+                      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0.833333 0C0.61232 0 0.400358 0.0877973 0.244078 0.244078C0.0877973 0.400358 0 0.61232 0 0.833333C0 4.59057 1.49256 8.19391 4.14932 10.8507C6.80609 13.5074 10.4094 15 14.1667 15C14.3877 15 14.5996 14.9122 14.7559 14.7559C14.9122 14.5996 15 14.3877 15 14.1667V11.25C15 11.029 14.9122 10.817 14.7559 10.6607C14.5996 10.5045 14.3877 10.4167 14.1667 10.4167C13.125 10.4167 12.125 10.25 11.1917 9.94167C11.0451 9.895 10.8887 9.88895 10.739 9.92417C10.5893 9.95939 10.452 10.0346 10.3417 10.1417L8.50833 11.975C6.14283 10.7716 4.22005 8.84884 3.01667 6.48333L4.85 4.64167C4.96037 4.53695 5.0386 4.40293 5.0755 4.25533C5.1124 4.10773 5.10644 3.95267 5.05833 3.80833C4.74277 2.84824 4.58242 1.84395 4.58333 0.833333C4.58333 0.61232 4.49554 0.400358 4.33926 0.244078C4.18298 0.0877973 3.97101 0 3.75 0H0.833333ZM13.3333 6.66667V5.41667H10.4167L15 0.833333L14.1667 0L9.58333 4.58333V1.66667H8.33333V6.66667H13.3333Z" fill="white"/>
+</svg>
+
                     </span>
                   </div>
                   <div class="pull-left margin-right">
@@ -223,8 +226,11 @@
                 @if(!empty($user->outcall))
                 <div class="pull-left" data-placement="bottom" data-toggle="tooltip" title="I can come to your place">
                   <div class="pull-left text-muted">
-                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #0D1011; border-radius: 50%; margin-right: 5px;padding: 7px;">
-                      <img src="https://assets.evoory.com/assets/newtheme/outcall.png" width="12" height="16" alt="Message">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; background: #0D1011; border-radius: 50%; margin-right: 5px;padding: 7px;">
+                      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0.833333 0C0.61232 0 0.400358 0.0877973 0.244078 0.244078C0.0877973 0.400358 0 0.61232 0 0.833333C0 4.59057 1.49256 8.19391 4.14932 10.8507C6.80609 13.5074 10.4094 15 14.1667 15C14.3877 15 14.5996 14.9122 14.7559 14.7559C14.9122 14.5996 15 14.3877 15 14.1667V11.25C15 11.029 14.9122 10.817 14.7559 10.6607C14.5996 10.5045 14.3877 10.4167 14.1667 10.4167C13.125 10.4167 12.125 10.25 11.1917 9.94167C11.0451 9.895 10.8887 9.88895 10.739 9.92417C10.5893 9.95939 10.452 10.0346 10.3417 10.1417L8.50833 11.975C6.14283 10.7716 4.22005 8.84884 3.01667 6.48333L4.85 4.64167C4.96037 4.53695 5.0386 4.40293 5.0755 4.25533C5.1124 4.10773 5.10644 3.95267 5.05833 3.80833C4.74277 2.84824 4.58242 1.84395 4.58333 0.833333C4.58333 0.61232 4.49554 0.400358 4.33926 0.244078C4.18298 0.0877973 3.97101 0 3.75 0H0.833333ZM10 0V1.25H12.9167L8.33333 5.83333L9.16667 6.66667L13.75 2.08333V5H15V0H10Z" fill="white"/>
+</svg>
+
                     </span>
                   </div>
                   <div class="pull-left margin-right">
@@ -960,13 +966,12 @@
                 </span>
               </li>
             </ul>
-            <p style="clear:both;font-size:12px" class="text-muted pull-left">Please tell me you found me on Massage Republic.</p>
+            <p style="clear:both;font-size:12px" class="text-muted pull-left">Please tell me you found me on evoory.</p>
             <div class="clearfix"></div>
           </div>
-          <div class="modal-footer mt-2 modal-footer__disclaimer d-flex align-items-center">
-            <img src="{{ smart_asset('assets/images/triangle.png') }}" alt="Warning" class="mr-2" style="width: 40px; ">
-            <p class="mb-0 text-left" style="color: #c2c2c2">Do not pay anyone in advance, as this is often used by scammers. Please report any
-              suspicious profiles to us. For your safety, we recommend booking verified escorts.</p>
+          <div class="modal-footer modal-footer__disclaimer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <p class="mb-0 text-left">Do not pay anyone in advance, as this is often used by scammers. Please report any suspicious profiles to us. For your safety, we recommend booking verified escorts.</p>
           </div>
         </div>
       </div>

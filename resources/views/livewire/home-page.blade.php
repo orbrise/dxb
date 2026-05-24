@@ -1840,6 +1840,20 @@ setTimeout(() => {
     }
 }, 3000);
 
+// Re-bind after every Livewire morph. wire:model.live="rate" triggers a
+// morph on every keystroke. Even though the services dropdown is wrapped
+// in wire:ignore, morphdom can still detach/reattach the subtree in some
+// edge cases, leaving the display-box click handler dead. initServicesDropdown
+// always clones+replaces, so calling it again is safe — it just rebinds
+// onto whatever DOM is currently in place.
+document.addEventListener('livewire:init', function () {
+    if (window.Livewire && typeof window.Livewire.hook === 'function') {
+        window.Livewire.hook('morphed', function () {
+            setTimeout(initServicesDropdown, 50);
+        });
+    }
+});
+
 console.log('✅ Services dropdown script loaded');
 
 // City Search Functionality - Database search with dropdown
