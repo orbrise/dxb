@@ -51,6 +51,18 @@
 .nav-bar .next:hover {
     color: #fff !important;
 }
+/* Kill the focus outline (white ring) left on these buttons after a click —
+   they're high-traffic nav links so the persistent focus indicator is
+   distracting. Keyboard users still get a green outline on every other
+   link via the global :focus-visible rule we kept in site-inline.css. */
+.nav-bar .back-link:focus,
+.nav-bar .next:focus,
+.nav-bar .back-link:focus-visible,
+.nav-bar .next:focus-visible {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
 .nav-bar .back-link .fa,
 .nav-bar .next .fa {
     font-family: "Font Awesome 5 Free" !important;
@@ -558,6 +570,15 @@ dl.languages dd {
     box-shadow: none !important;
     font-size: 14px;
     padding: 10px 12px;
+    /* Override legacy .form-control { height: 34px } from site-inline.css —
+       with 10+10 padding it only left 14px for the line, clipping the top of
+       descenders in <select> fields. Let padding define the height. */
+    height: auto !important;
+    min-height: 42px;
+    line-height: 1.4;
+}
+.modal textarea.form-control {
+    min-height: auto;
 }
 .modal .form-control:focus {
     border-color: #C1F11D !important;
@@ -606,9 +627,24 @@ dl.languages dd {
     color: #C1F11D !important;
 }
 .modal .alert-warning {
-    background: rgba(255, 193, 7, 0.1) !important;
-    border: 1px solid rgba(255, 193, 7, 0.3) !important;
-    color: #ffc107 !important;
+    background: #1D2224 !important;
+    border: 1px solid #2a2a2a !important;
+    color: #C1F11D !important;
+}
+
+/* Report modal — space the Sign In / Cancel (and OK on success/error) buttons
+   so they don't sit shoulder-to-shoulder. Also flex-aligns the action row. */
+.reportModal .modal-body p.text-center,
+.reportModal .modal-body .text-center:has(> .btn) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+.reportModal .modal-body p.text-center .btn,
+.reportModal .modal-body .text-center .btn {
+    margin: 0;
 }
 .modal .alert-danger {
     background: rgba(220, 53, 69, 0.1) !important;

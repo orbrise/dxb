@@ -145,12 +145,12 @@ button.ev-nav-link{height:35px;padding:12px 12px;font-size:14px;font-family:inhe
 .ev-country-empty{color:#d0d5df;font-size:14px;padding:12px}
 
 /* Footer */
-.ev-footer{background:var(--bg-secondary);border-top:1px solid var(--border-color);padding:32px 0; margin-top:15px;}
+.ev-footer{background:var(--bg-secondary);border-top:1px solid var(--border-color);padding:20px 0; }
 .ev-footer-links-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px}
 .ev-footer-link{color:var(--accent);text-decoration:none;font-size:13px;transition:var(--transition)}
 .ev-footer-link:hover{color:var(--accent-hover);text-decoration:underline}
 .ev-footer-sep{color:var(--text-muted);font-size:13px}
-.ev-footer-bottom{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
+.ev-footer-bottom{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .ev-copyright{color:var(--accent);font-size:13px;margin-right:8px}
 .ev-disclaimer{color:#fff;font-size:11px;line-height:1.6;margin:0}
 .ev-footer-pages{display:flex;flex-wrap:wrap;align-items:center;gap:0}
