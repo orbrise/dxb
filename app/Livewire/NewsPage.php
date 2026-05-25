@@ -88,7 +88,8 @@ class NewsPage extends Component
     protected function cacheKey(string $bucket): string
     {
         $page = (int) request()->query('page', 1);
-        return "news:{$bucket}:{$this->gender}:{$this->city}:{$this->perPage}:p{$page}";
+        $type = $this->type ?: 'all';
+        return "news:{$bucket}:{$this->gender}:{$this->city}:{$type}:{$this->perPage}:p{$page}";
     }
 
     /**

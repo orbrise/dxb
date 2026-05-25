@@ -8,7 +8,7 @@
     @foreach($items as $item)
     @if(isset($item->item_type) && $item->item_type === 'escort')
         @php $profile = $item; @endphp
-        <li>
+        <li wire:key="news-escort-{{ $profile->id }}">
         @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $profile->created_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -38,7 +38,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     @if(!empty($profile->coverimg))
                                     <img alt="{{ $profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
@@ -71,7 +71,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     <img alt="{{ $profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
                                          height="208"
@@ -94,7 +94,7 @@
     </li>
     @elseif(isset($item->item_type) && $item->item_type === 'question')
         @php $question = $item; @endphp
-        <li>
+        <li wire:key="news-question-{{ $question->id }}">
         @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->updated_at->format('Y-m-d') != $question->updated_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -125,7 +125,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     @if(!empty($question->profile->coverimg))
                                     <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
@@ -157,7 +157,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
                                          height="208"
@@ -200,7 +200,7 @@
 
 @elseif($type === 'new-escorts')
     @foreach($items as $profile)
-    <li>
+    <li wire:key="news-escort-{{ $profile->id }}">
         @if($loop->first || $loop->iteration == 1 || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $profile->created_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -230,7 +230,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     @if(!empty($profile->coverimg))
                                     <img alt="{{ $profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
@@ -256,7 +256,7 @@
                             @foreach($profile->multipleimgs->take(2) as $img)
                             <a class="{{ $loop->index == 1 ? 'hidden-md' : '' }} pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                                 <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
-                                    <div class="image-wrapper">
+                                    <div class="image-wrapper" wire:ignore>
                                         <img alt="{{ $profile->name }} - escort in {{ $cityname }}"
                                              class="img-responsive"
                                              height="208"
@@ -281,7 +281,7 @@
 
 @elseif($type === 'new-reviews')
     @foreach($items as $review)
-    <li>
+    <li wire:key="news-review-{{ $review->id }}">
         @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $review->created_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -311,7 +311,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     @if(!empty($review->profile->coverimg))
                                     <img alt="{{ $review->profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
@@ -343,7 +343,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     <img alt="{{ $review->profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
                                          height="208"
@@ -411,7 +411,7 @@
 
 @elseif($type === 'new-questions')
     @foreach($items as $question)
-    <li>
+    <li wire:key="news-question-{{ $question->id }}">
         @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->updated_at->format('Y-m-d') != $question->updated_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -442,7 +442,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     @if(!empty($question->profile->coverimg))
                                     <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
@@ -474,7 +474,7 @@
                                     <span>Verified photos</span>
                                 </span>
                                 @endif
-                                <div class="image-wrapper">
+                                <div class="image-wrapper" wire:ignore>
                                     <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}"
                                          class="img-responsive"
                                          height="208"
