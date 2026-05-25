@@ -5,7 +5,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\On;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use App\Models\{Listing, Service, Country, User, ProfileImage, UserService, 
+use App\Models\{Listing, Service, Country, User, ProfileImage, UserService,
     Gender, Currency, Ethnicity, Bust, HairColor, Language, UserLanguage, UsersProfile};
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;

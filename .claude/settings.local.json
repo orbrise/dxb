@@ -13,7 +13,8 @@
       "Bash(xargs wc *)",
       "Bash(c:/laragon/bin/php/php-8.3.3-Win32-vs16-x64/php.exe c:/laragon/www/dxb/artisan migrate:status)",
       "Bash(php artisan *)",
-      "Bash(awk 'NR>=449 && NR<=470' resources/views/livewire/news-page.blade.php)"
+      "Bash(awk 'NR>=449 && NR<=470' resources/views/livewire/news-page.blade.php)",
+      "Bash(grep -n 'yield\\\\|@yield\\\\|{{$slot}}\\\\|main\\\\|<body' 'c:\\\\laragon\\\\www\\\\dxb\\\\resources\\\\views\\\\components\\\\layouts\\\\app.blade.php')"
     ]
   }
 }

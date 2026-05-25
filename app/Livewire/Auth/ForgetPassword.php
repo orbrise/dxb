@@ -3,12 +3,14 @@
 namespace App\Livewire\Auth;
 
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 use App\Models\User;
 use App\Mail\ForgetPassword as Forgetpass;
 use Str;
 use Mail;
 use App\Models\MailSettings;
 
+#[Layout('components.layouts.app-evoory')]
 class ForgetPassword extends Component
 {
     public $email;
