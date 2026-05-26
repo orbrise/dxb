@@ -382,6 +382,11 @@ label {color:white !important;}
     border-color: #747474ff;
 }
 
+/* Sticky footer: keep footer at the bottom of the viewport on short pages. */
+html { min-height: 100%; }
+body { display: flex; flex-direction: column; min-height: 100vh; }
+body > main.ev-page-main { flex: 1 0 auto; }
+
     </style>
 
   </head>
@@ -440,11 +445,13 @@ label {color:white !important;}
   </script>
   @endif
 
-        {{ $slot ?? '' }}
-        @yield('content')
-     
+        <main class="ev-page-main">
+            {{ $slot ?? '' }}
+            @yield('content')
+        </main>
+
         <div id="fb-root"></div>
-        @include('components.layouts.footer')
+        @include('components.layouts.footer-evoory')
         @yield('advancesearch')
         @yield('homepopup')
         

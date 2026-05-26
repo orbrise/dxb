@@ -379,6 +379,97 @@ form.activity-nav-form button.search-bar--gender {
 }
 .dropdown-gender-menu { min-width: 200px !important; }
 
+/* Belt-and-suspenders: hide the mobile-only ESCORTS/WHAT'S NEW pill bar and
+   "Back" back-bar on desktop. Bootstrap's `.visible-xs` rule should already
+   do this, but the duplicate row was leaking onto the desktop view — force
+   it gone with an explicit min-width override. */
+@media (min-width: 768px) {
+    div.visible-xs,
+    .ev-news-back-bar { display: none !important; }
+
+    /* Lay the search form and the activity-stream-nav (All news / Escorts /
+       Reviews / Questions) on the same horizontal row instead of stacking. */
+    header#header .nav-bar .container-fluid {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    header#header form.activity-nav-form { margin: 0; }
+    header#header .activity-stream-nav.btn-group { margin: 0; }
+
+    /* Activity stream layout — explicit so we don't silently depend on the
+       legacy `.activity-stream-full` floats in app2.css (which were getting
+       clobbered, leaving the date badge unstyled and right-thumb images
+       dropping below the text). Date badge column on the left, the rest of
+       the row to its right; inside, photo floats left, right-thumbs floats
+       right, and .activity-content fills the remaining space. */
+    ul.activity-stream.activity-stream-full {
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 0;
+    }
+    ul.activity-stream.activity-stream-full > li {
+        display: block;
+        overflow: hidden;
+        padding: 20px 0;
+        margin: 0;
+        border-top: 1px solid #2a2a2a;
+    }
+    ul.activity-stream.activity-stream-full > li:first-child { border-top: none; }
+
+    .activity-stream-full .date-wrapper {
+        float: left;
+        width: 80px;
+        padding: 0 16px 0 0;
+        box-sizing: content-box;
+    }
+    .activity-stream-full .date-wrapper .date {
+        background: #1a1a1a;
+        border-radius: 6px;
+        padding: 12px 0;
+        text-align: center;
+    }
+    .activity-stream-full .date-wrapper .date .day {
+        display: block;
+        font-size: 24px;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.1;
+    }
+    .activity-stream-full .date-wrapper .date .month {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #999;
+        margin-top: 2px;
+    }
+
+    .activity-stream-full .activity-record-wrapper {
+        overflow: hidden;
+        padding: 0 16px;
+    }
+    .activity-stream-full .activity-record { overflow: hidden; padding: 0 !important; border-top: none !important; }
+    .activity-stream-full .activity-record .activity-row { overflow: hidden; }
+    .activity-stream-full .activity-record .headline { margin: 0 0 12px; }
+    .activity-stream-full .activity-record .photo {
+        float: left;
+        margin: 0 16px 8px 0;
+        padding: 0;
+        text-align: left;
+    }
+    .activity-stream-full .activity-record .right-thumbs {
+        float: right;
+        display: flex;
+        gap: 6px;
+        margin: 0 0 8px 16px;
+    }
+    .activity-stream-full .activity-record .activity-content {
+        overflow: hidden;
+        word-break: break-word;
+    }
+}
+
 /* ═══ MOBILE VIEW ═══ */
 @media (max-width: 767px) {
     /* Hide ESCORTS/WHAT'S NEW mobile tabs - we have back bar */
@@ -721,14 +812,14 @@ form.activity-nav-form button.search-bar--gender {
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 loading="lazy"
+                                                
                                                  src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
                                             @elseif(!empty($profile->singleimg))
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 loading="lazy"
+                                                
                                                  src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image) }}">
                                             @endif
                                         </div>
@@ -753,7 +844,7 @@ form.activity-nav-form button.search-bar--gender {
                                                  class="img-responsive" 
                                                  height="208" 
                                                  width="200"
-                                                 loading="lazy"
+                                                
                                                  src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
                                         </div>
                                     </span>
