@@ -809,14 +809,14 @@ form.activity-nav-form button.search-bar--gender {
                                         <div class="image-wrapper" wire:ignore>
                                             @if(!empty($profile->coverimg))
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                 
                                                  src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
                                             @elseif(!empty($profile->singleimg))
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                 
@@ -841,7 +841,7 @@ form.activity-nav-form button.search-bar--gender {
                                         @endif
                                         <div class="image-wrapper" wire:ignore>
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                 
@@ -896,13 +896,13 @@ form.activity-nav-form button.search-bar--gender {
                                         <div class="image-wrapper" wire:ignore>
                                             @if(!empty($question->profile->coverimg))
                                             <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->coverimg->image) }}">
                                             @elseif(!empty($question->profile->singleimg))
                                             <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->singleimg->image) }}">
@@ -925,7 +925,7 @@ form.activity-nav-form button.search-bar--gender {
                                         @endif
                                         <div class="image-wrapper" wire:ignore>
                                             <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
@@ -998,13 +998,13 @@ form.activity-nav-form button.search-bar--gender {
                                         <div class="image-wrapper" wire:ignore>
                                             @if(!empty($profile->coverimg))
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
                                             @elseif(!empty($profile->singleimg))
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image) }}">
@@ -1021,7 +1021,7 @@ form.activity-nav-form button.search-bar--gender {
                                         <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
                                             <div class="image-wrapper" wire:ignore>
                                                 <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
-                                                     class="img-responsive" 
+                                                     class="img-responsive" decoding="async" 
                                                      height="208" 
                                                      width="200"
                                                      src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
@@ -1076,13 +1076,13 @@ form.activity-nav-form button.search-bar--gender {
                                         <div class="image-wrapper" wire:ignore>
                                             @if(!empty($review->profile->coverimg))
                                             <img alt="{{ $review->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$review->profile->user_id.'/'.$review->profile->id.'/'.$review->profile->coverimg->image) }}">
                                             @elseif(!empty($review->profile->singleimg))
                                             <img alt="{{ $review->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$review->profile->user_id.'/'.$review->profile->id.'/'.$review->profile->singleimg->image) }}">
@@ -1105,7 +1105,7 @@ form.activity-nav-form button.search-bar--gender {
                                         @endif
                                         <div class="image-wrapper" wire:ignore>
                                             <img alt="{{ $review->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">
@@ -1205,13 +1205,13 @@ form.activity-nav-form button.search-bar--gender {
                                         <div class="image-wrapper" wire:ignore>
                                             @if(!empty($question->profile->coverimg))
                                             <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->coverimg->image) }}">
                                             @elseif(!empty($question->profile->singleimg))
                                             <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$question->profile->user_id.'/'.$question->profile->id.'/'.$question->profile->singleimg->image) }}">
@@ -1234,7 +1234,7 @@ form.activity-nav-form button.search-bar--gender {
                                         @endif
                                         <div class="image-wrapper" wire:ignore>
                                             <img alt="{{ $question->profile->name }} - escort in {{ $cityname }}" 
-                                                 class="img-responsive" 
+                                                 class="img-responsive" decoding="async" 
                                                  height="208" 
                                                  width="200"
                                                  src="{{ webp_asset('userimages/'.$img->user_id.'/'.$img->profile_id.'/'.$img->image) }}">

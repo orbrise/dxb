@@ -11,8 +11,8 @@
     @endphp 
      
     <!-- DNS Prefetch and Preconnect for faster resource loading -->
-    <link rel="dns-prefetch" href="//assets.massagerepublic.com.co">
-    <link rel="preconnect" href="https://assets.massagerepublic.com.co" crossorigin>
+    <link rel="dns-prefetch" href="//assets.evoory.com">
+    <link rel="preconnect" href="https://assets.evoory.com" crossorigin>
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="dns-prefetch" href="//code.jquery.com">
