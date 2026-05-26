@@ -106,7 +106,9 @@
     {{-- Critical CSS inline for faster FCP --}}
     <style>
         :root{--bg-primary:#0D1011;--bg-secondary:#111111;--accent:#C1F11D;--text-primary:#ffffff}
-        body{margin:0;background:var(--bg-primary) !important;background-image:none !important;color:var(--text-primary);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:300}
+        html{min-height:100%}
+        body{margin:0;background:var(--bg-primary) !important;background-image:none !important;color:var(--text-primary);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:300;display:flex;flex-direction:column;min-height:100vh}
+        body > main{flex:1 0 auto}
         .ev-header{background:var(--bg-secondary);padding:12px 0;position:sticky;top:0;z-index:1000}
         .ev-container{max-width:1200px;margin:0 auto;padding:0 16px}
         .ev-logo{font-size:24px;font-weight:700;color:var(--accent);text-decoration:none}

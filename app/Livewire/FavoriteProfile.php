@@ -18,7 +18,7 @@ class FavoriteProfile extends Component
     public function toggleFavorite()
     {
         if (!auth()->check()) {
-            return redirect()->route('login');
+            return redirect()->route('sign-in');
         }
 
         if ($this->isFavorited) {
