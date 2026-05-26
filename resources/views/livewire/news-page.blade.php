@@ -366,6 +366,19 @@ input.tt-hint,
 
  #main-nav a.selected:before {width: 16px;border-top-color:transparent !important;}
 
+/* Gender select button — widen to match the dropdown's width so the button
+   and its open menu align (dropdown has min-width: 168px). */
+form.activity-nav-form .activity-search-gender { min-width: 200px; }
+form.activity-nav-form button.search-bar--gender {
+    min-width: 200px;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.dropdown-gender-menu { min-width: 200px !important; }
+
 /* ═══ MOBILE VIEW ═══ */
 @media (max-width: 767px) {
     /* Hide ESCORTS/WHAT'S NEW mobile tabs - we have back bar */
@@ -378,7 +391,7 @@ input.tt-hint,
     /* Gender + City row */
     form.activity-nav-form { display: flex !important; gap: 8px !important; margin-bottom: 10px !important; flex-wrap: nowrap !important; }
     form.activity-nav-form .form-group { flex: 1 !important; margin: 0 !important; float: none !important; }
-    form.activity-nav-form .activity-search-gender { flex: none !important; width: auto !important; }
+    form.activity-nav-form .activity-search-gender { flex: none !important; width: auto !important; min-width: 0 !important; }
     form.activity-nav-form button.search-bar--gender {
         background: #1a1a1a !important;
         border: 1px solid #333 !important;
@@ -386,6 +399,8 @@ input.tt-hint,
         color: #fff !important;
         font-size: 13px !important;
         padding: 10px 12px !important;
+        min-width: 0 !important;
+        width: auto !important;
     }
     form.activity-nav-form input.search-bar--city {
         background: #1a1a1a !important;

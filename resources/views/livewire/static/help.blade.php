@@ -40,8 +40,8 @@
     padding: 40px 0 60px;
 }
 .help-page .ev-container {
-    max-width: 900px;
-    margin-left: 2rem;
+    max-width: 1275px;
+    margin: 0 auto;
 }
 .help-page h1.help-hero {
     color: #fff;

@@ -40,8 +40,8 @@
     padding: 40px 0 60px;
 }
 .guide-page .ev-container {
-    max-width: 900px;
-    margin-left: 2rem;
+    max-width: 1275px;
+    margin: 0 auto;
 }
 .guide-page h2 {
     color: #fff;

@@ -484,7 +484,7 @@ div.listings div.listing-li::after {
 .primary-search-gender .search-bar--gender {
     justify-content: space-between !important;
     gap: 6px !important;
-    min-width: 140px;
+    min-width: 180px;
 }
 
 /* City input */

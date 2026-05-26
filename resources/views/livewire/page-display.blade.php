@@ -50,7 +50,6 @@
     color: #ccc;
     font-size: 15px;
     line-height: 1.7;
-    margin-left:2rem;
 }
 .page-display .page-content h1,
 .page-display .page-content h2,
@@ -119,7 +118,6 @@
     margin-top: 32px;
     padding-top: 32px;
     border-top: 1px solid #2a2a2a;
-    margin-left:2rem;
 }
 </style>
 @endpush
@@ -138,7 +136,7 @@
 
 {{-- Main content --}}
 <div class="page-display">
-    <div class="ev-container" style="max-width: 900px; margin-left: 0;">
+    <div class="ev-container" style="max-width: 1275px; margin: 0 auto;">
 
         {{-- Render processed content (with shortcodes removed) --}}
         @if($processedContent)
