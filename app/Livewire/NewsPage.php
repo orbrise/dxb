@@ -182,7 +182,7 @@ class NewsPage extends Component
         $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
 
-        return UsersProfile::where('city', $this->city)
+        $paginator = UsersProfile::where('city', $this->city)
             ->where('gender', $genderId)
             ->where('is_active', 1)
             ->whereNull('archived_at')
@@ -247,15 +247,19 @@ class NewsPage extends Component
             ->with([
                 'singleimg:id,user_id,profile_id,image',
                 'coverimg:id,user_id,profile_id,image',
-                'multipleimgs:id,user_id,profile_id,image',
+                // multipleimgs intentionally omitted — attached manually below
+                // (see attachThumbnailImages for why).
                 'photoverify:id,profile_id,status',
                 'gcity:id,name,slug',
                 'gnat:id,nicename'
             ])
             ->orderBy('created_at', 'desc')
             ->paginate($this->perPage);
+
+        $this->attachThumbnailImages($paginator->getCollection());
+        return $paginator;
     }
-    
+
     public function getNewReviews()
     {
         return $this->fetchNewReviews();
@@ -266,7 +270,7 @@ class NewsPage extends Component
         $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
 
-        return Review::whereHas('profile', function($query) use ($genderId) {
+        $paginator = Review::whereHas('profile', function($query) use ($genderId) {
                 $query->where('city', $this->city)
                       ->where('gender', $genderId)
                       ->where('is_active', 1)
@@ -277,9 +281,7 @@ class NewsPage extends Component
                     $query->with([
                         'singleimg:id,user_id,profile_id,image',
                         'coverimg:id,user_id,profile_id,image',
-                        'multipleimgs' => function($q) {
-                            $q->select('id', 'user_id', 'profile_id', 'image')->limit(3);
-                        },
+                        // multipleimgs attached manually below — see attachThumbnailImages.
                         'photoverify:id,profile_id,status',
                         'gcity:id,name,slug',
                         'gnat:id,nicename'
@@ -289,6 +291,9 @@ class NewsPage extends Component
             ])
             ->orderBy('created_at', 'desc')
             ->paginate($this->perPage);
+
+        $this->attachThumbnailImages($paginator->getCollection()->pluck('profile')->filter());
+        return $paginator;
     }
     
     public function getNewQuestions()
@@ -301,7 +306,7 @@ class NewsPage extends Component
         $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
 
-        return Question::whereHas('profile', function($query) use ($genderId) {
+        $paginator = Question::whereHas('profile', function($query) use ($genderId) {
                 $query->where('city', $this->city)
                       ->where('gender', $genderId)
                       ->where('is_active', 1)
@@ -314,9 +319,7 @@ class NewsPage extends Component
                     $query->with([
                         'singleimg:id,user_id,profile_id,image',
                         'coverimg:id,user_id,profile_id,image',
-                        'multipleimgs' => function($q) {
-                            $q->select('id', 'user_id', 'profile_id', 'image')->limit(3);
-                        },
+                        // multipleimgs attached manually below — see attachThumbnailImages.
                         'photoverify:id,profile_id,status',
                         'gcity:id,name,slug',
                         'gnat:id,nicename'
@@ -326,6 +329,9 @@ class NewsPage extends Component
             ])
             ->orderBy('updated_at', 'desc')
             ->paginate($this->perPage);
+
+        $this->attachThumbnailImages($paginator->getCollection()->pluck('profile')->filter());
+        return $paginator;
     }
     
     public function getAllNews()
@@ -338,13 +344,15 @@ class NewsPage extends Component
         $genderModel = CacheService::getGenderByName($this->gender);
         $genderId = $genderModel ? $genderModel->id : null;
 
-        // Get escorts with item_type attribute
+        // Get escorts — multipleimgs is attached manually below via
+        // attachThumbnailImages() to dodge Laravel's eager-load LIMIT footgun
+        // (same fix HomePage::attachThumbnailImages uses, see HomePage.php:723).
         $escorts = UsersProfile::where('city', $this->city)
             ->where('gender', $genderId)
             ->where('is_active', 1)
             ->whereNull('archived_at')
             ->with([
-                'singleimg', 'coverimg', 'multipleimgs', 'photoverify', 'gcity', 'gnat'
+                'singleimg', 'coverimg', 'photoverify', 'gcity', 'gnat'
             ])
             ->orderBy('created_at', 'desc')
             ->limit($this->perPage)
@@ -354,7 +362,9 @@ class NewsPage extends Component
                 $item->sort_date = $item->created_at;
                 return $item;
             });
-            
+
+        $this->attachThumbnailImages($escorts);
+
         // Get questions with item_type attribute
         $questions = Question::whereHas('profile', function($query) use ($genderId) {
                 $query->where('city', $this->city)
@@ -364,7 +374,7 @@ class NewsPage extends Component
             })
             ->whereNotNull('answer')
             ->where('answer', '!=', '')
-            ->with(['profile.singleimg', 'profile.coverimg', 'profile.multipleimgs', 'profile.photoverify', 'profile.gcity', 'profile.gnat', 'askedBy'])
+            ->with(['profile.singleimg', 'profile.coverimg', 'profile.photoverify', 'profile.gcity', 'profile.gnat', 'askedBy'])
             ->orderBy('updated_at', 'desc')
             ->limit($this->perPage)
             ->get()
@@ -373,7 +383,9 @@ class NewsPage extends Component
                 $item->sort_date = $item->updated_at;
                 return $item;
             });
-        
+
+        $this->attachThumbnailImages($questions->pluck('profile')->filter());
+
         // Merge and sort all items by date
         $allItems = $escorts->concat($questions)->sortByDesc('sort_date')->take($this->perPage)->values();
         
@@ -386,7 +398,44 @@ class NewsPage extends Component
             ['path' => request()->url()]
         );
     }
-    
+
+    /**
+     * Manually attach up to 3 thumbnail images per profile.
+     *
+     * Copied from HomePage::attachThumbnailImages. Eloquent's eager-load with
+     * any LIMIT (either in the relation method itself, or via a closure
+     * constraint) applies the LIMIT to the whole IN(...) result, not per
+     * parent — so on the news page, profiles like Daraline (4243) randomly
+     * end up with zero thumbnails depending on cache state and worker race.
+     * Running one grouped query and setRelation()'ing the result manually
+     * makes the count per profile deterministic.
+     */
+    protected function attachThumbnailImages($profiles): void
+    {
+        if ($profiles->isEmpty()) {
+            return;
+        }
+        $profileIds = $profiles->pluck('id')->filter()->values()->all();
+        if (empty($profileIds)) {
+            return;
+        }
+        $imagesByProfile = \App\Models\ProfileImage::query()
+            ->select('id', 'user_id', 'profile_id', 'image', 'is_main')
+            ->whereIn('profile_id', $profileIds)
+            ->where(function ($q) {
+                $q->whereNull('is_main')->orWhere('is_main', '!=', 1);
+            })
+            ->orderBy('profile_id')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('profile_id');
+        foreach ($profiles as $profile) {
+            $thumbs = $imagesByProfile->get($profile->id, collect())->take(3)->values();
+            $profile->setRelation('multipleimgs', $thumbs);
+            $profile->setRelation('multipleimgss', $thumbs);
+        }
+    }
+
     public function render()
     {
         $data = [];

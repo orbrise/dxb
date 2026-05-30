@@ -93,11 +93,17 @@ class UsersProfile extends Model
     }
 
     public function multipleimgs() {
+        // No ->take()/->limit() here: when this relation is eager-loaded via
+        // ->with('multipleimgs'), Laravel rolls every parent's images into a
+        // single `WHERE profile_id IN (...) LIMIT 3` query — the LIMIT applies
+        // globally, not per parent, so only ~3 records total come back and
+        // most profiles get zero. Callers already apply per-profile limits on
+        // the resulting collection (->multipleimgs->take(2) / ->take(3)).
         return $this->hasMany(ProfileImage::class, 'profile_id', 'id')
             ->where(function($query) {
                 $query->whereNull('is_main')
                       ->orWhere('is_main', '!=', 1);
-            })->take(3);
+            });
     }
     
      public function multipleimgss() {
