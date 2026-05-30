@@ -1220,6 +1220,7 @@ h1, h2, h3, h4, h5, h6 {
     color: #000 !important;
     border: none;
     font-weight: 600;
+    margin-right: 5px;
 }
 .ev-action-item.ev-action-primary svg,
 .ev-action-item:first-child svg {

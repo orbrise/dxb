@@ -1343,37 +1343,50 @@ button.btn.btn-primary#submit[type="submit"]:hover {
     transition: transform 0.2s;
 }
 
-/* Mobile: remove border-radius from all listing images */
+/* Mobile: round outer corners only — left side on main image,
+   top-right on first thumbnail, bottom-right on last thumbnail.
+   Mirrors the desktop pattern at lines 271-311. */
 @media (max-width: 768px) {
-    .listing-li .thumbs img,
-    .listing-li .thumbs .img-wrapper,
-    .listing-li .thumbs .image-wrapper,
+    /* Main (big left) image: round left corners only */
     .listing-li .thumbs .main-thumbs img,
     .listing-li .thumbs .main-thumbs .img-wrapper,
-    .listing-li .thumbs .main-thumbs .image-wrapper,
-    .listing-li .thumbs .main-thumbs:first-child:last-child img,
-    .listing-li .thumbs .main-thumbs:first-child:last-child .img-wrapper,
-    .listing-li .thumbs .main-thumbs:first-child:last-child .image-wrapper,
-    .listing-li .thumbs .main-thumbs:only-child img,
-    .listing-li .thumbs .main-thumbs:only-child .img-wrapper,
-    .listing-li .thumbs .main-thumbs:only-child .image-wrapper,
+    .listing-li .thumbs .main-thumbs .image-wrapper {
+        border-radius: 12px 0 0 12px !important;
+        overflow: hidden !important;
+    }
+    /* First thumbnail (top-right): round top-right corner */
     .listing-li .thumbs .other-thumbs .thumb:first-child img,
     .listing-li .thumbs .other-thumbs .thumb:first-child .img-wrapper,
-    .listing-li .thumbs .other-thumbs .thumb:first-child .image-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:first-child .image-wrapper {
+        border-radius: 0 12px 0 0 !important;
+        overflow: hidden !important;
+    }
+    /* Last thumbnail (bottom-right): round bottom-right corner */
     .listing-li .thumbs .other-thumbs .thumb:last-child img,
     .listing-li .thumbs .other-thumbs .thumb:last-child .img-wrapper,
-    .listing-li .thumbs .other-thumbs .thumb:last-child .image-wrapper,
-    .listing-li .thumbs .other-thumbs .thumb:only-child img,
-    .listing-li .thumbs .other-thumbs .thumb:only-child .img-wrapper,
-    .listing-li .thumbs .other-thumbs .thumb:only-child .image-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:last-child .image-wrapper {
+        border-radius: 0 0 12px 0 !important;
+        overflow: hidden !important;
+    }
+    /* Middle thumbnail(s): square */
     .listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) img,
     .listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) .img-wrapper,
     .listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) .image-wrapper {
         border-radius: 0 !important;
-        border-top-left-radius: 0 !important;
-        border-top-right-radius: 0 !important;
-        border-bottom-left-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
+    }
+    /* Only-child thumbnail: round full right side */
+    .listing-li .thumbs .other-thumbs .thumb:only-child img,
+    .listing-li .thumbs .other-thumbs .thumb:only-child .img-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb:only-child .image-wrapper {
+        border-radius: 0 12px 12px 0 !important;
+        overflow: hidden !important;
+    }
+    /* Only-child main image (no thumbnails): round all corners */
+    .listing-li .thumbs .main-thumbs:only-child img,
+    .listing-li .thumbs .main-thumbs:only-child .img-wrapper,
+    .listing-li .thumbs .main-thumbs:only-child .image-wrapper {
+        border-radius: 12px !important;
+        overflow: hidden !important;
     }
 }
 
@@ -1431,5 +1444,42 @@ button.btn.btn-primary#submit[type="submit"]:hover {
     }
     #header .listings-search-form.search-form {
         display: none !important;
+    }
+
+    /* Show description + "See more & contact" button on mobile
+       (overrides legacy-listing-bundle.css rule that sets .listing-info display:none under 567px) */
+    .listings .listing-li > .listing-info-wrapper > .listing-info,
+    .listings .listing-li .listing-info-wrapper > .listing-info {
+        display: block !important;
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 0 12px !important;
+        text-align: center !important;
+    }
+
+    /* Hide the duplicate inner h2 on mobile — name already shown above the thumbs via h2.visible-xxs */
+    .listings .listing-li .listing-info > h2 {
+        display: none !important;
+    }
+
+    /* Clamp the description to 3 lines */
+    .listings .listing-li .listing-info > a > p,
+    .listings .listing-li .listing-info p {
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        -webkit-line-clamp: 3 !important;
+        line-clamp: 3 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        margin: 10px 0 12px !important;
+    }
+
+    /* Anchor cropped listing images to the top so faces stay visible.
+       (listing-page-inline.css applies object-fit:cover with a fixed height on mobile —
+       default object-position is center, which crops the head off portrait photos.) */
+    .listing-li .img-wrapper img,
+    .listing-li .thumbs .main-thumbs img,
+    .listing-li .thumbs .other-thumbs .thumb img {
+        object-position: top !important;
     }
 }
