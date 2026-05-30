@@ -776,7 +776,7 @@ form.activity-nav-form button.search-bar--gender {
             @foreach($items as $item)
             @if(isset($item->item_type) && $item->item_type === 'escort')
                 @php $profile = $item; @endphp
-                <li wire:key="news-escort-{{ $profile->id }}">
+                <li wire:key="news-escort-{{ $profile->id }}" wire:ignore>
                 @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $profile->created_at->format('Y-m-d')))
                 <div class="date-wrapper">
                     <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -830,7 +830,7 @@ form.activity-nav-form button.search-bar--gender {
                             @if($profile->multipleimgs && $profile->multipleimgs->count() > 0)
                             <div class="right-thumbs">
                                 @foreach($profile->multipleimgs->take(2) as $img)
-                                <a class="{{ $loop->index == 1 ? 'hidden-md' : '' }} pb-photo-link" 
+                                <a class="pb-photo-link1" 
                                    href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                                     <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
@@ -839,7 +839,7 @@ form.activity-nav-form button.search-bar--gender {
                                             <span>Verified photos</span>
                                         </span>
                                         @endif
-                                        <div class="image-wrapper" wire:ignore>
+                                        <div class="image-wrapper1" wire:ignore>
                                             <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
                                                  class="img-responsive" decoding="async" 
                                                  height="208" 
@@ -862,7 +862,7 @@ form.activity-nav-form button.search-bar--gender {
             </li>
             @elseif(isset($item->item_type) && $item->item_type === 'question')
                 @php $question = $item; @endphp
-                <li wire:key="news-question-{{ $question->id }}">
+                <li wire:key="news-question-{{ $question->id }}" wire:ignore>
                 @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->updated_at->format('Y-m-d') != $question->updated_at->format('Y-m-d')))
                 <div class="date-wrapper">
                     <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -965,7 +965,7 @@ form.activity-nav-form button.search-bar--gender {
             
         @elseif($type === 'new-escorts')
             @foreach($items as $profile)
-            <li wire:key="news-escort-{{ $profile->id }}">
+            <li wire:key="news-escort-{{ $profile->id }}" wire:ignore>
                 @if($loop->first || $loop->iteration == 1 || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $profile->created_at->format('Y-m-d')))
                 <div class="date-wrapper">
                     <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -1043,7 +1043,7 @@ form.activity-nav-form button.search-bar--gender {
             
         @elseif($type === 'new-reviews')
             @foreach($items as $review)
-            <li wire:key="news-review-{{ $review->id }}">
+            <li wire:key="news-review-{{ $review->id }}" wire:ignore>
                 @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $review->created_at->format('Y-m-d')))
                 <div class="date-wrapper">
                     <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -1171,7 +1171,7 @@ form.activity-nav-form button.search-bar--gender {
             
         @elseif($type === 'new-questions')
             @foreach($items as $question)
-            <li wire:key="news-question-{{ $question->id }}">
+            <li wire:key="news-question-{{ $question->id }}" wire:ignore>
                 @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->updated_at->format('Y-m-d') != $question->updated_at->format('Y-m-d')))
                 <div class="date-wrapper">
                     <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -1337,6 +1337,67 @@ document.addEventListener('livewire:init', function () {
         if (el) el.remove();
     }).observe(document.body, { childList: true });
 });
+</script>
+<script>
+// Image flicker fix. The news page on prod sees previously-loaded <img>
+// elements briefly lose their decoded pixels during the morph after loadMore
+// — visible as black/blank rectangles where images used to be. Cannot
+// reproduce locally; almost certainly a morph race where the <img> element
+// is detached and reattached faster than the browser preserves decoded data.
+//
+// Strategy: once each <img> has successfully loaded, also paint that same
+// image URL as a CSS background-image on its parent .image-wrapper. CSS
+// backgrounds live on the parent element and are not affected by what the
+// child <img> is doing — so even if the <img> briefly goes blank during a
+// re-attach, the wrapper still shows the image visually.
+//
+// One-time only per image (guarded by data-bg-painted). Skips broken images
+// so we don't paint a black placeholder backed by a 404 URL.
+(function () {
+    if (window.__newsImgBgFallbackBound) return;
+    window.__newsImgBgFallbackBound = true;
+
+    function paint(img) {
+        if (!img || img.dataset.bgPainted) return;
+        var wrapper = img.parentElement;
+        if (!wrapper || !wrapper.classList.contains('image-wrapper')) return;
+        if (!img.complete || img.naturalWidth === 0) return;
+        var src = img.currentSrc || img.src;
+        if (!src) return;
+        wrapper.style.backgroundImage = "url('" + src.replace(/'/g, "\\'") + "')";
+        wrapper.style.backgroundSize = 'cover';
+        wrapper.style.backgroundPosition = 'center';
+        wrapper.style.backgroundRepeat = 'no-repeat';
+        img.dataset.bgPainted = '1';
+    }
+
+    function attach(img) {
+        if (!img || img.__bgAttached) return;
+        img.__bgAttached = true;
+        if (img.complete) {
+            paint(img);
+        } else {
+            img.addEventListener('load', function () { paint(img); }, { once: true });
+        }
+    }
+
+    function scan() {
+        document.querySelectorAll('.activity-stream .image-wrapper img').forEach(attach);
+    }
+
+    function start() {
+        var ul = document.querySelector('.activity-stream');
+        if (!ul) { setTimeout(start, 250); return; }
+        scan();
+        new MutationObserver(scan).observe(ul, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
+})();
 </script>
 <script>
 // The news-page renders on the legacy `app` layout which loads css-optimized.blade.php

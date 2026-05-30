@@ -8,7 +8,7 @@
     @foreach($items as $item)
     @if(isset($item->item_type) && $item->item_type === 'escort')
         @php $profile = $item; @endphp
-        <li wire:key="news-escort-{{ $profile->id }}">
+        <li wire:key="news-escort-{{ $profile->id }}" wire:ignore>
         @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $profile->created_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -94,7 +94,7 @@
     </li>
     @elseif(isset($item->item_type) && $item->item_type === 'question')
         @php $question = $item; @endphp
-        <li wire:key="news-question-{{ $question->id }}">
+        <li wire:key="news-question-{{ $question->id }}" wire:ignore>
         @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->updated_at->format('Y-m-d') != $question->updated_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -200,7 +200,7 @@
 
 @elseif($type === 'new-escorts')
     @foreach($items as $profile)
-    <li wire:key="news-escort-{{ $profile->id }}">
+    <li wire:key="news-escort-{{ $profile->id }}" wire:ignore>
         @if($loop->first || $loop->iteration == 1 || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $profile->created_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -281,7 +281,7 @@
 
 @elseif($type === 'new-reviews')
     @foreach($items as $review)
-    <li wire:key="news-review-{{ $review->id }}">
+    <li wire:key="news-review-{{ $review->id }}" wire:ignore>
         @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->created_at->format('Y-m-d') != $review->created_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
@@ -411,7 +411,7 @@
 
 @elseif($type === 'new-questions')
     @foreach($items as $question)
-    <li wire:key="news-question-{{ $question->id }}">
+    <li wire:key="news-question-{{ $question->id }}" wire:ignore>
         @if($loop->first || (isset($items[$loop->index - 1]) && $items[$loop->index - 1]->updated_at->format('Y-m-d') != $question->updated_at->format('Y-m-d')))
         <div class="date-wrapper">
             <div class="date {{ $loop->first ? 'first' : '' }}">
