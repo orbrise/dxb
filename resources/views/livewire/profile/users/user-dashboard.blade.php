@@ -626,6 +626,14 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
 
+    /* Main grid (desktop default) — moved out of inline style so
+       the media-query override below can win cleanly. */
+    .ev-main-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 24px;
+    }
+
     /* Responsive */
     @media (max-width: 991px) {
         .ev-main-grid { grid-template-columns: 1fr !important; }
@@ -827,6 +835,82 @@
         .ev-alert-danger { border-radius: 5px !important; }
         .ev-alert-danger h4 { font-size: 14px !important; }
         .ev-alert-danger p { font-size: 12px !important; }
+
+        /* ─── Mobile alignment fixes ─────────────────────────────
+           Grid items AND flex items default to min-width:auto, which
+           considers the intrinsic size of inner content (e.g. the
+           profile image's natural width). That makes columns/cards
+           expand wider than the viewport. Cascade min-width:0 down
+           through every wrapper between the grid and the <img>. */
+        .ev-container { overflow-x: hidden; }
+        .ev-main-grid,
+        .ev-main-grid > *,
+        .ev-main-grid > * > *,
+        .ev-stats-row,
+        .ev-stats-row > * {
+            min-width: 0 !important;
+        }
+
+        /* Profile card (flex) — same gotcha: flex children also need
+           min-width:0 so the avatar/info columns can shrink instead
+           of pushing the card past the grid column. */
+        .ev-profile-card,
+        .ev-profile-card > * {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Hard cap on the image so it can never exceed its column,
+           regardless of its intrinsic resolution. */
+        .ev-profile-card .ev-avatar,
+        .ev-profile-card .ev-avatar > a {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .ev-profile-card .ev-avatar img,
+        .ev-profile-card img {
+            max-width: 100% !important;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        /* Sidebar cards: align edges to the same gutter as the
+           profile listing cards above (no extra container padding). */
+        .ev-sidebar-card {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 16px !important;
+        }
+
+        /* Delete Profile: stop right-clipping by centering it. */
+        .ev-main-grid > div > div[style*="text-align: right"] {
+            text-align: center !important;
+            padding: 0 !important;
+        }
+
+        /* Stats cards: contain floated preview images so they
+           don't overflow the card on narrow screens. */
+        .ev-stats-card {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+        .ev-verify-preview,
+        .ev-link-preview {
+            max-width: 40% !important;
+        }
+        .ev-link-preview {
+            width: 110px !important;
+            height: 90px !important;
+        }
+        .ev-verify-preview img {
+            width: 64px !important;
+            height: 64px !important;
+        }
     }
 </style>
 @endpush
@@ -938,7 +1022,7 @@
     @endif
 
     <!-- Main Content Grid -->
-    <div class="ev-main-grid" style="display: grid; grid-template-columns: 1fr 340px; gap: 24px;">
+    <div class="ev-main-grid">
         <!-- Left Column: Profile Cards -->
         <div>
             @if(isset($allProfiles) && $allProfiles->total() > 0)

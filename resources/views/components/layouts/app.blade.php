@@ -387,6 +387,67 @@ html { min-height: 100%; }
 body { display: flex; flex-direction: column; min-height: 100vh; }
 body > main.ev-page-main { flex: 1 0 auto; }
 
+/* Evoory footer styles. The footer markup uses ev-footer-* classes from
+   footer-evoory.blade.php, but evoory-theme.css is only loaded by the
+   app-evoory layout. Inlined here (with hard-coded colors instead of the
+   theme's CSS variables) so pages on this legacy layout still render a
+   styled footer. Keep narrowly scoped to .ev-footer to avoid leaking into
+   legacy page content. */
+.ev-footer { background:#111111; border-top:1px solid #2a2a2a; padding:20px 0; color:#fff; }
+.ev-footer .ev-container { width:100%; max-width:1300px; margin:0 auto; padding:0 16px; box-sizing:border-box; }
+.ev-footer .ev-footer-links-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:16px; }
+.ev-footer .ev-footer-link { color:#C1F11D; text-decoration:none; font-size:13px; }
+.ev-footer .ev-footer-link:hover { color:#d4f84d; text-decoration:underline; }
+.ev-footer .ev-footer-sep { color:#666; font-size:13px; }
+.ev-footer .ev-disclaimer { color:#fff; font-size:11px; line-height:1.6; margin:0; }
+.ev-footer .ev-footer-bottom { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:16px; }
+.ev-footer .ev-copyright { color:#C1F11D; font-size:13px; margin-right:8px; }
+.ev-footer .ev-footer-pages { display:flex; flex-wrap:wrap; align-items:center; gap:0; }
+.ev-footer .ev-footer-pages ul { display:flex; flex-wrap:wrap; align-items:center; list-style:none; margin:0; padding:0; gap:0; }
+.ev-footer .ev-footer-pages li { display:inline-flex; align-items:center; }
+.ev-footer .ev-footer-pages li::before { content:'|'; color:#666; margin:0 8px; }
+.ev-footer .ev-footer-pages li:first-child::before { content:''; margin:0; }
+.ev-footer .ev-footer-pages a { color:#C1F11D; text-decoration:none; font-size:13px; }
+.ev-footer .ev-footer-pages a:hover { color:#d4f84d; text-decoration:underline; }
+
+/* Evoory header styles. The header markup (header-evoory.blade.php) uses
+   ev-header-* / ev-nav-* / ev-mobile-auth-btn classes from evoory-theme.css,
+   which is only loaded by the app-evoory layout. Inlined here (with hard-
+   coded colors instead of theme CSS variables) so pages on this legacy
+   layout still render the evoory header. Header-only — no ev-container,
+   ev-flex utilities, etc. that would leak into legacy page content. */
+header .ev-header { background:#0D1011; padding:12px 0; position:sticky; top:0; z-index:1000; }
+header .ev-header .ev-container { width:100%; max-width:1300px; margin:0 auto; padding:0 16px; box-sizing:border-box; }
+header .ev-header .ev-flex { display:flex; }
+header .ev-header .ev-items-center { align-items:center; }
+header .ev-header .ev-justify-between { justify-content:space-between; }
+header .ev-header .ev-logo { font-size:24px; font-weight:700; color:#C1F11D; text-decoration:none; letter-spacing:-0.5px; display:inline-flex; align-items:center; }
+header .ev-header .ev-logo:hover { color:#d4f84d; text-decoration:none; }
+header .ev-header .ev-nav { display:flex; align-items:center; gap:16px; }
+header .ev-header .ev-nav-link { color:#fff !important; text-decoration:none !important; font-size:14px; font-family:inherit; font-weight:300; line-height:1; padding:12px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; border:1px solid #2a2a2a; background:transparent; cursor:pointer; box-sizing:border-box; height:35px; transition:all .2s ease; }
+header .ev-header .ev-nav-link:hover { color:#fff; background:#1a1a1a; border-color:#fff; }
+header .ev-header .ev-nav-link svg { width:18px; height:18px; flex-shrink:0; }
+header .ev-header button.ev-nav-link { height:35px; padding:12px 12px; font-size:14px; font-family:inherit; font-weight:300; line-height:1; margin:0; box-sizing:border-box; border:1px solid #2a2a2a; -webkit-appearance:none; appearance:none; }
+header .ev-header .ev-header-tabs { display:inline-flex; align-items:center; background:#1D2224; border-radius:5px; padding:0; margin-left:16px; gap:0; }
+header .ev-header .ev-header-tab { color:#C1F11D; text-decoration:none; font-size:13px; font-weight:400; padding:7px 20px; text-transform:uppercase; letter-spacing:0.5px; position:relative; background:#1D2224; }
+header .ev-header .ev-header-tab:first-child { border-radius:5px 0 0 5px; }
+header .ev-header .ev-header-tab:last-child { border-radius:0 5px 5px 0; }
+header .ev-header .ev-header-tab:hover { color:#fff; text-decoration:none; }
+header .ev-header .ev-header-tab.active { color:#C1F11D; background:#262C2F; }
+header .ev-header .ev-mobile-auth-btn { display:none; }
+/* Simple header is mobile-only — hidden on desktop. */
+header .ev-header-simple { display:none; }
+header .ev-header-account { display:none; }
+@media (max-width: 767px) {
+    header .ev-header-simple { display:block; background:#0D1011; padding:12px 0; position:sticky; top:0; z-index:1000; border-bottom:1px solid #2a2a2a; }
+    header .ev-header-simple-inner { max-width:1200px; margin:0 auto; padding:0 16px; display:flex; align-items:center; gap:12px; position:relative; }
+    header .ev-header-simple-back { display:inline-flex; align-items:center; gap:4px; color:#C1F11D; text-decoration:none; font-size:17px; font-weight:500; flex:1 1 0; min-width:0; }
+    header .ev-header-simple-logo { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
+    header .ev-header-simple-spacer { flex:1 1 0; }
+    /* When a mobile simple header is rendered, hide the desktop header on mobile. */
+    header .ev-header.ev-header--has-simple { display:none; }
+}
+
     </style>
 
   </head>
@@ -399,7 +460,7 @@ body > main.ev-page-main { flex: 1 0 auto; }
     </div>
         
   <header id="header">
-    @include('components.layouts.header')
+    @include('components.layouts.header-evoory')
   @yield('headerform')
   </header>
     

@@ -29,6 +29,7 @@
         'favorites.dashboard' => 'My Favorite Profiles',
         'profile.archived' => 'Archived Profiles',
         'profile.status' => 'Profile Status',
+        'rejected.verifications' => 'Rejected Verifications',
     ];
     $isAccountPage = array_key_exists($currentRoute, $accountPageTitles);
     $accountPageTitle = $accountPageTitles[$currentRoute] ?? '';

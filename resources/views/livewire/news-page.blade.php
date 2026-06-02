@@ -379,6 +379,14 @@ form.activity-nav-form button.search-bar--gender {
 }
 .dropdown-gender-menu { min-width: 200px !important; }
 
+/* Bootstrap 4 JS (loaded by the app layout) toggles `.show` on the dropdown
+   and its menu, but the loaded CSS bundle is Bootstrap 3 — which only has
+   `.open > .dropdown-menu { display: block }`. Without a matching `.show`
+   rule the click handler fires, classes get toggled, but the menu stays
+   hidden. Add the Bootstrap 4 equivalent so the gender dropdown opens. */
+.dropdown.show > .dropdown-menu,
+.dropdown-menu.show { display: block; }
+
 /* Belt-and-suspenders: hide the mobile-only ESCORTS/WHAT'S NEW pill bar and
    "Back" back-bar on desktop. Bootstrap's `.visible-xs` rule should already
    do this, but the duplicate row was leaking onto the desktop view — force

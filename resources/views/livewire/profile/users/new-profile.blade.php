@@ -22,6 +22,30 @@
             background-color: #0a0b0d !important;
         }
 
+        /* Align the form wrapper with the evoory header and footer
+           (max-width 1300px, centered, 16px side padding). The outer
+           .row.container combines Bootstrap's .row and .container on the
+           same element — .row's `margin: 0 -15px` is defined after
+           .container, killing the auto-centering — so we re-apply it
+           explicitly. The legacy `col-lg-offset-1` class is a Bootstrap 3
+           selector and has no effect under Bootstrap 4, so we zero out any
+           inherited offset on the inner column. */
+        @media (min-width: 992px) {
+            .row.container {
+                margin-left: auto !important;
+                margin-right: auto !important;
+                max-width: 1300px !important;
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+                box-sizing: border-box !important;
+            }
+            .row.container > .col-lg-offset-1.col-lg-10 {
+                margin-left: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+        }
+
         /* Section title blocks with left accent border */
         .h3.title-block, h2.h3.title-block {
             color: #fff !important;

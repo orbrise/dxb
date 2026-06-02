@@ -367,10 +367,47 @@
         .ev-rejected-card .ev-card-body { flex-direction: column; }
     }
     @media (max-width: 768px) {
-        .ev-dashboard-tabs { flex-direction: column; align-items: stretch; }
-        .ev-dashboard-nav { flex-direction: column; }
-        .ev-dashboard-nav a { width: 100%; justify-content: center; }
-        .ev-dashboard-tabs .ev-add-btn { width: 100%; justify-content: center; }
+        /* Tabs — horizontal scrolling pill row (matches user-dashboard).
+           No top padding: the layout's account header already provides
+           spacing above. Bottom padding only. */
+        .ev-dashboard-tabs {
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            padding: 0 0 12px 0 !important;
+            gap: 0 !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .ev-dashboard-tabs::-webkit-scrollbar { display: none; }
+        .ev-dashboard-nav {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            width: 100%;
+        }
+        .ev-dashboard-nav a {
+            width: auto !important;
+            white-space: nowrap;
+            padding: 7px 16px !important;
+            font-size: 12px !important;
+            border-radius: 20px !important;
+            background: transparent !important;
+            border: 1px solid #3a3a3a !important;
+            color: #999 !important;
+            justify-content: center;
+        }
+        .ev-dashboard-nav a.active {
+            background: transparent !important;
+            border-color: #C1F11D !important;
+            color: #C1F11D !important;
+        }
+        .ev-dashboard-nav a i { display: none; }
+
+        /* Hide desktop Add Profile button — bottom nav handles it on mobile */
+        .ev-dashboard-tabs .ev-add-btn { display: none !important; }
+
         .ev-rejected-card .ev-card-body { flex-direction: column; align-items: center; text-align: center; }
         .ev-rejected-card .ev-avatar { width: 120px; height: 120px; }
         .ev-rejected-card .ev-profile-name { justify-content: center; }
@@ -379,15 +416,7 @@
 </style>
 @endpush
 
-<!-- Back Bar -->
-<div class="ev-back-bar">
-    <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
-        <a href="/my-account" style="position:absolute; left:16px;">
-            <i class="fa fa-angle-left"></i> Back to My Account
-        </a>
-        <h1>Rejected Photo Verifications</h1>
-    </div>
-</div>
+{{-- In-page back bar removed — the app-evoory layout already provides the top header. --}}
 
 <div class="ev-container" style="padding-top: 8px; padding-bottom: 40px;">
 
