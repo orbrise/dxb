@@ -510,8 +510,8 @@
             <i class="fa fa-archive"></i>
             <h3>No Archived Profiles</h3>
             <p>You don't have any archived profiles at the moment.</p>
-            <a class="ev-btn ev-btn-accent" href="/my-account">
-                <i class="fa fa-arrow-left"></i> Back to My Account
+            <a class="ev-btn ev-btn-sm ev-btn-accent" href="/my-account">
+                <i class="fas fa-arrow-left"></i> Back to My Account
             </a>
         </div>
     @endif

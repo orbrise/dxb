@@ -15,11 +15,11 @@ body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Se
 
 /* Header */
 /* Account header (account pages on mobile) - hidden by default */
-.ev-header-account{display:none;background:#0D1011;padding:14px 0;position:sticky;top:0;z-index:1000}
+.ev-header-account{display:none;background:#131616;padding:12px 0;position:sticky;top:0;z-index:1000}
 .ev-header-account-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;position:relative;min-height:24px}
-.ev-header-account-home{display:inline-flex;align-items:center;gap:4px;color:var(--accent);text-decoration:none;font-size:17px;font-weight:500;flex:1 1 0;min-width:0}
+.ev-header-account-home{display:inline-flex;align-items:center;gap:4px;color:var(--accent);text-decoration:none;font-size:13px;font-weight:500;flex:1 1 0;min-width:0}
 .ev-header-account-home:hover{color:var(--accent);text-decoration:none;opacity:.85}
-.ev-header-account-title{color:#fff;font-size:17px;font-weight:500;white-space:nowrap;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.ev-header-account-title{color:#fff;font-size:15px;font-weight:500;white-space:nowrap;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
 .ev-header-account-spacer{flex:1 1 0}
 
 /* Simple header (non-home pages on mobile) - hidden by default */

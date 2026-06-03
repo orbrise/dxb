@@ -533,8 +533,8 @@
             <i class="fa fa-check-circle"></i>
             <h3>Good news!</h3>
             <p>You don't have any rejected photo verifications at the moment.</p>
-            <a class="ev-btn ev-btn-accent" href="/my-account">
-                <i class="fa fa-arrow-left"></i> Back to My Account
+            <a class="ev-btn ev-btn-sm ev-btn-accent" href="/my-account">
+                <i class="fas fa-arrow-left"></i> Back to My Account
             </a>
         </div>
     @endif
