@@ -36,6 +36,7 @@ body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Se
 ;padding:12px 0;position:sticky;top:0;z-index:1000}
 .ev-logo{font-size:24px;font-weight:700;color:var(--accent);text-decoration:none;letter-spacing:-0.5px}
 .ev-logo:hover{color:var(--accent-hover)}
+.ev-logo:focus,.ev-logo:focus-visible,.ev-logo:active{outline:none!important;box-shadow:none!important}
 .ev-nav{display:flex;align-items:center;gap:16px}
 .ev-nav-link{color:var(--text-secondary) !important;text-decoration:none !important;font-size:14px;font-family:inherit;font-weight:300;line-height:1;padding:12px 12px;border-radius:var(--radius);transition:var(--transition);display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border-color);background:transparent;cursor:pointer;box-sizing:border-box;height:35px}
 .ev-nav-link:hover{color:var(--text-primary);background:var(--bg-card);border-color:var(--text-secondary)}

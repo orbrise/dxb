@@ -377,6 +377,14 @@ form.activity-nav-form button.search-bar--gender {
     align-items: center;
     justify-content: space-between;
 }
+form.activity-nav-form button.search-bar--gender:focus,
+form.activity-nav-form button.search-bar--gender:focus-visible,
+form.activity-nav-form button.search-bar--gender:active,
+form.activity-nav-form input.search-bar--city:focus,
+form.activity-nav-form input.search-bar--city:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
 .dropdown-gender-menu { min-width: 200px !important; }
 
 /* Bootstrap 4 JS (loaded by the app layout) toggles `.show` on the dropdown
