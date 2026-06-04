@@ -35,37 +35,95 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.2.0/css/all.min.css" integrity="sha512-6c4nX2tn5KbzeBJo9Ywpa0Gkt+mzCzJBrE1RB6fmpcsoN+b/w/euwIMuQKNyUoU/nToKN3a8SgNOtPrbW12fug==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
     <style>
-        .form-material .form-group > label
- {
-    position: absolute;
-    top: 50%;
-    left: 8px;
- }
- 
-  .btn-color-scheme {
-    color: #fff;
-    background-color: #d3980b;
-    border-color: #d3980b;
-}
+        :root {
+            --ev-bg: #0D1011;
+            --ev-card: #131616;
+            --ev-border: #2a2a2a;
+            --ev-accent: #C1F11D;
+            --ev-accent-hover: #d4f84d;
+            --ev-text: #ffffff;
+            --ev-text-muted: #b1b1b1;
+        }
 
+        body.body-bg-full.profile-page {
+            background-color: var(--ev-bg) !important;
+            font-family: 'Inter', 'Nunito Sans', sans-serif;
+        }
 
- .btn-color-scheme:hover {
-    color: #fff;
-    background-color: #d3980b;
-    border-color: #d3980b;
-}
+        .profile-page .login-center {
+            background-color: var(--ev-card) !important;
+            border: 1px solid var(--ev-border) !important;
+            border-radius: 12px !important;
+            padding: 32px 28px !important;
+            margin-top: 60px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
 
-.profile-page .login-center
- {
-    border: 1px solid;
- }
-    
+        .profile-page .navbar-header img {
+            max-height: 50px;
+            margin-bottom: 8px;
+        }
+
+        .form-material label,
+        .form-material p {
+            color: var(--ev-text-muted) !important;
+        }
+
+        .form-material .form-group > label {
+            position: absolute;
+            top: 50%;
+            left: 8px;
+        }
+
+        .form-material .form-control {
+            background: #1a1a1a !important;
+            border: 1px solid var(--ev-border) !important;
+            color: var(--ev-text) !important;
+            border-radius: 6px !important;
+            padding: 10px 12px !important;
+            height: auto !important;
+        }
+        .form-material .form-control:focus {
+            border-color: var(--ev-accent) !important;
+            box-shadow: 0 0 0 2px rgba(193, 241, 29, 0.15) !important;
+            outline: none !important;
+        }
+        .form-material .form-control::placeholder {
+            color: #666 !important;
+        }
+
+        .btn-color-scheme {
+            background-color: var(--ev-accent) !important;
+            border-color: var(--ev-accent) !important;
+            color: #000 !important;
+            border-radius: 25px !important;
+            font-weight: 600 !important;
+            padding: 12px !important;
+            transition: all 0.2s ease;
+        }
+        .btn-color-scheme:hover,
+        .btn-color-scheme:focus,
+        .btn-color-scheme:active {
+            background-color: var(--ev-accent-hover) !important;
+            border-color: var(--ev-accent-hover) !important;
+            color: #000 !important;
+        }
+        .btn-color-scheme .material-icons {
+            vertical-align: middle;
+        }
+
+        #to-recover {
+            color: var(--ev-accent) !important;
+        }
+        #to-recover:hover { color: var(--ev-accent-hover) !important; }
+
+        .checkbox .label-text { color: var(--ev-text-muted); }
     </style>
 </head>
 
-<body class="body-bg-full profile-page" style="background-color: #333">
+<body class="body-bg-full profile-page">
     <div id="wrapper" class="row wrapper">
-        <div class="col-10 ml-sm-auto col-sm-6 col-md-4 ml-md-auto login-center mx-auto" style="background-color: #302f2f">
+        <div class="col-10 ml-sm-auto col-sm-6 col-md-4 ml-md-auto login-center mx-auto">
             <div class="navbar-header text-center">
                 <a href="index.html">
                     <img alt="" src="{{smart_asset($setting->app_logo)}}">
@@ -75,33 +133,27 @@
             <form class="form-material mt-4" action="{{route('admin.loginpost')}}"   method="post">
                 {{ csrf_field() }}
                 <div class="form-group">
-                     <p style="margin-bottom: 0px;
-    color: #b1b1b1;">Email</p>
-                    <input type="email" placeholder="johndoe@site.com" class="form-control form-control-line mt-2" name="email" id="example-email" style="background: white;
-    border-radius: 6px;padding-inline: 10px;">
-                   
+                    <p style="margin-bottom: 6px;">Email</p>
+                    <input type="email" placeholder="johndoe@site.com" class="form-control form-control-line mt-2" name="email" id="example-email">
                 </div>
                 <div class="form-group">
-                    <p style="margin-bottom: 0px;
-    color: #b1b1b1;">Password</p>
-                    <input type="password" placeholder="password" class="form-control form-control-line mt-2" name="password" style="background: white;
-    border-radius: 6px;padding-inline: 10px;">
-                   
+                    <p style="margin-bottom: 6px;">Password</p>
+                    <input type="password" placeholder="password" class="form-control form-control-line mt-2" name="password">
                 </div>
-               
+
                 <div class="form-group no-gutters mb-3 mt-2">
                     <div class="col-md-12 d-flex">
                         <div class="checkbox checkbox-info mr-auto">
                             <label class="d-flex">
                                 <input type="checkbox"> <span class="label-text">Remember me</span>
                             </label>
-                        </div><a href="javascript:void(0)" id="to-recover" class="my-auto pb-2 text-right" style="color: #d3980b;"><i class="fa fa-lock mr-1"></i>Forgot Password?</a>
+                        </div><a href="javascript:void(0)" id="to-recover" class="my-auto pb-2 text-right"><i class="fa fa-lock mr-1"></i>Forgot Password?</a>
                     </div>
                     <!-- /.col-md-12 -->
                 </div>
-                
+
                  <div class="form-group">
-                    <button class="btn btn-block btn-lg btn-color-scheme ripple" type="submit" style="color:#333">Sign in <i class="list-icon material-icons">keyboard_arrow_right</i></button>
+                    <button class="btn btn-block btn-lg btn-color-scheme ripple" type="submit">Sign in <i class="list-icon material-icons">keyboard_arrow_right</i></button>
                 </div>
                 
                 <!-- /.form-group -->

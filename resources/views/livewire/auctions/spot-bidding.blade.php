@@ -12,6 +12,7 @@
 </div>
 @endsection
 
+<div>
 <style>
 /* === Evoory Dark Theme === */
 
@@ -962,3 +963,4 @@ if (typeof Livewire !== 'undefined') {
 document.addEventListener('livewire:navigated', () => { setTimeout(initializeSpotBiddingSelect2, 200); });
 document.addEventListener('livewire:load', () => { setTimeout(initializeSpotBiddingSelect2, 200); });
 </script>
+</div>
