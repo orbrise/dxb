@@ -26,6 +26,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('profiles:auto-archive')->daily()->at('02:00');
         // Auto-delete commands (runs daily at 03:00)
         $schedule->command('profiles:auto-delete')->daily()->at('03:00');
+
+        // Scrape massage republic profiles once daily
+        $schedule->command('scrape:massagerepublic --limit=100')->daily()->at('04:00');
         
         // Send weekly newsletter every Monday at 10:00 AM
         $schedule->command('newsletter:send-weekly')->weekly()->mondays()->at('10:00');

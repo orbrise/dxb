@@ -83,9 +83,9 @@ class SeoService
      */
     private function getSeoDataBySlug($genderSlug, $citySlug)
     {
-        // Find gender by slug/name
-        $gender = Gender::where('name', 'like', "%{$genderSlug}%")
-                       ->orWhere('slug', $genderSlug)
+        // Find gender by slug/name — exact match only, since LIKE '%male%' also matches 'female'.
+        $gender = Gender::where('slug', $genderSlug)
+                       ->orWhere('name', $genderSlug)
                        ->first();
         
         // Find city by slug/name (normalize city slug)

@@ -3,16 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Listing Not Approved - Massage Republic</title>
+    <title>Listing Not Approved - evoory</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #232323; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-    <div style="background-color: #232323; padding: 20px;">
-        <div style="padding: 20px; max-width: 670px; margin: 0 auto; background-color: #232323; color: #ffffff;">
+<body style="margin: 0; padding: 0; background-color: #0D1011; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <div style="background-color: #0D1011; padding: 20px;">
+        <div style="padding: 20px; max-width: 670px; margin: 0 auto; background-color: #0D1011; color: #ffffff;">
             
             <!-- Header -->
-            <div style="border-bottom: 2px solid #333333; padding-bottom: 5px; margin-bottom: 20px;">
-                <a href="{{ url('/') }}" title="Massage Republic" style="color: #C1F11D; text-decoration: none; outline: 0;">
-                    <img alt="Massage Republic" src="https://assets.massagerepublic.com.co/assets/images/web/maillogo.gif" width="309">
+            <div style="border-bottom: 2px solid #2a2a2a; padding-bottom: 5px; margin-bottom: 20px;">
+                <a href="{{ url('/') }}" title="evoory" style="color: #C1F11D; text-decoration: none; outline: 0;">
+                    <img alt="evoory" src="https://assets.evoory.com/uploads/1776856883_Logo.png" width="180">
                 </a>
             </div>
             
@@ -22,7 +22,7 @@
             </p>
             
             <p style="font-size: 14px; line-height: 1.5; color: #ffffff; margin-bottom: 15px;">
-                Thank you for listing on Massage Republic. Unfortunately, we are not able to approve your listing.
+                Thank you for listing on evoory. Unfortunately, we are not able to approve your listing.
             </p>
             
             <!-- Rejection Reason Box -->
@@ -49,12 +49,8 @@
             </p>
             
             <!-- Footer -->
-            <div style="border-top: 2px solid #333333; margin-top: 30px; padding-top: 15px; text-align: center;">
-                <a href="{{ url('/') }}" style="color: #C1F11D; outline: 0; text-decoration: underline; font-size: 12px;">Go to MassageRepublic.com</a>
-                <span style="color: #bebebe; font-size: 12px;"> - Site blocked? Try: </span>
-                <a href="https://escorts.ninja" style="color: #C1F11D; outline: 0; text-decoration: underline; font-size: 12px;">Escorts.ninja</a>
-                <span style="color: #bebebe; font-size: 12px;"> or </span>
-                <a href="https://massagerepublic.tk" style="color: #C1F11D; outline: 0; text-decoration: underline; font-size: 12px;">MassageRepublic.tk</a>
+            <div style="border-top: 2px solid #2a2a2a; margin-top: 30px; padding-top: 15px; text-align: center;">
+                <a href="{{ url('/') }}" style="color: #C1F11D; outline: 0; text-decoration: underline; font-size: 12px;">Go to evoory.com</a>
             </div>
             
         </div>

@@ -1,10 +1,10 @@
-<div style="background-color:#232323;font:14px/1.5 'Helvetica Neue',Helvetica,Arial,sans-serif;color:#fff">
-    <div style="padding:20px;max-width:670px;background-color:#232323;font:14px/1.5 'Helvetica Neue',Helvetica,Arial,sans-serif;color:#fff">
+<div style="background-color:#0D1011;font:14px/1.5 'Helvetica Neue',Helvetica,Arial,sans-serif;color:#fff">
+    <div style="padding:20px;max-width:670px;background-color:#0D1011;font:14px/1.5 'Helvetica Neue',Helvetica,Arial,sans-serif;color:#fff">
         
         {{-- Header --}}
-        <div style="border-bottom:2px solid #333;padding-bottom:5px;margin-bottom:20px">
-            <a href="{{ config('app.url') }}?utm_campaign=Newsletter&utm_content=Weekly%20Update&utm_medium=email&utm_source=AppMail" title="Massage Republic" style="color:#C1F11D;text-decoration:none;outline:0">
-                <img alt="Massage Republic" src="https://assets.massagerepublic.com.co/assets/images/web/maillogo.gif" width="309">
+        <div style="border-bottom:2px solid #2a2a2a;padding-bottom:5px;margin-bottom:20px">
+            <a href="{{ config('app.url') }}?utm_campaign=Newsletter&utm_content=Weekly%20Update&utm_medium=email&utm_source=AppMail" title="evoory" style="color:#C1F11D;text-decoration:none;outline:0">
+                <img alt="evoory" src="https://assets.evoory.com/uploads/1776856883_Logo.png" width="180">
             </a>
         </div>
 
@@ -145,14 +145,14 @@
         {{-- Footer --}}
         <p style="font:14px/1.5 'Helvetica Neue',Helvetica,Arial,sans-serif;color:#fff">Thanks, Claire</p>
 
-        <p style="font:14px/1.5 'Helvetica Neue',Helvetica,Arial,sans-serif;color:#fff;color:#bebebe;font-size:10pt;border-top:2px solid #333;margin-top:20px;text-align:justify;padding-top:5px">
+        <p style="font:14px/1.5 'Helvetica Neue',Helvetica,Arial,sans-serif;color:#fff;color:#bebebe;font-size:10pt;border-top:2px solid #2a2a2a;margin-top:20px;text-align:justify;padding-top:5px">
             To change newsletter settings or unsubscribe:
             <a href="{{ config('app.url') }}/my-account/newsletter/edit?utm_campaign=Newsletter&utm_content=Weekly%20Update&utm_medium=email&utm_source=AppMail" style="color:#C1F11D;text-decoration:none;outline:0">click here</a>
         </p>
 
-        <div style="text-align:center;padding-top:5px;margin-top:5px;border-top:2px solid #333;font-size:9pt">
+        <div style="text-align:center;padding-top:5px;margin-top:5px;border-top:2px solid #2a2a2a;font-size:9pt">
             <a href="{{ config('app.url') }}?utm_campaign=Newsletter&utm_content=Weekly%20Update&utm_medium=email&utm_source=AppMail" style="color:#C1F11D;text-decoration:none;outline:0;text-decoration:underline">
-                Go to MassageRepublic.com
+                Go to evoory.com
             </a>
         </div>
     </div>

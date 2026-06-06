@@ -64,7 +64,9 @@ class UsersProfile extends Model
         'profile_views',
         'phone_clicks',
         'package_days',
-        'created_at'
+        'created_at',
+        'imported_from',
+        'imported_external_id',
     ];
  
     protected $casts = [
