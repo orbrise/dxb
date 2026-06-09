@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\MassageRepublicProfile;
 use App\Services\MassageRepublicImporter;
+use App\Services\MassageRepublicPhoneWorker;
 use App\Services\MassageRepublicScraper;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -13,11 +14,12 @@ class ScrapeMassageRepublicProfiles extends Command
     protected $signature = 'scrape:massagerepublic
                             {--city= : MR city slug, e.g. dubai, delhi, lahore}
                             {--limit=50 : Maximum number of profiles to fetch}
-                            {--no-import : Scrape only; skip writing to live tables}';
+                            {--no-import : Scrape only; skip writing to live tables}
+                            {--no-phone : Skip the Playwright phone-reveal step}';
 
     protected $description = 'Scrape massagerepublic.com profiles for a given city and import them into the live users_profiles tables.';
 
-    public function handle(MassageRepublicImporter $importer)
+    public function handle(MassageRepublicImporter $importer, MassageRepublicPhoneWorker $phoneWorker)
     {
         $username = config('services.massagrerepublic.username') ?: env('MASSAGE_REPUBLIC_USERNAME');
         $password = config('services.massagrerepublic.password') ?: env('MASSAGE_REPUBLIC_PASSWORD');
@@ -82,13 +84,17 @@ class ScrapeMassageRepublicProfiles extends Command
                 }
             }
 
+            $worker = $this->option('no-phone') ? null : $phoneWorker;
+
             try {
-                $result = $importer->import($row, $citySlug, $cityId);
+                $result = $importer->import($row, $citySlug, $cityId, $worker);
                 if ($result === null) {
                     continue;
                 }
                 $saved++;
-                $this->line("  + imported {$row->external_id} → user #{$result['user_id']}, profile #{$result['profile_id']}, {$result['images']} image(s)");
+                $finalPhone = \App\Models\UsersProfile::find($result['profile_id'])?->phone;
+                $phoneNote = $finalPhone ? ", phone={$finalPhone}" : ', phone=NULL';
+                $this->line("  + imported {$row->external_id} → user #{$result['user_id']}, profile #{$result['profile_id']}, {$result['images']} image(s){$phoneNote}");
             } catch (\Throwable $e) {
                 $this->error("  ! import failed for {$row->external_id}: " . $e->getMessage());
             }

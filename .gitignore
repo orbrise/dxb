@@ -20,3 +20,4 @@ yarn-error.log
 /.idea
 /.vscode
 *.zip
+tools/mr-phone-worker/node_modules/

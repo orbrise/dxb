@@ -1,0 +1,13 @@
+{
+  "name": "mr-phone-worker",
+  "version": "1.0.0",
+  "description": "Headless-browser worker that logs into massagerepublic.com and extracts phone numbers from reCAPTCHA-protected reveal modals.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "reveal": "node worker.js"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

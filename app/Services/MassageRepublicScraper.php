@@ -93,6 +93,11 @@ class MassageRepublicScraper
 
         $profiles = [];
         $page = 1;
+        $fetchFailures = [];
+
+        // MR / Cloudflare rate-limits rapid sequential profile fetches; without
+        // a pause we get ~3 profiles in, then everything 4xx/5xx silently.
+        $delayMs = (int) (env('MASSAGE_REPUBLIC_FETCH_DELAY_MS', 1500));
 
         while (count($profiles) < $limit) {
             $html = $this->fetchProfileListPage($page);
@@ -108,9 +113,11 @@ class MassageRepublicScraper
                 }
 
                 $url = $this->normalizeUrl($link);
-                $html = $this->fetchUrl($url);
+                $html = $this->fetchUrlWithRetry($url);
 
                 if (! $html) {
+                    $fetchFailures[] = $url;
+                    if ($delayMs > 0) usleep($delayMs * 1000);
                     continue;
                 }
 
@@ -119,6 +126,8 @@ class MassageRepublicScraper
                 if (! empty($profile['external_id'])) {
                     $profiles[] = $profile;
                 }
+
+                if ($delayMs > 0) usleep($delayMs * 1000);
             }
 
             $page++;
@@ -127,7 +136,37 @@ class MassageRepublicScraper
             }
         }
 
+        if (! empty($fetchFailures)) {
+            \Log::info('MR scraper: profile-fetch failures', [
+                'count' => count($fetchFailures),
+                'sample' => array_slice($fetchFailures, 0, 5),
+            ]);
+        }
+
         return $profiles;
+    }
+
+    /**
+     * fetchUrl + retry on 4xx/5xx, with exponential backoff up to 3 attempts.
+     * Returns the body on success, empty string after all retries fail.
+     */
+    protected function fetchUrlWithRetry(string $url, int $maxAttempts = 3): string
+    {
+        $attempt = 0;
+        $backoffMs = 2000;
+
+        while ($attempt < $maxAttempts) {
+            $body = $this->fetchUrl($url);
+            if ($body !== '') {
+                return $body;
+            }
+            $attempt++;
+            if ($attempt < $maxAttempts) {
+                usleep($backoffMs * 1000);
+                $backoffMs *= 2;
+            }
+        }
+        return '';
     }
 
     protected function login(): bool
@@ -373,20 +412,28 @@ class MassageRepublicScraper
             '//*[contains(@class, "phone")]',
             '//*[contains(text(), "Phone")]/following-sibling::*',
         ]);
-        // Try to extract an email address from mailto links or inline text
+        // Try to extract an email address. MR doesn't expose profile emails
+        // anywhere, but some descriptions or external sites might. We prefer
+        // explicit mailto: links over regex-scans-of-the-page (which would
+        // otherwise pick up the logged-in user's own email from the nav bar).
         $email = '';
         $mailto = $this->getFirstAttribute($xpath, [
             '//a[starts-with(@href, "mailto:")]/@href',
         ]);
         if ($mailto) {
             $email = preg_replace('/^mailto:/i', '', trim($mailto));
-            // strip query params if present
             $email = preg_replace('/\?.*$/', '', $email);
         }
-        if ($email === '') {
-            if (preg_match('/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i', $html, $m)) {
-                $email = $m[0];
-            }
+
+        // Discard the email if it matches the MR account we're logged into,
+        // or any other email tagged as our scraper credentials in env. This
+        // guards against false positives from the nav bar / footer.
+        $excluded = array_filter([
+            strtolower((string) $this->username),
+            strtolower((string) env('MASSAGE_REPUBLIC_USERNAME', '')),
+        ]);
+        if ($email !== '' && in_array(strtolower($email), $excluded, true)) {
+            $email = '';
         }
         $website = $this->getFirstAttribute($xpath, [
             '//a[contains(@href, "http") and contains(@href, "website")]',

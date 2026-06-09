@@ -44,7 +44,7 @@ class MassageRepublicImporter
     /**
      * @return array{user_id:int, profile_id:int, images:int}|null  null when skipped
      */
-    public function import(MassageRepublicProfile $row, string $citySlug, ?int $cityId): ?array
+    public function import(MassageRepublicProfile $row, string $citySlug, ?int $cityId, ?MassageRepublicPhoneWorker $phoneWorker = null): ?array
     {
         if ($row->imported_user_id) {
             return null;
@@ -55,7 +55,23 @@ class MassageRepublicImporter
         // Prefer any scraped email when creating the user
         $scrapedEmail = $row->email ?? ($row->attributes['email'] ?? null);
         $user = $this->createSyntheticUser($row, $scrapedEmail);
-        $profile = $this->createProfile($user, $row, $cityId);
+
+        // Try to reveal the phone via the Playwright worker. Done before
+        // createProfile() so the phone lands in the same INSERT.
+        $phone = null;
+        if ($phoneWorker && $phoneWorker->isAvailable()) {
+            $listingPath = '/female-escorts-in-' . ltrim($citySlug, '/');
+            try {
+                $phone = $phoneWorker->revealOne($row->external_id, $listingPath);
+                if ($phone) {
+                    $row->forceFill(['phone' => $phone])->save();
+                }
+            } catch (\Throwable $e) {
+                Log::warning('MR importer: phone reveal threw', ['slug' => $row->external_id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        $profile = $this->createProfile($user, $row, $cityId, $phone);
         $imageCount = $this->downloadAndStoreImages($row, $user, $profile);
 
         $row->forceFill([
@@ -74,36 +90,42 @@ class MassageRepublicImporter
 
     protected function createSyntheticUser(MassageRepublicProfile $row, ?string $scrapedEmail = null): User
     {
-        // Backwards-compatible: accept an optional scraped email and prefer it
         $scrapedEmail = $scrapedEmail ? trim($scrapedEmail) : null;
 
+        // Only reuse a scraped email if it's a real-looking address that
+        // (a) we don't already have in the users table, OR
+        // (b) we already have but it was previously imported by this same source.
+        // Never link a freshly-scraped profile to an unrelated, pre-existing user.
         if ($scrapedEmail && filter_var($scrapedEmail, FILTER_VALIDATE_EMAIL)) {
             $existing = User::where('email', $scrapedEmail)->first();
-            if ($existing) {
+            if ($existing && $existing->imported_from === self::SOURCE) {
                 return $existing;
             }
-
-            return User::create([
-                'name' => $row->name ?: 'Imported profile',
-                'email' => $scrapedEmail,
-                'password' => Hash::make(Str::random(40)),
-                'email_verified_at' => null,
-                'type' => self::DEFAULT_USER_TYPE,
-                'status' => 'pending',
-                'imported_from' => self::SOURCE,
-            ]);
+            if (! $existing) {
+                return User::create([
+                    'name' => $row->name ?: 'Imported profile',
+                    'email' => $scrapedEmail,
+                    'password' => Hash::make(Str::random(40)),
+                    'email_verified_at' => null,
+                    'type' => self::DEFAULT_USER_TYPE,
+                    'status' => 'pending',
+                    'imported_from' => self::SOURCE,
+                ]);
+            }
+            // Else: collision with an unrelated existing user — fall through to
+            // the synthetic-email path so we don't pollute that account.
         }
 
-        $email = 'mr-' . Str::lower(Str::slug($row->external_id, '-')) . '@' . self::IMPORT_DOMAIN;
+        $syntheticEmail = 'mr-' . Str::lower(Str::slug($row->external_id, '-')) . '@' . self::IMPORT_DOMAIN;
 
-        $existing = User::where('email', $email)->first();
+        $existing = User::where('email', $syntheticEmail)->first();
         if ($existing) {
             return $existing;
         }
 
         return User::create([
             'name' => $row->name ?: 'Imported profile',
-            'email' => $email,
+            'email' => $syntheticEmail,
             'password' => Hash::make(Str::random(40)),
             'email_verified_at' => null,
             'type' => self::DEFAULT_USER_TYPE,
@@ -112,7 +134,7 @@ class MassageRepublicImporter
         ]);
     }
 
-    protected function createProfile(User $user, MassageRepublicProfile $row, ?int $cityId): UsersProfile
+    protected function createProfile(User $user, MassageRepublicProfile $row, ?int $cityId, ?string $revealedPhone = null): UsersProfile
     {
         // users_profiles.slug is varchar(50); reserve 10 chars for "-mr-XXXXXX" suffix.
         $slugBase = Str::limit(Str::slug($row->name ?: $row->external_id, '-') ?: $row->external_id, 40, '');
@@ -128,7 +150,7 @@ class MassageRepublicImporter
             'gender' => self::DEFAULT_GENDER_ID,
             'age' => $this->normalizeAge($row->age),
             'website' => $row->website ?: null,
-            'phone' => $this->normalizePhone($row->phone ?? $attrs['phone'] ?? null),
+            'phone' => $this->normalizePhone($revealedPhone ?? $row->phone ?? $attrs['phone'] ?? null),
             'orientation' => $this->lookupId('orientations', $attrs['orientation'] ?? null),
             'height' => $this->extractHeightCm($attrs['height'] ?? null),
             'haircolor' => $this->lookupId('hair_colors', $attrs['hair_color'] ?? null),
