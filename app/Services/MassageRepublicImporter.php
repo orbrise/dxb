@@ -42,7 +42,7 @@ class MassageRepublicImporter
     }
 
     /**
-     * @return array{user_id:int, profile_id:int, images:int}|null  null when skipped
+     * @return array{user_id:int, profile_id:int, images:int, phone_error:?string}|null  null when skipped
      */
     public function import(MassageRepublicProfile $row, string $citySlug, ?int $cityId, ?MassageRepublicPhoneWorker $phoneWorker = null): ?array
     {
@@ -59,19 +59,35 @@ class MassageRepublicImporter
         // Try to reveal the phone via the Playwright worker. Done before
         // createProfile() so the phone lands in the same INSERT.
         $phone = null;
-        if ($phoneWorker && $phoneWorker->isAvailable()) {
-            $listingPath = '/female-escorts-in-' . ltrim($citySlug, '/');
-            try {
-                $phone = $phoneWorker->revealOne($row->external_id, $listingPath);
-                if ($phone) {
-                    $row->forceFill(['phone' => $phone])->save();
+        $phoneError = null;
+        $apps = ['whatsapp' => false, 'telegram' => false, 'signal' => false, 'wechat' => false];
+        if ($phoneWorker) {
+            if (! $phoneWorker->isAvailable()) {
+                $phoneError = 'worker script missing (tools/mr-phone-worker/worker.js)';
+            } else {
+                $listingPath = '/female-escorts-in-' . ltrim($citySlug, '/');
+                try {
+                    $phone = $phoneWorker->revealOne($row->external_id, $listingPath);
+                    if (method_exists($phoneWorker, 'getLastApps')) {
+                        $apps = $phoneWorker->getLastApps($row->external_id);
+                    }
+                    if ($phone) {
+                        $row->forceFill(['phone' => $phone])->save();
+                    } elseif (method_exists($phoneWorker, 'getLastError')) {
+                        $phoneError = $phoneWorker->getLastError($row->external_id) ?: 'no phone returned';
+                    } else {
+                        $phoneError = 'no phone returned';
+                    }
+                } catch (\Throwable $e) {
+                    $phoneError = 'exception: ' . $e->getMessage();
+                    Log::warning('MR importer: phone reveal threw', ['slug' => $row->external_id, 'error' => $e->getMessage()]);
                 }
-            } catch (\Throwable $e) {
-                Log::warning('MR importer: phone reveal threw', ['slug' => $row->external_id, 'error' => $e->getMessage()]);
             }
+        } else {
+            $phoneError = 'phone reveal disabled (--no-phone)';
         }
 
-        $profile = $this->createProfile($user, $row, $cityId, $phone);
+        $profile = $this->createProfile($user, $row, $cityId, $phone, $apps);
         $imageCount = $this->downloadAndStoreImages($row, $user, $profile);
 
         $row->forceFill([
@@ -85,6 +101,7 @@ class MassageRepublicImporter
             'user_id' => $user->id,
             'profile_id' => $profile->id,
             'images' => $imageCount,
+            'phone_error' => $phoneError,
         ];
     }
 
@@ -134,11 +151,19 @@ class MassageRepublicImporter
         ]);
     }
 
-    protected function createProfile(User $user, MassageRepublicProfile $row, ?int $cityId, ?string $revealedPhone = null): UsersProfile
+    /**
+     * @param array{whatsapp:bool,telegram:bool,signal:bool,wechat:bool} $apps
+     */
+    protected function createProfile(User $user, MassageRepublicProfile $row, ?int $cityId, ?string $revealedPhone = null, array $apps = ['whatsapp'=>false,'telegram'=>false,'signal'=>false,'wechat'=>false]): UsersProfile
     {
-        // users_profiles.slug is varchar(50); reserve 10 chars for "-mr-XXXXXX" suffix.
-        $slugBase = Str::limit(Str::slug($row->name ?: $row->external_id, '-') ?: $row->external_id, 40, '');
-        $slug = trim($slugBase, '-') . '-mr-' . Str::lower(Str::random(6));
+        // MR names look like "Jenny New Real Independent 😊 – Filipino escort in Dubai".
+        // The URL uses {id}/{slug} (id is the route key — slug has no unique index),
+        // so we only need a clean SEO slug. Drop everything after the first en/em dash
+        // or hyphen-with-spaces and slug the leading "real name" portion only.
+        $primary = preg_split('/\s+[\x{2013}\x{2014}\-]\s+/u', (string) $row->name, 2)[0] ?? '';
+        $slug = Str::slug($primary, '-') ?: Str::slug($row->external_id, '-');
+        // users_profiles.slug is varchar(50).
+        $slug = trim(Str::limit($slug, 50, ''), '-');
 
         $attrs = $row->attributes ?? [];
 
@@ -151,6 +176,10 @@ class MassageRepublicImporter
             'age' => $this->normalizeAge($row->age),
             'website' => $row->website ?: null,
             'phone' => $this->normalizePhone($revealedPhone ?? $row->phone ?? $attrs['phone'] ?? null),
+            'iswhatsapp' => $apps['whatsapp'] ? 1 : 0,
+            'istelegram' => $apps['telegram'] ? 1 : 0,
+            'issignal'   => $apps['signal']   ? 1 : 0,
+            'iswechat'   => $apps['wechat']   ? 1 : 0,
             'orientation' => $this->lookupId('orientations', $attrs['orientation'] ?? null),
             'height' => $this->extractHeightCm($attrs['height'] ?? null),
             'haircolor' => $this->lookupId('hair_colors', $attrs['hair_color'] ?? null),
@@ -165,7 +194,7 @@ class MassageRepublicImporter
             'listing' => 1,
             'is_active' => 1,
             'is_featured' => 1,
-            'is_verified' => 0,
+            'is_verified' => $row->is_verified ? 1 : 0,
             'package_id' => 37,
             'package_days' => 10,
             'promoted_until' => now()->addDays(10),

@@ -93,7 +93,12 @@ class ScrapeMassageRepublicProfiles extends Command
                 }
                 $saved++;
                 $finalPhone = \App\Models\UsersProfile::find($result['profile_id'])?->phone;
-                $phoneNote = $finalPhone ? ", phone={$finalPhone}" : ', phone=NULL';
+                if ($finalPhone) {
+                    $phoneNote = ", phone={$finalPhone}";
+                } else {
+                    $reason = $result['phone_error'] ?? 'unknown';
+                    $phoneNote = ", phone=NULL ({$reason})";
+                }
                 $this->line("  + imported {$row->external_id} → user #{$result['user_id']}, profile #{$result['profile_id']}, {$result['images']} image(s){$phoneNote}");
             } catch (\Throwable $e) {
                 $this->error("  ! import failed for {$row->external_id}: " . $e->getMessage());

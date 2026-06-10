@@ -457,6 +457,7 @@ class MassageRepublicScraper
         $imageUrls = $this->extractImageUrls($xpath);
         $attributes = $this->extractAttributes($xpath);
         $rates = $this->extractRates($html);
+        $isVerified = $this->extractIsVerified($xpath, $html);
 
         return [
             'external_id' => $externalId,
@@ -469,6 +470,7 @@ class MassageRepublicScraper
             'website' => $website,
             'gender' => $attributes['gender'] ?? $gender,
             'rating' => $rating,
+            'is_verified' => $isVerified,
             'services' => implode(', ', array_filter($services)),
             'description' => $description,
             'image_urls' => $imageUrls,
@@ -510,6 +512,34 @@ class MassageRepublicScraper
         }
 
         return $attributes;
+    }
+
+    /**
+     * MR marks reviewed profiles with a "Verified" badge — typically a
+     * <span class="verified-image"> wrapper holding text like "Verified photos"
+     * or "Photos Verified by Massage Republic". Detect via class first, then
+     * fall back to title/alt text in case MR rotates the markup.
+     */
+    protected function extractIsVerified(\DOMXPath $xpath, string $html): bool
+    {
+        $classQueries = [
+            "//*[contains(concat(' ', normalize-space(@class), ' '), ' verified-image ')]",
+            "//*[contains(concat(' ', normalize-space(@class), ' '), ' verified-badge ')]",
+            "//*[contains(concat(' ', normalize-space(@class), ' '), ' is-verified ')]",
+            "//*[contains(@class, 'mr-verified')]",
+        ];
+        foreach ($classQueries as $q) {
+            if ($xpath->query($q)->length > 0) {
+                return true;
+            }
+        }
+
+        // Text-based fallbacks (titles, alts, badge labels).
+        if (preg_match('/(Verified\s+by\s+Massage\s+Republic|Photos?\s+Verified|Identity\s+Verified|Verified\s+photos)/i', $html)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

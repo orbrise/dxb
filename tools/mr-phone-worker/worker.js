@@ -88,7 +88,37 @@ async function revealPhone(context, listingPath, slug) {
     await telLocator.first().waitFor({ state: 'attached', timeout: 90000 });
     const href = await telLocator.first().getAttribute('href');
     const phone = href ? href.replace(/^tel:/, '').trim() : null;
-    return phone || null;
+
+    // After reveal, MR also injects messaging-app icons (WhatsApp / Telegram /
+    // Signal / WeChat) for whichever services the number is registered with.
+    // Detect by href hostname (robust) AND class name (fallback for WeChat,
+    // which has no public URL scheme).
+    const detection = await page.evaluate(() => {
+      const has = (sel) => !!document.querySelector(sel);
+      const apps = {
+        whatsapp: has('a[href*="wa.me"], a[href*="api.whatsapp.com"], a.icon-whatsapp, [class*="whatsapp" i]'),
+        telegram: has('a[href*="t.me"], a[href*="telegram.me"], a.icon-telegram, [class*="telegram" i]'),
+        signal:   has('a[href*="signal.me"], a.icon-signal, [class*="signal" i]'),
+        wechat:   has('a.icon-wechat, .icon-wechat, [class*="wechat" i]'),
+      };
+      // Diagnostic: also dump the modal HTML so we can fingerprint MR's markup
+      // on the first run. Looks for the most likely modal/container around the
+      // revealed tel link, falls back to the tel anchor's parent.
+      let modalHtml = null;
+      const tel = document.querySelector('a.tel, a[href^="tel:"]');
+      if (tel) {
+        const container =
+          tel.closest('.callnow, .modal, .reveal, .phone-popup, .contact-popup, [class*="contact" i], [class*="phone" i]') ||
+          tel.parentElement?.parentElement ||
+          tel.parentElement;
+        if (container) {
+          modalHtml = (container.outerHTML || '').slice(0, 4000);
+        }
+      }
+      return { apps, modalHtml };
+    });
+
+    return { phone: phone || null, apps: detection.apps, modalHtml: detection.modalHtml };
   } finally {
     await page.close().catch(() => {});
   }
@@ -140,10 +170,10 @@ async function main() {
 
     for (const slug of (config.slugs || [])) {
       try {
-        const phone = await revealPhone(context, config.listingPath, slug);
-        emit({ slug, phone, ok: !!phone, error: phone ? null : 'no phone in DOM' });
+        const { phone, apps, modalHtml } = await revealPhone(context, config.listingPath, slug);
+        emit({ slug, phone, apps, modalHtml, ok: !!phone, error: phone ? null : 'no phone in DOM' });
       } catch (e) {
-        emit({ slug, phone: null, ok: false, error: e.message });
+        emit({ slug, phone: null, apps: null, modalHtml: null, ok: false, error: e.message });
       }
     }
   } catch (e) {

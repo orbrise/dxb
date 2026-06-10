@@ -22,6 +22,7 @@ class MassageRepublicProfile extends Model
         'website',
         'gender',
         'rating',
+        'is_verified',
         'services',
         'description',
         'image_urls',
@@ -41,6 +42,7 @@ class MassageRepublicProfile extends Model
     protected $casts = [
         'image_urls' => 'array',
         'attributes' => 'array',
+        'is_verified' => 'boolean',
         'scraped_at' => 'datetime',
         'imported_at' => 'datetime',
     ];
