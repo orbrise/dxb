@@ -176,6 +176,323 @@
             color: #000 !important;
             text-decoration: none !important;
         }
+
+        /* === Empty-city listing fallback (no profiles in selected city) === */
+        .ev-empty-listings-wrap,
+        .ev-empty-listings-wrap *,
+        .ev-fallback-section,
+        .ev-fallback-section * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        }
+        .ev-empty-listings-wrap.col-md-12,
+        .ev-empty-listings-wrap { width: 100%; padding-left: 0 !important; padding-right: 0 !important; }
+        .ev-empty-listings-card {
+            padding: 0;
+            margin: 0 0 8px;
+        }
+        .ev-empty-listings-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #C77DFF;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+        .ev-empty-listings-ban {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #C77DFF;
+        }
+        .ev-empty-listings-ban svg { display: block; }
+        .ev-empty-listings-sub {
+            color: #C77DFF;
+            opacity: 0.85;
+            font-size: 14px;
+            margin: 0 0 8px;
+        }
+        .ev-empty-listings-cta {
+            color: #C1F11D;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0 0 12px;
+            max-width: 520px;
+        }
+        .ev-empty-listings-wrap .subscribe-btn-wrapper { margin: 0 0 4px; }
+        .ev-empty-listings-wrap .ev-empty-subscribe-btn {
+            background: transparent !important;
+            color: #fff !important;
+            border: 1px solid #3a3a3a !important;
+            border-radius: 999px !important;
+            padding: 8px 28px !important;
+        }
+        .ev-empty-listings-wrap .ev-empty-subscribe-btn:hover,
+        .ev-empty-listings-wrap .ev-empty-subscribe-btn:focus {
+            background: #1f1f1f !important;
+            color: #fff !important;
+            border-color: #4a4a4a !important;
+        }
+
+        /* Fallback (nearby/global) section header */
+        .ev-fallback-section {
+            margin-top: 10px;
+            padding-top: 12px;
+            border-top: 1px solid #2a2a2a;
+        }
+        .ev-fallback-title {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 10px;
+        }
+        .ev-fallback-section .ev-fallback-title .ev-fallback-accent,
+        .ev-fallback-accent {
+            color: #C1F11D !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            font-style: normal !important;
+            font-weight: inherit !important;
+            font-size: inherit !important;
+        }
+        .ev-empty-listings-wrap .ev-fallback-sub,
+        .ev-fallback-sub {
+            color: #8a8a8a !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            line-height: 1.5 !important;
+            text-transform: none !important;
+            letter-spacing: normal !important;
+            margin: 0 0 18px !important;
+        }
+        .ev-fallback-card { margin-bottom: 8px; }
+        .ev-fallback-card + .ev-fallback-card {
+            border-top: 1px solid #1f1f1f;
+            padding-top: 16px;
+        }
+
+        /* VIP Positioning promo (shown under the fallback profiles) */
+        .ev-vip-promo {
+            margin-top: 22px;
+            padding: 22px 26px 24px;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 14px;
+            position: relative;
+        }
+        .ev-vip-promo-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .ev-vip-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border: 1px solid #C1F11D;
+            color: #C1F11D;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        .ev-vip-crown {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid #2a2a2a;
+            color: #C1F11D;
+        }
+        .ev-vip-title {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 0 6px;
+        }
+        .ev-vip-sub {
+            color: #c9c9c9;
+            font-size: 14px;
+            margin: 0 0 14px;
+        }
+        .ev-vip-perks {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 18px;
+        }
+        .ev-vip-perks li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #b3b3b3;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .ev-vip-perks li:last-child { margin-bottom: 0; }
+        .ev-vip-perk-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+        }
+        .ev-vip-cta {
+            display: inline-block;
+            background: #C1F11D;
+            color: #000 !important;
+            padding: 9px 24px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none !important;
+            transition: background 0.15s ease;
+        }
+        .ev-vip-cta:hover,
+        .ev-vip-cta:focus {
+            background: #d4f84d;
+            color: #000 !important;
+            text-decoration: none !important;
+        }
+
+        /* === Subscribe newsletter modal (mirrors user-account modal styles) === */
+        [x-cloak] { display: none !important; }
+        .ev-empty-listings-wrap .ev-modal-overlay {
+            background: rgba(0,0,0,0.85);
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 99999;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 3rem 1rem;
+        }
+        .ev-empty-listings-wrap .ev-modal {
+            background: #1a1a1a;
+            color: #fff;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 500px;
+        }
+        .ev-empty-listings-wrap .ev-modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ev-empty-listings-wrap .ev-modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .ev-empty-listings-wrap .ev-modal-close {
+            background: #222;
+            border: 1px solid #2a2a2a;
+            color: #fff;
+            font-size: 1.25rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ev-empty-listings-wrap .ev-modal-close:hover { background: #2a2a2a; }
+        .ev-empty-listings-wrap .ev-modal-body { padding: 1.5rem; color: #fff; }
+        .ev-empty-listings-wrap .ev-modal-footer {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid #2a2a2a;
+            text-align: right;
+        }
+        .ev-empty-listings-wrap .ev-search-input {
+            display: flex;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #111;
+        }
+        .ev-empty-listings-wrap .ev-search-input span {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+        .ev-empty-listings-wrap .ev-search-input input {
+            flex: 1;
+            padding: 0.75rem;
+            background: transparent;
+            border: none;
+            color: #fff;
+            outline: none;
+            font-size: 0.95rem;
+        }
+        .ev-empty-listings-wrap .ev-search-input input::placeholder { color: #666; }
+        .ev-empty-listings-wrap .ev-search-input button {
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            color: #C1F11D;
+            cursor: pointer;
+        }
+        .ev-empty-listings-wrap .ev-city-tag {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #111;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+            color: #fff;
+        }
+        .ev-empty-listings-wrap .ev-city-tag button { color: #C1F11D; }
+        .ev-empty-listings-wrap .ev-dropdown-results {
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            margin-top: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .ev-empty-listings-wrap .ev-dropdown-results button {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            color: #fff;
+            border: none;
+            border-bottom: 1px solid #2a2a2a;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .ev-empty-listings-wrap .ev-dropdown-results button:hover { background: #222; }
+        .ev-empty-listings-wrap .ev-buy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #C1F11D;
+            color: #000;
+            border: none;
+            border-radius: 21.5px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .ev-empty-listings-wrap .ev-buy-btn:hover { background: #d4f84d; }
     </style>
 
     <!-- Load non-critical styles asynchronously -->
@@ -1551,7 +1868,215 @@
         @endif
 
         @empty
-        <div class="col-md-12 mb-2"><h2>No Escorts in {{$selectedcity}} yet</h2><p>Register today and we will send you updates with new listings in {{$selectedcity}}</p><p></p><div class="subscribe-btn-wrapper"><a class="ev-empty-subscribe-btn" data-btn-link="" href="/register">Subscribe</a></div><p></p></div>
+        @php
+            $emptyCityLabel = ucwords(str_replace('-', ' ', $selectedcity ?: 'this location'));
+        @endphp
+        <div class="col-md-12 mb-2 ev-empty-listings-wrap">
+            <div class="ev-empty-listings-card">
+                <h2 class="ev-empty-listings-title">
+                    <span class="ev-empty-listings-ban" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                    </span>
+                    No Listings Available in {{ $emptyCityLabel }} Yet
+                </h2>
+                <p class="ev-empty-listings-sub">There are currently no active listings in this location. New profiles are added regularly.</p>
+                <p class="ev-empty-listings-cta">Subscribe now and be the first to know when new profiles become available in {{ $emptyCityLabel }}.</p>
+                <div class="subscribe-btn-wrapper" x-data="{ show: @entangle('showSubscribeModal') }">
+                    @auth
+                        <a class="ev-empty-subscribe-btn" href="#" @click.prevent="show = true; $wire.prefillSubscribeCity()">Subscribe</a>
+                    @else
+                        <a class="ev-empty-subscribe-btn" href="/register">Subscribe</a>
+                    @endauth
+
+                    @auth
+                    {{-- Newsletter subscribe modal (mirrors the My Account page modal) --}}
+                    <div x-show="show" x-cloak class="ev-modal-overlay" @click.self="show = false" @keydown.escape.window="show = false" style="display:none;">
+                        <div class="ev-modal">
+                            <div class="ev-modal-header">
+                                <h2>
+                                    <i class="fa fa-newspaper"></i>
+                                    <span>Subscribe</span>
+                                </h2>
+                                <button type="button" class="ev-modal-close" @click="show = false">&times;</button>
+                            </div>
+                            <div class="ev-modal-body">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <label style="display: flex; align-items: center; cursor: pointer; font-size: 1rem;">
+                                        <input type="checkbox" wire:model.live="subReceiveNewsletter" style="width:18px;height:18px;margin:0;cursor:pointer;accent-color:#C1F11D;">
+                                        <span style="margin-left:0.75rem;font-weight:500;">Send me newsletter for:</span>
+                                    </label>
+                                </div>
+
+                                @if($subReceiveNewsletter)
+                                <div style="margin-bottom: 1rem; position: relative;">
+                                    <div class="ev-search-input">
+                                        <span><i class="fa fa-map-marker-alt"></i></span>
+                                        <input type="text" placeholder="Find city..." wire:model.live="subCitySearch" autocomplete="off">
+                                        @if($subCitySearch)
+                                            <button type="button" wire:click="$set('subCitySearch', '')"><i class="fa fa-times"></i></button>
+                                        @endif
+                                    </div>
+                                    @if(count($subSearchResults) > 0)
+                                        <div class="ev-dropdown-results">
+                                            @foreach($subSearchResults as $resultCity)
+                                                <button type="button" wire:click="subAddCity({{ $resultCity['id'] }})">{{ $resultCity['name'] }}@if(!empty($resultCity['country'])) <span style="color:#666;">({{ $resultCity['country'] }})</span>@endif</button>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+
+                                @if(count($subSelectedCities) > 0)
+                                    <div style="margin-bottom: 1rem; max-height: 150px; overflow-y: auto;">
+                                        @foreach($subSelectedCities as $index => $subCity)
+                                            <div class="ev-city-tag">
+                                                <span><i class="fa fa-map-marker-alt" style="margin-right:0.5rem;"></i>{{ $subCity['name'] }}@if(!empty($subCity['country'])) <span style="color:#666;">({{ $subCity['country'] }})</span>@endif</span>
+                                                <button type="button" style="background:none;border:none;cursor:pointer;font-size:1.2rem;padding:0;" wire:click="subRemoveCity({{ $index }})"><i class="fa fa-times"></i></button>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <div>
+                                    <label style="display:block;margin-bottom:1rem;font-weight:600;font-size:1rem;">Include</label>
+                                    <div style="display:flex;flex-wrap:wrap;gap:1.5rem;">
+                                        <label style="display:flex;align-items:center;cursor:pointer;">
+                                            <input type="checkbox" value="female" wire:model="subSelectedGenders" style="width:18px;height:18px;margin:0;cursor:pointer;accent-color:#C1F11D;">
+                                            <span style="margin-left:0.5rem;">Escorts</span>
+                                        </label>
+                                        <label style="display:flex;align-items:center;cursor:pointer;">
+                                            <input type="checkbox" value="male" wire:model="subSelectedGenders" style="width:18px;height:18px;margin:0;cursor:pointer;accent-color:#C1F11D;">
+                                            <span style="margin-left:0.5rem;">Male Escorts</span>
+                                        </label>
+                                        <label style="display:flex;align-items:center;cursor:pointer;">
+                                            <input type="checkbox" value="shemale" wire:model="subSelectedGenders" style="width:18px;height:18px;margin:0;cursor:pointer;accent-color:#C1F11D;">
+                                            <span style="margin-left:0.5rem;">Shemale Escorts</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+                            <div class="ev-modal-footer">
+                                <button type="button" class="ev-buy-btn" wire:click="subSaveNewsletter" @click="show = false">
+                                    <span>Save</span> <i class="fa fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    @endauth
+                </div>
+            </div>
+
+            @if(!empty($fallback) && $fallback['profiles']->count() > 0)
+            <div class="ev-fallback-section">
+                <h3 class="ev-fallback-title">
+                    @if($fallback['type'] === 'nearby')
+                        Profiles Available Nearby <span class="ev-fallback-accent">{{ $fallback['cityName'] }}</span>
+                    @else
+                        What&#39;s Happening Across <span class="ev-fallback-accent">{{ $fallback['cityName'] }}</span> Right Now
+                    @endif
+                </h3>
+                <p class="ev-fallback-sub">
+                    @if($fallback['type'] === 'nearby')
+                        Explore verified profiles from nearby locations.
+                    @else
+                        Explore the newest Escorts Models and trending profiles currently active on Evoory.
+                    @endif
+                </p>
+
+                @foreach($fallback['profiles'] as $profile)
+                @php
+                    $fallbackCityModel = $profile->getcity;
+                    $fallbackCitySlug = $fallbackCityModel
+                        ? ($fallbackCityModel->slug ?: strtolower(str_replace([' ', "'", '.'], ['-', '', ''], $fallbackCityModel->name)))
+                        : ($cityname ?? 'dubai');
+                    $fallbackCitySlug = preg_replace('/[^a-z0-9\-]/', '', $fallbackCitySlug);
+                    $fallbackUrl = url($gender.'-escorts-in-'.$fallbackCitySlug.'/'.$profile->id.'/'.$profile->slug);
+                @endphp
+                <div class="listing-li pb-3 featured thumbs-2 thumbs-mini ev-fallback-card">
+                    <h2 class="visible-xxs">
+                        <a class="nostyle-link" href="{{ $fallbackUrl }}">{{ $profile->name }}</a>
+                    </h2>
+                    <div class="thumbs">
+                        <div class="main-thumbs">
+                            <a class="img pb-photo-link" href="{{ $fallbackUrl }}">
+                                <span class="img-wrapper featured">
+                                    @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <i class="fa fa-check"></i><span>Verified photos</span>
+                                    </span>
+                                    @endif
+                                    <div class="image-wrapper">
+                                        @if(!empty($profile->coverimg->image))
+                                            <img alt="{{ $profile->name }} - escort in {{ optional($fallbackCityModel)->name ?? '' }}" class="img-responsive" height="135" width="115" loading="lazy" decoding="async" src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
+                                        @elseif(!empty($profile->singleimg->image))
+                                            <img alt="{{ $profile->name }} - escort in {{ optional($fallbackCityModel)->name ?? '' }}" class="img-responsive" height="135" width="115" loading="lazy" decoding="async" src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image) }}">
+                                        @else
+                                            <img alt="{{ $profile->name }}" class="img-responsive" height="135" src="{{ smart_asset('admin/assets/img/flat-icons/user.png') }}" width="115" style="opacity:0.5; padding:15px;">
+                                        @endif
+                                    </div>
+                                </span>
+                            </a>
+                        </div>
+                        <div class="other-thumbs pull-left">
+                            @forelse($profile->multipleimgs->take(3) as $k => $imgs)
+                            <div class="thumb thumb-{{ $k }}">
+                                <a class="img img-responsive pb-photo-link" href="{{ $fallbackUrl }}">
+                                    <span class="img-wrapper mini">
+                                        <div class="image-wrapper">
+                                            <img alt="{{ $profile->name }} - Photo {{ $k + 1 }}" class="img-responsive" height="60" width="60" loading="lazy" src="{{ webp_asset('userimages/'.$imgs->user_id.'/'.$imgs->profile_id.'/'.$imgs->image) }}">
+                                        </div>
+                                    </span>
+                                </a>
+                            </div>
+                            @empty
+                            @endforelse
+                        </div>
+                    </div>
+                    <div class="listing-info-wrapper">
+                        <div class="listing-info">
+                            <h2>
+                                <a class="nostyle-link" href="{{ $fallbackUrl }}">{{ $profile->name }}</a>
+                            </h2>
+                            <a class="nostyle-link" href="{{ $fallbackUrl }}">
+                                <p>{{ str()->of($profile->about)->stripTags()->squish()->limit(220) }}</p>
+                            </a>
+                            <p class="no-margin see-more">
+                                <a class="btn btn-dark" href="{{ $fallbackUrl }}">See more contact</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @endif
+
+            {{-- VIP Positioning promo: encourage first-mover profile creation in empty cities --}}
+            <div class="ev-vip-promo">
+                <div class="ev-vip-promo-head">
+                    <span class="ev-vip-badge">VIP Positioning</span>
+                    <span class="ev-vip-crown" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7l4 10h12l4-10-6 4-4-7-4 7-6-4z"></path></svg>
+                    </span>
+                </div>
+                <h3 class="ev-vip-title">Be the First in {{ $emptyCityLabel }}</h3>
+                <p class="ev-vip-sub">Start receiving visibility before everyone else by creating the first listing in this area.</p>
+                <ul class="ev-vip-perks">
+                    <li>
+                        <span class="ev-vip-perk-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FFB627" stroke="none"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61z"></path></svg>
+                        </span>
+                        Maximum regional search exposure with top-tier ranking
+                    </li>
+                    <li>
+                        <span class="ev-vip-perk-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFB627" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </span>
+                        Comprehensive profile verification priority and verification badge
+                    </li>
+                </ul>
+                <a class="ev-vip-cta" href="{{ auth()->check() ? route('new.profile') : '/register' }}">Add your Profile</a>
+            </div>
+        </div>
         @endforelse
         
         

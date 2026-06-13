@@ -5,8 +5,9 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use Illuminate\Http\Request;
-use App\Models\{Listing, Service, UserService, Gender, Currency, Ethnicity, 
-    Bust, HairColor, Language, UserLanguage, UsersProfile, City, Country, Review, Auction};
+use App\Models\{Listing, Service, UserService, Gender, Currency, Ethnicity,
+    Bust, HairColor, Language, UserLanguage, UsersProfile, City, Country, Review, Auction,
+    NewsletterSubscription, NewsletterGender};
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\CacheService;
@@ -53,6 +54,14 @@ class HomePage extends Component
     public $showMobileSearch = false;
     public $tempCity;
     public $tempCityName;
+
+    // === Empty-state Subscribe modal (mirrors UserAccount newsletter modal) ===
+    public $showSubscribeModal = false;
+    public $subReceiveNewsletter = true;
+    public $subSelectedCities = [];
+    public $subCitySearch = '';
+    public $subSearchResults = [];
+    public $subSelectedGenders = [];
 
     protected $queryString = [
         'gender' => ['except' => ''],
@@ -841,6 +850,216 @@ public function checkIfFavorited($profileId)
         return Cache::remember('cache:city:id:229', 3600, fn() => City::find(229));
     }
 
+    /**
+     * When the current-city listing is empty, find replacement profiles to show
+     * under a "Profiles Available Nearby ..." (same country, other cities) or
+     * "What's Happening Across Evoory Right Now" (global latest) section.
+     *
+     * Filters/auction exclusions are intentionally NOT applied — the goal is to
+     * give the user *something* to browse when their filtered city is dead, not
+     * another empty list.
+     *
+     * Returns null when no fallback is needed (city has results) or none exists.
+     *  [
+     *    'type'     => 'nearby' | 'global',
+     *    'profiles' => Collection<UsersProfile>,
+     *    'cityName' => string,   // green-accented label in the heading
+     *  ]
+     */
+    protected function getFallbackProfiles($currentCity)
+    {
+        $genderId = null;
+        if ($this->gender) {
+            $genderModel = CacheService::getGenderByName($this->gender);
+            $genderId = $genderModel ? $genderModel->id : null;
+        }
+
+        $countryId = $currentCity?->country;
+        $currentCityId = $currentCity?->id;
+        $cacheKey = 'home:fallback:' . ($countryId ?: 'none') . ':' . ($currentCityId ?: 'none') . ':' . ($genderId ?: 'any');
+
+        return Cache::remember($cacheKey, 300, function () use ($countryId, $currentCityId, $genderId) {
+            $with = [
+                'singleimg:id,user_id,profile_id,image',
+                'coverimg:id,user_id,profile_id,image',
+                'photoverify:id,profile_id,status',
+                'package:id,name',
+                'reviews:id,profile_id',
+                'getcity:id,name,slug',
+            ];
+
+            $type = 'nearby';
+            $profiles = collect();
+
+            if ($countryId) {
+                $nearbyCityIds = City::where('country', $countryId)
+                    ->when($currentCityId, fn($q) => $q->where('id', '!=', $currentCityId))
+                    ->pluck('id');
+
+                if ($nearbyCityIds->isNotEmpty()) {
+                    $profiles = UsersProfile::query()
+                        ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'is_verified', 'created_at')
+                        ->where('is_active', 1)
+                        ->whereNull('archived_at')
+                        ->whereIn('city', $nearbyCityIds)
+                        ->when($genderId, fn($q) => $q->where('gender', $genderId))
+                        ->with($with)
+                        ->orderByDesc('created_at')
+                        ->take(5)
+                        ->get();
+                }
+            }
+
+            if ($profiles->isEmpty()) {
+                $type = 'global';
+                $profiles = UsersProfile::query()
+                    ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'is_verified', 'created_at')
+                    ->where('is_active', 1)
+                    ->whereNull('archived_at')
+                    ->when($genderId, fn($q) => $q->where('gender', $genderId))
+                    ->with($with)
+                    ->orderByDesc('created_at')
+                    ->take(5)
+                    ->get();
+            }
+
+            if ($profiles->isEmpty()) {
+                return null;
+            }
+
+            $this->attachThumbnailImages($profiles);
+
+            // Highlight city = the city that contributes the most fallback profiles
+            // (so the green-accent label reflects what the user is actually seeing).
+            $cityName = 'Evoory';
+            if ($type === 'nearby') {
+                $topCity = $profiles->groupBy('city')
+                    ->sortByDesc(fn($g) => $g->count())
+                    ->first();
+                $cityName = optional($topCity?->first()?->getcity)->name ?? 'Nearby';
+            }
+
+            return [
+                'type' => $type,
+                'profiles' => $profiles,
+                'cityName' => $cityName,
+            ];
+        });
+    }
+
+    // === Subscribe-from-empty-state newsletter modal ============================
+    // Mirrors UserAccount::loadUserSettings/addCity/removeCity/saveNewsletter so the
+    // empty-listing Subscribe button opens the same evoory-styled newsletter modal.
+    // Wire properties are prefixed `sub*` to avoid clashes with existing HomePage
+    // filter state (e.g. $this->city is the FK to the currently-viewed city, NOT
+    // the newsletter form's city list).
+
+    public function prefillSubscribeCity()
+    {
+        if (!auth()->check()) {
+            return redirect()->to('/register');
+        }
+
+        $this->subSelectedCities = [];
+        $this->subSelectedGenders = [];
+
+        // Load existing user subscriptions so we don't wipe them when saving.
+        $subscriptions = NewsletterSubscription::where('user_id', auth()->id())->with('city')->get();
+        foreach ($subscriptions as $sub) {
+            if ($sub->city) {
+                $this->subSelectedCities[] = [
+                    'id' => $sub->city_id,
+                    'name' => $sub->city->name,
+                    'country' => $sub->city->country ?? '',
+                ];
+            }
+        }
+
+        $existingGenders = NewsletterGender::where('user_id', auth()->id())->pluck('gender')->toArray();
+        $this->subSelectedGenders = !empty($existingGenders)
+            ? $existingGenders
+            : [$this->gender ?: 'female'];
+
+        // Pre-add the currently-viewed city if not already subscribed.
+        $currentCity = $this->resolveCurrentCity();
+        if ($currentCity && !collect($this->subSelectedCities)->contains('id', $currentCity->id)) {
+            $this->subSelectedCities[] = [
+                'id' => $currentCity->id,
+                'name' => $currentCity->name,
+                'country' => $currentCity->country ?? '',
+            ];
+        }
+
+        $this->subReceiveNewsletter = true;
+        $this->subCitySearch = '';
+        $this->subSearchResults = [];
+        $this->showSubscribeModal = true;
+    }
+
+    public function updatedSubCitySearch()
+    {
+        if (strlen($this->subCitySearch) >= 2) {
+            $this->subSearchResults = City::where('name', 'like', '%' . $this->subCitySearch . '%')
+                ->orWhere('country', 'like', '%' . $this->subCitySearch . '%')
+                ->limit(10)
+                ->get(['id', 'name', 'country'])
+                ->toArray();
+        } else {
+            $this->subSearchResults = [];
+        }
+    }
+
+    public function subAddCity($cityId)
+    {
+        $city = City::find($cityId);
+        if ($city && !collect($this->subSelectedCities)->contains('id', $cityId)) {
+            $this->subSelectedCities[] = [
+                'id' => $city->id,
+                'name' => $city->name,
+                'country' => $city->country ?? '',
+            ];
+        }
+        $this->subCitySearch = '';
+        $this->subSearchResults = [];
+    }
+
+    public function subRemoveCity($index)
+    {
+        unset($this->subSelectedCities[$index]);
+        $this->subSelectedCities = array_values($this->subSelectedCities);
+    }
+
+    public function subSaveNewsletter()
+    {
+        if (!auth()->check()) {
+            return redirect()->to('/register');
+        }
+
+        $userId = auth()->id();
+
+        // Replace existing subscriptions with the modal's selection.
+        NewsletterSubscription::where('user_id', $userId)->delete();
+        NewsletterGender::where('user_id', $userId)->delete();
+
+        if ($this->subReceiveNewsletter && count($this->subSelectedCities) > 0) {
+            foreach ($this->subSelectedCities as $city) {
+                NewsletterSubscription::create([
+                    'user_id' => $userId,
+                    'city_id' => $city['id'],
+                ]);
+            }
+            foreach ($this->subSelectedGenders as $gender) {
+                NewsletterGender::create([
+                    'user_id' => $userId,
+                    'gender' => $gender,
+                ]);
+            }
+        }
+
+        $this->showSubscribeModal = false;
+        session()->flash('subscribe_success', 'Newsletter subscription saved.');
+    }
+
     public function render()
     {
         // Load auctions (internally cached for 60s). Required here so pagination/filter
@@ -848,18 +1067,22 @@ public function checkIfFavorited($profileId)
         $this->loadAuctions();
 
         $currentCity = $this->resolveCurrentCity();
-        
+
         // Get nearby cities (cached)
         $nearbyCities = collect();
         if ($currentCity && $currentCity->country) {
             $nearbyCities = CacheService::getFeaturedCities($currentCity->country, $currentCity->id);
         }
-        
+
         // Get SEO content (cached)
         $seoContent = $this->getCachedSeoContent($currentCity);
-        
+
+        $profiles = $this->getProfiles();
+        $fallback = $profiles->total() === 0 ? $this->getFallbackProfiles($currentCity) : null;
+
         return view('livewire.home-page', [
-            'profiles' => $this->getProfiles(),
+            'profiles' => $profiles,
+            'fallback' => $fallback,
             // Use CacheService for all lookup data
             'listings' => Cache::remember('cache:listings', CacheService::TTL_LOOKUP, function() {
                 return Listing::select('id', 'name')->get();

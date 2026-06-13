@@ -225,7 +225,7 @@
                 <h2>Viewing Messages</h2>
             </div>
             <div class="card-block">
-                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="//d18fr84zq3fgpm.cloudfront.net/comfy/cms/files/files/000/000/067/original/viewing_messages.mp4"></video>
+                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="https://assets.evoory.com/videos/viewingmessages.mp4"></video>
             </div>
         </div>
 
@@ -234,7 +234,7 @@
                 <h2>Viewing Questions</h2>
             </div>
             <div class="card-block">
-                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="//d18fr84zq3fgpm.cloudfront.net/comfy/cms/files/files/000/000/061/original/viewing_questions.mp4"></video>
+                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="https://assets.evoory.com/videos/viewingquestions.mp4"></video>
             </div>
         </div>
 
@@ -243,7 +243,7 @@
                 <h2>Bookmarking</h2>
             </div>
             <div class="card-block">
-                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="//d18fr84zq3fgpm.cloudfront.net/comfy/cms/files/files/000/000/060/original/bookmarking.mp4"></video>
+                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="https://assets.evoory.com/videos/bookmarking.mp4"></video>
             </div>
         </div>
 
@@ -252,7 +252,7 @@
                 <h2>Editing Listings</h2>
             </div>
             <div class="card-block">
-                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="//d18fr84zq3fgpm.cloudfront.net/comfy/cms/files/files/000/000/066/original/edit_listing.mp4"></video>
+                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="https://assets.evoory.com/videos/editinglistings.mp4"></video>
             </div>
         </div>
 
@@ -261,7 +261,7 @@
                 <h2>Deleting Listings</h2>
             </div>
             <div class="card-block">
-                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="//d18fr84zq3fgpm.cloudfront.net/comfy/cms/files/files/000/000/062/original/deleting_listings.mp4"></video>
+                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="https://assets.evoory.com/videos/deletinglistings.mp4"></video>
             </div>
         </div>
 
@@ -270,27 +270,20 @@
                 <h2>Managing Profiles</h2>
             </div>
             <div class="card-block">
-                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="//d18fr84zq3fgpm.cloudfront.net/comfy/cms/files/files/000/000/065/original/managing_profiles.mp4"></video>
+                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="https://assets.evoory.com/videos/managingprofiles.mp4"></video>
             </div>
         </div>
 
-        <div class="card" id="transfering_credits">
-            <div class="card-header">
-                <h2>Transferring Credits</h2>
-            </div>
-            <div class="card-block">
-                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="//d18fr84zq3fgpm.cloudfront.net/comfy/cms/files/files/000/000/064/original/transfering_credits.mp4"></video>
-            </div>
-        </div>
+       
 
-        <div class="card" id="editing_account">
+        <!-- <div class="card" id="editing_account">
             <div class="card-header">
                 <h2>Editing my Email and Account details</h2>
             </div>
             <div class="card-block">
-                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="//d18fr84zq3fgpm.cloudfront.net/comfy/cms/files/files/000/000/063/original/editing_account.mp4"></video>
+                <video width="600" controls class="col-sm-12 col-xs-12 col-md-6" src="https://assets.evoory.com/videos/editing_account.mp4"></video>
             </div>
-        </div>
+        </div> -->
 
         <h2>More questions?</h2>
         <p>If you have a question, find something that doesn't work or have a suggestion to make the site work better, <a href="/forums/feedback">click here for the Feedback forum</a>.</p>
