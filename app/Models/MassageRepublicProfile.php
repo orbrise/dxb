@@ -23,6 +23,7 @@ class MassageRepublicProfile extends Model
         'gender',
         'rating',
         'is_verified',
+        'is_premium',
         'services',
         'description',
         'image_urls',
@@ -43,6 +44,7 @@ class MassageRepublicProfile extends Model
         'image_urls' => 'array',
         'attributes' => 'array',
         'is_verified' => 'boolean',
+        'is_premium' => 'boolean',
         'scraped_at' => 'datetime',
         'imported_at' => 'datetime',
     ];

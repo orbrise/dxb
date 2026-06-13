@@ -94,6 +94,7 @@ class MassageRepublicScraper
         $profiles = [];
         $page = 1;
         $fetchFailures = [];
+        $skippedAgencies = 0;
 
         // MR / Cloudflare rate-limits rapid sequential profile fetches; without
         // a pause we get ~3 profiles in, then everything 4xx/5xx silently.
@@ -101,18 +102,18 @@ class MassageRepublicScraper
 
         while (count($profiles) < $limit) {
             $html = $this->fetchProfileListPage($page);
-            $links = $this->extractProfileLinks($html);
+            $cards = $this->extractProfileCards($html);
 
-            if (empty($links)) {
+            if (empty($cards)) {
                 break;
             }
 
-            foreach ($links as $link) {
+            foreach ($cards as $card) {
                 if (count($profiles) >= $limit) {
                     break 2;
                 }
 
-                $url = $this->normalizeUrl($link);
+                $url = $this->normalizeUrl($card['href']);
                 $html = $this->fetchUrlWithRetry($url);
 
                 if (! $html) {
@@ -124,6 +125,20 @@ class MassageRepublicScraper
                 $profile = $this->parseProfile($url, $html);
 
                 if (! empty($profile['external_id'])) {
+                    // Listing-card flags are authoritative — MR puts the
+                    // verified badge and "premium" class on the card wrapper,
+                    // not on the detail page, so prefer those values here.
+                    $profile['is_verified'] = $card['is_verified'] || ($profile['is_verified'] ?? false);
+                    $profile['is_premium'] = $card['is_premium'];
+
+                    // Skip paid-sponsored agency listings — MR puts them at the
+                    // top of every listing page, but the user wants actual latest
+                    // individual ads, not promoted multi-model agencies.
+                    if ($this->looksLikeAgency($profile['name'] ?? '')) {
+                        $skippedAgencies++;
+                        if ($delayMs > 0) usleep($delayMs * 1000);
+                        continue;
+                    }
                     $profiles[] = $profile;
                 }
 
@@ -143,7 +158,43 @@ class MassageRepublicScraper
             ]);
         }
 
+        if ($skippedAgencies > 0) {
+            \Log::info('MR scraper: agency listings skipped', ['count' => $skippedAgencies]);
+        }
+
         return $profiles;
+    }
+
+    /**
+     * MR mixes paid agency promos into the standard listing — they sit at the
+     * top of each page regardless of recency. Detect by naming convention so
+     * the scraper can skip them and keep paginating for genuine individuals.
+     *
+     * False-positive risk: a stage name containing "Agency"/"Models"/"Hub" as
+     * a real individual would also get filtered. Acceptable trade-off given
+     * how rare that is on MR.
+     */
+    protected function looksLikeAgency(string $name): bool
+    {
+        if ($name === '') return false;
+
+        $patterns = [
+            '/escort\s+agency/i',     // tail: "Russian escort agency in Dubai"
+            '/\bagency\b/i',          // "Aura Agency", "Playgirl Agency"
+            '/\bmodels\b/i',          // "Freya Models", "100+ Slavic models"
+            '/\bhub\b/i',             // "Dream Hub"
+            '/best\s+girls/i',        // "Lady for Daddy Best Girls"
+            '/search\s*bot/i',        // "Escort Search Bot"
+            '/\bstudio\b/i',
+            '/\bcollective\b/i',
+        ];
+
+        foreach ($patterns as $p) {
+            if (preg_match($p, $name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -337,7 +388,15 @@ class MassageRepublicScraper
         return $node ? trim($node->getAttribute('value')) : null;
     }
 
-    protected function extractProfileLinks(string $html): array
+    /**
+     * Parse the listing page into structured per-card data — the profile URL,
+     * plus the verified badge + premium flag MR exposes only on listing cards
+     * (the detail page doesn't repeat them, which is why a detail-page scan
+     * for "verified" always returned zero).
+     *
+     * @return array<int, array{href:string, is_verified:bool, is_premium:bool}>
+     */
+    protected function extractProfileCards(string $html): array
     {
         if (empty($html)) {
             return [];
@@ -349,33 +408,59 @@ class MassageRepublicScraper
         $xpath = new \DOMXPath($doc);
 
         $listingPath = '/' . trim($this->listingPath, '/');
-        $listingSegment = ltrim($listingPath, '/');
+        $cards = [];
+        $seen = [];
 
-        $nodes = $xpath->query("//a[starts-with(@href, '{$listingPath}/')]/@href");
-        $links = [];
+        // Each listing tile is a <div class="listing-li …"> wrapping an <a>
+        // pointing at the profile slug. Verified badge is a descendant
+        // <span class="verified-image"> (title="Photos Verified by …").
+        $cardNodes = $xpath->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' listing-li ')]");
+        foreach ($cardNodes as $card) {
+            $href = null;
+            foreach ($xpath->query(".//a[starts-with(@href, '{$listingPath}/')]/@href", $card) as $hrefAttr) {
+                $candidate = trim($hrefAttr->nodeValue);
+                if ($candidate === '' || str_starts_with($candidate, '#')) continue;
 
-        foreach ($nodes as $node) {
-            $href = trim($node->nodeValue);
-            if ($href === '' || str_starts_with($href, '#')) {
-                continue;
+                $tail = substr($candidate, strlen($listingPath) + 1);
+                if ($tail === '' || ctype_digit($tail) || str_contains($tail, '/')) continue;
+
+                $href = $candidate;
+                break;
             }
+            if (! $href || isset($seen[$href])) continue;
+            $seen[$href] = true;
 
-            $tail = substr($href, strlen($listingPath) + 1);
+            $verifiedHit = $xpath->query(
+                ".//*[contains(concat(' ', normalize-space(@class), ' '), ' verified-image ')]",
+                $card
+            );
+            $isVerified = $verifiedHit && $verifiedHit->length > 0;
+            $isPremium = (bool) preg_match('/\bpremium\b/i', $card->getAttribute('class'));
 
-            // Skip pagination links like "/female-escorts-in-dubai/2"
-            if ($tail === '' || ctype_digit($tail)) {
-                continue;
-            }
-
-            // Skip any nested paths (real profile slugs have no further '/')
-            if (str_contains($tail, '/')) {
-                continue;
-            }
-
-            $links[] = $href;
+            $cards[] = [
+                'href' => $href,
+                'is_verified' => $isVerified,
+                'is_premium' => $isPremium,
+            ];
         }
 
-        return array_values(array_unique($links));
+        // Fallback for any layout where MR drops the listing-li wrapper —
+        // collect orphan profile links so we don't lose entries entirely.
+        if (empty($cards)) {
+            foreach ($xpath->query("//a[starts-with(@href, '{$listingPath}/')]/@href") as $hrefAttr) {
+                $candidate = trim($hrefAttr->nodeValue);
+                if ($candidate === '' || str_starts_with($candidate, '#')) continue;
+
+                $tail = substr($candidate, strlen($listingPath) + 1);
+                if ($tail === '' || ctype_digit($tail) || str_contains($tail, '/')) continue;
+                if (isset($seen[$candidate])) continue;
+                $seen[$candidate] = true;
+
+                $cards[] = ['href' => $candidate, 'is_verified' => false, 'is_premium' => false];
+            }
+        }
+
+        return $cards;
     }
 
     protected function normalizeUrl(string $href): string
