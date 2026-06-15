@@ -264,10 +264,182 @@
             letter-spacing: normal !important;
             margin: 0 0 18px !important;
         }
-        .ev-fallback-card { margin-bottom: 8px; }
-        .ev-fallback-card + .ev-fallback-card {
-            border-top: 1px solid #1f1f1f;
-            padding-top: 16px;
+        .listings .ev-fallback-card,
+        .ev-empty-listings-wrap .ev-fallback-card {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+            padding: 14px 0 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        /* The mobile-only title is hidden on desktop. */
+        .ev-empty-listings-wrap .ev-fallback-name--mobile { display: none !important; }
+        .ev-empty-listings-wrap .ev-fallback-card + .ev-fallback-card {
+            border-top: 1px solid #1f1f1f !important;
+        }
+        .listings .ev-fallback-main,
+        .ev-empty-listings-wrap .ev-fallback-main {
+            flex: 0 0 200px !important;
+            width: 200px !important;
+            max-width: 200px !important;
+            height: 210px !important;
+            display: block !important;
+            border-radius: 6px !important;
+            overflow: hidden !important;
+            background: #111 !important;
+            line-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .listings .ev-fallback-main img,
+        .ev-empty-listings-wrap .ev-fallback-main img {
+            width: 200px !important;
+            height: 210px !important;
+            max-width: 200px !important;
+            object-fit: cover !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+        }
+        .listings .ev-fallback-thumbs,
+        .ev-empty-listings-wrap .ev-fallback-thumbs {
+            flex: 0 0 65px !important;
+            width: 65px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 5px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .listings .ev-fallback-thumb,
+        .ev-empty-listings-wrap .ev-fallback-thumb {
+            display: block !important;
+            width: 65px !important;
+            height: 65px !important;
+            max-width: 65px !important;
+            border-radius: 4px !important;
+            overflow: hidden !important;
+            background: #111 !important;
+            line-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .listings .ev-fallback-thumb img,
+        .ev-empty-listings-wrap .ev-fallback-thumb img {
+            width: 65px !important;
+            height: 65px !important;
+            max-width: 65px !important;
+            object-fit: cover !important;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .listings .ev-fallback-info,
+        .ev-empty-listings-wrap .ev-fallback-info {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            padding-left: 8px !important;
+        }
+        .ev-empty-listings-wrap .ev-fallback-name {
+            color: #fff !important;
+            font-size: 22px !important;
+            font-weight: 700 !important;
+            margin: 0 0 10px !important;
+            line-height: 1.2 !important;
+        }
+        .ev-empty-listings-wrap .ev-fallback-name a { color: #fff !important; text-decoration: none !important; }
+        .ev-empty-listings-wrap .ev-fallback-desc,
+        .ev-empty-listings-wrap .ev-fallback-info a p,
+        .ev-empty-listings-wrap .ev-fallback-info p {
+            color: #c9c9c9 !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            line-height: 1.5 !important;
+            margin: 0 0 14px !important;
+        }
+        .ev-empty-listings-wrap .ev-fallback-see-more {
+            display: inline-block !important;
+            background: #1a1a1a !important;
+            color: #C1F11D !important;
+            padding: 8px 18px !important;
+            border-radius: 999px !important;
+            font-size: 13px !important;
+            text-decoration: none !important;
+            transition: background 0.15s ease !important;
+        }
+        .ev-empty-listings-wrap .ev-fallback-see-more:hover {
+            background: #2a2a2a !important;
+            color: #C1F11D !important;
+        }
+        @media (max-width: 640px) {
+            /* Mobile layout: title spans full width above image row, description+button
+               below it (also full width). Image row is a single connected unit — main
+               on the left with rounded left corners, 3 narrower thumbs stacked tightly
+               on the right with only the outer-right corners rounded (top-right of
+               first thumb, bottom-right of last thumb). */
+            .listings .ev-empty-listings-wrap .ev-fallback-card,
+            .ev-empty-listings-wrap .ev-fallback-card { gap: 0 !important; flex-wrap: wrap !important; }
+            .ev-empty-listings-wrap .ev-fallback-name--mobile {
+                display: block !important;
+                width: 100% !important;
+                flex: 0 0 100% !important;
+                order: -1 !important;
+                margin: 0 0 10px !important;
+                font-size: 18px !important;
+            }
+            .ev-empty-listings-wrap .ev-fallback-name--desktop { display: none !important; }
+            .listings .ev-empty-listings-wrap .ev-fallback-main,
+            .ev-empty-listings-wrap .ev-fallback-main {
+                flex: 0 0 78% !important;
+                width: 78% !important;
+                max-width: none !important;
+                height: auto !important;
+                aspect-ratio: 1 / 1 !important;
+                border-radius: 10px 0 0 10px !important;
+            }
+            .listings .ev-empty-listings-wrap .ev-fallback-main img,
+            .ev-empty-listings-wrap .ev-fallback-main img {
+                width: 98% !important;
+                height: 100% !important;
+                max-width: none !important;
+                border-radius: 0 !important;
+            }
+            .listings .ev-empty-listings-wrap .ev-fallback-thumbs,
+            .ev-empty-listings-wrap .ev-fallback-thumbs {
+                flex: 0 0 22% !important;
+                width: 22% !important;
+                gap: 0 !important;
+            }
+            .listings .ev-empty-listings-wrap .ev-fallback-thumb,
+            .ev-empty-listings-wrap .ev-fallback-thumb {
+                      width: 100% !important;
+        max-width: none !important;
+        height: 103px !important;
+        aspect-ratio: 1 / 1 !important;
+        border-radius: 0 !important;
+        margin-bottom: 10px !important;
+            }
+            .ev-empty-listings-wrap .ev-fallback-thumb img {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: none !important;
+                border-radius: 0 !important;
+            }
+            .ev-empty-listings-wrap .ev-fallback-thumb:first-child { border-radius: 0 10px 0 0 !important; }
+            .ev-empty-listings-wrap .ev-fallback-thumb:last-child  { border-radius: 0 0 10px 0 !important; }
+            .ev-empty-listings-wrap .ev-fallback-info {
+                flex: 0 0 100% !important;
+                width: 100% !important;
+                order: 99 !important;
+                padding-left: 0 !important;
+                margin-top: 12px !important;
+            }
+            .ev-empty-listings-wrap .ev-fallback-desc { text-align: left !important; }
+            .ev-empty-listings-wrap .ev-fallback-see-more { display: block !important; text-align: center !important; margin: 0 auto !important; }
         }
 
         /* VIP Positioning promo (shown under the fallback profiles) */
@@ -1991,59 +2163,37 @@
                         : ($cityname ?? 'dubai');
                     $fallbackCitySlug = preg_replace('/[^a-z0-9\-]/', '', $fallbackCitySlug);
                     $fallbackUrl = url($gender.'-escorts-in-'.$fallbackCitySlug.'/'.$profile->id.'/'.$profile->slug);
+                    if (!empty($profile->coverimg->image)) {
+                        $fallbackMainImg = webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image);
+                    } elseif (!empty($profile->singleimg->image)) {
+                        $fallbackMainImg = webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image);
+                    } else {
+                        $fallbackMainImg = smart_asset('admin/assets/img/flat-icons/user.png');
+                    }
                 @endphp
-                <div class="listing-li pb-3 featured thumbs-2 thumbs-mini ev-fallback-card">
-                    <h2 class="visible-xxs">
+                <div class="ev-fallback-card">
+                    {{-- Mobile-only title (appears above the image row on small screens) --}}
+                    <h2 class="ev-fallback-name ev-fallback-name--mobile">
                         <a class="nostyle-link" href="{{ $fallbackUrl }}">{{ $profile->name }}</a>
                     </h2>
-                    <div class="thumbs">
-                        <div class="main-thumbs">
-                            <a class="img pb-photo-link" href="{{ $fallbackUrl }}">
-                                <span class="img-wrapper featured">
-                                    @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
-                                        <i class="fa fa-check"></i><span>Verified photos</span>
-                                    </span>
-                                    @endif
-                                    <div class="image-wrapper">
-                                        @if(!empty($profile->coverimg->image))
-                                            <img alt="{{ $profile->name }} - escort in {{ optional($fallbackCityModel)->name ?? '' }}" class="img-responsive" height="135" width="115" loading="lazy" decoding="async" src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image) }}">
-                                        @elseif(!empty($profile->singleimg->image))
-                                            <img alt="{{ $profile->name }} - escort in {{ optional($fallbackCityModel)->name ?? '' }}" class="img-responsive" height="135" width="115" loading="lazy" decoding="async" src="{{ webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image) }}">
-                                        @else
-                                            <img alt="{{ $profile->name }}" class="img-responsive" height="135" src="{{ smart_asset('admin/assets/img/flat-icons/user.png') }}" width="115" style="opacity:0.5; padding:15px;">
-                                        @endif
-                                    </div>
-                                </span>
+                    <a class="ev-fallback-main" href="{{ $fallbackUrl }}">
+                        <img alt="{{ $profile->name }} - escort in {{ optional($fallbackCityModel)->name ?? '' }}" loading="lazy" decoding="async" src="{{ $fallbackMainImg }}">
+                    </a>
+                    <div class="ev-fallback-thumbs">
+                        @foreach($profile->multipleimgs->take(3) as $k => $imgs)
+                            <a class="ev-fallback-thumb" href="{{ $fallbackUrl }}">
+                                <img alt="{{ $profile->name }} - Photo {{ $k + 1 }}" loading="lazy" src="{{ webp_asset('userimages/'.$imgs->user_id.'/'.$imgs->profile_id.'/'.$imgs->image) }}">
                             </a>
-                        </div>
-                        <div class="other-thumbs pull-left">
-                            @forelse($profile->multipleimgs->take(3) as $k => $imgs)
-                            <div class="thumb thumb-{{ $k }}">
-                                <a class="img img-responsive pb-photo-link" href="{{ $fallbackUrl }}">
-                                    <span class="img-wrapper mini">
-                                        <div class="image-wrapper">
-                                            <img alt="{{ $profile->name }} - Photo {{ $k + 1 }}" class="img-responsive" height="60" width="60" loading="lazy" src="{{ webp_asset('userimages/'.$imgs->user_id.'/'.$imgs->profile_id.'/'.$imgs->image) }}">
-                                        </div>
-                                    </span>
-                                </a>
-                            </div>
-                            @empty
-                            @endforelse
-                        </div>
+                        @endforeach
                     </div>
-                    <div class="listing-info-wrapper">
-                        <div class="listing-info">
-                            <h2>
-                                <a class="nostyle-link" href="{{ $fallbackUrl }}">{{ $profile->name }}</a>
-                            </h2>
-                            <a class="nostyle-link" href="{{ $fallbackUrl }}">
-                                <p>{{ str()->of($profile->about)->stripTags()->squish()->limit(220) }}</p>
-                            </a>
-                            <p class="no-margin see-more">
-                                <a class="btn btn-dark" href="{{ $fallbackUrl }}">See more contact</a>
-                            </p>
-                        </div>
+                    <div class="ev-fallback-info">
+                        <h2 class="ev-fallback-name ev-fallback-name--desktop">
+                            <a class="nostyle-link" href="{{ $fallbackUrl }}">{{ $profile->name }}</a>
+                        </h2>
+                        <a class="nostyle-link" href="{{ $fallbackUrl }}">
+                            <p class="ev-fallback-desc">{{ str()->of($profile->about)->stripTags()->squish()->limit(280) }}</p>
+                        </a>
+                        <a class="ev-fallback-see-more" href="{{ $fallbackUrl }}">See more contact</a>
                     </div>
                 </div>
                 @endforeach
