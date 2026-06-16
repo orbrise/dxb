@@ -3,19 +3,28 @@
         @php
             $gender = request()->route('gender') ?: 'female';
             $city = request()->route('city') ?: 'dubai';
+            $service = request()->route('service');
             $currentPage = $paginator->currentPage();
             $lastPage = $paginator->lastPage();
-            
-            // Generate URLs
+
             $prevPage = $currentPage - 1;
             $nextPage = $currentPage + 1;
-            
-            $prevUrl = $prevPage <= 1 
-                ? route('home', ['gender' => $gender, 'city' => $city])
-                : route('home.paginated', ['gender' => $gender, 'city' => $city, 'page' => $prevPage]);
-            
-            $nextUrl = route('home.paginated', ['gender' => $gender, 'city' => $city, 'page' => $nextPage]);
-        @endphp 
+
+            // Service pages don't have a path-based paginated route; the
+            // component reads ?page=N from the query string, so we keep
+            // pagination on the same URL via query string. Listing/home pages
+            // continue to use the pretty /page/{n} URLs.
+            if ($service) {
+                $basePath = "/{$service}-{$gender}-escorts-in-{$city}";
+                $prevUrl = $prevPage <= 1 ? url($basePath) : url($basePath . '?page=' . $prevPage);
+                $nextUrl = url($basePath . '?page=' . $nextPage);
+            } else {
+                $prevUrl = $prevPage <= 1
+                    ? route('home', ['gender' => $gender, 'city' => $city])
+                    : route('home.paginated', ['gender' => $gender, 'city' => $city, 'page' => $prevPage]);
+                $nextUrl = route('home.paginated', ['gender' => $gender, 'city' => $city, 'page' => $nextPage]);
+            }
+        @endphp
         <nav aria-label="Listing pages navigation" style="width: fit-content">
             <ul class="pagination pagination-lg mt-2">
                 {{-- Previous Page Link --}}

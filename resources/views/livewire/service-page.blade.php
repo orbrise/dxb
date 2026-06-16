@@ -489,11 +489,66 @@ min-width: 222px;
         width: 100%;
         display: inline-block;
     }
-    
+
     .city-search-icon {
         font-size: 12px !important;
         left: 8px !important;
     }
+}
+
+/* Vertical breathing room between profile cards on the listing.
+   Without this the cards are flush against the thin separator and
+   look cramped (Thalia / sadf sdfsd / asdfasdfsadf all touching). */
+.listings > .listing-li {
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.listings > .listing-li:last-child {
+    border-bottom: none;
+}
+@media (max-width: 767px) {
+    .listings > .listing-li {
+        padding-top: 18px !important;
+        padding-bottom: 18px !important;
+    }
+}
+
+/* Cap the image column so missing/broken images don't stretch to fill
+   the column and push the separator line way below the actual card
+   content. The width/height attributes on each <img> already declare
+   the intended size (200x208 for premium, 115x135 for featured) — these
+   rules just enforce them on the wrapper so `img-responsive` can't
+   blow the row out. */
+.listings > .listing-li .main-thumbs .img-wrapper {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+}
+.listings > .listing-li.premium .main-thumbs .img-wrapper,
+.listings > .listing-li.premium .main-thumbs .image-wrapper {
+    width: 200px;
+    height: 208px;
+    max-width: 100%;
+}
+.listings > .listing-li.featured .main-thumbs .img-wrapper,
+.listings > .listing-li.featured .main-thumbs .image-wrapper {
+    width: 115px;
+    height: 135px;
+    max-width: 100%;
+}
+.listings > .listing-li.basic .main-thumbs .img-wrapper,
+.listings > .listing-li.basic .main-thumbs .image-wrapper {
+    width: 89px;
+    height: 95px;
+    max-width: 100%;
+}
+.listings > .listing-li .main-thumbs .img-wrapper img,
+.listings > .listing-li .main-thumbs .image-wrapper img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    display: block;
 }
 
 .select2-container--default .select2-selection--single,
@@ -965,7 +1020,16 @@ min-width: 222px;
       </div>
       <div class="listings  @if($auctions->count() > 0 and Auth::check()) padding-top @endif">
         @forelse($profiles as $profile)
-        @if($profile->package_id == 21)
+        @php
+            // Bucket each profile using the same package id sets the
+            // controller (ServicePage::getProfiles) uses, so the view never
+            // silently drops a profile whose package_id isn't 19/20/21/null.
+            $pkgId = (int) $profile->package_id;
+            $isVip = in_array($pkgId, $vipPackageIds ?? [], true);
+            $isFeatured = !$isVip && in_array($pkgId, $featuredPackageIds ?? [], true);
+            $isBasic = !$isVip && !$isFeatured;
+        @endphp
+        @if($isVip)
         <div class="listing-li premium thumbs-3 thumbs-mini">
           <h2 class="visible-xxs">
             <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
@@ -1063,7 +1127,7 @@ min-width: 222px;
           </div>
         </div>
 
-        @elseif($profile->package_id == 20)
+        @elseif($isFeatured)
         <div class="listing-li pb-3 featured thumbs-2 thumbs-mini">
           <h2 class="visible-xxs">
             <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">{{$profile->name}}</a>
@@ -1127,7 +1191,7 @@ min-width: 222px;
           </div>
         </div>
 
-        @elseif($profile->package_id == 19 or empty($profile->package_id))
+        @elseif($isBasic)
         <div class="listing-li pb-3 basic thumbs-0 thumbs-basic" style="padding-left:0px">
           <h2 class="visible-xxs">
             <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">{{$profile->name}}</a>

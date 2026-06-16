@@ -35,7 +35,8 @@ class ServicePage extends Component
     public $gender;
     public $serviceSlug; // Service slug from URL
     public $serviceName; // Service name for display
-    public $serviceId; // Service ID for filtering
+    public $serviceId; // Primary service ID (first match) for display/sservices preselect
+    public $serviceIds = []; // Every service ID whose slug matches the URL slug
     public $sservices = [];
     public $rate = null;
     public $currency = 248;
@@ -78,16 +79,35 @@ class ServicePage extends Component
     {
         $this->gender = $gender;
         $this->serviceSlug = $service;
-        
-        // Find the service by slug
-        $serviceModel = Service::where('slug', $service)
-            ->orWhere('name', 'like', '%' . str_replace('-', ' ', $service) . '%')
-            ->first();
-        
-        if ($serviceModel) {
-            $this->serviceId = $serviceModel->id;
-            $this->serviceName = $serviceModel->name;
-            $this->sservices = [$serviceModel->id]; // Pre-filter by this service
+
+        // Resolve EVERY service row matching this slug, not just the first.
+        // The sidebar links pass `strtolower($service->slug)`, but DB slugs
+        // may be stored with mixed case or there may be near-duplicate rows
+        // sharing the same canonical name. Filtering by a single id meant
+        // the sidebar count ("216") and the listing total ("100") could
+        // disagree because they were resolving to different services rows.
+        // Matching all candidates closes that gap.
+        $slugNormalized = strtolower($service);
+        $nameLike = '%' . str_replace('-', ' ', $slugNormalized) . '%';
+
+        $serviceModels = Service::whereRaw('LOWER(slug) = ?', [$slugNormalized])
+            ->orWhere('name', 'like', $nameLike)
+            ->get();
+
+        if ($serviceModels->isNotEmpty()) {
+            // Prefer exact slug matches when both exact and LIKE results came
+            // back, so the displayed name reflects the actual sidebar entry
+            // the user clicked rather than a stray near-name-match.
+            $exactSlugMatches = $serviceModels->filter(
+                fn ($s) => strtolower($s->slug) === $slugNormalized
+            );
+            $matches = $exactSlugMatches->isNotEmpty() ? $exactSlugMatches : $serviceModels;
+
+            $this->serviceIds = $matches->pluck('id')->all();
+            $primary = $matches->first();
+            $this->serviceId = $primary->id;
+            $this->serviceName = $primary->name;
+            $this->sservices = $this->serviceIds; // Pre-fill advanced search
         }
         
         // Set city
@@ -268,18 +288,27 @@ class ServicePage extends Component
             ->toArray();
 
         $sortDirection = $this->getSortDirection();
-        
+
+        // Only show profiles that are actually live — same filter HomePage
+        // applies. Without these, sidebar counts include archived/inactive
+        // profiles that the listing would never render, producing the
+        // "sidebar 9, listing 2" mismatch.
         $query = UsersProfile::query()
             ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'created_at')
+            ->where('is_active', 1)
+            ->whereNull('archived_at')
             ->when($this->city, fn($q) => $q->where('city', $this->city))
             ->when($this->gender, function($q) {
                 $genderModel = CacheService::getGenderByName($this->gender);
                 return $q->where('gender', $genderModel ? $genderModel->id : null);
             })
-            // Always filter by the service from URL
-            ->when($this->serviceId, function($q) {
+            // Always filter by the service(s) resolved from the URL slug.
+            // Using whereIn matches every services row that shared the slug,
+            // so the listing total agrees with the sidebar count for that
+            // same slug.
+            ->when(!empty($this->serviceIds), function($q) {
                 return $q->whereHas('services', function($query) {
-                    $query->where('service_id', $this->serviceId);
+                    $query->whereIn('service_id', $this->serviceIds);
                 });
             })
             ->when($this->rate, function($q) {
@@ -360,9 +389,22 @@ class ServicePage extends Component
             ])
             ->get();
 
-        $vipProfiles = $query->where('package_id', 21);
-        $featuredProfiles = $query->where('package_id', 20);
-        $basicProfiles = $query->whereIn('package_id', [19, null]);
+        // Bucket profiles by package using the same package-id sets HomePage
+        // resolves at runtime. Anything that isn't VIP or Featured drops into
+        // the "basic" bucket (including NULL and unknown ids) — previously
+        // the basic bucket was hardcoded to [19, null] and silently dropped
+        // every profile with another package id, which is why "Couples 9"
+        // in the sidebar rendered as 2 in the listing.
+        $packageIds = CacheService::getPackageIdsByType();
+        $vipPackageIds = array_map('intval', $packageIds['vip'] ?? []);
+        $featuredPackageIds = array_map('intval', $packageIds['featured'] ?? []);
+
+        $vipProfiles = $query->filter(fn($p) => in_array((int) $p->package_id, $vipPackageIds, true));
+        $featuredProfiles = $query->filter(fn($p) => in_array((int) $p->package_id, $featuredPackageIds, true));
+        $basicProfiles = $query->reject(fn($p) =>
+            in_array((int) $p->package_id, $vipPackageIds, true)
+            || in_array((int) $p->package_id, $featuredPackageIds, true)
+        );
 
         $vipProfiles = $vipProfiles->sortBy('created_at', SORT_REGULAR, $sortDirection === 'desc')->values();
         $featuredProfiles = $featuredProfiles->sortBy('created_at', SORT_REGULAR, $sortDirection === 'desc')->values();
@@ -395,24 +437,34 @@ class ServicePage extends Component
         $currentCity = City::where('slug', $this->selectedcity)
             ->orWhere('name', $this->cityname)
             ->first();
-        
+
         // Get all services for the sidebar
         $allServices = Service::select('id', 'name', 'slug')
             ->orderBy('name', 'asc')
             ->get();
-        
-        // Get popular services in this city with counts
-        $popularServices = Service::select('services.id', 'services.name', 'services.slug')
+
+        // Package id sets used by the listing view to pick the VIP /
+        // Featured / Basic markup. Must come from the same source as
+        // getProfiles() so the view and the controller bucket profiles the
+        // same way — otherwise the view's @else branch silently swallows
+        // profiles (e.g. "5 escorts" in the header but 0 cards rendered).
+        $packageIdsByType = CacheService::getPackageIdsByType();
+        $vipPackageIds = array_map('intval', $packageIdsByType['vip'] ?? []);
+        $featuredPackageIds = array_map('intval', $packageIdsByType['featured'] ?? []);
+
+        $genderModel = $this->gender ? CacheService::getGenderByName($this->gender) : null;
+        $genderId = $genderModel ? $genderModel->id : null;
+
+        $popularServices = Service::query()
             ->join('user_services', 'services.id', '=', 'user_services.service_id')
             ->join('users_profiles', 'user_services.profile_id', '=', 'users_profiles.id')
             ->where('users_profiles.city', $this->city)
-            ->when($this->gender, function($q) {
-                $genderModel = CacheService::getGenderByName($this->gender);
-                return $q->where('users_profiles.gender', $genderModel ? $genderModel->id : null);
-            })
-            ->groupBy('services.id', 'services.name', 'services.slug')
-            ->selectRaw('COUNT(DISTINCT users_profiles.id) as profile_count')
-            ->orderBy('profile_count', 'desc')
+            ->where('users_profiles.is_active', 1)
+            ->whereNull('users_profiles.archived_at')
+            ->when($genderId, fn($q) => $q->where('users_profiles.gender', $genderId))
+            ->groupByRaw('LOWER(services.slug)')
+            ->selectRaw('MIN(services.id) as id, MIN(services.name) as name, LOWER(services.slug) as slug, COUNT(DISTINCT users_profiles.id) as profile_count')
+            ->orderByDesc('profile_count')
             ->limit(15)
             ->get();
         
@@ -456,7 +508,9 @@ class ServicePage extends Component
             'serviceName' => $this->serviceName,
             'serviceSlug' => $this->serviceSlug,
             'allServices' => $allServices,
-            'popularServices' => $popularServices
+            'popularServices' => $popularServices,
+            'vipPackageIds' => $vipPackageIds,
+            'featuredPackageIds' => $featuredPackageIds,
         ]);
     }
 }
