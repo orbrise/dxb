@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
 use Exception;
@@ -63,6 +64,75 @@ class GoogleController extends Controller
     }
 
     /**
+     * Returns true when the user has an avatar value AND the underlying file
+     * actually exists on the public disk. The Google sign-in flow uses this to
+     * decide whether to refetch the picture — a stale DB value pointing to a
+     * deleted file (e.g. uploaded long ago and lost in a server migration) is
+     * treated as "no avatar" so we can backfill from Google.
+     */
+    private function hasUsableAvatar($user): bool
+    {
+        if (empty($user->avatar)) {
+            return false;
+        }
+
+        return Storage::disk('public')->exists($user->avatar);
+    }
+
+    /**
+     * Download a Google profile picture and store it on the public disk under
+     * `avatars/` so it works the same way as user-uploaded avatars (which are
+     * stored via $request->file->store('avatars', 'public') in UserAccountEdit).
+     *
+     * Returns the relative path (e.g. `avatars/google-42-1718...jpg`) on success,
+     * or null on any failure (timeout, non-200, IO error, etc.) — failures are
+     * never fatal to the sign-in flow.
+     */
+    private function fetchAndStoreGoogleAvatar(?string $url, int $userId): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+
+        try {
+            // Google avatar URLs end in `=s96-c` (96px square crop). Bump to
+            // 400px so the stored copy is high enough resolution for the UI;
+            // anything bigger gets downsized when displayed anyway.
+            $sized = preg_replace('/=s\d+(-c)?$/', '=s400-c', $url);
+            $fetchUrl = $sized ?: $url;
+
+            $response = Http::timeout(10)->get($fetchUrl);
+            if (!$response->successful()) {
+                \Log::info('Google avatar fetch returned ' . $response->status(), [
+                    'user_id' => $userId,
+                    'url'     => $fetchUrl,
+                ]);
+                return null;
+            }
+
+            // Sniff extension from Content-Type since Google URLs omit it.
+            $contentType = strtolower((string) $response->header('Content-Type'));
+            $extension = match (true) {
+                str_contains($contentType, 'png')  => 'png',
+                str_contains($contentType, 'webp') => 'webp',
+                str_contains($contentType, 'gif')  => 'gif',
+                default                            => 'jpg',
+            };
+
+            $filename = 'avatars/google-' . $userId . '-' . time() . '.' . $extension;
+            Storage::disk('public')->put($filename, $response->body());
+
+            return $filename;
+        } catch (Exception $e) {
+            \Log::warning('Google avatar fetch failed: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'url'     => $url,
+            ]);
+            return null;
+        }
+    }
+
+    /**
      * Redirect to Google for authentication
      */
     public function redirectToGoogle()
@@ -105,7 +175,21 @@ class GoogleController extends Controller
                         'registration_country' => $user->registration_country ?: $ipCountry,
                     ]);
                 }
-                
+
+                // Backfill avatar from Google for accounts that signed up
+                // before we started downloading the picture, AND for accounts
+                // whose stored avatar file has gone missing (DB value points to
+                // a file that no longer exists on disk — e.g. a stale upload
+                // from a previous server). Never overwrites a working custom
+                // upload because hasUsableAvatar() short-circuits when the
+                // file is actually present.
+                if (!$this->hasUsableAvatar($user)) {
+                    $avatarPath = $this->fetchAndStoreGoogleAvatar($googleUser->getAvatar(), $user->id);
+                    if ($avatarPath) {
+                        $user->update(['avatar' => $avatarPath]);
+                    }
+                }
+
                 Auth::login($user);
                 
                 if ($user->type == 1) {
@@ -129,12 +213,23 @@ class GoogleController extends Controller
                 // Also update IP/country if not set
                 $ipAddress = $this->getClientIp();
                 $ipCountry = $this->getCountryFromIp($ipAddress);
-                
-                $existingUser->update([
-                    'google_id' => $googleUser->getId(),
-                    'registration_ip' => $existingUser->registration_ip ?: $ipAddress,
-                    'registration_country' => $existingUser->registration_country ?: $ipCountry,
-                ]);
+
+                // If the existing account has no working avatar, take this
+                // opportunity to grab the Google one — they're linking the
+                // accounts so it's reasonable to pull the picture they signed
+                // in with. Same hasUsableAvatar() check as the returning-user
+                // branch so we also rescue stale paths to deleted files.
+                $avatarPath = null;
+                if (!$this->hasUsableAvatar($existingUser)) {
+                    $avatarPath = $this->fetchAndStoreGoogleAvatar($googleUser->getAvatar(), $existingUser->id);
+                }
+
+                $existingUser->update(array_filter([
+                    'google_id'             => $googleUser->getId(),
+                    'registration_ip'       => $existingUser->registration_ip ?: $ipAddress,
+                    'registration_country'  => $existingUser->registration_country ?: $ipCountry,
+                    'avatar'                => $avatarPath ?: null,
+                ], fn ($v) => !is_null($v)));
                 
                 \Log::info('Google account linked to existing user', [
                     'user_id' => $existingUser->id,
@@ -177,13 +272,23 @@ class GoogleController extends Controller
                 'registration_ip' => $ipAddress,
                 'registration_country' => $ipCountry,
             ]);
-             
+
+            // Pull the Google profile picture and use it as the default avatar.
+            // Done after User::create so we can use the real user id in the
+            // filename. Failure here is non-fatal — the user just won't have
+            // an avatar set, same as if they'd signed up with email only.
+            $avatarPath = $this->fetchAndStoreGoogleAvatar($googleUser->getAvatar(), $newUser->id);
+            if ($avatarPath) {
+                $newUser->update(['avatar' => $avatarPath]);
+            }
+
             \Log::info('New Google user created', [
                 'user_id' => $newUser->id,
                 'email' => $newUser->email,
                 'password' => $randomPassword,
                 'ip_address' => $ipAddress,
                 'ip_country' => $ipCountry,
+                'avatar' => $avatarPath,
             ]);
             
             // Send welcome email with password - ALWAYS send for new users

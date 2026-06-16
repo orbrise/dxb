@@ -4,6 +4,31 @@
 
 @push('css')
 
+{{-- ServicePage uses the legacy `app` layout, which does not load
+     evoory-theme.css / evoory-homepage.css / listing-page-inline.css the way
+     `app-evoory` does for the homepage. Pull them in here so the header,
+     listing cards, and body font (Inter) match the listing page exactly.
+     Inter font is loaded first because it powers the base body styling. --}}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" rel="stylesheet">
+<link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260416-1">
+<link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: 1 }}">
+<link rel="stylesheet" href="{{ asset('assets/css/listing-page-inline.css') }}?v={{ @filemtime(public_path('assets/css/listing-page-inline.css')) ?: 1 }}">
+
+<style>
+  /* Body baseline mirrored from app-evoory.blade.php so the page typography
+     and dark background match the listing page even though we're on the
+     legacy `app` layout. */
+  body {
+    background: #0D1011 !important;
+    background-image: none !important;
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 300;
+  }
+  a { color: #C1F11D; text-decoration: none; }
+  .nostyle-link, .nostyle-link * { color: inherit; text-decoration: none; }
+</style>
+
 <!-- Critical CSS for select components (load immediately) -->
 <link rel="preload" href="{{smart_asset('chosen/chosen.css')}}" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="{{smart_asset('chosen/chosen.css')}}"></noscript>
@@ -136,24 +161,33 @@
     padding-top: 30px;
 }
 
-/* Service Sidebar Styles - Matching Design */
+/* Service Sidebar — Evoory dark/lime theme */
+.col-md-3 > h3 {
+    color: #fff !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    margin: 0 0 -1px !important;
+    padding: 14px 16px !important;
+    background: #0e121a !important;
+    border: 1px solid #1f262f !important;
+    border-radius: 8px 8px 0 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.col-md-3 > h3 .fa-list { color: #C1F11D !important; }
+
 .service-sidebar {
-    background: #3a3a3a;
-    padding: 0;
-    border-radius: 4px;
-    margin-bottom: 20px;
+    background: #0a0a0a !important;
+    border: 1px solid #1f262f !important;
+    border-top: 0 !important;
+    border-radius: 0 0 8px 8px !important;
+    margin: 0 0 20px !important;
     overflow: hidden;
+    padding: 0;
 }
 
-.service-sidebar h3 {
-    color: #f5a623;
-    font-size: 18px;
-    margin: 0;
-    padding: 20px;
-    background: #2d2d2d;
-    border-bottom: none;
-    font-weight: 600;
-}
+.service-sidebar h3 { display: none !important; } /* legacy inner h3, never rendered now */
 
 .service-list {
     list-style: none;
@@ -163,7 +197,7 @@
 
 .service-list li {
     margin: 0;
-    border-bottom: 1px solid #2d2d2d;
+    border-bottom: 1px solid #1f262f;
 }
 
 .service-list li:last-child {
@@ -171,41 +205,62 @@
 }
 
 .service-list a {
-    color: #f5a623;
+    color: #d6dbe6 !important;
     text-decoration: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    transition: all 0.2s ease;
-    font-size: 16px;
-    background: #3a3a3a;
+    padding: 12px 16px;
+    transition: background 0.15s ease, color 0.15s ease;
+    font-size: 14px;
+    background: transparent;
 }
 
 .service-list a:hover {
-    background: #444;
-    color: #C1F11D;
+    background: #12191c !important;
+    color: #C1F11D !important;
 }
 
 .service-list a.active {
-    background: #4a4a4a;
-    color: #C1F11D;
-    font-weight: 500;
+    background: #12191c !important;
+    color: #C1F11D !important;
+    font-weight: 600;
+    border-left: 3px solid #C1F11D;
+    padding-left: 13px;
 }
 
 .service-count {
-    background: #5a5a5a;
-    color: #fff;
-    padding: 4px 12px;
-    border-radius: 14px;
-    font-size: 13px;
-    min-width: 40px;
+    background: #1f262f;
+    color: #8f97a6;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    min-width: 36px;
     text-align: center;
     font-weight: 500;
 }
 
+.service-list a:hover .service-count,
 .service-list a.active .service-count {
-    background: #666;
+    background: rgba(193, 241, 29, 0.12);
+    color: #C1F11D;
+}
+
+/* Header Search button — restore the lime pill the homepage uses. Scoped
+   to #header so it only touches the search submit on this page. */
+#header #submit,
+#header button.btn.btn-primary[type="submit"] {
+    background: #C1F11D !important;
+    background-image: none !important;
+    color: #000 !important;
+    border: none !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+}
+#header #submit:hover,
+#header button.btn.btn-primary[type="submit"]:hover {
+    background: #d4f84d !important;
 }
 
 .select2.select2-container {
@@ -499,25 +554,25 @@ min-width: 222px;
 }
 
 #search-more .modal-content {
-    background-color: #2d2d2d !important;
-    color: white !important;
-    border: 1px solid #444;
-    border-radius: 4px;
+    background-color: #0e121a !important;
+    color: #fff !important;
+    border: 1px solid #1f262f !important;
+    border-radius: 10px;
 }
 
 #search-more .modal-header {
-    background-color: #2d2d2d !important;
-    border-bottom: 1px solid #444;
+    background-color: #0e121a !important;
+    border-bottom: 1px solid #1f262f !important;
     padding: 20px;
 }
 
 #search-more .modal-title {
-    color: #f5a623 !important;
+    color: #fff !important;
     font-weight: 600;
 }
 
 #search-more .close {
-    color: white !important;
+    color: #fff !important;
     opacity: 0.8;
     text-shadow: none;
 }
@@ -527,30 +582,30 @@ min-width: 222px;
 }
 
 #search-more .modal-body {
-    background-color: #2d2d2d !important;
+    background-color: #0e121a !important;
     padding: 30px 20px;
 }
 
 #search-more label {
-    color: #ddd !important;
+    color: #d6dbe6 !important;
     font-weight: normal;
 }
 
 #search-more .modal-footer {
-    background-color: #2d2d2d !important;
-    border-top: 1px solid #444;
+    background-color: #0e121a !important;
+    border-top: 1px solid #1f262f !important;
     padding: 20px;
 }
 
 #search-more .btn-primary {
-    background-color: #f5a623 !important;
-    border-color: #f5a623 !important;
+    background-color: #C1F11D !important;
+    border-color: #C1F11D !important;
     color: #000 !important;
 }
 
 #search-more .btn-primary:hover {
-    background-color: #C1F11D !important;
-    border-color: #C1F11D !important;
+    background-color: #d4f84d !important;
+    border-color: #d4f84d !important;
 }
 
 /* Main Navigation Tabs - ESCORTS / WHAT'S NEW */
@@ -825,7 +880,7 @@ min-width: 222px;
                 
                 <div class="other-thumbs pull-left">
                   @if($auction->status == 'ended' && $auction->winnerProfile && $auction->winnerProfile->multipleimgs)
-                    @foreach($auction->winnerProfile->multipleimgss->take(3) as $key => $img)
+                    @foreach($auction->winnerProfile->multipleimgs->take(3) as $key => $img)
                       <div class="thumb thumb-{{ $key }}">
                         <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
                           <span class="img-wrapper mini">
@@ -956,11 +1011,11 @@ min-width: 222px;
 
             
             <div class="other-thumbs pull-left">
-              @forelse($profile->multipleimgss as $imgs)
-              <div class="thumb thumb-0">
+              @forelse(($profile->multipleimgs ?? collect())->take(3) as $imgs)
+              <div class="thumb thumb-{{ $loop->index }}">
                 <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                   <span class="img-wrapper mini">
-                 
+
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
                     <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
                       <i class="fa fa-check"></i>
@@ -968,9 +1023,9 @@ min-width: 222px;
                     </span>
                     @endif
                     <div class="image-wrapper">
-                      <img alt="{{ $profile->name }} - Photo {{ $loop->iteration }}" 
-                           class="img-responsive" 
-                           height="60" 
+                      <img alt="{{ $profile->name }} - Photo {{ $loop->iteration }}"
+                           class="img-responsive"
+                           height="60"
                            width="60"
                            loading="lazy"
                            src="{{smart_asset('userimages/'.$imgs->user_id.'/'.$imgs->profile_id.'/'.$imgs->image)}}" />
@@ -979,7 +1034,7 @@ min-width: 222px;
                 </a>
               </div>
               @empty
-                  
+
               @endforelse
               
               
@@ -1036,9 +1091,8 @@ min-width: 222px;
               </a>
             </div>
             <div class="other-thumbs pull-left">
-          @forelse($profile->multipleimgss->take(2) as $k => $imgs)
-                      @if($k < 2)
-              <div class="thumb thumb-0">
+          @forelse(($profile->multipleimgs ?? collect())->take(2) as $k => $imgs)
+              <div class="thumb thumb-{{ $k }}">
                 <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                   <span class="img-wrapper mini">
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
@@ -1048,13 +1102,12 @@ min-width: 222px;
                     </span>
                     @endif
                     <div class="image-wrapper">
-                      <img alt="{{ $profile->name }} - Photo {{ $k+1 }}" class="img-responsive" height="60" 
+                      <img alt="{{ $profile->name }} - Photo {{ $k+1 }}" class="img-responsive" height="60"
                            src="{{smart_asset('userimages/'.$imgs->user_id.'/'.$imgs->profile_id.'/'.$imgs->image)}}" width="60">
                     </div>
                   </span>
                 </a>
               </div>
-            @endif
             @empty
             @endforelse
             </div>

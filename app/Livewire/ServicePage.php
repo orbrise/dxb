@@ -11,6 +11,16 @@ use App\Services\CacheService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 
+// NOTE: ServicePage intentionally uses Livewire's default `app` layout. An
+// attempt to switch this to `components.layouts.app-evoory` (matching HomePage)
+// crashed production with "Allowed memory size exhausted" inside the compiled
+// view. The service-page view structure (top-level `@section('headerform')` +
+// heavy `@push('css')` blocks + nested `@forelse` over $profiles + the
+// search-header component) interacts badly with app-evoory's slot + stack +
+// header partial chain in a way the homepage doesn't trigger. Visual parity
+// for the search bar / Search button is achieved by the CSS rules embedded
+// inside resources/views/components/search-header.blade.php — those apply
+// universally regardless of layout, so the user-visible result is the same.
 class ServicePage extends Component
 {
     use WithPagination;
@@ -343,6 +353,7 @@ class ServicePage extends Component
                     $query->select('id', 'user_id', 'profile_id', 'image')->limit(6);
                 },
                 'photoverify:id,profile_id,status',
+                'package:id,name',
                 'reviews' => function($query) {
                     $query->select('id', 'profile_id')->limit(1);
                 }

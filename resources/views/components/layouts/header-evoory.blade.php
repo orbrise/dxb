@@ -5,6 +5,14 @@
     $citySlug = function_exists('getFeaturedCitySlug') ? getFeaturedCitySlug() : 'dubai';
     // Listings (home) pages: /, /{gender}-escorts-in-{city}, /{gender}-escorts-in-{city}/page/{n}
     $isHomePage = $currentRoute === 'home' || $currentRoute === 'home.paginated' || $currentRoute === 'newhome' || $currentPath === '/' || (bool) preg_match('#^(female|male|shemale)-escorts-in-[^/]+(/page/\d+)?$#', $currentPath);
+    // Service-filtered listing pages: /{service}-{gender}-escorts-in-{city}
+    // Treat them as a listing page so the ESCORTS / WHAT'S NEW tabs render
+    // and the desktop nav matches the homepage. The non-capturing prefix
+    // `(?:[a-z][a-z0-9-]+-)?` allows zero or one service slug before the
+    // gender; without it the URL fell through to the no-tabs branch and the
+    // service page header looked stripped down vs the homepage.
+    $isServicePage = (bool) preg_match('#^[a-z][a-z0-9-]+-(female|male|shemale)-escorts-in-[^/]+(/page/\d+)?$#', $currentPath);
+    $isHomePage = $isHomePage || $isServicePage;
     // News / What's new pages
     $isNewsPage = in_array($currentRoute, ['news.all', 'news.page']) || str_contains($currentPath, 'escort-news-in-');
     // Auth pages keep their own layout
@@ -125,16 +133,21 @@
                     @if(Auth::user()->type != 1)
                         @php
                             $userProfile = auth()->user()->profiles->first();
+                            // Always surface a "My Profile" entry in the header, even for
+                            // brand-new accounts that haven't created a profile yet — the
+                            // link then points to the create-profile flow so users have a
+                            // clear path forward instead of a missing menu item.
+                            $myProfileHref = $userProfile
+                                ? url('my-profile/'.$userProfile->slug.'/'.$userProfile->id)
+                                : route('new.profile');
                         @endphp
-                        @if($userProfile)
-                        <a href="{{ url('my-profile/'.$userProfile->slug.'/'.$userProfile->id) }}" class="ev-nav-link" wire:navigate>
+                        <a href="{{ $myProfileHref }}" class="ev-nav-link" wire:navigate>
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
                             My Profile
                         </a>
-                        @endif
                         <a href="{{ url('my-account') }}" class="ev-nav-link" wire:navigate>
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>

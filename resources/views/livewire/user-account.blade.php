@@ -622,9 +622,18 @@
         <div class="ev-account-cards">
             
             {{-- User info card --}}
+            @php
+                // Mirror the avatar resolution used on the edit page: prefer the
+                // user's uploaded/Google-fetched avatar on the public disk; fall
+                // back to a Gravatar identicon when they don't have one yet.
+                $authUser = auth()->user();
+                $accountAvatarUrl = !empty($authUser->avatar) && \Illuminate\Support\Facades\Storage::disk('public')->exists($authUser->avatar)
+                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($authUser->avatar)
+                    : 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($authUser->email))) . '?s=128&d=identicon';
+            @endphp
             <div class="ev-account-card">
                 <div class="ev-user-card">
-                    <img alt="{{ auth()->user()->name }}'s avatar" class="ev-avatar" src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim(auth()->user()->email))) }}?s=128&d=identicon" />
+                    <img alt="{{ $authUser->name }}'s avatar" class="ev-avatar" src="{{ $accountAvatarUrl }}" />
                     <div>
                         <h2 class="ev-user-name">{{ auth()->user()->name }}</h2>
                         <ul class="ev-user-info">

@@ -194,16 +194,18 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            color: #C77DFF;
+            color: #C77DFF !important;
             font-size: 22px;
             font-weight: 700;
             margin: 0 0 8px;
         }
+        .ev-empty-listings-title a,
+        .ev-empty-listings-title span { color: #C77DFF !important; }
         .ev-empty-listings-ban {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: #C77DFF;
+            color: #C77DFF !important;
         }
         .ev-empty-listings-ban svg { display: block; }
         .ev-empty-listings-sub {
@@ -280,6 +282,9 @@
         .ev-empty-listings-wrap .ev-fallback-card + .ev-fallback-card {
             border-top: 1px solid #1f1f1f !important;
         }
+        /* When the profile has no thumbnails, hide the empty thumbs column slot so the
+           text expands naturally without a 65px gap. */
+        .ev-empty-listings-wrap .ev-fallback-card--no-thumbs .ev-fallback-thumbs { display: none !important; }
         .listings .ev-fallback-main,
         .ev-empty-listings-wrap .ev-fallback-main {
             flex: 0 0 200px !important;
@@ -340,9 +345,11 @@
         }
         .listings .ev-fallback-info,
         .ev-empty-listings-wrap .ev-fallback-info {
-            flex: 1 1 auto !important;
+            flex: 1 1 0 !important;
             min-width: 0 !important;
+            max-width: 100% !important;
             padding-left: 8px !important;
+            overflow: hidden !important;
         }
         .ev-empty-listings-wrap .ev-fallback-name {
             color: #fff !important;
@@ -350,6 +357,8 @@
             font-weight: 700 !important;
             margin: 0 0 10px !important;
             line-height: 1.2 !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
         }
         .ev-empty-listings-wrap .ev-fallback-name a { color: #fff !important; text-decoration: none !important; }
         .ev-empty-listings-wrap .ev-fallback-desc,
@@ -360,6 +369,10 @@
             font-weight: 400 !important;
             line-height: 1.5 !important;
             margin: 0 0 14px !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+            white-space: normal !important;
+            max-width: 100% !important;
         }
         .ev-empty-listings-wrap .ev-fallback-see-more {
             display: inline-block !important;
@@ -422,6 +435,15 @@
         aspect-ratio: 1 / 1 !important;
         border-radius: 0 !important;
         margin-bottom: 10px !important;
+            }
+            /* No-thumb cards: main image expands full width on mobile too. */
+            .ev-empty-listings-wrap .ev-fallback-card--no-thumbs .ev-fallback-main {
+                flex: 0 0 100% !important;
+                width: 100% !important;
+                border-radius: 10px !important;
+            }
+            .ev-empty-listings-wrap .ev-fallback-card--no-thumbs .ev-fallback-main img {
+                width: 100% !important;
             }
             .ev-empty-listings-wrap .ev-fallback-thumb img {
                 width: 100% !important;
@@ -2171,21 +2193,23 @@
                         $fallbackMainImg = smart_asset('admin/assets/img/flat-icons/user.png');
                     }
                 @endphp
-                <div class="ev-fallback-card">
+                <div class="ev-fallback-card{{ $profile->multipleimgs->isEmpty() ? ' ev-fallback-card--no-thumbs' : '' }}">
                     {{-- Mobile-only title (appears above the image row on small screens) --}}
                     <h2 class="ev-fallback-name ev-fallback-name--mobile">
                         <a class="nostyle-link" href="{{ $fallbackUrl }}">{{ $profile->name }}</a>
                     </h2>
-                    <a class="ev-fallback-main" href="{{ $fallbackUrl }}">
-                        <img alt="{{ $profile->name }} - escort in {{ optional($fallbackCityModel)->name ?? '' }}" loading="lazy" decoding="async" src="{{ $fallbackMainImg }}">
+                    <a class="ev-fallback-main" href="{{ $fallbackUrl }}" style="flex:0 0 200px;width:200px;max-width:200px;height:210px;display:block;border-radius:6px;overflow:hidden;background:#111;">
+                        <img alt="{{ $profile->name }} - escort in {{ optional($fallbackCityModel)->name ?? '' }}" width="200" height="210" loading="lazy" decoding="async" src="{{ $fallbackMainImg }}" style="width:200px;height:210px;max-width:200px;object-fit:cover;display:block;">
                     </a>
-                    <div class="ev-fallback-thumbs">
+                    @if($profile->multipleimgs->isNotEmpty())
+                    <div class="ev-fallback-thumbs" style="flex:0 0 65px;width:65px;display:flex;flex-direction:column;gap:5px;">
                         @foreach($profile->multipleimgs->take(3) as $k => $imgs)
-                            <a class="ev-fallback-thumb" href="{{ $fallbackUrl }}">
-                                <img alt="{{ $profile->name }} - Photo {{ $k + 1 }}" loading="lazy" src="{{ webp_asset('userimages/'.$imgs->user_id.'/'.$imgs->profile_id.'/'.$imgs->image) }}">
+                            <a class="ev-fallback-thumb" href="{{ $fallbackUrl }}" style="display:block;width:65px;height:65px;border-radius:4px;overflow:hidden;background:#111;">
+                                <img alt="{{ $profile->name }} - Photo {{ $k + 1 }}" width="65" height="65" loading="lazy" src="{{ webp_asset('userimages/'.$imgs->user_id.'/'.$imgs->profile_id.'/'.$imgs->image) }}" style="width:65px;height:65px;max-width:65px;object-fit:cover;display:block;">
                             </a>
                         @endforeach
                     </div>
+                    @endif
                     <div class="ev-fallback-info">
                         <h2 class="ev-fallback-name ev-fallback-name--desktop">
                             <a class="nostyle-link" href="{{ $fallbackUrl }}">{{ $profile->name }}</a>

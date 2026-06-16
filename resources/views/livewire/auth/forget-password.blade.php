@@ -9,19 +9,20 @@
     </div>
 </div>
 
-    @if (session()->has('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if (session()->has('error'))
-        <div class="alert alert-danger">
-            {{ session('error') }}
-        </div>
-    @endif
-
     <div class="ev-login-page">
+        @if (session()->has('success'))
+            <div class="ev-flash ev-flash-success">
+                <svg class="ev-flash-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if (session()->has('error'))
+            <div class="ev-flash ev-flash-error">
+                <svg class="ev-flash-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>{{ session('error') }}</span>
+            </div>
+        @endif
         {{-- Mobile Logo & Welcome --}}
         <div class="ev-login-mobile-header">
             <a href="/" class="ev-login-logo">
@@ -85,9 +86,10 @@
 .ev-auth-back-link{display:inline-flex;align-items:center;gap:4px;color:#b5df19;text-decoration:none;font-size:15px;position:absolute;left:16px}
 .ev-auth-topbar-title{color:#d6dbe6;font-size:22px;font-weight:400;line-height:1}
 
-.ev-login-page .alert{max-width:420px;margin:16px auto;padding:12px 16px;border-radius:5px;font-size:15px}
-.ev-login-page .alert-success{background:rgba(193,241,29,.12);border:1px solid rgba(193,241,29,.3);color:#c1f11d}
-.ev-login-page .alert-danger{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171}
+.ev-flash{max-width:420px;margin:0 auto 18px;padding:14px 18px;border-radius:8px;font-size:15px;display:flex;align-items:center;gap:10px;text-align:left;line-height:1.4}
+.ev-flash-icon{flex-shrink:0}
+.ev-flash-success{background:rgba(193,241,29,.1);border:1px solid rgba(193,241,29,.35);color:#c1f11d;box-shadow:0 4px 18px rgba(193,241,29,.08)}
+.ev-flash-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#f87171;box-shadow:0 4px 18px rgba(239,68,68,.08)}
 .validation-error{color:#f87171;font-size:13px;margin-top:4px;display:block}
 
 .ev-login-page{max-width:1180px;margin:0 auto;padding:36px 16px 60px}
