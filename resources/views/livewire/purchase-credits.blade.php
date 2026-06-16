@@ -200,19 +200,33 @@
 #paypal-button-container {
     margin-top: 20px;
     width: 100%;
+    /* White card behind PayPal's form. PayPal's inline checkout (the
+       "Pay with debit/credit card" panel that appears after the user picks
+       that funding source) renders labels like "Billing address" and the
+       "You acknowledge the terms…" disclaimer in dark grey designed for a
+       white background. When this container is the page's near-black we
+       were using before, those labels become invisible. The lime accent
+       lives on the *border* instead so the section still reads as themed
+       without ruining contrast for PayPal's own text. */
+    background: #858585;
+    color: #ffffff;
+    border: 2px solid #C1F11D;
+    border-radius: 12px;
+    padding: 14px;
+    box-sizing: border-box;
 }
-
-/* Override PayPal button color */
 #paypal-button-container .paypal-button {
-    background-color: #C1F11D !important;
     border-radius: 22px !important;
 }
-#paypal-button-container .paypal-button-color-gold,
-#paypal-button-container .paypal-button-color-black {
-    background: #C1F11D !important;
+/* Make sure any inline text PayPal injects (labels, disclaimers, links)
+   is readable on the white card — the SDK styles them with default dark
+   colors, but if our page reset bleeds through they’d turn white again. */
+#paypal-button-container,
+#paypal-button-container * {
+    color: #1a1a1a;
 }
-#paypal-button-container .paypal-button:hover {
-    background-color: #d4f84d !important;
+#paypal-button-container a {
+    color: #0066cc;
 }
 
 /* Primary Gateway Iframe */
@@ -395,8 +409,13 @@
   </div>
 </div>
 
-<div class="purchase-credits-page" style="background: #000; min-height: 100vh; padding: 30px 50px;">
-  <div style="max-width: 560px;">
+<div class="purchase-credits-page" style="background: #000; min-height: 100vh; padding: 30px 16px;">
+  {{-- Match the header's `.ev-container` (max-width 1300px, margin 0 auto)
+       so the page body sits flush with the evoory logo above. Inside that
+       container the actual card stays narrow (560px) but centered, so the
+       payment form keeps a comfortable reading width on wide screens. --}}
+  <div class="ev-container" style="max-width: 1300px; margin: 0 auto; padding: 0 16px;">
+  <div style="max-width: 48%;">
         <div id="content">
             <!-- Payment Result Modal -->
             <div aria-labelledby="paymentResultModalLabel" class="modal fade modal__payment-result" id="paymentResultModal" role="dialog" tabindex="-1" style="display: none;">
@@ -526,6 +545,7 @@
             </div>
         </div>
   </div>
+  </div>{{-- /ev-container --}}
 </div>
 </div>
 
@@ -654,37 +674,40 @@
     
     function initPrimaryGatewayIframe() {
         console.log('=== initPrimaryGatewayIframe CALLED ===');
-        
+
+        var $container = document.getElementById('primary-gateway-container');
         var $loading = document.getElementById('primary-gateway-loading');
         var $iframe = document.getElementById('primary-gateway-iframe');
-        
+
         var amountInput = document.getElementById('amount');
         if (amountInput) {
             selectedAmount = parseFloat(amountInput.value) || 0;
         }
-        
+
         if (selectedAmount < 10 || selectedAmount > 100) {
-            document.getElementById('primary-gateway-container').innerHTML = '<p class="text-danger p-3">Please enter a valid amount between $10 and $100.</p>';
+            $container.innerHTML = '<p class="text-danger p-3">Please enter a valid amount between $10 and $100.</p>';
             return;
         }
-        
-        // Show loading
+
+        // Clear any previous fallback link / error state and reset visibility.
+        var $fallback = document.getElementById('primary-gateway-fallback');
+        if ($fallback) $fallback.remove();
         $loading.style.display = 'block';
+        $loading.innerHTML = '<i class="fa fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading secure payment form...</p>';
         $iframe.style.display = 'none';
-        
+
         // Generate a unique reference ID
         var referenceId = 'CREDITS_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
+
         // Store reference for callback
         window.primaryPaymentReference = {
             referenceId: referenceId,
             amount: selectedAmount
         };
-        
+
         // Build the external payment URL
         var callbackUrl = encodeURIComponent(window.location.origin + '/payment/credits-callback?reference_id=' + referenceId);
-        var cancelUrl = encodeURIComponent(window.location.href);
-        
+
         var externalPaymentUrl = 'https://myadsnetwork.com/external-payment/checkout' +
             '?price=' + selectedAmount +
             '&name=' + encodeURIComponent('Purchase ' + selectedAmount + ' Credits') +
@@ -693,17 +716,51 @@
             '&reference_id=' + referenceId +
             '&customer_email=' + encodeURIComponent('{{ auth()->user()->email }}') +
             '&embed=1';
-        
+
         console.log('Loading iframe:', externalPaymentUrl);
-        
-        // Set iframe source
-        $iframe.src = externalPaymentUrl;
-        
+
+        var loaded = false;
+
+        // If the gateway sends `X-Frame-Options: DENY/SAMEORIGIN` (or fails to
+        // respond at all), the iframe's `onload` event never fires and the
+        // spinner spins forever — that's the most common "primary gateway not
+        // working" symptom. Race the load against an 8s timeout and degrade
+        // gracefully by offering to open the gateway in a new tab.
+        var timeoutId = setTimeout(function() {
+            if (loaded) return;
+            console.warn('Primary gateway iframe did not load in 8s — falling back to new-tab link.');
+            $iframe.style.display = 'none';
+            $loading.style.display = 'none';
+
+            // Build a non-embedded URL for the new-tab path (gateway usually
+            // requires `embed=0` or omitted for a top-level checkout).
+            var topLevelUrl = externalPaymentUrl.replace(/&embed=1$/, '');
+
+            var fallback = document.createElement('div');
+            fallback.id = 'primary-gateway-fallback';
+            fallback.style.cssText = 'text-align:center;padding:24px;background:#1a1f28;border:1px solid #2a3241;border-radius:8px;color:#fff;';
+            fallback.innerHTML =
+                '<p style="margin-bottom:12px;color:#f87171;"><i class="fa fa-exclamation-triangle"></i> ' +
+                'The payment form couldn’t load inside this page.</p>' +
+                '<a href="' + topLevelUrl + '" target="_blank" rel="noopener" ' +
+                'style="display:inline-block;background:#C1F11D;color:#000;font-weight:600;' +
+                'padding:10px 22px;border-radius:22px;text-decoration:none;">' +
+                'Open secure payment in a new window</a>' +
+                '<p style="margin-top:14px;font-size:12px;color:#9aa3b2;">' +
+                'After completing the payment, return to this page — your credits will be added automatically.</p>';
+            $container.appendChild(fallback);
+        }, 8000);
+
         // Show iframe when loaded
         $iframe.onload = function() {
+            loaded = true;
+            clearTimeout(timeoutId);
             $loading.style.display = 'none';
             $iframe.style.display = 'block';
         };
+
+        // Set iframe source
+        $iframe.src = externalPaymentUrl;
     }
     
     function initPayPalButtons() {
@@ -759,7 +816,12 @@
             paypal.Buttons({
                 style: {
                     layout: 'vertical',
-                    color: 'gold',
+                    // PayPal's SDK does not offer a green button color; gold
+                    // (yellow) is the default and the only non-neutral choice.
+                    // `silver` removes the yellow and leaves a clean grey/white
+                    // PayPal-logo button that sits well inside the green
+                    // wrapper we put around #paypal-button-container.
+                    color: 'silver',
                     shape: 'pill',
                     label: 'paypal',
                     height: 40

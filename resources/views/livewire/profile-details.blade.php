@@ -33,13 +33,25 @@
         $phoneE164 = ($ccDigits || $nat) ? '+' . $ccDigits . $nat : '';
         $phoneForLink = $ccDigits . $nat;
     }
+
+    // Safe city/country fallbacks. Some imported or archived profiles have a
+    // null user OR a missing gcity/getcountry relation; raw `$user->gcity->name`
+    // throws "Attempt to read property on null" the moment either is absent
+    // (the `??` operator can't rescue a null receiver). Resolve once here so
+    // every reference below survives orphaned data.
+    $cityName = optional(optional($user)->gcity)->name ?? 'Dubai';
+    $cityCountry = optional(optional($user)->gcity)->country ?? 'UAE';
+    $citySlug = Str::slug($cityName);
+    $nationality = optional(optional($user)->getcountry)->nationality ?? '';
+    $userName = optional($user)->name ?? optional($profile)->name ?? '';
+    $userCityField = optional($user)->city ?? $cityName;
   @endphp
 
   <div class="nav-bar navbar-top-nav" itemscope="" itemtype="https://schema.org/BreadcrumbList">
     <div class="container-fluid" itemprop="itemListElement" itemscope="" itemtype="https://schema.org/ListItem">
-      <a class="back-link btn btn-dark" href="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}" itemprop="item" title="Back">
+      <a class="back-link btn btn-dark" href="/{{ $gender }}-escorts-in-{{ $citySlug }}" itemprop="item" title="Back">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        <span itemprop="name">{{ ucfirst($gender) }} Escorts in {{$user->gcity->name}}</span>
+        <span itemprop="name">{{ ucfirst($gender) }} Escorts in {{ $cityName }}</span>
       </a>
 
       <meta content="1" itemprop="position" />
@@ -47,8 +59,8 @@
 
         @livewire('favorite-profile', ['profileId' => $profile->id])
 
-        <a href="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}/{{ $profile->slug }}">
-          <h1 style="font-size: 18px; margin-top: 7px; font-weight: 500;">{{ ucfirst($profile->name)}} – {{$user->getcountry->nationality ?? ''}} escort in {{$user->gcity->name}}</h1>
+        <a href="/{{ $gender }}-escorts-in-{{ $citySlug }}/{{ $profile->slug }}">
+          <h1 style="font-size: 18px; margin-top: 7px; font-weight: 500;">{{ ucfirst($profile->name)}} – {{ $nationality }} escort in {{ $cityName }}</h1>
         </a>
       </div>
       <a wire:click='nextescort' class="next btn btn-dark" href="javascript:void(0)">
@@ -60,7 +72,7 @@
   </div>
 
   <div class="listing-user-actions" navbar-affix="">
-    <a class="pull-left btn btn-dark btn-lg" href="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}" itemprop="url" title="Back">
+    <a class="pull-left btn btn-dark btn-lg" href="/{{ $gender }}-escorts-in-{{ $citySlug }}" itemprop="url" title="Back">
       <i class="fa fa-angle-left fa-fw"></i>All </a>
     <a wire:click='nextescort' class="pull-right btn btn-dark btn-lg" href="#">Next <i
         class="fa fa-angle-right fa-fw"></i>
@@ -98,7 +110,7 @@
         <div class="listing-title title visible-xs">
           @livewire('favorite-profile', ['profileId' => $profile->id])
           <a href="javascript:void(0);">
-            <h1>{{ ucfirst($profile->name)}} – {{$user->getcountry->nationality ?? ''}} escort in {{$user->gcity->name}}</h1>
+            <h1>{{ ucfirst($profile->name)}} – {{ $nationality }} escort in {{ $cityName }}</h1>
           </a>
           <div class="clearfix"></div>
         </div>
@@ -117,7 +129,7 @@
                       </span>
                       @endif
                       <div class="image-wrapper">
-                        <img alt="{{ $user->name }} - escort in {{ $user->city }}" class="img-responsive" data-original-height="1499" data-original-width="1000" data-thumb-url="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" height="327" loading="{{ $loop->first ? 'eager' : 'lazy' }}" fetchpriority="{{ $loop->first ? 'high' : 'auto' }}" decoding="async" src="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" width="238">
+                        <img alt="{{ $userName }} - escort in {{ $userCityField }}" class="img-responsive" data-original-height="1499" data-original-width="1000" data-thumb-url="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" height="327" loading="{{ $loop->first ? 'eager' : 'lazy' }}" fetchpriority="{{ $loop->first ? 'high' : 'auto' }}" decoding="async" src="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" width="238">
                       </div>
                     </span>
                   </a>
@@ -310,7 +322,7 @@
                 <tr>
                   <td class="label-cell">City</td>
                   <td class="value-cell" colspan="3">
-                    <a href="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}">{{$user->gcity->name ?? 'none'}}@if($user->gcity && $user->gcity->country) - {{$user->gcity->country}}@endif</a>
+                    <a href="/{{ $gender }}-escorts-in-{{ $citySlug }}">{{ $cityName }}@if($cityCountry) - {{ $cityCountry }}@endif</a>
                   </td>
                 </tr>
               </table>
@@ -422,9 +434,9 @@
                               <meta
                                 content="{{ $firstImage ? webp_asset('userimages/'.$firstImage->user_id.'/'.$firstImage->profile_id.'/'.$firstImage->image) : '' }}"
                                 itemprop="image" />
-                              <meta content="{{ $profile->name }} - escort in {{ $user->gcity->name ?? 'Dubai' }}" itemprop="name" />
-                              <meta content="/{{ $gender }}-escorts-in-{{ Str::slug($user->gcity->name ?? 'dubai') }}/{{ $profile->slug }}" itemprop="url" />
-                              <meta content="{{ $user->gcity->name ?? 'Dubai' }}, {{ $user->gcity->country ?? 'UAE' }}" itemprop="areaServed" />
+                              <meta content="{{ $profile->name }} - escort in {{ $cityName }}" itemprop="name" />
+                              <meta content="/{{ $gender }}-escorts-in-{{ $citySlug }}/{{ $profile->slug }}" itemprop="url" />
+                              <meta content="{{ $cityName }}, {{ $cityCountry }}" itemprop="areaServed" />
                             </div>
                             <span class="star-rating" data-val="{{$review->star}}" itemprop="reviewRating" itemscope=""
                               itemtype="https://schema.org/Rating" title="Rating: 5 / 5">
@@ -523,7 +535,7 @@
                     href="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}">
                     <span class="img-wrapper listing">
                       <div class="image-wrapper">
-                        <img alt="{{ $user->name }} - escort in {{ $user->city }}" class="img-responsive uniform-image"
+                        <img alt="{{ $userName }} - escort in {{ $userCityField }}" class="img-responsive uniform-image"
                           loading="lazy" decoding="async"
                           src="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}" />
                       </div>
@@ -787,7 +799,7 @@
             <p style="margin:0;color:#fff;font-size:16px;">Your message has been sent</p>
             @else
             <h1 class="modal-title" style="margin:0;font-size:17px;font-weight:600;color:#fff;flex:1;">
-              Message for {{$user->name}}
+              Message for {{ $userName }}
             </h1>
             @endif
             <button class="close" type="button" data-dismiss="modal" aria-label="Close"
@@ -1005,7 +1017,7 @@
             <button class="close" type="button" data-dismiss="modal">
               <i class="fa fa-times"></i>
             </button>
-            <h1 class="modal-title">Report {{$user->name}}</h1>
+            <h1 class="modal-title">Report {{ $userName }}</h1>
           </div>
           <div class="modal-body">
             @if(!auth()->check())
@@ -1430,7 +1442,7 @@ document.querySelectorAll('.report-link').forEach(function(link) {
               <div id="customLightbox" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999;">
                 <div id="lightboxImageContainer" style="position: absolute; top: 10%; left: 0; right: 0; bottom: 140px; display: flex; align-items: center; justify-content: center; padding: 0px; width: 100%; height: 36rem;">
                   <img id="lightboxImage" style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; box-shadow: 0 4px 20px rgba(0,0,0,0.5); object-fit: cover; opacity: 1; transition: opacity 0.4s ease-in-out;">
-                  <div id="lightboxProfileText" style="display: none; position: absolute; bottom: 12px; left: 16px; right: 16px; z-index: 3; color: #fff; font-size: 14px; line-height: 1.4;">{{ ucfirst($profile->name) }}, {{ $user->getcountry->nationality ?? '' }} escort in {{ $user->gcity->name }}</div>
+                  <div id="lightboxProfileText" style="display: none; position: absolute; bottom: 12px; left: 16px; right: 16px; z-index: 3; color: #fff; font-size: 14px; line-height: 1.4;">{{ ucfirst($profile->name) }}, {{ $nationality }} escort in {{ $cityName }}</div>
                 </div>
                 
                 <!-- Play/Stop button -->
