@@ -378,14 +378,18 @@ class ServicePage extends Component
             ->with([
                 'singleimg:id,user_id,profile_id,image',
                 'coverimg:id,user_id,profile_id,image',
-                'multipleimgs' => function($query) {
-                    $query->select('id', 'user_id', 'profile_id', 'image')->limit(6);
-                },
+                // Note: NO ->limit()/->take() on these eager-load constraints.
+                // An ->limit(N) inside `with()` applies a single SQL LIMIT
+                // across the WHOLE result set, not per parent profile — so on
+                // a 25-profile page only N rows total are loaded and the
+                // remaining profiles silently render with empty collections.
+                // That bug is exactly why side thumbs (multipleimgs) were
+                // missing from every profile after the first one on this
+                // page. See memory/project_eager_load_limit_footgun.md.
+                'multipleimgs:id,user_id,profile_id,image',
                 'photoverify:id,profile_id,status',
                 'package:id,name',
-                'reviews' => function($query) {
-                    $query->select('id', 'profile_id')->limit(1);
-                }
+                'reviews:id,profile_id',
             ])
             ->get();
 

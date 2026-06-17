@@ -639,6 +639,40 @@ min-width: 222px;
     display: block;
 }
 
+/* Side thumbs on the Basic card. The legacy listing CSS only styles
+   .other-thumbs for premium/featured layouts, so the new basic-card
+   thumbs need their own size + spacing rules. Stack three 60×60 squares
+   vertically next to the 89×95 main image so the column reads at a
+   glance and matches the homepage's fallback card layout. */
+.listings > .listing-li.basic .thumbs { display: flex; gap: 6px; }
+.listings > .listing-li.basic .main-thumbs { flex: 0 0 89px; }
+.listings > .listing-li.basic .other-thumbs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    float: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.listings > .listing-li.basic .other-thumbs .thumb {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.listings > .listing-li.basic .other-thumbs .img-wrapper,
+.listings > .listing-li.basic .other-thumbs .image-wrapper {
+    width: 60px;
+    height: 60px;
+    display: block;
+    overflow: hidden;
+    border-radius: 4px;
+}
+.listings > .listing-li.basic .other-thumbs img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    display: block;
+}
+
 .select2-container--default .select2-selection--single,
 .select2-container--default .select2-selection--multiple {
     background-color: #333 !important;
@@ -1289,7 +1323,15 @@ min-width: 222px;
         </div>
 
         @elseif($isBasic)
-        <div class="listing-li pb-3 basic thumbs-0 thumbs-basic" style="padding-left:0px">
+        @php
+            // Compute the side-thumb collection up front so we can swap the
+            // basic card to a "thumbs-3" layout when extras exist. Without
+            // this the basic branch only ever rendered the main image, even
+            // when the profile had 2-3 additional photos.
+            $basicSideThumbs = ($profile->multipleimgs ?? collect())->take(3);
+            $basicHasThumbs = $basicSideThumbs->isNotEmpty();
+        @endphp
+        <div class="listing-li pb-3 basic {{ $basicHasThumbs ? 'thumbs-3' : 'thumbs-0' }} thumbs-basic" style="padding-left:0px">
           <h2 class="visible-xxs">
             <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">{{$profile->name}}</a>
           </h2>
@@ -1305,11 +1347,11 @@ min-width: 222px;
                   @endif
                   <div class="image-wrapper">
                @if(!empty($profile->coverimg->image))
-                    <img alt="{{ $profile->name }} - escort in {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}" class="img-responsive" height="95" 
+                    <img alt="{{ $profile->name }} - escort in {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}" class="img-responsive" height="95"
                          src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image)}}" width="89">
              @else
              @if(!empty($profile->singleimg->image))
-             <img alt="{{ $profile->name }} - escort in {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}" class="img-responsive" height="95" 
+             <img alt="{{ $profile->name }} - escort in {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}" class="img-responsive" height="95"
                   src="{{smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->singleimg->image)}}" width="89">
               @endif
                     @endif
@@ -1317,6 +1359,33 @@ min-width: 222px;
                 </span>
               </a>
             </div>
+
+            @if($basicHasThumbs)
+            <div class="other-thumbs pull-left">
+              @foreach($basicSideThumbs as $imgs)
+              <div class="thumb thumb-{{ $loop->index }}">
+                <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
+                  <span class="img-wrapper mini">
+                    @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <i class="fa fa-check"></i>
+                      <span>Verified photos</span>
+                    </span>
+                    @endif
+                    <div class="image-wrapper">
+                      <img alt="{{ $profile->name }} - Photo {{ $loop->iteration }}"
+                           class="img-responsive"
+                           height="60"
+                           width="60"
+                           loading="lazy"
+                           src="{{smart_asset('userimages/'.$imgs->user_id.'/'.$imgs->profile_id.'/'.$imgs->image)}}" />
+                    </div>
+                  </span>
+                </a>
+              </div>
+              @endforeach
+            </div>
+            @endif
           </div>
           <div class="listing-info-wrapper">
             <div class="listing-info">

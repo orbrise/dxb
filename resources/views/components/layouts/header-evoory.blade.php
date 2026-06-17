@@ -45,7 +45,36 @@
     $useSimpleHeader = !$isAccountPage && ($isListingCreateEdit || $isNewsPage || $isListingsHome);
     // Profile details and user dashboard hide both headers on mobile (they have their own internal nav)
     $hideAllHeadersMobile = $isProfileDetails || $currentRoute === 'user.dashboard';
+
+    // Auth-nav active states. Used by the desktop "My Profile" / "My Account"
+    // links so the current page renders with a lime outline, matching the
+    // selected-tab look the rest of the site uses. Each predicate covers
+    // every URL that lives "under" that menu entry:
+    //   - My Profile  → /my-profile/{slug}/{id}, the create-profile flow,
+    //                   the edit-profile flow, and the legacy user.dashboard.
+    //   - My Account  → any of the account-area routes from $accountPageTitles
+    //                   above (Messages, Reviews, Buy Credits, Favorites, …).
+    $isMyProfileActive = str_starts_with($currentPath, 'my-profile/')
+        || in_array($currentRoute, ['new.profile', 'user.profile', 'user.dashboard'], true);
+    $isMyAccountActive = $isAccountPage;
 @endphp
+
+{{-- Selected-state pill for the auth nav. `.ev-nav-link` already has the
+     dark pill background + 1px border from evoory-theme.css; we just need
+     to swap the border + text to the brand lime when the link's page is
+     the one currently being viewed. Slight background tint mirrors the
+     hover state so the selection reads even without comparing to siblings. --}}
+<style>
+    .ev-nav.ev-nav .ev-nav-link.active,
+    .ev-nav.ev-nav .ev-nav-link.active:link,
+    .ev-nav.ev-nav .ev-nav-link.active:visited,
+    .ev-nav.ev-nav .ev-nav-link.active:hover,
+    .ev-nav.ev-nav .ev-nav-link.active:focus {
+        color: #C1F11D !important;
+        border-color: #C1F11D !important;
+        background: rgba(193, 241, 29, 0.08) !important;
+    }
+</style>
 
 {{-- Mobile Account Header ("< Home" + page title, no logo) --}}
 @if($isAccountPage)
@@ -141,14 +170,20 @@
                                 ? url('my-profile/'.$userProfile->slug.'/'.$userProfile->id)
                                 : route('new.profile');
                         @endphp
-                        <a href="{{ $myProfileHref }}" class="ev-nav-link" wire:navigate>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
+                        <a href="{{ $myProfileHref }}" class="ev-nav-link {{ $isMyProfileActive ? 'active' : '' }}" wire:navigate>
+                            {{-- Evoory brand icon used in place of the generic
+                                 person silhouette to mark this as the user's
+                                 own profile entry. Served from the shared CDN
+                                 so it stays in sync if the brand mark updates. --}}
+                            <img src="https://assets.evoory.com/assets/newtheme/evooryicon.svg"
+                                 alt=""
+                                 aria-hidden="true"
+                                 width="18"
+                                 height="18"
+                                 style="display:inline-block;vertical-align:middle;">
                             My Profile
                         </a>
-                        <a href="{{ url('my-account') }}" class="ev-nav-link" wire:navigate>
+                        <a href="{{ url('my-account') }}" class="ev-nav-link {{ $isMyAccountActive ? 'active' : '' }}" wire:navigate>
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <line x1="3" y1="9" x2="21" y2="9"></line>

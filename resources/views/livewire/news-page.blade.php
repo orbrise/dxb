@@ -179,6 +179,16 @@ body > header#header { display: none !important; }
 .ev-news-root a { color: #C1F11D !important; }
 body:has(.ev-news-root) a { color: #C1F11D !important; }
 
+/* Exclude the top header's auth nav (My Profile / My Account / Sign Out
+   and the Sign In / Language buttons) from the lime-anchor rule above —
+   on the listing pages those entries render as white text via .ev-nav-link,
+   and the news page should match instead of repainting them lime. */
+.ev-news-root .ev-header .ev-nav-link,
+.ev-news-root .ev-header .ev-nav-link:link,
+.ev-news-root .ev-header .ev-nav-link:visited { color: #ffffff !important; }
+.ev-news-root .ev-header .ev-nav-link:hover,
+.ev-news-root .ev-header .ev-nav-link:focus { color: #C1F11D !important; }
+
 /* Breathing room between the sticky filter bar (#header .nav-bar) and the
    first content row. Without this the page title ("Delhi Escort News", etc.)
    visually butts right up against the bar. */
@@ -803,10 +813,18 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                         @php $userProfile = auth()->user()->profiles->first(); @endphp
                         @if($userProfile)
                         <a href="{{ url('my-profile/'.$userProfile->slug.'/'.$userProfile->id) }}" class="ev-nav-link">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
+                            {{-- Brand mark instead of the generic person SVG,
+                                 matching the rest of the site (see
+                                 header-evoory.blade.php). This page renders
+                                 its own header markup inline because it uses
+                                 the legacy `app` layout, so the icon swap has
+                                 to be repeated here too. --}}
+                            <img src="https://assets.evoory.com/assets/newtheme/evooryicon.svg"
+                                 alt=""
+                                 aria-hidden="true"
+                                 width="18"
+                                 height="18"
+                                 style="display:inline-block;vertical-align:middle;">
                             My Profile
                         </a>
                         @endif
@@ -819,6 +837,20 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                             My Account
                         </a>
                     @endif
+                    {{-- Sign Out matches header-evoory.blade.php — the news page
+                         inlines its own header so the entry has to be repeated
+                         here. Without it the auth nav was missing a way out. --}}
+                    <form method="post" action="{{ url('sign_out') }}" style="display:inline">
+                        {{ csrf_field() }}
+                        <button type="submit" class="ev-nav-link" style="padding: 12px 20px;background:transparent;border:none;cursor:pointer;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            Sign Out
+                        </button>
+                    </form>
                 @endauth
             </nav>
         </div>
