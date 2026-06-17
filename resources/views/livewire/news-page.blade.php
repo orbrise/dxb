@@ -179,6 +179,156 @@ body > header#header { display: none !important; }
 .ev-news-root a { color: #C1F11D !important; }
 body:has(.ev-news-root) a { color: #C1F11D !important; }
 
+/* Breathing room between the sticky filter bar (#header .nav-bar) and the
+   first content row. Without this the page title ("Delhi Escort News", etc.)
+   visually butts right up against the bar. */
+.ev-news-content { padding-top: 24px !important; }
+@media (max-width: 767px) {
+    .ev-news-content { padding-top: 16px !important; }
+}
+
+/* Newsletter subscribe modal styles (mirrors the home page's scoped copy
+   under .ev-empty-listings-wrap, repeated unprefixed here so the Subscribe
+   popup opened from the news page top-right button gets the same look). */
+[x-cloak] { display: none !important; }
+.ev-news-root .ev-modal-overlay {
+    background: rgba(0,0,0,0.85);
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 99999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 3rem 1rem;
+}
+.ev-news-root .ev-modal {
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 12px;
+    border: 1px solid #2a2a2a;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    width: 100%;
+    max-width: 500px;
+}
+.ev-news-root .ev-modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.ev-news-root .ev-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.ev-news-root .ev-modal-close {
+    background: #222;
+    border: 1px solid #2a2a2a;
+    color: #fff;
+    font-size: 1.25rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ev-news-root .ev-modal-close:hover { background: #2a2a2a; }
+.ev-news-root .ev-modal-body { padding: 1.5rem; color: #fff; }
+.ev-news-root .ev-modal-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid #2a2a2a;
+    text-align: right;
+}
+.ev-news-root .ev-search-input {
+    display: flex;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #111;
+}
+.ev-news-root .ev-search-input span {
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+}
+.ev-news-root .ev-search-input input {
+    flex: 1;
+    padding: 0.75rem;
+    background: transparent;
+    border: none;
+    color: #fff;
+    outline: none;
+    font-size: 0.95rem;
+}
+.ev-news-root .ev-search-input input::placeholder { color: #666; }
+.ev-news-root .ev-search-input button {
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    color: #C1F11D;
+    cursor: pointer;
+}
+.ev-news-root .ev-city-tag {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #111;
+    border-radius: 8px;
+    border: 1px solid #2a2a2a;
+    color: #fff;
+}
+.ev-news-root .ev-city-tag button { color: #C1F11D; }
+.ev-news-root .ev-dropdown-results {
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    margin-top: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.ev-news-root .ev-dropdown-results button {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    color: #fff;
+    border: none;
+    border-bottom: 1px solid #2a2a2a;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+}
+.ev-news-root .ev-dropdown-results button:hover { background: #222; }
+.ev-news-root .ev-buy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #C1F11D;
+    color: #000;
+    border: none;
+    border-radius: 21.5px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.ev-news-root .ev-buy-btn:hover { background: #d4f84d; }
+
 /* Activity stream items */
 .activity-stream { color: #fff; }
 .activity-stream li { border-color: #2a2a2a !important; }
@@ -770,11 +920,96 @@ form.activity-nav-form input.search-bar--city:focus-visible {
     </div>
 </header>
 
-      <div class="container-fluid mt-2">
-    <div class="subscribe-btn-wrapper subscribe-btn-wrapper--small-right">
-        <a class="btn btn-primary btn-lg" data-btn-link="" href="/register">
-            <i class="fa fa-newspaper"></i> Subscribe
-        </a>
+      <div class="container-fluid mt-2 ev-news-content">
+    <div class="subscribe-btn-wrapper subscribe-btn-wrapper--small-right" x-data="{ show: @entangle('showSubscribeModal') }">
+        @auth
+            <a class="btn btn-primary btn-lg" href="#" @click.prevent="show = true; $wire.prefillSubscribeCity()">
+                <i class="fa fa-newspaper"></i> Subscribe
+            </a>
+        @else
+            <a class="btn btn-primary btn-lg" href="/register">
+                <i class="fa fa-newspaper"></i> Subscribe
+            </a>
+        @endauth
+
+        @auth
+        {{-- Newsletter subscribe modal — mirrors the home page implementation
+             so logged-in users can manage their multi-city / multi-gender
+             newsletter subscriptions from the What's New page too, instead of
+             being kicked to /register. --}}
+        <div x-show="show" x-cloak class="ev-modal-overlay" @click.self="show = false" @keydown.escape.window="show = false" style="display:none;">
+            <div class="ev-modal">
+                <div class="ev-modal-header">
+                    <h2>
+                        <i class="fa fa-newspaper"></i>
+                        <span>Subscribe</span>
+                    </h2>
+                    <button type="button" class="ev-modal-close" @click="show = false">&times;</button>
+                </div>
+                <div class="ev-modal-body">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 1rem;">
+                            <input type="checkbox" wire:model.live="subReceiveNewsletter" style="width:18px;height:18px;margin:0;cursor:pointer;accent-color:#C1F11D;">
+                            <span style="margin-left:0.75rem;font-weight:500;">Send me newsletter for:</span>
+                        </label>
+                    </div>
+
+                    @if($subReceiveNewsletter)
+                    <div style="margin-bottom: 1rem; position: relative;">
+                        <div class="ev-search-input">
+                            <span><i class="fa fa-map-marker-alt"></i></span>
+                            <input type="text" placeholder="Find city..." wire:model.live="subCitySearch" autocomplete="off">
+                            @if($subCitySearch)
+                                <button type="button" wire:click="$set('subCitySearch', '')"><i class="fa fa-times"></i></button>
+                            @endif
+                        </div>
+                        @if(count($subSearchResults) > 0)
+                            <div class="ev-dropdown-results">
+                                @foreach($subSearchResults as $resultCity)
+                                    <button type="button" wire:click="subAddCity({{ $resultCity['id'] }})">{{ $resultCity['name'] }}@if(!empty($resultCity['country'])) <span style="color:#666;">({{ $resultCity['country'] }})</span>@endif</button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    @if(count($subSelectedCities) > 0)
+                        <div style="margin-bottom: 1rem; max-height: 150px; overflow-y: auto;">
+                            @foreach($subSelectedCities as $index => $subCity)
+                                <div class="ev-city-tag">
+                                    <span><i class="fa fa-map-marker-alt" style="margin-right:0.5rem;"></i>{{ $subCity['name'] }}@if(!empty($subCity['country'])) <span style="color:#666;">({{ $subCity['country'] }})</span>@endif</span>
+                                    <button type="button" style="background:none;border:none;cursor:pointer;font-size:1.2rem;padding:0;" wire:click="subRemoveCity({{ $index }})"><i class="fa fa-times"></i></button>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div>
+                        <label style="display:block;margin-bottom:1rem;font-weight:600;font-size:1rem;">Include</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:1.5rem;">
+                            <label style="display:flex;align-items:center;cursor:pointer;">
+                                <input type="checkbox" value="female" wire:model="subSelectedGenders" style="width:18px;height:18px;margin:0;cursor:pointer;accent-color:#C1F11D;">
+                                <span style="margin-left:0.5rem;">Escorts</span>
+                            </label>
+                            <label style="display:flex;align-items:center;cursor:pointer;">
+                                <input type="checkbox" value="male" wire:model="subSelectedGenders" style="width:18px;height:18px;margin:0;cursor:pointer;accent-color:#C1F11D;">
+                                <span style="margin-left:0.5rem;">Male Escorts</span>
+                            </label>
+                            <label style="display:flex;align-items:center;cursor:pointer;">
+                                <input type="checkbox" value="shemale" wire:model="subSelectedGenders" style="width:18px;height:18px;margin:0;cursor:pointer;accent-color:#C1F11D;">
+                                <span style="margin-left:0.5rem;">Shemale Escorts</span>
+                            </label>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+                <div class="ev-modal-footer">
+                    <button type="button" class="ev-buy-btn" wire:click="subSaveNewsletter" @click="show = false">
+                        <span>Save</span> <i class="fa fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endauth
     </div>
     
     <a class="page-title" href="/{{ $gender }}-escort-news-in-{{ $selectedcity }}/{{ $type ?? 'all' }}">

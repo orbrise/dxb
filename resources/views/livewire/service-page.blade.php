@@ -8,26 +8,80 @@
      evoory-theme.css / evoory-homepage.css / listing-page-inline.css the way
      `app-evoory` does for the homepage. Pull them in here so the header,
      listing cards, and body font (Inter) match the listing page exactly.
-     Inter font is loaded first because it powers the base body styling. --}}
+     Inter font is loaded first because it powers the base body styling.
+
+     CRITICAL: the two listing-only stylesheets MUST reuse the same IDs
+     (`evoory-listing-css`, `evoory-listing-inline-css`) that the
+     `app-evoory` layout uses for its <link> tags. Without matching IDs,
+     wire:navigate treats our push-injected tags as separate elements,
+     keeps them around when navigating back to the homepage, and the
+     homepage's `media="print"` guard rails (which exist precisely to stop
+     evoory-homepage.css's bare `a { color: #C1F11D }` rule from leaking)
+     stop working — the leaked rule made the lime-on-lime "List now"
+     button label invisible. Using matching IDs lets Livewire's head
+     merger reconcile the elements properly on each navigation. --}}
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260416-1">
-<link rel="stylesheet" href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: 1 }}">
-<link rel="stylesheet" href="{{ asset('assets/css/listing-page-inline.css') }}?v={{ @filemtime(public_path('assets/css/listing-page-inline.css')) ?: 1 }}">
+<link rel="stylesheet" id="evoory-listing-css"
+      href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: 1 }}">
+<link rel="stylesheet" id="evoory-listing-inline-css"
+      href="{{ asset('assets/css/listing-page-inline.css') }}?v={{ @filemtime(public_path('assets/css/listing-page-inline.css')) ?: 1 }}">
 
-<style>
-  /* Body baseline mirrored from app-evoory.blade.php so the page typography
-     and dark background match the listing page even though we're on the
-     legacy `app` layout. */
-  body {
-    background: #0D1011 !important;
-    background-image: none !important;
-    color: #ffffff;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-weight: 300;
-  }
-  a { color: #C1F11D; text-decoration: none; }
-  .nostyle-link, .nostyle-link * { color: inherit; text-decoration: none; }
-</style>
+{{-- Note: deliberately NO inline <style> here.
+
+     The earlier version contained bare `body { ... }` and `a { ... }`
+     rules. With wire:navigate, browsers retain <style> blocks in <head>
+     across page changes, so once the user touched the service page those
+     rules continued to repaint anchors lime on the home page — which made
+     the lime-on-lime "List now" button label invisible.
+
+     All the typography / background / anchor styling the service page
+     needs is already supplied by the evoory-theme.css and
+     evoory-homepage.css files loaded above, so we can simply omit the
+     inline overrides and the leak goes away entirely. --}}
+<script>
+    /*
+     * Enforce media="all" on the listing CSS when this page is visible, and
+     * media="print" when we navigate away. The `app-evoory` layout already
+     * has a syncListingCss() function that does the same, but it ONLY fires
+     * on `livewire:navigated`. When you arrive here via wire:navigate from
+     * a non-listing page, the head merger may keep the previous
+     * media="print" attribute on the layout's <link id="evoory-listing-css">
+     * — which means evoory-homepage.css stays inert and the service page
+     * renders unstyled. When you leave to a non-listing page, the reverse
+     * happens: media stays at "all" and the leaked `a:hover` rule repaints
+     * homepage pills lime on hover (confirmed in DevTools).
+     *
+     * This block runs on the live page so it doesn't matter whether
+     * Livewire's diff updated the attribute or not.
+     */
+    (function () {
+        // Match by href substring, not getElementById. Livewire's head merge
+        // sometimes ends up with DUPLICATE <link> tags (one from the app-evoory
+        // layout, one pushed by this view) — and getElementById returns only
+        // the first hit, leaving the duplicate stuck at media="all" which is
+        // exactly what causes evoory-homepage.css's `a:hover { color:!important }`
+        // to keep repainting homepage pills lime after we navigate away.
+        function listingLinks() {
+            return document.querySelectorAll(
+                'link[href*="evoory-homepage.css"], link[href*="listing-page-inline.css"]'
+            );
+        }
+        function setListingCssMedia(value) {
+            listingLinks().forEach(function (el) { el.media = value; });
+        }
+        function isServicePagePath(path) {
+            return /^\/[a-z0-9-]+-(female|male|shemale)-escorts-in-[a-z0-9-]+(\/page\/\d+)?\/?$/.test(path);
+        }
+        setListingCssMedia('all');
+        document.addEventListener('livewire:navigating', function () {
+            setListingCssMedia('print');
+        });
+        document.addEventListener('livewire:navigated', function () {
+            setListingCssMedia(isServicePagePath(window.location.pathname) ? 'all' : 'print');
+        });
+    })();
+</script>
 
 <!-- Critical CSS for select components (load immediately) -->
 <link rel="preload" href="{{smart_asset('chosen/chosen.css')}}" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -496,6 +550,40 @@ min-width: 222px;
     }
 }
 
+/* Empty-state Subscribe button (rendered when no profiles match the
+   service in this city). The default `<a class="btn btn-primary btn-lg">`
+   markup inherits evoory-homepage.css's Bootstrap 3 lime→orange gradient
+   on `.btn-primary` (background:#C1F11D linear-gradient(#C1F11D,#d3980b)
+   repeat-x; border-color:#c9910a), which clashes with the flat Evoory
+   theme. These overrides match the homepage's equivalent rules so the
+   button looks the same regardless of which city/service combination
+   produced the empty state. */
+.subscribe-btn-wrapper .btn,
+.subscribe-btn-wrapper .btn-primary {
+    display: inline-block !important;
+    background: #C1F11D !important;
+    background-image: none !important;
+    color: #000 !important;
+    border: none !important;
+    padding: 7px 22px !important;
+    border-radius: 24px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: background 0.15s ease !important;
+}
+.subscribe-btn-wrapper .btn:hover,
+.subscribe-btn-wrapper .btn:focus,
+.subscribe-btn-wrapper .btn-primary:hover,
+.subscribe-btn-wrapper .btn-primary:focus {
+    background: #d4f84d !important;
+    background-image: none !important;
+    color: #000 !important;
+    text-decoration: none !important;
+}
+
 /* Vertical breathing room between profile cards on the listing.
    Without this the cards are flush against the thin separator and
    look cramped (Thalia / sadf sdfsd / asdfasdfsadf all touching). */
@@ -769,7 +857,16 @@ min-width: 222px;
 
 @endpush
 
-<div class="">
+<div class="ev-listing-page">
+  {{-- `ev-listing-page` is REQUIRED here. The app-evoory layout (used by
+       the homepage) keeps evoory-homepage.css + listing-page-inline.css at
+       `media="print"` to stop their rules from leaking onto the homepage.
+       It runs a `syncListingCss()` function on every `livewire:navigated`
+       event that flips `media` to "all" only when this class is present
+       in the DOM, and back to "print" otherwise. Without the class, after
+       a wire:navigate to and back from this page the listing CSS stays at
+       media="all", so its bare `a:hover { color: !important }` rule then
+       repaints every homepage link/pill lime on hover. --}}
   <div wire:loading class="page-loader">
     <div class="spinner"></div>
   </div>
@@ -1246,7 +1343,16 @@ min-width: 222px;
           <p></p>
           <div class="subscribe-btn-wrapper">
             <a class="btn btn-primary btn-lg btn-lg" href="/register">
-              <i class="fa fa-newspaper"></i> Subscribe
+              {{-- Inline SVG instead of <i class="fa fa-newspaper"> because the
+                   legacy `app` layout hand-maps Font Awesome 5 glyphs and
+                   fa-newspaper isn't in its list, so the <i> element rendered
+                   as a blank box. --}}
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;">
+                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+                <path d="M18 14h-8"/>
+                <path d="M15 18h-5"/>
+                <path d="M10 6h8v4h-8V6z"/>
+              </svg>Subscribe
             </a>
           </div>
           <p></p>
@@ -1271,7 +1377,9 @@ min-width: 222px;
             <a href="/{{ strtolower($service->slug) }}-{{ $gender }}-escorts-in-{{ $selectedcity }}" 
                class="{{ $service->slug === $serviceSlug ? 'active' : '' }}">
               <span>{{ $service->name }}</span>
-              <span class="service-count">{{ $service->profile_count }}</span>
+              @if($service->profile_count > 0)
+                <span class="service-count">{{ $service->profile_count }}</span>
+              @endif
             </a>
           </li>
           @endforeach

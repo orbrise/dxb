@@ -9,6 +9,21 @@
             })
             ->count();
     }
+
+    // Resolve the active tab. Callers can pass an explicit $active key (one
+    // of: 'messages', 'questions', 'reviews', 'favorites') which is the
+    // reliable source of truth — required for Livewire components that poll,
+    // because during a Livewire AJAX update the request runs through the
+    // livewire.update route and request()->routeIs('user.chat*') returns
+    // false. That made the Messages tab lose its highlight ~2s after the
+    // page loaded (one poll cycle on chat.blade.php). When no explicit
+    // value is passed we fall back to route detection so the nav still works
+    // on non-polling pages without changing every caller.
+    $active = $active ?? null;
+    $isMessagesActive  = $active === 'messages'  || (is_null($active) && request()->routeIs('user.chat*'));
+    $isQuestionsActive = $active === 'questions' || (is_null($active) && request()->routeIs('user.questions'));
+    $isReviewsActive   = $active === 'reviews'   || (is_null($active) && request()->routeIs('user.reviews'));
+    $isFavoritesActive = $active === 'favorites' || (is_null($active) && request()->routeIs('favorites.dashboard'));
 @endphp
 
 <style>
@@ -135,14 +150,14 @@
             Communication
         </h2>
         <a href="{{ route('user.dashboard', ['name' => auth()->user()->profiles->first()->slug ?? 'user', 'id' => auth()->user()->profiles->first()->id ?? auth()->id()]) }}" class="communication-nav-back">
-            <i class="fa fa-arrow-left"></i>
-            Back to Dashboard
+            <span aria-hidden="true" style="font-size:16px;line-height:1;">&lsaquo;</span>
+            Back to dashboard
         </a>
     </div>
     
     <ul class="communication-nav-menu">
         <li class="communication-nav-item">
-            <a href="{{ route('user.chat') }}" class="communication-nav-link {{ request()->routeIs('user.chat*') ? 'active' : '' }}">
+            <a href="{{ route('user.chat') }}" class="communication-nav-link {{ $isMessagesActive ? 'active' : '' }}">
                 <i class="fa fa-comments"></i>
                 <span>Messages</span>
                 @php
@@ -162,21 +177,21 @@
             </a>
         </li>
         <li class="communication-nav-item">
-            <a href="{{ route('user.questions') }}" class="communication-nav-link {{ request()->routeIs('user.questions') ? 'active' : '' }}">
+            <a href="{{ route('user.questions') }}" class="communication-nav-link {{ $isQuestionsActive ? 'active' : '' }}">
                 <i class="fa fa-question-circle"></i>
                 <span>Questions</span>
             </a>
         </li>
         <li class="communication-nav-item">
-            <a href="{{ route('user.reviews') }}" class="communication-nav-link {{ request()->routeIs('user.reviews') ? 'active' : '' }}">
-                <i class="fa fa-star"></i>
+            <a href="{{ route('user.reviews') }}" class="communication-nav-link {{ $isReviewsActive ? 'active' : '' }}">
+                <i class="fa fa-image"></i>
                 <span>Reviews</span>
             </a>
         </li>
         <li class="communication-nav-item">
-            <a href="{{ route('favorites.dashboard') }}" class="communication-nav-link {{ request()->routeIs('favorites.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('favorites.dashboard') }}" class="communication-nav-link {{ $isFavoritesActive ? 'active' : '' }}">
                 <i class="fa fa-heart"></i>
-                <span>My Favorites</span>
+                <span>My Favorite</span>
             </a>
         </li>
     </ul>

@@ -467,6 +467,24 @@ class ServicePage extends Component
             ->orderByDesc('profile_count')
             ->limit(15)
             ->get();
+
+        // Fallback: when a city has zero active profiles, the sidebar would
+        // otherwise render as a bare "All Services in {City}" heading sitting
+        // over an empty list, while a city with data shows a populated list.
+        // To keep the layout consistent across cities, fall back to the full
+        // services list (alphabetical, no counts) so the sidebar always has
+        // something in it.
+        if ($popularServices->isEmpty()) {
+            $popularServices = Service::select('id', 'name', 'slug')
+                ->orderBy('name', 'asc')
+                ->limit(15)
+                ->get()
+                ->map(function ($service) {
+                    $service->slug = strtolower($service->slug);
+                    $service->profile_count = 0;
+                    return $service;
+                });
+        }
         
         return view('livewire.service-page', [
             'profiles' => $this->getProfiles(),

@@ -68,7 +68,7 @@
 
         .questions-sidebar-header {
             padding: 15px 0px;
-            background: #0a0a0a;
+            
             
         }
 
@@ -129,6 +129,10 @@
         .questions-list {
             flex: 1;
             overflow-y: auto;
+            background: #15191B;
+            border: 1px solid #23292B;
+            border-radius: 10px;
+            padding: 10px;
         }
 
         .question-item {
@@ -153,7 +157,7 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #c1f11d, #d4a017);
+            background: #C1F11D;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -220,7 +224,10 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #0D1011;
+            background: #15191B;
+            border: 1px solid #23292B;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
         .question-detail-header {
@@ -241,7 +248,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #c1f11d, #d4a017);
+            background: #C1F11D;
             display: flex;
             align-items: center;
             justify-content: center;

@@ -1,5 +1,45 @@
 {{-- Evoory Theme Homepage - Optimized for <0.6s load time --}}
 {{-- Single root element for Livewire compatibility --}}
+
+{{-- Defensive anchor overrides for homepage elements.
+
+     evoory-homepage.css contains a bare `a:hover { color: !important }` rule
+     that's meant only for listing pages. The layout disables that stylesheet
+     with media="print" outside listing pages, but after a wire:navigate hop
+     to a service page and back, the media attribute sometimes ends up at
+     "all" again (due to Livewire's head merge keeping duplicate <link>
+     tags). Rather than continue fighting Livewire's head merger, we just
+     win the cascade with higher-specificity rules here so the leak — if
+     it happens — has no visible effect on the homepage's pills, the List-
+     now button, and the city / male / shemale text links. Each rule below
+     uses a class + pseudo-class selector so it beats `a:hover` even with
+     !important on both sides, and adds !important itself for good measure. --}}
+<style>
+    /* Popular-locations city pills — leaked rule was making them lime on hover. */
+    a.ev-tag,
+    a.ev-tag:link,
+    a.ev-tag:visited { color: #000 !important; background: #fff !important; }
+    a.ev-tag:hover,
+    a.ev-tag:focus,
+    a.ev-tag:active { color: #000 !important; background: #f0f0f0 !important; }
+
+    /* "List now" / "Go" lime buttons — text must stay legible (black on lime). */
+    a.ev-btn-primary,
+    a.ev-btn-primary:link,
+    a.ev-btn-primary:visited,
+    a.ev-btn-primary:hover,
+    a.ev-btn-primary:focus,
+    a.ev-btn-primary:active { color: #000 !important; }
+
+    /* "male escorts" / "shemale escorts" inline text links in the search note. */
+    .ev-search-note a,
+    .ev-search-note a:link,
+    .ev-search-note a:visited,
+    .ev-search-note a:hover,
+    .ev-search-note a:focus,
+    .ev-search-note a:active { color: #C1F11D !important; }
+</style>
+
 <div class="ev-homepage">
     {{-- Hero Tagline --}}
     <div class="ev-hero">

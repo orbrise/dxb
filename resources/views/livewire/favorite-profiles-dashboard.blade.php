@@ -227,12 +227,12 @@
         color: #000;
         font-weight: 600;
         font-size: 15px;
-        padding: 14px 24px;
+        padding: 5px 18px;
         border-radius: 999px;
         border: none;
         text-decoration: none;
         width: 100%;
-        max-width: 360px;
+        max-width: 178px;
         margin: 0 auto;
         transition: transform 0.15s ease, background 0.15s ease;
     }

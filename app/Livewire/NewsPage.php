@@ -4,7 +4,8 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\{UsersProfile, Review, Question, City, Gender, Service, Currency, Bust, Ethnicity, HairColor, Language, Country};
+use App\Models\{UsersProfile, Review, Question, City, Gender, Service, Currency, Bust, Ethnicity, HairColor, Language, Country,
+    NewsletterSubscription, NewsletterGender};
 use App\Services\CacheService;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
@@ -42,7 +43,18 @@ class NewsPage extends Component
     public $language;
     public $isshaved;
     public $haircolor;
-    
+
+    // Subscribe modal state — mirrors HomePage's newsletter modal so the
+    // Subscribe button at the top of the news page opens the same Alpine-
+    // backed dialog (multi-city + gender checkboxes) instead of just linking
+    // to /register.
+    public $showSubscribeModal = false;
+    public $subReceiveNewsletter = true;
+    public $subSelectedCities = [];
+    public $subCitySearch = '';
+    public $subSearchResults = [];
+    public $subSelectedGenders = [];
+
     protected $queryString = [
         'gender' => ['except' => 'female'],
         'rate' => ['except' => ''],
@@ -55,6 +67,126 @@ class NewsPage extends Component
     public function loadMore()
     {
         $this->perPage += 4;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Subscribe-modal methods (copied from HomePage so news page can offer
+    // the same multi-city newsletter signup popup). If we ever grow a third
+    // consumer, lift this block into a trait.
+    // ─────────────────────────────────────────────────────────────────────
+
+    protected function resolveNewsCurrentCity()
+    {
+        $slug = strtolower(trim($this->selectedcity ?: $this->cityname ?: 'dubai'));
+        $city = Cache::remember("cache:city:slug:{$slug}", 3600, fn() => City::where('slug', $slug)->first());
+        if ($city) {
+            return $city;
+        }
+        return Cache::remember("cache:city:name:{$slug}", 3600, fn() => City::where('name', $this->cityname ?: 'Dubai')->first())
+            ?? Cache::remember('cache:city:id:229', 3600, fn() => City::find(229));
+    }
+
+    public function prefillSubscribeCity()
+    {
+        if (!auth()->check()) {
+            return redirect()->to('/register');
+        }
+
+        $this->subSelectedCities = [];
+        $this->subSelectedGenders = [];
+
+        $subscriptions = NewsletterSubscription::where('user_id', auth()->id())->with('city')->get();
+        foreach ($subscriptions as $sub) {
+            if ($sub->city) {
+                $this->subSelectedCities[] = [
+                    'id' => $sub->city_id,
+                    'name' => $sub->city->name,
+                    'country' => $sub->city->country ?? '',
+                ];
+            }
+        }
+
+        $existingGenders = NewsletterGender::where('user_id', auth()->id())->pluck('gender')->toArray();
+        $this->subSelectedGenders = !empty($existingGenders)
+            ? $existingGenders
+            : [$this->gender ?: 'female'];
+
+        $currentCity = $this->resolveNewsCurrentCity();
+        if ($currentCity && !collect($this->subSelectedCities)->contains('id', $currentCity->id)) {
+            $this->subSelectedCities[] = [
+                'id' => $currentCity->id,
+                'name' => $currentCity->name,
+                'country' => $currentCity->country ?? '',
+            ];
+        }
+
+        $this->subReceiveNewsletter = true;
+        $this->subCitySearch = '';
+        $this->subSearchResults = [];
+        $this->showSubscribeModal = true;
+    }
+
+    public function updatedSubCitySearch()
+    {
+        if (strlen($this->subCitySearch) >= 2) {
+            $this->subSearchResults = City::where('name', 'like', '%' . $this->subCitySearch . '%')
+                ->orWhere('country', 'like', '%' . $this->subCitySearch . '%')
+                ->limit(10)
+                ->get(['id', 'name', 'country'])
+                ->toArray();
+        } else {
+            $this->subSearchResults = [];
+        }
+    }
+
+    public function subAddCity($cityId)
+    {
+        $city = City::find($cityId);
+        if ($city && !collect($this->subSelectedCities)->contains('id', $cityId)) {
+            $this->subSelectedCities[] = [
+                'id' => $city->id,
+                'name' => $city->name,
+                'country' => $city->country ?? '',
+            ];
+        }
+        $this->subCitySearch = '';
+        $this->subSearchResults = [];
+    }
+
+    public function subRemoveCity($index)
+    {
+        unset($this->subSelectedCities[$index]);
+        $this->subSelectedCities = array_values($this->subSelectedCities);
+    }
+
+    public function subSaveNewsletter()
+    {
+        if (!auth()->check()) {
+            return redirect()->to('/register');
+        }
+
+        $userId = auth()->id();
+
+        NewsletterSubscription::where('user_id', $userId)->delete();
+        NewsletterGender::where('user_id', $userId)->delete();
+
+        if ($this->subReceiveNewsletter && count($this->subSelectedCities) > 0) {
+            foreach ($this->subSelectedCities as $city) {
+                NewsletterSubscription::create([
+                    'user_id' => $userId,
+                    'city_id' => $city['id'],
+                ]);
+            }
+            foreach ($this->subSelectedGenders as $gender) {
+                NewsletterGender::create([
+                    'user_id' => $userId,
+                    'gender' => $gender,
+                ]);
+            }
+        }
+
+        $this->showSubscribeModal = false;
+        session()->flash('subscribe_success', 'Newsletter subscription saved.');
     }
 
     /**

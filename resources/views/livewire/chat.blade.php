@@ -26,8 +26,7 @@
         .chat-sidebar {
             width: 350px;
             min-width: 300px;
-           
-            
+            background: transparent;
             border-radius: 8px;
             display: flex;
             flex-direction: column;
@@ -36,7 +35,6 @@
         .chat-sidebar-header {
             padding: 15px;
             background: transparent;
-         
         }
 
         .chat-sidebar-header h4 {
@@ -125,7 +123,9 @@
         .conversation-list {
             flex: 1;
             overflow-y: auto;
-            background: #0D1011;
+            background: #15191B;
+            border: 1px solid #23292B;
+            border-radius: 10px;
             padding: 10px;
         }
 
@@ -223,15 +223,16 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #0D1011;
-            border-radius: 8px;
+            background: #15191B;
+            border: 1px solid #23292B;
+            border-radius: 10px;
             overflow: hidden;
         }
 
         .chat-header {
             padding: 15px 20px;
-            background: #0D1011;
-            border-bottom: 1px solid #444;
+            background: #15191B;
+            border-bottom: 1px solid #23292B;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -763,7 +764,13 @@
     </style>
 
     <div class="ev-container" style="padding-top: 8px; padding-bottom: 40px;">
-                @include('components.communication-nav')
+                {{-- Pass `active` explicitly. This page polls every 2s
+                     (wire:poll.2s="pollMessages") and during a Livewire
+                     update the request runs through livewire.update, not
+                     user.chat, so route-based detection inside the nav
+                     would fail and the Messages tab would lose its
+                     highlight one poll cycle after the page loaded. --}}
+                @include('components.communication-nav', ['active' => 'messages'])
                 
                 <div class="mb-3 clearfix" style="clear: both;" id="my-chat">
                     {{-- Flash Messages --}}

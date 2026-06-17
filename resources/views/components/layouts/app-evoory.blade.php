@@ -166,14 +166,30 @@
           media="{{ $__isListingPage ? 'all' : 'print' }}">
     <script>
     (function(){
+        // Toggle listing-only CSS between media="all" and media="print" so its
+        // rules only apply on listing/service pages. Matches BY HREF (not by
+        // id), because Livewire's head merge can leave duplicate <link> tags
+        // around when navigating between pages that push their own copy of
+        // these stylesheets (service-page does); getElementById would only
+        // touch the first match and leave the rest stuck.
+        function isListingPath(path){
+            return /-escorts-in-/.test(path);
+        }
         function syncListingCss(){
-            var on = !!document.querySelector('.ev-listing-page');
-            var a = document.getElementById('evoory-listing-css');
-            var b = document.getElementById('evoory-listing-inline-css');
-            if (a) a.media = on ? 'all' : 'print';
-            if (b) b.media = on ? 'all' : 'print';
+            var on = !!document.querySelector('.ev-listing-page')
+                  || isListingPath(window.location.pathname);
+            var links = document.querySelectorAll(
+                'link[href*="evoory-homepage.css"], link[href*="listing-page-inline.css"]'
+            );
+            links.forEach(function(el){ el.media = on ? 'all' : 'print'; });
         }
         document.addEventListener('livewire:navigated', syncListingCss);
+        document.addEventListener('livewire:navigating', syncListingCss);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', syncListingCss);
+        } else {
+            syncListingCss();
+        }
     })();
     </script>
 

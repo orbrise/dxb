@@ -85,9 +85,15 @@
                         background-color: #1a1a1a !important;
                         color: #fff !important;
                         border: 1px solid #2a2a2a !important;
-                        height: 32px;
+                        /* Match the height of the sibling .btn (Female escorts,
+                           Price, All Services) buttons. They come from Bootstrap
+                           4's .btn (padding 0.375rem 0.75rem + 1.5 line-height +
+                           1px borders ≈ 38px). The trigger previously had a
+                           hard-coded 32px which made it visibly shorter in the
+                           search bar row. */
+                        height: 38px;
                         min-width: 90px;
-                        padding: 6px 28px 6px 12px;
+                        padding: 0 28px 0 12px;
                         font-size: 13px;
                         font-weight: bold;
                         border-radius: 4px;
@@ -95,6 +101,9 @@
                         text-align: left;
                         position: relative;
                         white-space: nowrap;
+                        line-height: 1.5;
+                        display: inline-flex;
+                        align-items: center;
                     }
                     .currency-dd-trigger .currency-dd-chevron {
                         position: absolute; right: 8px; top: 50%;

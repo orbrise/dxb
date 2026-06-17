@@ -158,7 +158,7 @@
             background-image: none !important;
             color: #000 !important;
             border: none !important;
-            padding: 7px 22px !important;
+            padding: 5px 18px !important;
             border-radius: 24px !important;
             font-size: 16px !important;
             font-weight: 600 !important;

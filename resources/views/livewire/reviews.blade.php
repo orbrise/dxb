@@ -31,7 +31,7 @@
 
         .review-sidebar-header {
             padding: 15px 20px;
-            background: #0a0a0a;
+       
             
         }
 
@@ -90,6 +90,10 @@
         .review-list {
             flex: 1;
             overflow-y: auto;
+            background: #15191B;
+            border: 1px solid #23292B;
+            border-radius: 10px;
+            padding: 10px;
         }
 
         .review-item {
@@ -113,7 +117,7 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #c1f11d 0%, #d4a017 100%);
+            background: #C1F11D;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -187,7 +191,10 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #0D1011;
+            background: #15191B;
+            border: 1px solid #23292B;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
         .review-detail-header {
@@ -294,7 +301,7 @@
         }
 
         .review-bubble.review-outgoing {
-            background: linear-gradient(135deg, #c1f11d 0%, #d4a017 100%);
+            background: #C1F11D;
             color: #1a1a1a;
             align-self: flex-end;
             border-bottom-right-radius: 5px;
@@ -354,7 +361,7 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #c1f11d 0%, #d4a017 100%);
+            background: #C1F11D;
             border: none;
             color: #1a1a1a;
             cursor: pointer;
