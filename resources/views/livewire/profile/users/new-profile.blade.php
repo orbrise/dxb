@@ -338,7 +338,7 @@
             border: none !important;
             border-radius: 50px !important;
             font-weight: 600 !important;
-            padding: 10px 40px !important;
+            padding: 10px 106px !important;
         }
         .btn-primary.btn-lg#submit:hover {
             background: #b5e600 !important;
@@ -529,6 +529,21 @@
             border-radius: 4px;
             font-size: 11px;
             font-weight: bold;
+        }
+
+        .btn-set-main {
+            background: transparent;
+            color: #c8ff00;
+            border: 1px solid #c8ff00;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-set-main:hover {
+            background: #c8ff00;
+            color: #000;
         }
         
         #image-container {
@@ -1171,6 +1186,119 @@ div#basic {
         gap: 10px;
     }
 
+    /* Basic Information: wrap whole section as one card; heading becomes
+       an internal header instead of a stand-alone card. Scoped to #basic
+       so other sections (Upload photos, About me, etc.) keep their own
+       card-per-heading look. */
+    #basic {
+        background: #111 !important;
+        border: 1px solid #222 !important;
+        border-radius: 10px !important;
+        padding: 18px !important;
+        margin: 24px 0 16px !important;
+    }
+    #basic .h3.title-block,
+    #basic h2.h3.title-block {
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 0 18px !important;
+        font-size: 17px !important;
+        gap: 12px !important;
+    }
+    #basic .h3.title-block svg {
+        background: #283813;
+        border: 1px solid #3a4a2a;
+        border-radius: 8px;
+        padding: 7px;
+        width: 36px !important;
+        height: 36px !important;
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    /* City input keeps a dashed bottom border via #citysearch id selector
+       (specificity beats the .big-one-line class override above) */
+    input#citysearch {
+        border: 1px solid #333 !important;
+        border-bottom: 1px solid #333 !important;
+    }
+
+    /* Photos: wrap whole section as one card; replace long desktop header
+       and disclaimer with a simple icon header + minimal hint text. */
+    #photos {
+        background: #111 !important;
+        border: 1px solid #222 !important;
+        border-radius: 10px !important;
+        padding: 18px !important;
+        margin: 24px 0 16px !important;
+    }
+    #photos .ev-photos-desktop-title,
+    #photos .ev-photos-disclaimer {
+        display: none !important;
+    }
+    #photos .ev-photos-mobile-title {
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 0 16px !important;
+        font-size: 17px !important;
+        gap: 12px !important;
+    }
+    #photos .ev-photos-mobile-title svg {
+        background: #283813;
+        border: 1px solid #3a4a2a;
+        border-radius: 8px;
+        padding: 7px;
+        width: 36px !important;
+        height: 36px !important;
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    /* Dotted border via SVG background — gives full control over dot-to-gap
+       spacing that CSS `border-style: dotted` can't express (it locks the
+       gap to the dot diameter). stroke-dasharray="2,10" + linecap=round
+       paints 2px round dots with 10px gaps. */
+    #photos .drag-drop {
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 28px 18px !important;
+        background-color: transparent !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect width='100%25' height='100%25' fill='none' stroke='%23727b7e' stroke-width='2' stroke-dasharray='2%2C 10' stroke-linecap='round' rx='10' ry='10'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+    }
+    #photos .drag-drop svg {
+        width: 65px !important;
+        height: 65px !important;
+        margin-bottom: 14px !important;
+        stroke: #727B7E !important;
+    }
+    /* Hide desktop-only text on mobile */
+    #photos .ev-photos-desktop-only {
+        display: none !important;
+    }
+    /* Show the simplified mobile hint */
+    #photos .ev-photos-mobile-hint {
+        display: block !important;
+        color: #888 !important;
+        font-size: 12px !important;
+        text-align: center;
+        margin: 14px 0 0 !important;
+        line-height: 1.5 !important;
+    }
+    /* Outlined "Choose file" button to match reference */
+    #photos .ev-photos-choose-btn {
+        background: transparent !important;
+        color: #fff !important;
+        border: 1px solid #364153 !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        padding: 7px 50px !important;
+        font-size: 14px !important;
+        margin: 4px 0 !important;
+    }
+
     /* Form inputs - consistent dark style */
     .form-control,
     input.form-control,
@@ -1447,9 +1575,9 @@ div#basic {
         </a>
         <div style="width:40px;"></div>
     </div>
-    <div style="padding:0 16px 16px;">
-        <h1 style="color:#fff;font-size:20px;font-weight:600;margin:0 0 4px;">Create Your Listing</h1>
-        <p style="color:#888;font-size:13px;margin:0;">Complete all sections to publish your profile</p>
+    <div style="padding:8px 25px 16px;">
+        <h1 style="color:#fff;font-size:26px;font-weight:600;margin:0 0 4px;">Create Your Listing</h1>
+        <p style="color: #A6B4B8 !important;font-size:15px;margin:0;">Complete all sections to publish your profile</p>
     </div>
 </div>
 <style>
@@ -1503,7 +1631,7 @@ div#basic {
                     
                     <div class="form-group text required listing_description">
                       <label class="text required control-label" for="listing_description">
-                        About me <span class="required-star">*</span></label>
+                        About <span class="required-star">*</span></label>
                       <textarea class="text required form-control validate large" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(50,2000)" maxlength="2000" wire:model='aboutme' name="listing[description]" id="listing_description" oninput="updateCharCount(this)" placeholder="Write a brief description of yourself..."></textarea>
                       <div class="char-count-container" style="margin-top: 5px; font-size: 12px;">
                         <span id="char-count" style="color: #666;">Minimum 50 characters</span>
@@ -1515,11 +1643,15 @@ div#basic {
                       @enderror
                     </div>
                   </div>
-                  <div id="">
-                    <h2 class="h3 title-block">Upload photos</h2>
+                  <div id="photos">
+                    <h2 class="h3 title-block ev-photos-desktop-title">Upload photos</h2>
+                    <h2 class="h3 title-block ev-mobile-section-title ev-photos-mobile-title" style="display:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        Photos
+                    </h2>
                     <div class="ad-images string optional listing_listing_images">
                       <div class="multi-image-uploader1" >
-                        <p>Please upload high quality images only. Only post pictures of yourself or of a person who has given you explicit permission to do so. If you post fake photos, your profile will be deleted and your account blocked - <a href="/help-for-advertisers#fake" target="_blank">more information</a>. <br /> Photos with full frontal nudity, genitalia or sexually explicit conduct are prohibited. </p>
+                        <p class="ev-photos-disclaimer">Please upload high quality images only. Only post pictures of yourself or of a person who has given you explicit permission to do so. If you post fake photos, your profile will be deleted and your account blocked - <a href="/help-for-advertisers#fake" target="_blank">more information</a>. <br /> Photos with full frontal nudity, genitalia or sexually explicit conduct are prohibited. </p>
 
                         <div wire:loading.flex wire:target="mphoto" style="align-items:center;justify-content:center;gap:10px;color:#0a0b0d;background:#c8ff00;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:14px;font-weight:600;">
                             <i class="fas fa-spinner fa-spin"></i> Uploading photo…
@@ -1531,13 +1663,17 @@ div#basic {
                         <div class="record image" draggable="true" role="option" aria-grabbed="false" data-index="{{ $key }}">
                           <i wire:click="removeTemporaryImage({{ $key }})" class="fa fa-times fa-lg delete"></i>
                           <span class="img-name" ></span>
-                          <img src="{{ $image->temporaryUrl() }}">
+                          {{-- draggable=false on the img prevents the browser from
+                               claiming the image element as the drag source; the
+                               wrapper's draggable=true then takes effect cleanly. --}}
+                          <img src="{{ $image->temporaryUrl() }}" draggable="false">
                           <div class="img-footer">
                             <label class="d-flex align-items-center justify-content-center gap-2">
                                 @if($key === 0)
                                 <span class="badge badge-success">Main Image</span>
                                 @else
-                                <span class="text-muted small">Drag to first position to set as main</span>
+                                {{-- Button works on touch devices where HTML5 drag doesn't fire. --}}
+                                <button type="button" class="btn-set-main" wire:click="setAsMain({{ $key }})">Set as Main</button>
                                 @endif
                             </label>
                         </div>
@@ -1549,14 +1685,15 @@ div#basic {
                           <div class="file optional add-img">
                             <label class="modern-upload-label" for="mphoto" style="cursor: pointer;">
                               <div class="text-center mb-4 drag-drop" id="drag-drop-area">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="55" height="55" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="65" height="65" viewBox="0 0 24 24" fill="none" stroke="#727B7E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                                
                                 <div class="upload-available">
-                                  <p class="m-0 font-weight-bold drag-drop-text-main" style="font-size: 12px; color: #ffffff; font-weight:400; margin-bottom:20px">Drop files here</p>
-                                  <p class="m-1 drag-drop-text" style="color: #6c757d;padding-top:10px; padding-bottom:15px">or</p>
-                                  <button class="m-1 mb-3 btn btn-primary" type="button" onclick="document.getElementById('mphoto').click(); return false;" style="background:#c8ff00;color:#000;border:none;border-radius:50px;font-weight:600;padding:8px 24px;">Choose file</button>
-                                  <p class="m-0 mt-3 drag-drop-text" style="font-size: 13px; color: #6c757d;">Pick a file up to 8MB and at least 400×400 px</p>
-                                  <p class="m-0 drag-drop-text" style="font-size: 13px; color: #6c757d;">Allowed file formats: jpg, jpeg, gif, png, webp</p>
+                                  <p class="m-0 font-weight-bold drag-drop-text-main ev-photos-desktop-only" style="font-size: 12px; color: #ffffff; font-weight:400; margin-bottom:20px">Drop files here</p>
+                                  <p class="m-1 drag-drop-text ev-photos-desktop-only" style="color: #6c757d;padding-top:10px; padding-bottom:15px">or</p>
+                                  <button class="m-1 mb-3 btn btn-primary ev-photos-choose-btn" type="button" onclick="document.getElementById('mphoto').click(); return false;" style="background:#c8ff00;color:#000;border:none;border-radius:50px;font-weight:600;padding:8px 24px;">Choose file</button>
+                                  <p class="m-0 mt-3 drag-drop-text ev-photos-desktop-only" style="font-size: 13px; color: #6c757d;">Pick a file up to 8MB and at least 400×400 px</p>
+                                  <p class="m-0 drag-drop-text ev-photos-desktop-only" style="font-size: 13px; color: #6c757d;">Allowed file formats: jpg, jpeg, gif, png, webp</p>
+                                  <p class="ev-photos-mobile-hint" style="display:none;">JPG, PNG up to 8MB each. <br>Min 3 photos required.</p>
                                 </div>
                                 <div class="upload-disabled">
                                   <p class="m-0 drag-drop-text" style="color: #dc3545; font-weight: 500;">You have reached the limit of 30 images. Remove one to add a new image.</p>
@@ -1637,7 +1774,36 @@ div#basic {
                   </div>
                   <style>
                     @media(max-width:768px){
-                        .ev-mobile-contact{display:block!important}
+                        /* Contact Information wrapped as a single card */
+                        .ev-mobile-contact{
+                            display:block!important;
+                            background:#111!important;
+                            border:1px solid #222!important;
+                            border-radius:10px!important;
+                            padding:18px!important;
+                            margin:24px 0 16px!important;
+                        }
+                        /* Heading becomes internal header, not its own card */
+                        .ev-mobile-contact .h3.title-block,
+                        .ev-mobile-contact h2.h3.title-block{
+                            background:transparent!important;
+                            border:none!important;
+                            border-radius:0!important;
+                            padding:0!important;
+                            margin:0 0 16px!important;
+                            font-size:17px!important;
+                            gap:12px!important;
+                        }
+                        .ev-mobile-contact .h3.title-block svg{
+                            background:#283813;
+                            border:1px solid #3a4a2a;
+                            border-radius:8px;
+                            padding:7px;
+                            width:36px!important;
+                            height:36px!important;
+                            box-sizing:border-box;
+                            flex-shrink:0;
+                        }
                         #contact-information{display:none!important}
                         .ev-mc-group{margin-bottom:16px}
                         .ev-mc-group>label{display:block;color:#ccc;font-size:13px;font-weight:500;margin-bottom:6px}
@@ -1796,26 +1962,52 @@ div#basic {
                   </div>
                   <style>
                     @media(max-width:768px){
-                        .ev-mobile-services{display:block!important}
+                        /* Services Offered wrapped as a single card */
+                        .ev-mobile-services{
+                            display:block!important;
+                            background:#111!important;
+                            border:1px solid #222!important;
+                            border-radius:10px!important;
+                            padding:18px!important;
+                            margin:24px 0 16px!important;
+                        }
+                        /* Heading becomes internal header, not its own card */
+                        .ev-mobile-services .h3.title-block,
+                        .ev-mobile-services h2.h3.title-block{
+                            background:transparent!important;
+                            border:none!important;
+                            border-radius:0!important;
+                            padding:0!important;
+                            margin:0 0 16px!important;
+                            font-size:17px!important;
+                        }
                         #services{display:none!important}
-                        .ev-svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+                        .ev-svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
                         .ev-svc-pill{
                             display:flex;align-items:center;justify-content:center;
-                            background:#111;border:1px solid #333;border-radius:5px;
-                            padding:10px 8px;cursor:pointer;color:#fff;font-size:12px;
+                            background:#111;border:1px solid #333;border-radius:8px;
+                            padding:7px 8px;cursor:pointer;color:#fff;font-size:13px;
                             text-align:center;
                         }
                         .ev-svc-pill:has(input:checked){
                             border-color:#C1F11D;color:#C1F11D;
                         }
                         .ev-svc-pill:has(input:checked)::before{
-                            content:'✓ ';color:#C1F11D;
+                            content:'';
+                            display:inline-block;
+                            width:16px;height:16px;
+                            margin-right:8px;
+                            flex-shrink:0;
+                            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C1F11D' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='8 12 11 15 16 9'/%3E%3C/svg%3E");
+                            background-repeat:no-repeat;
+                            background-position:center;
+                            background-size:contain;
                         }
                         .ev-svc-hidden{display:none!important}
                         .ev-svc-loadmore{
                             background:none;border:none;color:#C1F11D;
                             font-size:14px;font-weight:500;cursor:pointer;
-                            padding:12px 0;display:flex;align-items:center;gap:4px;
+                            padding:14px 0 0;display:flex;align-items:center;gap:6px;
                         }
                     }
                   </style>
@@ -2015,7 +2207,40 @@ div#basic {
                   </div>
                   <style>
                     @media(max-width:768px){
-                        .ev-mobile-pricing{display:block!important}
+                        /* Pricing wrapped as a single card */
+                        .ev-mobile-pricing{
+                            display:block!important;
+                            background:#111!important;
+                            border:1px solid #222!important;
+                            border-radius:10px!important;
+                            padding:18px!important;
+                            margin:24px 0 16px!important;
+                        }
+                        /* Heading becomes internal header, not its own card */
+                        .ev-mobile-pricing .h3.title-block,
+                        .ev-mobile-pricing h2.h3.title-block{
+                            background:transparent!important;
+                            border:none!important;
+                            border-radius:0!important;
+                            padding:0!important;
+                            margin:0 0 16px!important;
+                            font-size:17px!important;
+                            gap:12px!important;
+                        }
+                        /* $ glyph rendered as a green-tinted icon tile */
+                        .ev-mobile-pricing .h3.title-block > span:first-child{
+                            background:#283813;
+                            border:1px solid #3a4a2a;
+                            border-radius:8px;
+                            width:36px;
+                            height:36px;
+                            display:inline-flex;
+                            align-items:center;
+                            justify-content:center;
+                            box-sizing:border-box;
+                            flex-shrink:0;
+                            font-size:18px!important;
+                        }
                         #fees{display:none!important}
                     }
                   </style>
@@ -2173,19 +2398,78 @@ div#basic {
                             <option value="1">Yes</option>
                         </select>
                     </div>
-                    <!-- <div class="ev-mc-group">
+                    <div class="ev-mc-group">
                         <label>Add Video URL</label>
                         <input wire:model='video' class="form-control" type="text" placeholder="https://yourchannel.com">
                         <span style="color:#666;font-size:11px;margin-top:4px;display:block;">YouTube, Vimeo or other video platform URL</span>
-                    </div> -->
+                    </div>
                   </div>
 
                   <style>
                     @media(max-width:768px){
-                        .ev-mobile-personal{display:block!important}
-                        .ev-mobile-languages{display:block!important}
-                        .ev-mobile-additional{display:block!important}
-                        #about-me, #languages, #add-video, #social{display:none!important}
+                        /* Personal Details wrapped as a single card */
+                        .ev-mobile-personal{
+                            display:block!important;
+                            background:#111!important;
+                            border:1px solid #222!important;
+                            border-radius:10px!important;
+                            padding:18px!important;
+                            margin:24px 0 16px!important;
+                        }
+                        .ev-mobile-personal .h3.title-block,
+                        .ev-mobile-personal h2.h3.title-block{
+                            background:transparent!important;
+                            border:none!important;
+                            border-radius:0!important;
+                            padding:0!important;
+                            margin:0 0 16px!important;
+                            font-size:17px!important;
+                        }
+                        /* Languages Spoken wrapped as a single card */
+                        .ev-mobile-languages{
+                            display:block!important;
+                            background:#111!important;
+                            border:1px solid #222!important;
+                            border-radius:10px!important;
+                            padding:18px!important;
+                            margin:24px 0 16px!important;
+                        }
+                        .ev-mobile-languages .h3.title-block,
+                        .ev-mobile-languages h2.h3.title-block{
+                            background:transparent!important;
+                            border:none!important;
+                            border-radius:0!important;
+                            padding:0!important;
+                            margin:0 0 16px!important;
+                            font-size:17px!important;
+                        }
+                        /* Additional Information wrapped as a single card */
+                        .ev-mobile-additional{
+                            display:block!important;
+                            background:#111!important;
+                            border:1px solid #222!important;
+                            border-radius:10px!important;
+                            padding:18px!important;
+                            margin:24px 0 16px!important;
+                        }
+                        .ev-mobile-additional .h3.title-block,
+                        .ev-mobile-additional h2.h3.title-block{
+                            background:transparent!important;
+                            border:none!important;
+                            border-radius:0!important;
+                            padding:0!important;
+                            margin:0 0 16px!important;
+                            font-size:17px!important;
+                        }
+                        #about-me, #languages, #add-video, #video, #social{display:none!important}
+                        /* Submit button: less wide, centered */
+                        #submit, .btn-primary.btn-lg{
+                            width:auto!important;
+                            max-width:304px!important;
+                            display:block!important;
+                            margin:20px auto 0!important;
+                            padding:14px 40px!important;
+                        }
                         .ev-add-lang-btn{
                             width:100%;background:#111;border:1px solid #333;border-radius:5px;
                             color:#fff;font-size:14px;padding:12px;cursor:pointer;

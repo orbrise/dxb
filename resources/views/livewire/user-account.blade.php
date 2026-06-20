@@ -416,7 +416,7 @@
         .ev-account-card {
             flex-basis: auto;
             border-radius: 5px;
-            padding: 16px;
+            padding: 25px;
         }
 
         /* User card */
@@ -471,7 +471,7 @@
         .ev-buy-btn {
             width: 100%;
             justify-content: center;
-            border-radius: 5px !important;
+            border-radius: 25px !important;
             padding: 12px 20px;
         }
         /* Hide payment icons & desktop credits on mobile */
@@ -730,11 +730,11 @@
                 </h2>
                 <p class="ev-newsletter-text">
                     Receiving monthly updates in {{ auth()->user()->newsletterSubscriptions()->count() }} cities.<br>
-                    <a href="#" @click.prevent="show = true; $wire.call('loadUserSettings')">
+                    <a href="#" @click.prevent="show = true">
                         <i class="fa fa-pencil-alt"></i> Edit Subscription
                     </a>
                 </p>
-                
+
                 {{-- Newsletter Modal --}}
                 <div x-show="show" x-cloak class="ev-modal-overlay" @click.self="show = false">
                     <div class="ev-modal">
@@ -836,11 +836,11 @@
                 <div class="ev-newsletter-mobile-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </div>
-                <div class="ev-newsletter-mobile-info" @click="show = true; $wire.call('loadUserSettings')">
+                <div class="ev-newsletter-mobile-info" @click="show = true">
                     <p class="ev-nl-title">Newsletter</p>
                     <p class="ev-nl-sub">Subscribed</p>
                 </div>
-                <span class="ev-newsletter-mobile-arrow" @click="show = true; $wire.call('loadUserSettings')">›</span>
+                <span class="ev-newsletter-mobile-arrow" @click="show = true">›</span>
 
                 {{-- Reuse newsletter modal --}}
                 <div x-show="show" x-cloak class="ev-modal-overlay" @click.self="show = false">

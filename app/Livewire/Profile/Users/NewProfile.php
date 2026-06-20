@@ -224,8 +224,20 @@ public function reorderImages($orderedIndexes)
         }
     }
     $this->tempImages = $newOrder;
-    
+
     // First image is always the main image
+    $this->mainImage = 0;
+}
+
+public function setAsMain($index)
+{
+    if (!isset($this->tempImages[$index])) {
+        return;
+    }
+    $picked = $this->tempImages[$index];
+    unset($this->tempImages[$index]);
+    array_unshift($this->tempImages, $picked);
+    $this->tempImages = array_values($this->tempImages);
     $this->mainImage = 0;
 }
 

@@ -1,36 +1,4 @@
 <style>
-/* Sub-header bar */
-.purchase-credits-subheader {
-    background: #131616;
-    padding: 12px 0;
-   
-}
-.purchase-credits-subheader .ev-container {
-    display: flex;
-    align-items: center;
-    position: relative;
-}
-.purchase-credits-subheader .back-link {
-    color: #C1F11D;
-    text-decoration: none;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-.purchase-credits-subheader .back-link:hover {
-    color: #d4f84d;
-}
-.purchase-credits-subheader .page-title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #fff;
-    font-size: 16px;
-    font-weight: 500;
-    margin: 0;
-}
-
 #header .nav-bar { background: #131616 !important; }
 #header { margin-bottom: 0px !important; }
 .backclass { background: #0a0a0a !important; }
@@ -271,28 +239,17 @@
    MOBILE PURCHASE CREDITS VIEW
    ═══════════════════════════════════════════ */
 @media (max-width: 768px) {
-    /* Hide desktop header */
-    #header, .nav-bar.navbar-top-nav {
-        display: none !important;
-    }
-
-    /* Sub-header as mobile nav */
-    .purchase-credits-subheader {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        padding: 14px 0 !important;
-    }
-    .purchase-credits-subheader .back-link {
-        font-size: 13px !important;
-    }
-    .purchase-credits-subheader .page-title {
-        font-size: 15px !important;
-    }
-
     /* Main page padding */
     .purchase-credits-page {
         padding: 16px !important;
+    }
+
+    /* Force inner column to full width on mobile (desktop uses inline max-width:48%) */
+    .purchase-credits-page .ev-container,
+    .purchase-credits-page .ev-container > div {
+        max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 
     /* Hide desktop heading */
@@ -304,82 +261,104 @@
     .ev-balance-card {
         display: flex !important;
         align-items: center;
-        gap: 12px;
-        background: linear-gradient(135deg, #1a2a10, #0f1a08);
+        gap: 14px;
+        background: linear-gradient(135deg, #1f2d11, #131c08);
         border: 1px solid #2a3a1a;
-        border-radius: 5px;
-        padding: 16px;
-        margin-bottom: 16px;
+        border-radius: 12px;
+        padding: 18px 18px;
+        margin-bottom: 18px;
     }
     .ev-balance-icon {
-        background: #1a2a10;
+        background: #283813;
         border: 1px solid #3a4a2a;
-        border-radius: 5px;
-        padding: 8px;
+        border-radius: 10px;
+        width: 52px;
+        height: 52px;
+        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
+    }
+    .ev-balance-icon svg {
+        width: 26px;
+        height: 26px;
     }
     .ev-balance-label {
-        color: #999;
-        font-size: 11px;
+        color: #b8b8b8;
+        font-size: 13px;
         margin-bottom: 2px;
     }
     .ev-balance-amount {
         color: #fff;
-        font-size: 20px;
+        font-size: 24px;
         font-weight: 700;
+        line-height: 1.1;
     }
 
     /* Info text */
     .purchase-credits-page .mb-2 p {
-        font-size: 11px !important;
-        color: #666 !important;
-        margin-bottom: 16px !important;
-        line-height: 1.4 !important;
+        font-size: 13px !important;
+        color: #8a8a8a !important;
+        margin-bottom: 22px !important;
+        line-height: 1.5 !important;
     }
 
-    /* Amount input */
+    /* Amount input row - keep on one line */
+    .purchase-credits-page .d-flex.align-items-center {
+        flex-wrap: nowrap !important;
+    }
     .purchase-credits-page .amount-input-group {
-        border-radius: 5px !important;
+        border-radius: 8px !important;
+        flex-shrink: 0;
     }
     .purchase-credits-page .amount-input-group .dollar-sign {
-        padding: 10px 12px !important;
-        font-size: 15px !important;
+        padding: 12px 16px !important;
+        font-size: 18px !important;
     }
     .purchase-credits-page .amount-input-group input {
-        font-size: 15px !important;
-        padding: 10px 12px !important;
+        font-size: 16px !important;
+        padding: 12px 14px !important;
+        width: 110px !important;
     }
     .purchase-credits-page .choose-amount-label {
-        font-size: 13px !important;
+        font-size: 15px !important;
+        margin-left: 18px !important;
+        white-space: nowrap;
     }
 
     /* Payment methods card */
     .purchase-credits-page .payment-methods-card {
-        border-radius: 5px !important;
-        padding: 16px !important;
-        margin-top: 16px !important;
+        border-radius: 12px !important;
+        padding: 18px !important;
+        margin-top: 20px !important;
     }
     .purchase-credits-page .payment-methods-card h2 {
-        font-size: 15px !important;
-        margin-bottom: 14px !important;
+        font-size: 17px !important;
+        margin-bottom: 16px !important;
     }
     .purchase-credits-page .payment-method-option {
-        border-radius: 5px !important;
-        padding: 12px 14px !important;
-        margin-bottom: 10px !important;
+        border-radius: 10px !important;
+        padding: 14px 16px !important;
+        margin-bottom: 12px !important;
     }
     .purchase-credits-page .payment-method-option label {
-        font-size: 13px !important;
+        font-size: 14px !important;
+        gap: 8px;
+    }
+    .purchase-credits-page .payment-method-option label > span:first-of-type {
+        white-space: nowrap;
     }
     .purchase-credits-page .payment-method-option input[type="radio"] {
-        width: 16px !important;
-        height: 16px !important;
+        width: 18px !important;
+        height: 18px !important;
         margin-right: 10px !important;
     }
+    .purchase-credits-page .payment-method-option .ev-card-logos {
+        gap: 8px;
+    }
     .purchase-credits-page .payment-method-option img {
-        height: 15px !important;
+        height: 16px !important;
     }
 
     /* Payment section card */
@@ -401,14 +380,6 @@
 </style>
 
 <div>
-<div class="purchase-credits-subheader">
-  <div class="ev-container">
-    <a href="/female-escorts-in-dubai" class="back-link"><span class="ev-desktop-back">&lsaquo; Escorts in Dubai</span><span class="ev-mobile-back" style="display:none;">&lsaquo; Home</span></a>
-    <style>@media(max-width:768px){.ev-desktop-back{display:none!important}.ev-mobile-back{display:inline!important}}</style>
-    <span class="page-title">Purchase Credits</span>
-  </div>
-</div>
-
 <div class="purchase-credits-page" style="background: #000; min-height: 100vh; padding: 30px 16px;">
   {{-- Match the header's `.ev-container` (max-width 1300px, margin 0 auto)
        so the page body sits flush with the evoory logo above. Inside that
@@ -447,7 +418,7 @@
             <!-- Mobile Balance Card -->
             <div class="ev-balance-card" style="display:none;">
                 <div class="ev-balance-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                 </div>
                 <div>
                     <div class="ev-balance-label">Current Balance</div>
