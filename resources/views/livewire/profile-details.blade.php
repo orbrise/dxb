@@ -336,6 +336,566 @@
               </div>
               </div>{{-- /ev-details-card --}}
 
+              {{-- "Is This Your Profile?" claim card.
+                   Hidden once the viewer is signed in and already owns the
+                   profile so a logged-in profile owner doesn't see their own
+                   claim CTA. The actual three-step modal (phone → code →
+                   success) lives further down inside #profile-claim-modal. --}}
+              @if(!Auth::check() || (Auth::id() !== ($user->id ?? null) && Auth::user()?->type != 1))
+              <div class="ev-claim-card" id="ev-claim-card">
+                  <div class="ev-claim-card-inner">
+                      <div class="ev-claim-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      </div>
+                      <div class="ev-claim-text">
+                          <h4>Is This Your Profile?</h4>
+                          <p>If this listing belongs to you but was posted by someone else, you can verify your ownership and claim it. We will transfer it securely to your original account.</p>
+                          <button type="button" class="ev-claim-cta" onclick="document.getElementById('profile-claim-modal').classList.add('is-open');document.body.style.overflow='hidden';">Claim Now</button>
+                      </div>
+                  </div>
+              </div>
+
+              {{-- Claim modal — three stacked panels controlled by the
+                   data-step attribute set in JS: phone → code → success. --}}
+              <div class="ev-claim-modal" id="profile-claim-modal" data-step="phone" data-profile-id="{{ $user->id ?? '' }}" role="dialog" aria-modal="true" aria-labelledby="ev-claim-title" hidden>
+                  <div class="ev-claim-modal-overlay" onclick="window.profileClaimClose && window.profileClaimClose()"></div>
+                  <div class="ev-claim-modal-panel">
+                      <button type="button" class="ev-claim-close" aria-label="Close" onclick="window.profileClaimClose && window.profileClaimClose()">&times;</button>
+
+                      {{-- Step 1: phone + email + channel --}}
+                      <div class="ev-claim-step" data-step-panel="phone">
+                          <div class="ev-claim-modal-head">
+                              <h2 id="ev-claim-title">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                  Claim Your Profile
+                              </h2>
+                              <p class="ev-claim-sub">Verify ownership &amp; request transfer</p>
+                          </div>
+                          <p class="ev-claim-blurb">Verify that this profile belongs to you, and we'll securely help transfer it to your account after verification is complete.</p>
+
+                          <label class="ev-claim-label" for="ev-claim-phone-number">Mobile Number</label>
+                          @php
+                              // Default selection: the profile's own city country if we know it,
+                              // otherwise UAE. Falls back gracefully if either lookup is empty.
+                              $claimDefaultIso = strtoupper(optional(optional($user)->getcountry)->iso ?: 'AE');
+                              $claimDefaultCountry = ($countries ?? collect())->firstWhere('iso', $claimDefaultIso)
+                                  ?? ($countries ?? collect())->firstWhere('iso', 'AE')
+                                  ?? ($countries ?? collect())->first();
+                          @endphp
+                          <div class="ev-claim-phone-group">
+                              <div class="ev-claim-cc" id="ev-claim-cc">
+                                  <button type="button" class="ev-claim-cc-trigger" data-cc-trigger
+                                          aria-haspopup="listbox" aria-expanded="false">
+                                      <img class="ev-claim-cc-flag" data-cc-flag
+                                           src="https://flagcdn.com/w40/{{ strtolower($claimDefaultCountry->iso ?? 'ae') }}.png"
+                                           alt="" width="22" height="16">
+                                      <span class="ev-claim-cc-code" data-cc-code>+{{ $claimDefaultCountry->phonecode ?? '971' }}</span>
+                                      <span class="ev-claim-cc-caret" aria-hidden="true">▾</span>
+                                      <input type="hidden" id="ev-claim-dial" value="{{ $claimDefaultCountry->phonecode ?? '971' }}">
+                                      <input type="hidden" id="ev-claim-iso" value="{{ strtoupper($claimDefaultCountry->iso ?? 'AE') }}">
+                                  </button>
+                                  <div class="ev-claim-cc-panel" data-cc-panel hidden role="listbox">
+                                      <input type="text" class="ev-claim-cc-search" placeholder="Search country…" data-cc-search>
+                                      <ul class="ev-claim-cc-list" data-cc-list>
+                                          @foreach($countries as $c)
+                                              @if(!empty($c->phonecode))
+                                              <li role="option"
+                                                  data-cc-iso="{{ strtoupper($c->iso) }}"
+                                                  data-cc-dial="{{ $c->phonecode }}"
+                                                  data-cc-name="{{ strtolower($c->nicename) }}">
+                                                  <img src="https://flagcdn.com/w40/{{ strtolower($c->iso) }}.png" alt="" width="22" height="16">
+                                                  <span class="ev-claim-cc-list-name">{{ $c->nicename }}</span>
+                                                  <span class="ev-claim-cc-list-dial">+{{ $c->phonecode }}</span>
+                                              </li>
+                                              @endif
+                                          @endforeach
+                                      </ul>
+                                  </div>
+                              </div>
+                              <input id="ev-claim-phone-number" name="phone_number" type="tel"
+                                     class="ev-claim-input ev-claim-phone-input"
+                                     placeholder="Enter your mobile number"
+                                     autocomplete="tel-national" inputmode="numeric">
+                          </div>
+
+                          <label class="ev-claim-label" for="ev-claim-email">Email Address</label>
+                          <input id="ev-claim-email" name="email" type="email" class="ev-claim-input" placeholder="Enter your email" autocomplete="email">
+
+                          <p class="ev-claim-label" style="margin-top:18px;">Choose how you'd like to receive your verification code.</p>
+                          <div class="ev-claim-channels">
+                              <label class="ev-claim-channel">
+                                  <input type="radio" name="claim-channel" value="whatsapp" checked>
+                                  <span class="ev-claim-channel-icon" aria-hidden="true">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 0 1 8.413 3.488 11.82 11.82 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.711.306 1.265.489 1.697.625.713.227 1.362.195 1.875.118.572-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/></svg>
+                                  </span>
+                                  <span>WhatsApp</span>
+                              </label>
+                              <label class="ev-claim-channel">
+                                  <input type="radio" name="claim-channel" value="sms">
+                                  <span class="ev-claim-channel-icon" aria-hidden="true">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                  </span>
+                                  <span>SMS</span>
+                              </label>
+                          </div>
+
+                          <div class="ev-claim-info">
+                              <strong>Why claim this profile?</strong>
+                              <ul>
+                                  <li>Protect your identity on evoory.</li>
+                                  <li>Recover your original listing securely.</li>
+                                  <li>Prevent duplicate or fake profiles using your imagery.</li>
+                                  <li>Manage reviews and updates directly from your own dashboard.</li>
+                              </ul>
+                          </div>
+
+                          <p class="ev-claim-error" data-claim-error hidden></p>
+                          <button type="button" class="ev-claim-primary" data-claim-action="send-otp">Continue <span aria-hidden="true">›</span></button>
+                      </div>
+
+                      {{-- Step 2: OTP entry --}}
+                      <div class="ev-claim-step" data-step-panel="code" hidden>
+                          <div class="ev-claim-modal-head">
+                              <h2>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+                                  Enter Security Code
+                              </h2>
+                              <p class="ev-claim-sub">Verification code sent to phone</p>
+                          </div>
+                          <p class="ev-claim-blurb">We've dispatched a secure code to <strong data-claim-phone-mask>your phone</strong>.</p>
+                          <div class="ev-claim-otp" data-claim-otp>
+                              <input type="text" inputmode="numeric" maxlength="1" data-otp-cell>
+                              <input type="text" inputmode="numeric" maxlength="1" data-otp-cell>
+                              <input type="text" inputmode="numeric" maxlength="1" data-otp-cell>
+                              <input type="text" inputmode="numeric" maxlength="1" data-otp-cell>
+                              <input type="text" inputmode="numeric" maxlength="1" data-otp-cell>
+                              <input type="text" inputmode="numeric" maxlength="1" data-otp-cell>
+                          </div>
+                          <div class="ev-claim-otp-actions">
+                              <button type="button" class="ev-claim-link" data-claim-action="back-to-phone">‹ Change Number</button>
+                              <button type="button" class="ev-claim-link ev-claim-link--accent" data-claim-action="resend">RESEND CODE</button>
+                          </div>
+                          <p class="ev-claim-error" data-claim-error hidden></p>
+                          <button type="button" class="ev-claim-primary" data-claim-action="verify-otp">Verify OTP <span aria-hidden="true">›</span></button>
+                      </div>
+
+                      {{-- Step 3: success --}}
+                      <div class="ev-claim-step" data-step-panel="success" hidden>
+                          <div class="ev-claim-success-icon">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="9 12 12 15 17 9"></polyline></svg>
+                          </div>
+                          <h2 class="ev-claim-success-title">Verification Successful</h2>
+                          <p class="ev-claim-blurb">Your profile ownership verification has been logged successfully. The profile is now linked to your account, and we've sent your login credentials to the email you provided.</p>
+                          <a href="{{ url('my-account') }}" class="ev-claim-primary ev-claim-primary--center">Go To My Dashboard <span aria-hidden="true">›</span></a>
+                      </div>
+                  </div>
+              </div>
+
+              <style>
+                  /* Claim card (shown inside About tab content) */
+                  .ev-claim-card {
+                      margin: 16px 0 0;
+                      padding: 18px 18px;
+                      background: #15191B;
+                      border: 1px solid #23292B;
+                      border-radius: 12px;
+                  }
+                  .ev-claim-card-inner { display: flex; gap: 14px; align-items: flex-start; }
+                  .ev-claim-icon {
+                      flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%;
+                      background: rgba(193, 241, 29, 0.12); display: flex; align-items: center; justify-content: center;
+                  }
+                  .ev-claim-text h4 { margin: 0 0 6px; color: #fff; font-size: 16px; font-weight: 600; }
+                  .ev-claim-text p { margin: 0 0 12px; color: #aab0b4; font-size: 13.5px; line-height: 1.55; }
+                  .ev-claim-cta {
+                      background: #C1F11D; color: #000; border: none; border-radius: 24px;
+                      padding: 7px 22px; font-weight: 600; font-size: 14px; cursor: pointer;
+                      transition: background 0.15s ease;
+                  }
+                  .ev-claim-cta:hover { background: #d4f84d; }
+
+                  /* Modal */
+                  .ev-claim-modal { position: fixed; inset: 0; z-index: 99999; display: none; align-items: flex-start; justify-content: center; padding: 4vh 16px; }
+                  .ev-claim-modal.is-open { display: flex; }
+                  .ev-claim-modal[hidden] { display: none !important; }
+                  .ev-claim-modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.78); }
+                  .ev-claim-modal-panel {
+                      position: relative; width: 100%; max-width: 520px;
+                      background: #0e1214; color: #fff; border: 1px solid #23292B;
+                      border-radius: 14px; padding: 28px 26px;
+                      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+                      max-height: 92vh; overflow-y: auto;
+                  }
+                  .ev-claim-close {
+                      position: absolute; top: 14px; right: 14px;
+                      width: 32px; height: 32px; border-radius: 50%;
+                      background: #1a1f22; border: 1px solid #23292B; color: #fff;
+                      font-size: 18px; line-height: 1; cursor: pointer;
+                  }
+                  .ev-claim-close:hover { background: #23292b; }
+                  .ev-claim-modal-head { padding-right: 36px; }
+                  .ev-claim-modal-head h2 { margin: 0 0 4px; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+                  .ev-claim-sub { margin: 0 0 18px; color: #8b9298; font-size: 13px; }
+                  .ev-claim-blurb { margin: 0 0 18px; color: #cfd3d6; font-size: 14px; line-height: 1.55; }
+                  .ev-claim-label { display: block; margin: 14px 0 6px; color: #cfd3d6; font-size: 13px; }
+                  .ev-claim-input {
+                      width: 100%; padding: 12px 14px; background: #0a0d0f;
+                      border: 1px solid #23292B; border-radius: 8px; color: #fff; font-size: 14px;
+                  }
+                  .ev-claim-input:focus { outline: none; border-color: #C1F11D; }
+                  /* Country-code + phone composite field */
+                  .ev-claim-phone-group {
+                      display: flex; gap: 8px; align-items: stretch; position: relative;
+                  }
+                  .ev-claim-cc { position: relative; flex: 0 0 auto; }
+                  .ev-claim-cc-trigger {
+                      display: inline-flex; align-items: center; gap: 8px;
+                      height: 100%; min-height: 44px; padding: 0 10px;
+                      background: #0a0d0f; border: 1px solid #23292B;
+                      border-radius: 8px; color: #fff; cursor: pointer;
+                      font: inherit; font-size: 14px;
+                  }
+                  .ev-claim-cc-trigger:hover { border-color: #3a4147; }
+                  .ev-claim-cc-trigger[aria-expanded="true"] { border-color: #C1F11D; }
+                  .ev-claim-cc-flag {
+                      display: block; width: 22px; height: 16px; border-radius: 2px;
+                      object-fit: cover; flex-shrink: 0;
+                  }
+                  .ev-claim-cc-code { font-weight: 500; }
+                  .ev-claim-cc-caret { color: #8b9298; font-size: 11px; }
+                  .ev-claim-phone-input { flex: 1; }
+                  .ev-claim-cc-panel {
+                      position: absolute; top: calc(100% + 6px); left: 0;
+                      width: 320px; max-width: calc(100vw - 32px);
+                      background: #0a0d0f; border: 1px solid #23292B;
+                      border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+                      z-index: 10; padding: 8px;
+                  }
+                  .ev-claim-cc-search {
+                      width: 100%; padding: 8px 10px;
+                      background: #0e1214; border: 1px solid #23292B;
+                      border-radius: 6px; color: #fff; font-size: 13px;
+                      margin-bottom: 6px;
+                  }
+                  .ev-claim-cc-search:focus { outline: none; border-color: #C1F11D; }
+                  .ev-claim-cc-list {
+                      list-style: none; margin: 0; padding: 0;
+                      max-height: 240px; overflow-y: auto;
+                  }
+                  .ev-claim-cc-list li {
+                      display: flex; align-items: center; gap: 10px;
+                      padding: 8px 8px; border-radius: 6px; cursor: pointer;
+                      color: #cfd3d6; font-size: 13.5px;
+                  }
+                  .ev-claim-cc-list li:hover,
+                  .ev-claim-cc-list li[aria-selected="true"] { background: #15191B; color: #fff; }
+                  .ev-claim-cc-list li.is-hidden { display: none; }
+                  .ev-claim-cc-list-name { flex: 1; }
+                  .ev-claim-cc-list-dial { color: #8b9298; font-variant-numeric: tabular-nums; }
+
+                  /* Channel chips: content-width pills, not full-row.
+                     Each chip = icon + label + radio dot, snug padding so the
+                     row hugs the controls rather than stretching across the
+                     modal body. Match the target reference. */
+                  .ev-claim-channels {
+                      display: flex; gap: 12px; flex-wrap: wrap;
+                      margin: 6px 0 18px;
+                  }
+                  .ev-claim-channel {
+                      display: inline-flex; align-items: center; gap: 10px;
+                      padding: 10px 16px; background: #0a0d0f;
+                      border: 1px solid #23292B; border-radius: 10px;
+                      cursor: pointer; font-size: 14px; line-height: 1;
+                      transition: border-color 0.15s ease, background 0.15s ease;
+                  }
+                  .ev-claim-channel:hover { border-color: #3a4147; }
+                  .ev-claim-channel:has(input:checked) {
+                      border-color: #C1F11D; background: rgba(193, 241, 29, 0.06);
+                      color: #C1F11D;
+                  }
+                  .ev-claim-channel input { accent-color: #C1F11D; margin: 0; }
+                  .ev-claim-channel-icon { display: inline-flex; }
+                  .ev-claim-info {
+                      margin: 4px 0 18px; padding: 14px 16px;
+                      background: rgba(193, 241, 29, 0.05);
+                      border: 1px solid rgba(193, 241, 29, 0.25);
+                      border-radius: 10px; font-size: 13px; color: #cfd3d6;
+                  }
+                  .ev-claim-info strong { display: block; color: #C1F11D; margin-bottom: 6px; }
+                  .ev-claim-info ul { margin: 0; padding-left: 18px; line-height: 1.6; }
+                  .ev-claim-info li { margin-bottom: 2px; }
+                  .ev-claim-error {
+                      margin: 0 0 12px; padding: 10px 12px;
+                      background: rgba(220, 53, 69, 0.12); border: 1px solid rgba(220, 53, 69, 0.4);
+                      border-radius: 8px; color: #ff8c95; font-size: 13px;
+                  }
+                  .ev-claim-primary {
+                      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+                      width: auto; min-width: 140px; padding: 10px 24px;
+                      background: #C1F11D; color: #000; border: none; border-radius: 24px;
+                      font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none;
+                  }
+                  .ev-claim-primary:hover { background: #d4f84d; }
+                  .ev-claim-primary[disabled] { opacity: 0.55; cursor: progress; }
+                  .ev-claim-primary--center { display: flex; margin: 8px auto 0; }
+                  .ev-claim-otp { display: flex; gap: 8px; justify-content: center; margin: 10px 0 6px; }
+                  .ev-claim-otp input {
+                      width: 44px; height: 50px; text-align: center; font-size: 18px;
+                      background: #0a0d0f; border: 1px solid #23292B; border-radius: 8px; color: #fff;
+                  }
+                  .ev-claim-otp input:focus { outline: none; border-color: #C1F11D; }
+                  .ev-claim-otp-actions { display: flex; justify-content: space-between; padding: 12px 0 18px; border-bottom: 1px solid #1f262f; margin-bottom: 18px; }
+                  .ev-claim-link { background: none; border: none; color: #cfd3d6; font-size: 13px; cursor: pointer; padding: 0; }
+                  .ev-claim-link--accent { color: #C1F11D; font-weight: 600; letter-spacing: 0.05em; }
+                  .ev-claim-success-icon { display: flex; justify-content: center; margin: 8px 0 14px; }
+                  .ev-claim-success-title { margin: 0 0 10px; text-align: center; font-size: 20px; font-weight: 600; }
+              </style>
+
+              <script>
+                  (function () {
+                      var modal = document.getElementById('profile-claim-modal');
+                      if (!modal || modal.__bound) return;
+                      modal.__bound = true;
+
+                      var profileId = modal.getAttribute('data-profile-id');
+                      var csrf = document.querySelector('meta[name="csrf-token"]')
+                          ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                          : @json(csrf_token());
+
+                      function panels() { return modal.querySelectorAll('[data-step-panel]'); }
+                      function setStep(name) {
+                          modal.setAttribute('data-step', name);
+                          panels().forEach(function (el) {
+                              if (el.getAttribute('data-step-panel') === name) el.removeAttribute('hidden');
+                              else el.setAttribute('hidden', '');
+                          });
+                          clearError();
+                      }
+                      function clearError() {
+                          modal.querySelectorAll('[data-claim-error]').forEach(function (el) {
+                              el.textContent = '';
+                              el.setAttribute('hidden', '');
+                          });
+                      }
+                      function showError(msg) {
+                          var panel = modal.querySelector('[data-step-panel="' + modal.getAttribute('data-step') + '"]');
+                          if (!panel) return;
+                          var err = panel.querySelector('[data-claim-error]');
+                          if (!err) return;
+                          err.textContent = msg;
+                          err.removeAttribute('hidden');
+                      }
+                      function getVal(sel) {
+                          var el = modal.querySelector(sel);
+                          return el ? (el.value || '').trim() : '';
+                      }
+                      function getFullPhone() {
+                          // Concatenate selected dial code + the local-number
+                          // input. Strips everything non-numeric from both so
+                          // we always send E.164 (digits-only after the
+                          // leading +). Server side normalises identically.
+                          var dial = getVal('#ev-claim-dial').replace(/\D/g, '');
+                          var local = getVal('#ev-claim-phone-number').replace(/\D/g, '');
+                          if (!dial || !local) return '';
+                          return '+' + dial + local;
+                      }
+                      function getChannel() {
+                          var checked = modal.querySelector('input[name="claim-channel"]:checked');
+                          return checked ? checked.value : 'whatsapp';
+                      }
+                      function getOtp() {
+                          var out = '';
+                          modal.querySelectorAll('[data-otp-cell]').forEach(function (el) {
+                              out += (el.value || '').replace(/\D/g, '').slice(0, 1);
+                          });
+                          return out;
+                      }
+                      function maskPhone(phone) {
+                          var digits = (phone || '').replace(/\D/g, '');
+                          if (digits.length < 4) return digits;
+                          var prefix = digits.length > 4 ? digits.slice(0, digits.length - 4) : '';
+                          return (prefix ? '+' + prefix : '') + ' ' + '*'.repeat(Math.max(0, digits.length - 4)) + digits.slice(-4);
+                      }
+                      function busy(button, on) {
+                          if (!button) return;
+                          if (on) {
+                              button.dataset.originalText = button.dataset.originalText || button.innerHTML;
+                              button.setAttribute('disabled', 'disabled');
+                              button.innerHTML = 'Please wait…';
+                          } else {
+                              button.removeAttribute('disabled');
+                              if (button.dataset.originalText) button.innerHTML = button.dataset.originalText;
+                          }
+                      }
+
+                      async function api(path, payload) {
+                          var res = await fetch(path, {
+                              method: 'POST',
+                              headers: {
+                                  'Content-Type': 'application/json',
+                                  'Accept': 'application/json',
+                                  'X-CSRF-TOKEN': csrf,
+                                  'X-Requested-With': 'XMLHttpRequest',
+                              },
+                              body: JSON.stringify(payload),
+                          });
+                          var data = {};
+                          try { data = await res.json(); } catch (e) { data = {}; }
+                          return { ok: res.ok && data.ok, status: res.status, data: data };
+                      }
+
+                      async function sendOtp(btn) {
+                          var phone = getFullPhone();
+                          var email = getVal('#ev-claim-email');
+                          if (!phone || phone.replace(/\D/g, '').length < 7) {
+                              showError('Please enter a valid phone number.');
+                              return;
+                          }
+                          if (!email || email.indexOf('@') === -1) {
+                              showError('Please enter a valid email address.');
+                              return;
+                          }
+                          busy(btn, true);
+                          var r = await api('/profile/' + profileId + '/claim/send-otp', {
+                              phone: phone, email: email, channel: getChannel(),
+                          });
+                          busy(btn, false);
+                          if (!r.ok) { showError((r.data && r.data.message) || 'Could not send the code.'); return; }
+                          var mask = modal.querySelector('[data-claim-phone-mask]');
+                          if (mask) mask.textContent = maskPhone(phone);
+                          setStep('code');
+                          setTimeout(function () {
+                              var first = modal.querySelector('[data-otp-cell]');
+                              if (first) first.focus();
+                          }, 40);
+                      }
+
+                      async function verifyOtp(btn) {
+                          var code = getOtp();
+                          if (code.length < 4) { showError('Please enter the full code.'); return; }
+                          busy(btn, true);
+                          var r = await api('/profile/' + profileId + '/claim/verify-otp', {
+                              phone: getFullPhone(),
+                              email: getVal('#ev-claim-email'),
+                              code: code,
+                          });
+                          busy(btn, false);
+                          if (!r.ok) {
+                              showError((r.data && r.data.message) || 'Verification failed.');
+                              return;
+                          }
+                          setStep('success');
+                      }
+
+                      // Country-code dropdown wiring. Self-contained — no
+                      // external lib. Open/close, type-to-filter, click to
+                      // select, escape to close. Updates the visible flag +
+                      // dial-code and the hidden inputs the OTP send reads.
+                      (function () {
+                          var trigger = modal.querySelector('[data-cc-trigger]');
+                          var panel = modal.querySelector('[data-cc-panel]');
+                          var search = modal.querySelector('[data-cc-search]');
+                          var list = modal.querySelector('[data-cc-list]');
+                          var flagEl = modal.querySelector('[data-cc-flag]');
+                          var codeEl = modal.querySelector('[data-cc-code]');
+                          var dialInput = modal.querySelector('#ev-claim-dial');
+                          var isoInput = modal.querySelector('#ev-claim-iso');
+                          if (!trigger || !panel || !list) return;
+
+                          function open() {
+                              panel.removeAttribute('hidden');
+                              trigger.setAttribute('aria-expanded', 'true');
+                              if (search) { search.value = ''; filter(''); setTimeout(function () { search.focus(); }, 10); }
+                          }
+                          function close() {
+                              panel.setAttribute('hidden', '');
+                              trigger.setAttribute('aria-expanded', 'false');
+                          }
+                          function filter(term) {
+                              term = (term || '').toLowerCase().trim();
+                              Array.prototype.forEach.call(list.children, function (li) {
+                                  var name = li.getAttribute('data-cc-name') || '';
+                                  var dial = li.getAttribute('data-cc-dial') || '';
+                                  var match = !term || name.indexOf(term) !== -1 || ('+' + dial).indexOf(term) !== -1 || dial.indexOf(term) !== -1;
+                                  li.classList.toggle('is-hidden', !match);
+                              });
+                          }
+                          trigger.addEventListener('click', function (e) {
+                              e.preventDefault();
+                              if (panel.hasAttribute('hidden')) open(); else close();
+                          });
+                          search && search.addEventListener('input', function () { filter(search.value); });
+                          search && search.addEventListener('keydown', function (e) {
+                              if (e.key === 'Escape') { close(); trigger.focus(); }
+                          });
+                          list.addEventListener('click', function (e) {
+                              var li = e.target.closest('li');
+                              if (!li || li.classList.contains('is-hidden')) return;
+                              var iso = li.getAttribute('data-cc-iso');
+                              var dial = li.getAttribute('data-cc-dial');
+                              if (flagEl) flagEl.src = 'https://flagcdn.com/w40/' + (iso || '').toLowerCase() + '.png';
+                              if (codeEl) codeEl.textContent = '+' + dial;
+                              if (dialInput) dialInput.value = dial;
+                              if (isoInput) isoInput.value = iso;
+                              close();
+                              var phoneInput = modal.querySelector('#ev-claim-phone-number');
+                              if (phoneInput) phoneInput.focus();
+                          });
+                          document.addEventListener('click', function (e) {
+                              if (!panel.contains(e.target) && e.target !== trigger && !trigger.contains(e.target)) close();
+                          });
+                      })();
+
+                      modal.addEventListener('click', function (e) {
+                          var btn = e.target.closest('[data-claim-action]');
+                          if (!btn) return;
+                          e.preventDefault();
+                          var action = btn.getAttribute('data-claim-action');
+                          if (action === 'send-otp') sendOtp(btn);
+                          else if (action === 'resend') sendOtp(btn);
+                          else if (action === 'back-to-phone') setStep('phone');
+                          else if (action === 'verify-otp') verifyOtp(btn);
+                      });
+
+                      // OTP UX: auto-advance + backspace-to-previous + paste handling.
+                      var cells = modal.querySelectorAll('[data-otp-cell]');
+                      cells.forEach(function (cell, idx) {
+                          cell.addEventListener('input', function (e) {
+                              cell.value = (cell.value || '').replace(/\D/g, '').slice(0, 1);
+                              if (cell.value && cells[idx + 1]) cells[idx + 1].focus();
+                          });
+                          cell.addEventListener('keydown', function (e) {
+                              if (e.key === 'Backspace' && !cell.value && cells[idx - 1]) cells[idx - 1].focus();
+                          });
+                          cell.addEventListener('paste', function (e) {
+                              var data = (e.clipboardData || window.clipboardData).getData('text') || '';
+                              var digits = data.replace(/\D/g, '').slice(0, cells.length);
+                              if (!digits) return;
+                              e.preventDefault();
+                              for (var i = 0; i < cells.length; i++) cells[i].value = digits[i] || '';
+                              var next = digits.length >= cells.length ? cells[cells.length - 1] : cells[digits.length];
+                              if (next) next.focus();
+                          });
+                      });
+
+                      window.profileClaimClose = function () {
+                          modal.classList.remove('is-open');
+                          document.body.style.overflow = '';
+                          setStep('phone');
+                          cells.forEach(function (c) { c.value = ''; });
+                      };
+                      // Show the modal when the trigger was clicked while
+                      // it was still hidden=true (initial render quirk).
+                      modal.removeAttribute('hidden');
+                      modal.style.display = 'none';
+                      var observer = new MutationObserver(function () {
+                          modal.style.display = modal.classList.contains('is-open') ? 'flex' : 'none';
+                      });
+                      observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+                  })();
+              </script>
+              @endif
+
               {{-- Mobile: Report link inside About tab --}}
               <p class="ev-mobile-report visible-xs" style="text-align:center; padding: 16px 0; border-top: 1px solid #1a1a1a;">
                   <a class="report-link" href="javascript:void(0);">
