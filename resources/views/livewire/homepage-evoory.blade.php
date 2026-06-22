@@ -38,6 +38,88 @@
     .ev-search-note a:hover,
     .ev-search-note a:focus,
     .ev-search-note a:active { color: #C1F11D !important; }
+
+    /* Mobile-only standalone "Individual Escort or Agency" CTA.
+       Scoped under .evry-mcta — !important on svg sizing defeats the global
+       `svg { transform: scale(2); width: 100%; }` rule in app.min.css. */
+    .evry-mcta { display: none; }
+    .evry-mcta-hide-desktop-card { display: block; }
+
+    @media (max-width: 767px) {
+        .evry-mcta-hide-desktop-card { display: none !important; }
+
+        .evry-mcta {
+            display: block;
+            margin: 10px 16px 25px;
+        }
+        .evry-mcta__card {
+            background: #0d1011;
+            border: 1px solid #2a3a4a;
+            border-radius: 18px;
+            padding: 22px 20px;
+        }
+        .evry-mcta__head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .evry-mcta__icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+        }
+        .evry-mcta__icon svg {
+            display: block;
+            width: 44px !important;
+            height: 44px !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            margin: 0 !important;
+        }
+        .evry-mcta__title {
+            color: #fff !important;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .evry-mcta__desc {
+            color: #c7d2dc;
+            font-size: 16px;
+            margin: 0 0 18px;
+            line-height: 1.5;
+        }
+        .evry-mcta__btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #C1F11D;
+            color: #000 !important;
+            text-align: center;
+            padding: 5px 136px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 20px;
+            text-decoration: none !important;
+        }
+        .evry-mcta__btn svg {
+            width: 18px !important;
+            height: 18px !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            margin: 0 !important;
+        }
+        .evry-mcta__btn:hover,
+        .evry-mcta__btn:focus {
+            background: #b8e63d;
+            color: #000 !important;
+        }
+    }
 </style>
 
 <div class="ev-homepage">
@@ -91,8 +173,8 @@
                     </p>
                 </div>
                 
-                {{-- List Now Card --}}
-                <div class="ev-card">
+                {{-- List Now Card (desktop only — replaced by .evry-mcta on mobile) --}}
+                <div class="ev-card evry-mcta-hide-desktop-card">
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
                         <svg style="flex-shrink:0;color:var(--accent)" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                         <h2 class="ev-card-title" style="margin:0;font-size:18px;line-height:1.3">Individual Escort or Agency</h2>
@@ -108,6 +190,28 @@
                     </a>
                 </div>
             </div>
+        </div>
+    </section>
+
+    {{-- Mobile-only standalone "Individual Escort or Agency" CTA --}}
+    <section class="evry-mcta">
+        <div class="evry-mcta__card">
+            <div class="evry-mcta__head">
+                <span class="evry-mcta__icon" aria-hidden="true">
+                    <svg width="44" height="44" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="35" height="35" rx="6" fill="#C1F11D" fill-opacity="0.08"/>
+                        <path d="M9.67135 17.7609L14.8697 15.8697L16.7609 10.6713C16.8045 10.5526 16.8836 10.4502 16.9873 10.3778C17.0911 10.3054 17.2145 10.2666 17.341 10.2666C17.4675 10.2666 17.591 10.3054 17.6947 10.3778C17.7984 10.4502 17.8775 10.5526 17.9211 10.6713L19.8123 15.8697L25.0107 17.7609C25.1294 17.8045 25.2319 17.8836 25.3042 17.9873C25.3766 18.0911 25.4154 18.2145 25.4154 18.341C25.4154 18.4675 25.3766 18.591 25.3042 18.6947C25.2319 18.7984 25.1294 18.8775 25.0107 18.9211L19.8123 20.8123L17.9211 26.0107C17.8775 26.1294 17.7984 26.2319 17.6947 26.3042C17.591 26.3766 17.4675 26.4154 17.341 26.4154C17.2145 26.4154 17.0911 26.3766 16.9873 26.3042C16.8836 26.2319 16.8045 26.1294 16.7609 26.0107L14.8697 20.8123L9.67135 18.9211C9.55263 18.8775 9.45017 18.7984 9.37779 18.6947C9.30541 18.591 9.2666 18.4675 9.2666 18.341C9.2666 18.2145 9.30541 18.0911 9.37779 17.9873C9.45017 17.8836 9.55263 17.8045 9.67135 17.7609Z" stroke="#C1F11D" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M26.9998 11.8952H24.8283V14.0667H24.1045V11.8952H21.9331V11.1714H24.1045V9H24.8283V11.1714H26.9998V11.8952Z" fill="#C1F11D"/>
+                        <path d="M11.8 25.105H10.1714V26.7336H9.62857V25.105H8V24.5622H9.62857V22.9336H10.1714V24.5622H11.8V25.105Z" fill="#C1F11D"/>
+                    </svg>
+                </span>
+                <h3 class="evry-mcta__title">Individual Escort or Agency</h3>
+            </div>
+            <p class="evry-mcta__desc">Join thousands of verified professionals. Create your listing and connect with clients worldwide.</p>
+            <a href="action/listings/new" class="evry-mcta__btn">
+                <span>List now</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
         </div>
     </section>
 

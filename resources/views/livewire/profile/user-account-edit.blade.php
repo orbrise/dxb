@@ -468,12 +468,13 @@
             border-radius: 5px;
         }
         .ev-save-btn {
-            width: 100%;
+            display: flex;
+            width: auto;
+            margin: 16px auto 0;
             justify-content: center;
-            border-radius: 5px;
-            padding: 14px 28px;
+            border-radius: 30px;
+            padding: 12px 120px;
             font-size: 16px;
-            margin-top: 16px;
         }
         .ev-alert-success {
             border-radius: 5px;
@@ -858,8 +859,11 @@ function initAccountCountryDropdown() {
     // Toggle dropdown
     display.addEventListener('click', function(e) {
         e.stopPropagation();
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        if (dropdown.style.display === 'block') {
+        const isOpen = dropdown.style.display === 'block';
+        dropdown.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) {
+            searchInput.value = '';
+            countryList.querySelectorAll('.country-option').forEach(opt => opt.style.display = 'flex');
             searchInput.focus();
         }
     });

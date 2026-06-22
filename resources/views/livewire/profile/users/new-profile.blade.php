@@ -1524,6 +1524,60 @@ div#basic {
     .record.image .img-pending {
         display: none !important;
     }
+    /* On mobile, drag doesn't fire — make the Set as Main button big and
+       easy to tap, and the Main badge stand out at the bottom of each card.
+       touch-action: none allows our JS-driven long-press drag to take over
+       without the browser hijacking the gesture for scroll/select.
+       3-per-row layout: cards are narrower so badge/button text and padding
+       are reduced to keep everything legible without truncating. */
+    .record.image {
+        width: calc(33.33% - 6px) !important;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .record.image img {
+        -webkit-user-drag: none;
+        pointer-events: none;
+    }
+    .record.image.drag-over {
+        outline: 2px dashed #C1F11D !important;
+        outline-offset: -2px;
+    }
+    .record.image .img-footer {
+        position: absolute !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        padding: 4px !important;
+        background: rgba(0, 0, 0, 0.75) !important;
+    }
+    .record.image .btn-set-main {
+        display: block !important;
+        width: 100% !important;
+        padding: 6px 4px !important;
+        font-size: 10px !important;
+        border-radius: 5px !important;
+        min-height: 28px;
+        /* Ensure tap goes straight through — no double-tap zoom, no 300ms delay,
+           no parent drag interference */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(200,255,0,0.2);
+        pointer-events: auto !important;
+        position: relative;
+        z-index: 5;
+    }
+    .record.image .badge-success {
+        display: block;
+        padding: 4px 6px !important;
+        font-size: 10px !important;
+    }
+    .record.image .delete {
+        top: 3px !important;
+        right: 3px !important;
+        padding: 2px 4px !important;
+        font-size: 9px !important;
+    }
 
     /* Terms text at bottom */
     .terms-text {
@@ -1668,14 +1722,22 @@ div#basic {
                                wrapper's draggable=true then takes effect cleanly. --}}
                           <img src="{{ $image->temporaryUrl() }}" draggable="false">
                           <div class="img-footer">
-                            <label class="d-flex align-items-center justify-content-center gap-2">
-                                @if($key === 0)
+                            @if($key === 0)
                                 <span class="badge badge-success">Main Image</span>
-                                @else
-                                {{-- Button works on touch devices where HTML5 drag doesn't fire. --}}
-                                <button type="button" class="btn-set-main" wire:click="setAsMain({{ $key }})">Set as Main</button>
-                                @endif
-                            </label>
+                            @else
+                                {{-- Plain button (no wrapping <label>). On touch devices
+                                     a label can swallow / re-target the synthesized click;
+                                     desktop tolerates it, mobile doesn't. Also stop the
+                                     mousedown / touch so the parent's draggable=true
+                                     doesn't claim the gesture as a drag. --}}
+                                <button type="button"
+                                        class="btn-set-main"
+                                        wire:click="setAsMain({{ $key }})"
+                                        onmousedown="event.stopPropagation()"
+                                        ontouchstart="event.stopPropagation()"
+                                        ondragstart="event.preventDefault(); event.stopPropagation(); return false;"
+                                        draggable="false">Set as Main</button>
+                            @endif
                         </div>
                         </div>
                         @endforeach
@@ -3799,12 +3861,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize on page load
     initializeDragAndDrop();
-    
+
     // Reinitialize after Livewire updates
     document.addEventListener('livewire:update', function() {
         setTimeout(initializeDragAndDrop, 100);
     });
-    
+
     // Listen for file uploaded event
     Livewire.on('fileUploaded', function() {
         setTimeout(initializeDragAndDrop, 100);
@@ -4443,6 +4505,188 @@ if (typeof Livewire !== 'undefined') {
               }, true);
 
               console.log('[evDrag] delegated listeners attached');
+          })();
+          </script>
+
+          {{-- Touch-based drag-to-reorder for mobile. HTML5 dragstart/dragover/
+               drop above never fires on touch devices, so we replicate the
+               flow with delegated touch* events on document. Long-press a card
+               (~280ms hold) → drag mode → a floating clone follows the finger
+               → release on another card dispatches `reorderImages` to Livewire,
+               same payload shape as the desktop path. --}}
+          <script>
+          (function () {
+              var dragged = null;
+              var draggedIdx = null;
+              var clone = null;
+              var offX = 0, offY = 0;
+              var startX = 0, startY = 0;
+              var pressTimer = null;
+              var active = false;
+              var lastOver = null;
+              var LONG_PRESS_MS = 280;
+              var MOVE_TOLERANCE = 8;
+
+              function findCard(target) {
+                  while (target && target.nodeType === 1) {
+                      if (target.classList && target.classList.contains('record') && target.classList.contains('image')
+                          && target.parentNode && target.parentNode.id === 'image-container') {
+                          return target;
+                      }
+                      target = target.parentNode;
+                  }
+                  return null;
+              }
+
+              function clearHighlights() {
+                  var container = document.getElementById('image-container');
+                  if (!container) return;
+                  Array.prototype.forEach.call(container.querySelectorAll('.record.image.drag-over'), function (c) {
+                      c.classList.remove('drag-over');
+                  });
+              }
+
+              function cleanup() {
+                  if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                  if (clone && clone.parentNode) clone.parentNode.removeChild(clone);
+                  clone = null;
+                  if (dragged) dragged.style.opacity = '';
+                  clearHighlights();
+                  document.body.style.overflow = '';
+                  dragged = null;
+                  draggedIdx = null;
+                  active = false;
+                  lastOver = null;
+              }
+
+              document.addEventListener('touchstart', function (e) {
+                  // Skip taps on the Set-as-Main button or delete icon — they
+                  // need their own click flow.
+                  if (e.target.closest && (e.target.closest('.btn-set-main') || e.target.closest('.delete'))) return;
+                  var card = findCard(e.target);
+                  if (!card) return;
+
+                  var t = e.touches[0];
+                  startX = t.clientX;
+                  startY = t.clientY;
+                  dragged = card;
+                  draggedIdx = parseInt(card.getAttribute('data-index'), 10);
+
+                  pressTimer = setTimeout(function () {
+                      if (!dragged) return;
+                      active = true;
+                      var rect = card.getBoundingClientRect();
+                      offX = startX - rect.left;
+                      offY = startY - rect.top;
+
+                      clone = card.cloneNode(true);
+                      clone.style.position = 'fixed';
+                      clone.style.left = (startX - offX) + 'px';
+                      clone.style.top = (startY - offY) + 'px';
+                      clone.style.width = rect.width + 'px';
+                      clone.style.height = rect.height + 'px';
+                      clone.style.pointerEvents = 'none';
+                      clone.style.opacity = '0.85';
+                      clone.style.zIndex = '99999';
+                      clone.style.transform = 'scale(1.05)';
+                      clone.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
+                      clone.style.margin = '0';
+                      document.body.appendChild(clone);
+
+                      card.style.opacity = '0.35';
+                      document.body.style.overflow = 'hidden';
+                      if (navigator.vibrate) { try { navigator.vibrate(15); } catch (_) {} }
+                      console.log('[evTouchDrag] start', draggedIdx);
+                  }, LONG_PRESS_MS);
+              }, { passive: true, capture: true });
+
+              document.addEventListener('touchmove', function (e) {
+                  if (!dragged) return;
+                  var t = e.touches[0];
+
+                  if (!active) {
+                      // Long-press hasn't fired yet — if finger moves too far,
+                      // treat it as a scroll, abort.
+                      if (Math.abs(t.clientX - startX) > MOVE_TOLERANCE || Math.abs(t.clientY - startY) > MOVE_TOLERANCE) {
+                          if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                          dragged = null;
+                          draggedIdx = null;
+                      }
+                      return;
+                  }
+
+                  // In active drag — block page scroll.
+                  e.preventDefault();
+
+                  if (clone) {
+                      clone.style.left = (t.clientX - offX) + 'px';
+                      clone.style.top = (t.clientY - offY) + 'px';
+                  }
+
+                  if (clone) clone.style.display = 'none';
+                  var under = document.elementFromPoint(t.clientX, t.clientY);
+                  if (clone) clone.style.display = '';
+
+                  var overCard = under ? (function () {
+                      var n = under;
+                      while (n && n.nodeType === 1) {
+                          if (n.classList && n.classList.contains('record') && n.classList.contains('image')
+                              && n.parentNode && n.parentNode.id === 'image-container') return n;
+                          n = n.parentNode;
+                      }
+                      return null;
+                  })() : null;
+
+                  if (overCard !== lastOver) {
+                      clearHighlights();
+                      if (overCard && overCard !== dragged) overCard.classList.add('drag-over');
+                      lastOver = overCard;
+                  }
+              }, { passive: false, capture: true });
+
+              document.addEventListener('touchend', function (e) {
+                  if (!dragged || !active) { cleanup(); return; }
+
+                  var t = (e.changedTouches && e.changedTouches[0]) || null;
+                  var dropTarget = null;
+                  if (t) {
+                      if (clone) clone.style.display = 'none';
+                      var under = document.elementFromPoint(t.clientX, t.clientY);
+                      if (clone) clone.style.display = '';
+                      var n = under;
+                      while (n && n.nodeType === 1) {
+                          if (n.classList && n.classList.contains('record') && n.classList.contains('image')
+                              && n.parentNode && n.parentNode.id === 'image-container') { dropTarget = n; break; }
+                          n = n.parentNode;
+                      }
+                  }
+
+                  if (dropTarget && dropTarget !== dragged) {
+                      var container = dropTarget.parentNode;
+                      var all = Array.prototype.slice.call(container.querySelectorAll('.record.image'));
+                      var order = all.map(function (c) { return parseInt(c.getAttribute('data-index'), 10); });
+                      var fromIdx = draggedIdx;
+                      var toIdx = parseInt(dropTarget.getAttribute('data-index'), 10);
+                      var fromPos = order.indexOf(fromIdx);
+                      if (fromPos > -1) order.splice(fromPos, 1);
+                      var toPos = order.indexOf(toIdx);
+                      if (toPos < 0) toPos = order.length;
+                      order.splice(toPos, 0, fromIdx);
+
+                      console.log('[evTouchDrag] drop', { from: fromIdx, to: toIdx, order: order });
+
+                      if (window.Livewire && typeof window.Livewire.dispatch === 'function') {
+                          window.Livewire.dispatch('reorderImages', { orderedIndexes: order });
+                      } else {
+                          console.warn('[evTouchDrag] Livewire.dispatch not available');
+                      }
+                  }
+                  cleanup();
+              }, { capture: true });
+
+              document.addEventListener('touchcancel', cleanup, { capture: true });
+
+              console.log('[evTouchDrag] delegated touch listeners attached');
           })();
           </script>
 </div>{{-- /single-root --}}

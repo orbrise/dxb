@@ -155,11 +155,13 @@
             font-size: 14px;
         }
         .ev-save-btn {
-            width: 100%;
+            display: flex;
+            width: auto;
+            margin: 16px auto 0;
             justify-content: center;
-            border-radius: 5px;
+            border-radius: 30px;
+            padding: 12px 36px;
             font-size: 16px;
-            padding: 14px 28px;
         }
         .ev-alert-success {
             border-radius: 5px;

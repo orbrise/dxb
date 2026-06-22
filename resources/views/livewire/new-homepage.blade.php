@@ -75,6 +75,86 @@ a {
     text-decoration: none !important;
 }
 
+/* Mobile-only standalone "Individual Escort or Agency" CTA section.
+   Scoped under .evry-mcta so nothing on the page can bleed in. */
+.evry-mcta { display: none; }
+
+@media (max-width: 767px) {
+    .evry-mcta {
+        display: block;
+        margin: 10px 0 25px;
+    }
+    .evry-mcta__card {
+        background: #000;
+        border: 1px solid #2a3a4a;
+        border-radius: 18px;
+        padding: 22px 20px;
+    }
+    .evry-mcta__head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+    .evry-mcta__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+    }
+    .evry-mcta__icon svg {
+        display: block;
+        width: 44px !important;
+        height: 44px !important;
+        transform: none !important;
+        -webkit-transform: none !important;
+    }
+    .evry-mcta__title {
+        color: #fff !important;
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+    .evry-mcta__desc {
+        color: #c7d2dc;
+        font-size: 16px;
+        margin: 0 0 18px;
+        line-height: 1.5;
+    }
+    .evry-mcta__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        background: #C1F11D;
+        color: #000 !important;
+        text-align: center;
+        padding: 5px 136px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 20px;
+        text-decoration: none !important;
+        width: auto;
+    }
+    .evry-mcta__btn svg {
+        width: 18px !important;
+        height: 18px !important;
+        transform: none !important;
+        -webkit-transform: none !important;
+    }
+    .evry-mcta__btn:hover,
+    .evry-mcta__btn:focus {
+        background: #b8e63d;
+        color: #000 !important;
+    }
+    .mobile-hide-info-box {
+        display: none !important;
+    }
+}
+
 </style>
 @endpush
 <div class="container-fluid">
@@ -161,7 +241,7 @@ a {
               <p>Our goal is to help you find the right escort for you, right now! Massage Republic provides listings of providers of massage and other services. Not looking for a female escort? Click here for <a href="male-escorts-in-dubai" title="Gay escorts">male escorts</a> or <a href="shemale-escorts-in-dubai" title="Escort shemales">shemale escorts</a>. </p>
             </div>
           </div>
-          <div class="col-sm-5">
+          <div class="col-sm-5 mobile-hide-info-box">
             <div class="block">
               <div id="select-location-info-box" class="info-box">
                 <h2>Individual escort or agency?</h2>
@@ -176,6 +256,28 @@ a {
             </div>
           </div>
         </div>
+
+        {{-- Mobile-only standalone CTA: matches reference design exactly --}}
+        <section class="evry-mcta">
+          <div class="evry-mcta__card">
+            <div class="evry-mcta__head">
+              <span class="evry-mcta__icon" aria-hidden="true">
+                <svg width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="35" height="35" rx="6" fill="#C1F11D" fill-opacity="0.08"/>
+                  <path d="M9.67135 17.7609L14.8697 15.8697L16.7609 10.6713C16.8045 10.5526 16.8836 10.4502 16.9873 10.3778C17.0911 10.3054 17.2145 10.2666 17.341 10.2666C17.4675 10.2666 17.591 10.3054 17.6947 10.3778C17.7984 10.4502 17.8775 10.5526 17.9211 10.6713L19.8123 15.8697L25.0107 17.7609C25.1294 17.8045 25.2319 17.8836 25.3042 17.9873C25.3766 18.0911 25.4154 18.2145 25.4154 18.341C25.4154 18.4675 25.3766 18.591 25.3042 18.6947C25.2319 18.7984 25.1294 18.8775 25.0107 18.9211L19.8123 20.8123L17.9211 26.0107C17.8775 26.1294 17.7984 26.2319 17.6947 26.3042C17.591 26.3766 17.4675 26.4154 17.341 26.4154C17.2145 26.4154 17.0911 26.3766 16.9873 26.3042C16.8836 26.2319 16.8045 26.1294 16.7609 26.0107L14.8697 20.8123L9.67135 18.9211C9.55263 18.8775 9.45017 18.7984 9.37779 18.6947C9.30541 18.591 9.2666 18.4675 9.2666 18.341C9.2666 18.2145 9.30541 18.0911 9.37779 17.9873C9.45017 17.8836 9.55263 17.8045 9.67135 17.7609Z" stroke="#C1F11D" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M26.9998 11.8952H24.8283V14.0667H24.1045V11.8952H21.9331V11.1714H24.1045V9H24.8283V11.1714H26.9998V11.8952Z" fill="#C1F11D"/>
+                  <path d="M11.8 25.105H10.1714V26.7336H9.62857V25.105H8V24.5622H9.62857V22.9336H10.1714V24.5622H11.8V25.105Z" fill="#C1F11D"/>
+                </svg>
+              </span>
+              <h3 class="evry-mcta__title">Individual Escort or Agency</h3>
+            </div>
+            <p class="evry-mcta__desc">Join thousands of verified professionals. Create your listing and connect with clients worldwide.</p>
+            <a href="action/listings/new" class="evry-mcta__btn">
+              <span>List now</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+          </div>
+        </section>
         <p>
           <span class="my-2 h4">Welcome to ae.MassageRepublic.com.co, your premier destination for connecting with escorts from all corners of the globe.</span>
           <br> Our platform showcases a diverse array of stunning companions, each offering unique experiences tailored to your desires. <br> Whether you're seeking a charming dinner date, an adventurous travel partner, or an intimate encounter, you'll find the perfect match here. <br> Among our extensive listings, we proudly feature a selection of <b>Dubai escorts</b>, renowned for their elegance and sophistication. <br> These captivating companions embody the luxurious lifestyle of this vibrant city, providing unforgettable experiences that blend allure and excitement. <br> Explore profiles, read reviews, and connect with escorts who can make your time in Dubai truly exceptional. <br> Use our search feature to find a companion in Dubai (or any other city) that has all of your favourite physical characteristics or offering the service you would like to enjoy. <br>

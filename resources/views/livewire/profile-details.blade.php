@@ -494,6 +494,7 @@
               <style>
                   /* Claim card (shown inside About tab content) */
                   .ev-claim-card {
+                      display: none !important;
                       margin: 16px 0 0;
                       padding: 18px 18px;
                       background: #15191B;
@@ -1236,10 +1237,13 @@
               </div>
               @endif
               
-              <button class="btn btn-primary btn-lg btn-xs-block" type="submit" wire:loading.attr="disabled" wire:target="postreview">
-                <span wire:loading.remove wire:target="postreview">Post review</span>
-                <span wire:loading wire:target="postreview">Posting...</span>
-              </button>
+              <div style="text-align:center;">
+                <button type="submit" wire:loading.attr="disabled" wire:target="postreview"
+                  style="background:#c8ff00;color:#000;font-weight:500;font-size:16px;border:none;border-radius:50px;padding:5px 40px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+                  <span wire:loading.remove wire:target="postreview">Post review <span style="font-family:'Font Awesome 5 Free',sans-serif;font-weight:900;font-size:12px;display:inline-block;">&#xf054;</span></span>
+                  <span wire:loading wire:target="postreview">Posting...</span>
+                </button>
+              </div>
             </form>
           </div>
           @endif
