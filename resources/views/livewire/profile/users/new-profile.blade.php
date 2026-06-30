@@ -266,6 +266,42 @@
         .custom-select2-results::-webkit-scrollbar-thumb {
             background: #444 !important;
         }
+        /* Flag-enabled dropdown options (country code) */
+        .custom-select2-option--with-flag {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            padding: 10px 14px !important;
+        }
+        .custom-select2-flag {
+            display: inline-block !important;
+            width: 22px !important;
+            height: 16px !important;
+            border-radius: 2px !important;
+            object-fit: cover !important;
+            flex-shrink: 0 !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            margin: 0 !important;
+        }
+        .custom-select2-option-name {
+            flex: 1 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .custom-select2-option-dial {
+            color: #8b9298 !important;
+            font-variant-numeric: tabular-nums !important;
+            margin-left: auto !important;
+        }
+        /* Closed-state: flag sits left of the dial code inside the selection box. */
+        .custom-select2-selection .custom-select2-flag {
+            margin-right: 6px !important;
+        }
+        .custom-select2-selection-code {
+            font-weight: 500;
+        }
 
         /* Price input */
         .price-amount {
@@ -486,8 +522,7 @@
 
         /* Nav bar styling */
         .nav-bar.navbar-top-nav {
-            background: #131616;  !important;
-        
+            background: #1f2222 !important;
         }
         .nav-bar.navbar-top-nav .title h1 {
             color: #fff !important;
@@ -1790,10 +1825,10 @@ div#basic {
                         <label>Phone Number</label>
                         <div style="display:flex;gap:8px;">
                             <div style="width:110px;flex-shrink:0;" wire:ignore>
-                                <select data-radius="all" wire:model='countrycode' class="apply-custom-select2 form-control" id="ev_mobile_phone_code" style="height:44px;font-size:13px;">
+                                <select data-radius="all" data-with-flags="1" wire:model='countrycode' class="apply-custom-select2 form-control" id="ev_mobile_phone_code" style="height:44px;font-size:13px;">
                                     <option value="">Select</option>
                                     @foreach($countries as $code)
-                                    <option value="{{$code->phonecode}}" {{ $countrycode == $code->phonecode ? 'selected' : '' }}>+{{$code->phonecode}}</option>
+                                    <option value="{{$code->phonecode}}" data-iso="{{ strtolower($code->iso) }}" data-name="{{ $code->nicename }}" data-dial="{{ $code->phonecode }}" {{ $countrycode == $code->phonecode ? 'selected' : '' }}>+{{$code->phonecode}} - {{$code->nicename}}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -1806,14 +1841,31 @@ div#basic {
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
                             <label class="ev-msg-pill">
                                 <input wire:model='iswhatsapp' type="checkbox" value="1" style="display:none;">
+                                <svg class="ev-msg-pill__icon" width="16" height="16" viewBox="0 0 24 24" fill="#25D366" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413"/>
+                                </svg>
                                 <span>WhatsApp</span>
                             </label>
                             <label class="ev-msg-pill">
                                 <input wire:model='istelegram' type="checkbox" value="1" style="display:none;">
+                                <svg class="ev-msg-pill__icon" width="16" height="16" viewBox="0 0 24 24" fill="#229ED9" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0m5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.022c.243-.213-.054-.334-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.566-4.458c.538-.196 1.006.128.832.938"/>
+                                </svg>
                                 <span>Telegram</span>
                             </label>
                             <label class="ev-msg-pill">
+                                <input wire:model='iswechat' type="checkbox" value="1" style="display:none;">
+                                <svg class="ev-msg-pill__icon" width="16" height="16" viewBox="0 0 24 24" fill="#07C160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.32.32 0 0 0 .167-.054l1.903-1.114a.93.93 0 0 1 .48-.117c.085 0 .172.013.252.034.94.288 1.952.45 3.013.45.176 0 .349-.013.522-.025-.111-.395-.176-.812-.176-1.252 0-3.626 3.5-6.564 7.81-6.564.166 0 .332.013.495.025-.626-3.286-3.92-5.842-7.842-5.842M5.785 5.667a1.052 1.052 0 1 1 .003 2.105 1.052 1.052 0 0 1-.003-2.105m5.812 0a1.052 1.052 0 1 1 .003 2.105 1.052 1.052 0 0 1-.003-2.105"/>
+                                    <path d="M24 14.66c0-3.385-3.262-6.13-7.286-6.13s-7.286 2.745-7.286 6.13c0 3.388 3.262 6.131 7.286 6.131.846 0 1.66-.131 2.418-.355a.79.79 0 0 1 .205-.027c.135 0 .26.039.376.097l1.591.93a.27.27 0 0 0 .14.046.245.245 0 0 0 .244-.248c0-.062-.024-.12-.04-.178l-.327-1.237a.49.49 0 0 1 .175-.554C22.991 18.142 24 16.495 24 14.66m-9.701-1.018a.879.879 0 0 1 0-1.756.879.879 0 0 1 0 1.756m4.83 0a.879.879 0 0 1 0-1.756.879.879 0 0 1 0 1.756"/>
+                                </svg>
+                                <span>WeChat</span>
+                            </label>
+                            <label class="ev-msg-pill">
                                 <input wire:model='issignal' type="checkbox" value="1" style="display:none;">
+                                <svg class="ev-msg-pill__icon" width="16" height="16" viewBox="0 0 24 24" fill="#3A76F0" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M9.12.35a.4.4 0 0 1 .29.484l-.286 1.14a9.85 9.85 0 0 0-2.583 1.07l-.604-1.005a.4.4 0 1 1 .686-.411l.5.83a10.7 10.7 0 0 1 2.014-.835l.235-.937a.4.4 0 0 1 .483-.291zm6.05.292.236.936a10.7 10.7 0 0 1 2.012.834l.5-.83a.4.4 0 1 1 .686.411l-.604 1.006a9.85 9.85 0 0 0-2.581-1.07l-.286-1.14A.4.4 0 1 1 15.17.642zM4.21 3.117a.4.4 0 0 1 .025.566 9.9 9.9 0 0 0-1.512 2.234l1.04.518a.4.4 0 0 1-.358.715l-1.052-.525a10.8 10.8 0 0 0-.71 2.564l1.155.193a.4.4 0 1 1-.13.789L1.51 9.978a10.7 10.7 0 0 0 0 2.661l1.155-.192a.4.4 0 1 1 .13.789l-1.155.192a10.7 10.7 0 0 0 .71 2.557l1.05-.524a.4.4 0 0 1 .358.715l-1.04.518a9.9 9.9 0 0 0 1.513 2.236.4.4 0 0 1-.591.539 10.7 10.7 0 0 1-1.633-2.414l-.71.355a.4.4 0 0 1-.564-.452L1.32 14.91A11.5 11.5 0 0 1 .7 12.3a11.5 11.5 0 0 1 0-2.984.4.4 0 0 1-.07-.255l.704-3.519a.4.4 0 0 1 .564-.452l.71.355A10.7 10.7 0 0 1 3.644 3.09a.4.4 0 0 1 .566-.025zM12 1.5a10.5 10.5 0 0 0-3.027.443l.298 1.187a.4.4 0 0 1-.776.196L8.197 2.139A9.85 9.85 0 0 0 5.86 3.31l.687 1.144a.4.4 0 1 1-.686.412L5.175 3.72A9.9 9.9 0 0 0 3.722 5.17l1.142.686a.4.4 0 1 1-.412.686l-1.144-.687A9.85 9.85 0 0 0 2.137 8.19l1.189.297a.4.4 0 0 1-.196.776l-1.187-.297A10.5 10.5 0 0 0 1.5 12c0 1.034.149 2.034.443 2.974l1.187-.297a.4.4 0 0 1 .196.776l-1.189.297a9.85 9.85 0 0 0 1.171 2.336l1.144-.686a.4.4 0 1 1 .412.686l-1.142.686a9.9 9.9 0 0 0 1.452 1.452l.687-1.144a.4.4 0 0 1 .686.412L5.86 20.69a9.85 9.85 0 0 0 2.336 1.171l.297-1.189a.4.4 0 0 1 .777.196l-.297 1.189A10.5 10.5 0 0 0 11.5 22.5l-.005-1.225a.4.4 0 1 1 .8 0L12.3 22.5a10.5 10.5 0 0 0 2.532-.32 9.4 9.4 0 0 0-3.052-7.022.4.4 0 0 1 .55-.58 10.2 10.2 0 0 1 3.32 7.484 10.5 10.5 0 0 0 1.66-.852 9.4 9.4 0 0 0-3.69-3.464.4.4 0 1 1 .378-.706 10.2 10.2 0 0 1 3.946 3.674A10.4 10.4 0 0 0 19.21 19.46l-.687-1.144a.4.4 0 1 1 .686-.412l.686 1.144a9.85 9.85 0 0 0 1.452-1.452l-1.144-.686a.4.4 0 1 1 .412-.686l1.144.686a9.85 9.85 0 0 0 1.171-2.336l-1.189-.297a.4.4 0 0 1 .196-.776l1.187.297c.294-.94.443-1.94.443-2.974s-.149-2.034-.443-2.974l-1.187.297a.4.4 0 0 1-.196-.776l1.189-.297A9.85 9.85 0 0 0 21.76 5.86l-1.144.687a.4.4 0 1 1-.412-.686l1.142-.686a9.9 9.9 0 0 0-1.452-1.452l-.686 1.144a.4.4 0 1 1-.686-.412L18.825 3.31a9.85 9.85 0 0 0-2.336-1.171l-.297 1.189a.4.4 0 1 1-.777-.196l.298-1.187A10.5 10.5 0 0 0 12 1.5z"/>
+                                </svg>
                                 <span>Signal</span>
                             </label>
                         </div>
@@ -1870,9 +1922,18 @@ div#basic {
                         .ev-mc-group{margin-bottom:16px}
                         .ev-mc-group>label{display:block;color:#ccc;font-size:13px;font-weight:500;margin-bottom:6px}
                         .ev-msg-pill{
-                            display:inline-flex;align-items:center;
+                            display:inline-flex;align-items:center;gap:6px;
                             background:#111;border:1px solid #333;border-radius:5px;
-                            padding:8px 16px;cursor:pointer;color:#fff;font-size:13px;
+                            padding:8px 14px;cursor:pointer;color:#fff;font-size:13px;
+                        }
+                        .ev-msg-pill__icon{
+                            display:block;
+                            width:16px !important;
+                            height:16px !important;
+                            transform:none !important;
+                            -webkit-transform:none !important;
+                            margin:0 !important;
+                            flex-shrink:0;
                         }
                         .ev-msg-pill:has(input:checked){
                             border-color:#C1F11D;color:#C1F11D;
@@ -2865,21 +2926,40 @@ window.CustomSelect2 = class CustomSelect2 {
     populateOptions() {
         this.resultsList.innerHTML = '';
         const options = this.selectElement.querySelectorAll('option');
-        
+        // Opt-in flag rendering — set data-with-flags="1" on the <select>
+        // and data-iso="xx" on each <option> to enable.
+        const withFlags = this.selectElement.getAttribute('data-with-flags') === '1';
+
         options.forEach((option, index) => {
             if (index === 0 && option.value === '') {
                 return;
             }
-            
+
             const li = document.createElement('li');
             li.className = 'custom-select2-option';
-            li.textContent = option.textContent;
             li.dataset.value = option.value;
-            
+
+            const iso = (option.dataset.iso || '').toLowerCase();
+            const name = option.dataset.name || '';
+            const dial = option.dataset.dial || '';
+
+            if (withFlags && iso) {
+                li.classList.add('custom-select2-option--with-flag');
+                li.dataset.iso = iso;
+                li.dataset.dial = dial;
+                li.innerHTML =
+                    '<img class="custom-select2-flag" src="https://flagcdn.com/w40/' + iso + '.png" ' +
+                    'alt="" width="22" height="16" loading="lazy">' +
+                    '<span class="custom-select2-option-name">' + (name || option.textContent.trim()) + '</span>' +
+                    (dial ? '<span class="custom-select2-option-dial">+' + dial + '</span>' : '');
+            } else {
+                li.textContent = option.textContent;
+            }
+
             if (option.selected) {
                 this.selectOption(li, false);
             }
-            
+
             this.resultsList.appendChild(li);
         });
     }
@@ -2998,13 +3078,24 @@ window.CustomSelect2 = class CustomSelect2 {
         
         // Add new selection
         optionElement.classList.add('selected');
-        
-        // Update selection box - extract only the code part (e.g., "+93" from "+93 - Afghanistan")
-        const fullText = optionElement.textContent.trim();
-        // Match pattern like "+93 -" or "+1684 -" and take only the number part
-        const codeMatch = fullText.match(/^(\+\d+)/);
-        const displayText = codeMatch ? codeMatch[1] : fullText.split('-')[0].trim();
-        this.selectionBox.innerHTML = displayText;
+
+        // Closed-state display:
+        // - Flag-enabled dropdowns → show <flag> +dial (matches the
+        //   reference design with country flag + code).
+        // - Otherwise → extract the +code prefix from the option text.
+        const iso = optionElement.dataset.iso;
+        const dial = optionElement.dataset.dial;
+        if (iso && dial) {
+            this.selectionBox.innerHTML =
+                '<img class="custom-select2-flag" src="https://flagcdn.com/w40/' + iso + '.png" ' +
+                'alt="" width="22" height="16" loading="lazy">' +
+                '<span class="custom-select2-selection-code">+' + dial + '</span>';
+        } else {
+            const fullText = optionElement.textContent.trim();
+            const codeMatch = fullText.match(/^(\+\d+)/);
+            const displayText = codeMatch ? codeMatch[1] : fullText.split('-')[0].trim();
+            this.selectionBox.innerHTML = displayText;
+        }
         
         // Update original select
         this.selectElement.value = optionElement.dataset.value;
@@ -3076,8 +3167,24 @@ function destroyCustomSelect2() {
     const allSelects = document.querySelectorAll('select');
     allSelects.forEach(select => {
         if (select.customSelect2Instance) {
-            select.customSelect2Instance.destroy();
+            try { select.customSelect2Instance.destroy(); } catch (e) {}
             select.customSelect2Instance = null;
+        }
+        // The CustomSelect2 wrapper may have been stripped by Livewire's
+        // morph but left the inline `display:none` on the original select.
+        // Clear it so the select doesn't stay invisible if we fail to wrap.
+        if (select.classList && select.classList.contains('apply-custom-select2')) {
+            select.style.display = '';
+        }
+    });
+    // Sweep any leftover .custom-select2 wrappers whose select reference
+    // is stale (the select was removed/replaced by morph). Without this,
+    // a morph that removed the select still leaves the empty wrapper in
+    // the DOM, blocking re-init of the new select sitting beside it.
+    document.querySelectorAll('.custom-select2').forEach(wrap => {
+        const prev = wrap.previousElementSibling;
+        if (!prev || prev.tagName !== 'SELECT' || !prev.classList.contains('apply-custom-select2')) {
+            wrap.remove();
         }
     });
 }
@@ -3085,7 +3192,7 @@ function destroyCustomSelect2() {
 // Refresh function
 function refreshCustomSelect2() {
     destroyCustomSelect2();
-    setTimeout(initializeCustomSelect2, 100);
+    setTimeout(initializeCustomSelect2, 50);
 }
 
 // Initialize on different events
@@ -3103,17 +3210,53 @@ window.addEventListener('load', function() {
     }
 });
 
-// Livewire integration
+// Livewire integration. After Livewire morphs the DOM (file upload,
+// validation refresh, etc.) every select that wasn't inside `wire:ignore`
+// loses its CustomSelect2 wrapper and reverts to a native <select>.
+// Multiple defensive hooks cover all the Livewire 3 lifecycle entry
+// points where the DOM might change.
+var _select2RefreshDebounce = null;
+function scheduleSelect2Refresh(label) {
+    clearTimeout(_select2RefreshDebounce);
+    _select2RefreshDebounce = setTimeout(function () {
+        console.log('[select2] refresh triggered by:', label);
+        refreshCustomSelect2();
+    }, 80);
+}
+
 if (typeof Livewire !== 'undefined') {
     document.addEventListener('livewire:initialized', () => {
         console.log('Livewire initialized, refreshing Custom Select2...');
         refreshCustomSelect2();
+
+        // The Livewire.hook API is the canonical Livewire 3 way to react
+        // to DOM updates — runs after each component's morph completes,
+        // even when no document-level event fires. We do this lazily
+        // (inside livewire:initialized) because Livewire.hook isn't
+        // available before init.
+        try {
+            if (typeof Livewire.hook === 'function') {
+                Livewire.hook('morph.updated', () => scheduleSelect2Refresh('hook:morph.updated'));
+                Livewire.hook('commit', ({ succeed }) => {
+                    succeed(() => scheduleSelect2Refresh('hook:commit.succeed'));
+                });
+            }
+        } catch (e) { console.warn('[select2] could not bind Livewire.hook:', e); }
+
+        // The component dispatches `fileUploaded` after a photo upload —
+        // morph fires right after that and wipes Select2 wrappers. Catch
+        // it explicitly so we re-init even if the morph hook is missed.
+        try {
+            Livewire.on('fileUploaded', () => scheduleSelect2Refresh('event:fileUploaded'));
+        } catch (e) { console.warn('[select2] could not bind Livewire.on:', e); }
     });
-    
-    document.addEventListener('livewire:update', () => {
-        console.log('Livewire updated, refreshing Custom Select2...');
-        refreshCustomSelect2();
-    });
+
+    // Document-level fallback events. These bubble up from the component
+    // root when Livewire 3 morphs it — sometimes they fire when the hook
+    // doesn't (e.g. file-input change pipeline), so keep them as a safety net.
+    document.addEventListener('livewire:morphed', () => scheduleSelect2Refresh('doc:morphed'));
+    document.addEventListener('livewire:morph.updated', () => scheduleSelect2Refresh('doc:morph.updated'));
+    document.addEventListener('livewire:update', () => scheduleSelect2Refresh('doc:update'));
 }
 
 // ============================================

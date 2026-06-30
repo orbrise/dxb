@@ -2,7 +2,7 @@
 <style>
 /* Sub-header bar */
 .page-subheader {
-    background: #131616;
+    background: #1f2222;
     padding: 12px 0;
 }
 .page-subheader .ev-container {

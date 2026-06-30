@@ -859,7 +859,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
 
 {{-- Mobile Back Bar --}}
 <div class="ev-news-back-bar" style="display:none;">
-    <div style="display:flex;align-items:center;justify-content:center;position:relative;padding:12px 16px;background:#131616;">
+    <div style="display:flex;align-items:center;justify-content:center;position:relative;padding:12px 16px;background:#1f2222;">
         <a href="/{{ $gender ?? 'female' }}-escorts-in-{{ strtolower($selectedcity ?? 'dubai') }}" style="position:absolute;left:16px;color:#C1F11D;text-decoration:none;font-size:13px;">
             <i class="fa fa-angle-left"></i> Back
         </a>

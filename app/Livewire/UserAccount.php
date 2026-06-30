@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Models\NewsletterSubscription;
 use App\Models\NewsletterGender;
 use App\Models\City;
+use App\Models\Conversation;
 use Illuminate\Support\Facades\Auth;
 
 #[Layout('components.layouts.app-evoory')]
@@ -137,6 +138,24 @@ class UserAccount extends Component
 
     public function render()
     {
-        return view('livewire.user-account');
+        // Counts + balance for the mobile account dashboard. Done in render()
+        // so they refresh on every component update (favorites change, chat
+        // count, wallet top-up, etc.) without a manual mount/event wire-up.
+        $user = Auth::user();
+        $profilesCount = $user ? $user->profiles()->count() : 0;
+        $favoritesCount = $user ? $user->favorites()->count() : 0;
+        $chatsCount = $user
+            ? Conversation::where('user_one_id', $user->id)
+                ->orWhere('user_two_id', $user->id)
+                ->count()
+            : 0;
+        $walletBalance = ($user && $user->wallet) ? (float) $user->wallet->balance : 0;
+
+        return view('livewire.user-account', [
+            'profilesCount' => $profilesCount,
+            'favoritesCount' => $favoritesCount,
+            'chatsCount' => $chatsCount,
+            'walletBalance' => $walletBalance,
+        ]);
     }
 }

@@ -134,10 +134,83 @@
                     </span>
                   </a>
                   @endforeach
-                 
+
                 </div>
               </div>
-              
+
+              {{-- Mobile action menu bar (between photos and price section).
+                   Re-uses the same handler classes as the old sticky bar
+                   that we removed earlier — Phone/Message open the call
+                   sheet and message modal, Ask/Review open their modals. --}}
+              <div class="ev-profile-actions visible-xs">
+                <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--filled contact-phone1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <span>Phone</span>
+                </a>
+                <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--filled send-message1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <span>Message</span>
+                </a>
+                <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--ghost ask-question1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <span>Ask</span>
+                </a>
+                <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--ghost add-review1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <span>Review</span>
+                </a>
+              </div>
+              <style>
+                .ev-profile-actions {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  padding: 12px 0 14px;
+                }
+                .ev-profile-actions__btn {
+                  display: inline-flex !important;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 6px;
+                  flex: 1;
+                  min-height: 44px;
+                  padding: 8px 10px;
+                  border-radius: 10px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  text-decoration: none !important;
+                  white-space: nowrap;
+                }
+                .ev-profile-actions__btn svg {
+                  width: 18px !important;
+                  height: 18px !important;
+                  transform: none !important;
+                  -webkit-transform: none !important;
+                  margin: 0 !important;
+                  display: block;
+                }
+                .ev-profile-actions__btn--filled {
+                  background: #C1F11D;
+                  color: #000 !important;
+                  border: 1px solid #C1F11D;
+                }
+                .ev-profile-actions__btn--filled:hover,
+                .ev-profile-actions__btn--filled:focus {
+                  background: #b5e600;
+                  color: #000 !important;
+                }
+                .ev-profile-actions__btn--ghost {
+                  background: transparent;
+                  color: #fff !important;
+                  border: 1px solid #2a3241;
+                }
+                .ev-profile-actions__btn--ghost:hover,
+                .ev-profile-actions__btn--ghost:focus {
+                  border-color: #C1F11D;
+                  color: #C1F11D !important;
+                }
+              </style>
+
               {{-- YouTube Video Display - Top of Content --}}
               @if(!empty($user->video))
               @php
@@ -1114,25 +1187,11 @@
       </div>
       </div>
 
-    {{-- Mobile Sticky Bottom Action Bar --}}
-    <div class="ev-mobile-action-bar visible-xs">
-        <a class="ev-action-item contact-phone1" href="javascript:void(0)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            <span>Phone</span>
-        </a>
-        <a class="ev-action-item ev-action-primary send-message1" href="javascript:void(0)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span>Message</span>
-        </a>
-        <a class="ev-action-item ask-question1" href="javascript:void(0)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span>Ask</span>
-        </a>
-        <a class="ev-action-item add-review1" href="javascript:void(0)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            <span>Review</span>
-        </a>
-    </div>
+    {{-- Mobile Sticky Bottom Action Bar removed — the global
+         mobile-user-bottom-nav (Home/Chats/Add Profile/Favorite/Menu) now
+         handles the bottom-of-screen nav. Profile-details actions
+         (Phone/Message/Ask/Review) are still accessible via the buttons
+         higher up the page (.contact-phone1, .send-message1, etc.). --}}
 
     {{-- models --}}
     <div class="user-action-modal modal reviewmodal" wire:ignore.self data-backdrop="static">

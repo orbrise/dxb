@@ -683,6 +683,8 @@ body { background: #0a0a0a !important; }
                                 <i class="fas fa-video" id="cameraIcon"></i>
                                 Open Camera
                             </button>
+                            {{-- Hidden file input — used as a fallback if getUserMedia fails (no permission, no camera, or insecure context). --}}
+                            <input type="file" id="openVerificationCameraInput" accept="image/*" capture="user" style="display:none;" />
                         </div>
 
                         {{-- Camera Modal --}}
@@ -758,41 +760,21 @@ body { background: #0a0a0a !important; }
 @endsection
 
 @push('js')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-    window.initVerificationPage = function() {
-    const spinnerEl = document.getElementById('cameraSpinner');
-    const cameraIconEl = document.getElementById('cameraIcon');
-    if (spinnerEl) spinnerEl.style.display = 'none';
-    if (cameraIconEl) cameraIconEl.style.display = 'inline-block';
+(function () {
+    var userSlug = @json($user->slug ?? '');
+    var userId = @json($user->id ?? 0);
+    var csrfToken = @json(csrf_token());
 
-    const openBtn = document.getElementById('openVerificationCamera');
-    const modalEl = document.getElementById('verificationCameraModal');
-    const video = document.getElementById('verificationVideo');
-    const captureBtn = document.getElementById('captureVerificationBtn');
-    const submitBtn = document.getElementById('submitVerificationBtn');
-    const preview = document.getElementById('verificationPreview');
-    const canvas = document.createElement('canvas');
-    let stream = null;
-
-    if (!openBtn) return;
-
-    const newOpenBtn = openBtn.cloneNode(true);
-    openBtn.parentNode.replaceChild(newOpenBtn, openBtn);
-
-    const freshOpenBtn = document.getElementById('openVerificationCamera');
-    const freshSpinner = document.getElementById('cameraSpinner');
-    const freshCameraIcon = document.getElementById('cameraIcon');
-
-    if (freshSpinner) freshSpinner.style.display = 'none';
-    if (freshCameraIcon) freshCameraIcon.style.display = 'inline-block';
+    function $id(id) { return document.getElementById(id); }
 
     function showModal() {
+        var modalEl = $id('verificationCameraModal');
+        if (!modalEl) return;
         modalEl.style.display = 'block';
         modalEl.classList.add('show', 'in');
         document.body.classList.add('modal-open');
-
-        let backdrop = document.querySelector('.modal-backdrop');
+        var backdrop = document.querySelector('.modal-backdrop');
         if (!backdrop) {
             backdrop = document.createElement('div');
             backdrop.className = 'modal-backdrop fade show in';
@@ -801,257 +783,283 @@ body { background: #0a0a0a !important; }
     }
 
     function hideModal() {
+        var modalEl = $id('verificationCameraModal');
+        if (!modalEl) return;
         modalEl.style.display = 'none';
         modalEl.classList.remove('show', 'in');
         document.body.classList.remove('modal-open');
-
-        const backdrop = document.querySelector('.modal-backdrop');
+        var backdrop = document.querySelector('.modal-backdrop');
         if (backdrop) backdrop.remove();
 
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
+        if (window.__verifyStream) {
+            window.__verifyStream.getTracks().forEach(function (t) { t.stop(); });
+            window.__verifyStream = null;
         }
-
-        video.style.display = '';
-        captureBtn.style.display = '';
-        preview.classList.add('hidden');
-        preview.innerHTML = '';
-        submitBtn.disabled = true;
-        delete submitBtn.dataset.imageData;
+        var video = $id('verificationVideo');
+        var captureBtn = $id('captureVerificationBtn');
+        var preview = $id('verificationPreview');
+        var submitBtn = $id('submitVerificationBtn');
+        if (video) video.style.display = '';
+        if (captureBtn) captureBtn.style.display = '';
+        if (preview) { preview.classList.add('hidden'); preview.innerHTML = ''; }
+        if (submitBtn) { submitBtn.disabled = true; delete submitBtn.dataset.imageData; }
     }
 
-    freshOpenBtn.onclick = async () => {
-        try {
-            freshSpinner.style.display = 'inline-block';
-            freshCameraIcon.style.display = 'none';
-
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: { width: 1280, height: 720 }
-            });
-            video.srcObject = stream;
-            await video.play();
-
-            freshSpinner.style.display = 'none';
-            freshCameraIcon.style.display = 'inline-block';
-
+    function handleFilePicked(file) {
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            var imageData = ev.target.result;
+            var preview = $id('verificationPreview');
+            var video = $id('verificationVideo');
+            var captureBtn = $id('captureVerificationBtn');
+            var submitBtn = $id('submitVerificationBtn');
+            if (preview) {
+                preview.innerHTML = '<img src="' + imageData + '" style="width:100%;height:100%;object-fit:contain">';
+                preview.classList.remove('hidden');
+            }
+            if (video) video.style.display = 'none';
+            if (captureBtn) captureBtn.style.display = 'none';
+            if (submitBtn) {
+                submitBtn.removeAttribute('disabled');
+                submitBtn.dataset.imageData = imageData;
+            }
             showModal();
-        } catch (err) {
-            console.error('Camera error:', err);
-            freshSpinner.style.display = 'none';
-            freshCameraIcon.style.display = 'inline-block';
-            alert('Could not access camera. Please ensure camera permissions are granted.');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function bindFileInput() {
+        var input = $id('openVerificationCameraInput');
+        if (!input || input.__bound) return;
+        input.__bound = true;
+        input.addEventListener('change', function () {
+            var file = input.files && input.files[0];
+            handleFilePicked(file);
+            input.value = '';
+        });
+    }
+
+    function useFileFallback() {
+        var input = $id('openVerificationCameraInput');
+        if (!input) return;
+        input.value = '';
+        input.click();
+    }
+
+    var secureCtx = window.isSecureContext === true
+        || location.hostname === 'localhost'
+        || location.hostname === '127.0.0.1';
+    var supportsGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+    function handleOpenCamera() {
+        var video = $id('verificationVideo');
+        var spinner = $id('cameraSpinner');
+        var cameraIcon = $id('cameraIcon');
+
+        if (!supportsGetUserMedia || !secureCtx) {
+            useFileFallback();
+            return;
         }
-    };
 
-    modalEl.querySelector('[data-dismiss="modal"]').onclick = function() {
-        hideModal();
-    };
+        if (spinner) spinner.style.display = 'inline-block';
+        if (cameraIcon) cameraIcon.style.display = 'none';
 
-    modalEl.onclick = function(e) {
-        if (e.target === modalEl) hideModal();
-    };
+        navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+        }).then(function (stream) {
+            window.__verifyStream = stream;
+            if (video) { video.srcObject = stream; video.play(); }
+            if (spinner) spinner.style.display = 'none';
+            if (cameraIcon) cameraIcon.style.display = 'inline-block';
+            showModal();
+        }).catch(function (err) {
+            console.warn('[verify-photo] getUserMedia failed, falling back to file input:', err);
+            if (spinner) spinner.style.display = 'none';
+            if (cameraIcon) cameraIcon.style.display = 'inline-block';
+            useFileFallback();
+        });
+    }
 
-    captureBtn.onclick = () => {
+    function handleCapture() {
+        var video = $id('verificationVideo');
+        if (!video || !video.videoWidth) return;
+        var canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0);
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        var imageData = canvas.toDataURL('image/jpeg', 0.92);
 
-        const imageData = canvas.toDataURL('image/jpeg', 1.0);
-
-        preview.innerHTML = `<img src="${imageData}" style="width:100%;height:100%;object-fit:contain">`;
-        preview.classList.remove('hidden');
-
+        var preview = $id('verificationPreview');
+        var captureBtn = $id('captureVerificationBtn');
+        var submitBtn = $id('submitVerificationBtn');
+        if (preview) {
+            preview.innerHTML = '<img src="' + imageData + '" style="width:100%;height:100%;object-fit:contain">';
+            preview.classList.remove('hidden');
+        }
         video.style.display = 'none';
-        captureBtn.style.display = 'none';
-        submitBtn.removeAttribute('disabled');
-        submitBtn.dataset.imageData = imageData;
-    };
+        if (captureBtn) captureBtn.style.display = 'none';
+        if (submitBtn) {
+            submitBtn.removeAttribute('disabled');
+            submitBtn.dataset.imageData = imageData;
+        }
+    }
 
-    submitBtn.onclick = () => {
-        const imageData = submitBtn.dataset.imageData;
+    function handleSubmit(submitBtn) {
+        var imageData = submitBtn.dataset.imageData;
         if (!imageData) { alert('No image captured!'); return; }
-
-        const formData = new FormData();
+        var formData = new FormData();
         formData.append('photoData', imageData);
-        formData.append('_token', '{{ csrf_token() }}');
-
-        const slug = '{{ $user->slug }}';
-        const id = '{{ $user->id }}';
-
+        formData.append('_token', csrfToken);
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
-        fetch(`/my-profile/${slug}/${id}/verify-photo`, {
+        fetch('/my-profile/' + userSlug + '/' + userId + '/verify-photo', {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Upload failed');
-            return response.text();
-        })
-        .then(data => {
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+        }).then(function (r) {
+            if (!r.ok) throw new Error('Upload failed');
+            return r.text();
+        }).then(function () {
             hideModal();
-            window.location.href = `/my-profile/${slug}/${id}?verification_success=1`;
-        })
-        .catch(error => {
-            console.error('Error:', error);
+            window.location.href = '/my-profile/' + userSlug + '/' + userId + '?verification_success=1';
+        }).catch(function (err) {
+            console.error('[verify-photo] upload error:', err);
             alert('Failed to upload photo. Please try again.');
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Submit Photo';
         });
-    };
-
-    // Copy verification URL
-    const copyBtn = document.querySelector('[data-copy-btn]');
-    if (copyBtn) {
-        copyBtn.onclick = function() {
-            const target = document.querySelector(this.getAttribute('data-copy-btn'));
-            if (target) {
-                navigator.clipboard.writeText(target.textContent.trim()).then(() => {
-                    const span = this.querySelector('[data-text]');
-                    if (span) {
-                        const original = span.textContent;
-                        span.textContent = span.getAttribute('data-text');
-                        setTimeout(() => { span.textContent = original; }, 2000);
-                    }
-                });
-            }
-        };
     }
 
-    // Profile Search and Selection
-    let selectedProfileId = {{ $user->id }};
-    const profileSearch = document.getElementById('profileSearch');
-    const profileResults = document.getElementById('profileResults');
-    const searchBtn = document.getElementById('searchBtn');
-    const assetBaseUrl = 'https://assets.massagerepublic.com.co/';
-
-    if (!profileSearch) return;
-
-    function searchProfiles(query) {
-        fetch('/api/search-my-profiles?q=' + encodeURIComponent(query), {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Search failed');
-            return response.json();
-        })
-        .then(data => {
-            displayProfiles(data.profiles);
-        })
-        .catch(error => {
-            console.error('Search error:', error);
-            profileResults.innerHTML = '<div style="padding:12px;color:#666">Error loading profiles</div>';
-            profileResults.classList.add('show');
+    if (!window.__verifyPhotoClickBound) {
+        window.__verifyPhotoClickBound = true;
+        document.addEventListener('click', function (e) {
+            var openBtn = e.target.closest('#openVerificationCamera');
+            if (openBtn) { e.preventDefault(); handleOpenCamera(); return; }
+            var closeBtn = e.target.closest('#verificationCameraModal [data-dismiss="modal"]');
+            if (closeBtn) { e.preventDefault(); hideModal(); return; }
+            var captureBtn = e.target.closest('#captureVerificationBtn');
+            if (captureBtn) { e.preventDefault(); handleCapture(); return; }
+            var submitBtn = e.target.closest('#submitVerificationBtn');
+            if (submitBtn) { e.preventDefault(); handleSubmit(submitBtn); return; }
         });
     }
 
-    function displayProfiles(profiles) {
-        profileResults.innerHTML = '';
+    function initProfileSearch() {
+        var profileSearch = $id('profileSearch');
+        var profileResults = $id('profileResults');
+        var searchBtn = $id('searchBtn');
+        if (!profileSearch || profileSearch.__bound) return;
+        profileSearch.__bound = true;
+        var selectedProfileId = userId;
+        var assetBaseUrl = 'https://assets.massagerepublic.com.co/';
 
-        if (!profiles || profiles.length === 0) {
-            profileResults.innerHTML = '<div style="padding:12px;color:#666">No profiles found</div>';
-            profileResults.classList.add('show');
-            return;
-        }
-
-        profiles.forEach(function(profile) {
-            const isSelected = profile.id == selectedProfileId ? 'selected' : '';
-            const isCurrent = profile.id == {{ $user->id }} ? ' <span style="color:#C1F11D">(Current)</span>' : '';
-
-            let imageUrl = '/assets/images/default-avatar.png';
-            if (profile.cover_image) {
-                imageUrl = assetBaseUrl + 'userimages/' + profile.user_id + '/' + profile.id + '/' + profile.cover_image;
-            } else if (profile.single_image) {
-                imageUrl = assetBaseUrl + 'userimages/' + profile.user_id + '/' + profile.id + '/' + profile.single_image;
-            }
-
-            const div = document.createElement('div');
-            div.className = 'profile-option ' + isSelected;
-            div.setAttribute('data-profile-id', profile.id);
-            div.setAttribute('data-slug', profile.slug);
-            div.innerHTML = '<div class="opt-row">' +
-                '<img src="' + imageUrl + '" class="profile-thumb" alt="' + profile.name + '" onerror="this.src=\'/assets/images/default-avatar.png\'">' +
-                '<div><strong>' + profile.name + '</strong>' + isCurrent +
-                '<br><small style="color:#aaa">ID: ' + profile.id + '</small></div></div>';
-
-            div.addEventListener('click', function() {
-                window.location.href = '/my-profile/' + this.getAttribute('data-slug') + '/' + this.getAttribute('data-profile-id') + '/verify-photo';
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
             });
+        }
 
-            profileResults.appendChild(div);
+        function searchProfiles(query) {
+            fetch('/api/search-my-profiles?q=' + encodeURIComponent(query), {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            }).then(function (r) {
+                if (!r.ok) throw new Error('Search failed');
+                return r.json();
+            }).then(function (data) {
+                displayProfiles(data.profiles);
+            }).catch(function (err) {
+                console.error('Search error:', err);
+                profileResults.innerHTML = '<div style="padding:12px;color:#666">Error loading profiles</div>';
+                profileResults.classList.add('show');
+            });
+        }
+
+        function displayProfiles(profiles) {
+            profileResults.innerHTML = '';
+            if (!profiles || profiles.length === 0) {
+                profileResults.innerHTML = '<div style="padding:12px;color:#666">No profiles found</div>';
+                profileResults.classList.add('show');
+                return;
+            }
+            profiles.forEach(function (profile) {
+                var isSelected = profile.id == selectedProfileId ? 'selected' : '';
+                var isCurrent = profile.id == userId ? ' <span style="color:#C1F11D">(Current)</span>' : '';
+                var imageUrl = '/assets/images/default-avatar.png';
+                if (profile.cover_image) {
+                    imageUrl = assetBaseUrl + 'userimages/' + profile.user_id + '/' + profile.id + '/' + profile.cover_image;
+                } else if (profile.single_image) {
+                    imageUrl = assetBaseUrl + 'userimages/' + profile.user_id + '/' + profile.id + '/' + profile.single_image;
+                }
+                var div = document.createElement('div');
+                div.className = 'profile-option ' + isSelected;
+                div.setAttribute('data-profile-id', profile.id);
+                div.setAttribute('data-slug', profile.slug);
+                div.innerHTML = '<div class="opt-row">'
+                    + '<img src="' + imageUrl + '" class="profile-thumb" alt="' + escapeHtml(profile.name) + '" onerror="this.src=\'/assets/images/default-avatar.png\'">'
+                    + '<div><strong>' + escapeHtml(profile.name) + '</strong>' + isCurrent
+                    + '<br><small style="color:#aaa">ID: ' + profile.id + '</small></div></div>';
+                div.addEventListener('click', function () {
+                    window.location.href = '/my-profile/' + this.getAttribute('data-slug') + '/' + this.getAttribute('data-profile-id') + '/verify-photo';
+                });
+                profileResults.appendChild(div);
+            });
+            profileResults.classList.add('show');
+        }
+
+        var searchTimeout;
+        profileSearch.addEventListener('input', function () {
+            var query = this.value.trim();
+            clearTimeout(searchTimeout);
+            if (query.length === 0) {
+                profileResults.classList.remove('show');
+                profileResults.innerHTML = '';
+                return;
+            }
+            searchTimeout = setTimeout(function () { searchProfiles(query); }, 300);
         });
-
-        profileResults.classList.add('show');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', function () {
+                var q = profileSearch.value.trim();
+                if (q.length > 0) searchProfiles(q);
+            });
+        }
+        profileSearch.addEventListener('keypress', function (e) {
+            if (e.which === 13 || e.keyCode === 13) {
+                e.preventDefault();
+                var q = this.value.trim();
+                if (q.length > 0) searchProfiles(q);
+            }
+        });
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.profile-search-wrapper')) {
+                profileResults.classList.remove('show');
+            }
+        });
     }
 
-    let searchTimeout;
-    profileSearch.addEventListener('input', function() {
-        const query = this.value.trim();
-        clearTimeout(searchTimeout);
-        if (query.length === 0) {
-            profileResults.classList.remove('show');
-            profileResults.innerHTML = '';
-            return;
-        }
-        searchTimeout = setTimeout(function() { searchProfiles(query); }, 300);
-    });
+    function init() {
+        var spinner = $id('cameraSpinner');
+        var cameraIcon = $id('cameraIcon');
+        if (spinner) spinner.style.display = 'none';
+        if (cameraIcon) cameraIcon.style.display = 'inline-block';
+        bindFileInput();
+        initProfileSearch();
+    }
 
-    searchBtn.addEventListener('click', function() {
-        const query = profileSearch.value.trim();
-        if (query.length > 0) searchProfiles(query);
-    });
-
-    profileSearch.addEventListener('keypress', function(e) {
-        if (e.which === 13 || e.keyCode === 13) {
-            e.preventDefault();
-            const query = this.value.trim();
-            if (query.length > 0) searchProfiles(query);
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.profile-search-wrapper')) {
-            profileResults.classList.remove('show');
-        }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', window.initVerificationPage);
-document.addEventListener('livewire:navigated', window.initVerificationPage);
-document.addEventListener('livewire:init', window.initVerificationPage);
-
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    window.initVerificationPage();
-}
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    document.addEventListener('livewire:navigated', init);
+})();
 </script>
 @endpush
-
-<script>
-    (function() {
-        function tryInit() {
-            if (typeof window.initVerificationPage === 'function') {
-                window.initVerificationPage();
-            } else {
-                setTimeout(tryInit, 50);
-            }
-        }
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', tryInit);
-        } else {
-            setTimeout(tryInit, 10);
-        }
-    })();
-</script>

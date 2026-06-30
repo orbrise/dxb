@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 <style>
     .ev-back-bar {
-        background: #131616;
+        background: #1f2222;
         padding: 12px 0;
     }
     .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }
@@ -1209,11 +1209,12 @@
         <div class="ev-stats-card">
             <div class="ev-verify-preview">
                 <a href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>
-                    <div class="ev-verified-badge"><i class="fa fa-check"></i> Verified photos</div>
                     @if(!empty($user->coverimg->image))
                     <img alt="{{$user->name}}" src="{{webp_asset('userimages/'.$user->user_id.'/'.$user->id.'/'.$user->coverimg->image)}}" />
                     @elseif(!empty($user->singleimg->image))
                     <img alt="{{$user->name}}" src="{{webp_asset('userimages/'.$user->user_id.'/'.$user->id.'/'.$user->singleimg->image)}}" />
+                    @else
+                    <img alt="{{$user->name}}" src="{{smart_asset('assets/images/defaultprofile.png')}}" />
                     @endif
                 </a>
                 <span class="ev-label">Preview</span>

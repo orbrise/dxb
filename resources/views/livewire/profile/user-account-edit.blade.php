@@ -5,7 +5,7 @@
         background: #0D1011;
     }
     .ev-back-bar {
-        background: #131616;
+        background: #1f2222;
         padding: 12px 0;
     }
     .ev-back-bar a {
@@ -211,8 +211,10 @@
         position: absolute;
         top: 100%;
         left: 0;
-        right: 0;
-        max-height: 250px;
+        right: auto;
+        width: 320px;
+        max-width: calc(100vw - 32px);
+        max-height: 280px;
         overflow-y: auto;
         background: var(--bg-card, #1a1a1a);
         border: 1px solid var(--border-color, #2a2a2a);
@@ -466,11 +468,13 @@
         }
         .ev-country-dropdown {
             border-radius: 5px;
+            width: 280px;
+            max-width: calc(100vw - 32px);
         }
         .ev-save-btn {
             display: flex;
             width: auto;
-            margin: 16px auto 0;
+            margin: 16px auto 32px;
             justify-content: center;
             border-radius: 30px;
             padding: 12px 120px;
@@ -658,8 +662,16 @@
                 </div>
             </div>
 
-            <button class="ev-save-btn" type="submit">
-                Save <i class="fa fa-chevron-right"></i>
+            <button class="ev-save-btn" type="submit" wire:loading.attr="disabled" wire:target="save">
+                <span wire:loading.remove wire:target="save">
+                    Save <i class="fa fa-chevron-right"></i>
+                </span>
+                {{-- Hidden by default so it doesn't flash beside the idle
+                     label before Livewire takes over. wire:loading.flex
+                     swaps display:none → flex while save() is running. --}}
+                <span wire:loading.flex wire:target="save" style="display:none;align-items:center;gap:8px;">
+                    <i class="fa fa-spinner fa-spin"></i> Processing...
+                </span>
             </button>
         </form>
     </div>

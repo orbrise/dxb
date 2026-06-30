@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Livewire\CreateCustomer;
 use App\Livewire\HomePage;
 use App\Livewire\LoginController;
+use App\Livewire\HelpCenter;
 use App\Livewire\RegisterController;
 use App\Livewire\Auth\ActivateAccount;
 use App\Livewire\Profile\Users\UserProfile;
@@ -200,6 +201,7 @@ Route::get("{gender}-escorts-in-{city}/{id}/{username}", ProfileDetails::class)
     ->where('gender', 'female|male|shemale')
     ->middleware('page.cache');
 Route::get("sign-in", LoginController::class)->name('sign-in');
+Route::get('help', HelpCenter::class)->name('help');
 Route::get("register", RegisterController::class)->name('register');
 Route::get("escort-sign-up", EscortRegister::class)->name('escort.signup');
 
@@ -301,7 +303,6 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get('auctions/{gender?}-escorts-in-{city?}', AuctionPage::class)->name('auctions.index');
     Route::get('auctions/{gender?}-escorts-in-{cityname?}/spot/{spot}', SpotBidding::class);
     Route::get('purchase-credits', PurchaseCredits::class)->name('purchase.credits');
-
 
 });
 

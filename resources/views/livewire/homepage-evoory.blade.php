@@ -15,13 +15,128 @@
      uses a class + pseudo-class selector so it beats `a:hover` even with
      !important on both sides, and adds !important itself for good measure. --}}
 <style>
-    /* Popular-locations city pills — leaked rule was making them lime on hover. */
+    /* Popular-locations city pills — DESKTOP behaviour kept intact
+       (white solid background, wrapped rows on lime card). Only the
+       hover-tint leak from evoory-homepage.css is defended here. */
     a.ev-tag,
     a.ev-tag:link,
     a.ev-tag:visited { color: #000 !important; background: #fff !important; }
     a.ev-tag:hover,
     a.ev-tag:focus,
     a.ev-tag:active { color: #000 !important; background: #f0f0f0 !important; }
+
+    /* Constrain the pill row on desktop so it wraps to 3 lines and
+       leaves space on the right for the silhouette background image.
+       Both selectors are needed because evoory-theme.css sets max-width
+       on .ev-popular-tags but the flex container is .ev-popular-row. */
+    @media (min-width: 768px) {
+        .ev-popular .ev-popular-tags,
+        .ev-popular .ev-popular-row {
+            max-width: 780px !important;
+            width: 100% !important;
+        }
+    }
+
+    /* Replace the legacy MR silhouette image with the local Evoory one.
+       Overrides evoory-theme.css which points at massagerepublic.com.co. */
+    .ev-popular {
+        background-image: url('{{ asset("assets/newtheme/homebacground.png") }}') !important;
+    }
+
+    /* Custom scrollbar UI — hidden on desktop. Only used on mobile. */
+    .ev-popular-scroller { display: none; }
+
+    @media (max-width: 767px) {
+        /* Mobile: outlined transparent pills in a single horizontal-scroll row. */
+        a.ev-tag,
+        a.ev-tag:link,
+        a.ev-tag:visited {
+            color: #fff !important;
+            background: transparent !important;
+            border: 1px solid #2a3a4a !important;
+            border-radius: 999px !important;
+            padding: 8px 18px !important;
+            font-size: 14px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+        a.ev-tag:hover,
+        a.ev-tag:focus,
+        a.ev-tag:active {
+            color: #fff !important;
+            background: rgba(193, 241, 29, 0.08) !important;
+            border-color: #C1F11D !important;
+        }
+
+        /* Native scrollbar hidden — replaced by the custom UI below. */
+        .ev-popular-tags {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            gap: 10px !important;
+            padding-bottom: 0 !important;
+            scrollbar-width: none;
+        }
+        .ev-popular-row { display: contents !important; }
+        .ev-popular-tags::-webkit-scrollbar { display: none; }
+
+        /* Custom scrollbar: [◀] [── track ──── thumb ──] [▶] */
+        .ev-popular-scroller {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            user-select: none;
+        }
+        .ev-popular-scroller__btn {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: #6a7886;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 4px;
+            transition: color 0.15s;
+        }
+        .ev-popular-scroller__btn:hover:not(:disabled) { color: #C1F11D; }
+        .ev-popular-scroller__btn:disabled { opacity: 0.35; cursor: default; }
+        .ev-popular-scroller__btn svg {
+            width: 14px !important;
+            height: 14px !important;
+            transform: none !important;
+            -webkit-transform: none !important;
+            margin: 0 !important;
+            display: block;
+        }
+        .ev-popular-scroller__track {
+            flex: 1;
+            position: relative;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .ev-popular-scroller__thumb {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            min-width: 32px;
+            background: #2a3a4a;
+            border-radius: 3px;
+            cursor: grab;
+            transition: background 0.15s;
+        }
+        .ev-popular-scroller__thumb:hover,
+        .ev-popular-scroller__thumb.is-dragging { background: #3a4a5a; }
+        .ev-popular-scroller__thumb.is-dragging { cursor: grabbing; }
+    }
 
     /* "List now" / "Go" lime buttons — text must stay legible (black on lime). */
     a.ev-btn-primary,
@@ -38,6 +153,15 @@
     .ev-search-note a:hover,
     .ev-search-note a:focus,
     .ev-search-note a:active { color: #C1F11D !important; }
+
+    /* Center the logo in the mobile header on the homepage only.
+       Desktop is unaffected. Other pages keep the left-aligned logo. */
+    @media (max-width: 768px) {
+        body:has(.ev-homepage) .ev-header .ev-flex.ev-justify-between {
+            justify-content: center !important;
+        }
+        body:has(.ev-homepage) .ev-header .ev-nav { display: none !important; }
+    }
 
     /* Mobile-only standalone "Individual Escort or Agency" CTA.
        Scoped under .evry-mcta — !important on svg sizing defeats the global
@@ -94,18 +218,22 @@
             line-height: 1.5;
         }
         .evry-mcta__btn {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
             background: #C1F11D;
             color: #000 !important;
             text-align: center;
-            padding: 5px 136px;
+            padding: 12px 24px;
             border-radius: 50px;
             font-weight: 600;
-            font-size: 20px;
+            font-size: 18px;
             text-decoration: none !important;
+            width: 100%;
+            max-width: 100%;
+            white-space: nowrap;
+            box-sizing: border-box;
         }
         .evry-mcta__btn svg {
             width: 18px !important;
@@ -228,16 +356,31 @@
                         <a href="female-escorts-in-dubai" class="ev-tag">Dubai</a>
                         <a href="female-escorts-in-bangalore" class="ev-tag">Bangalore</a>
                         <a href="female-escorts-in-bangkok" class="ev-tag">Bangkok</a>
+                        </div>
+                        <div class="ev-popular-row">
                         <a href="female-escorts-in-chennai" class="ev-tag">Chennai</a>
                         <a href="female-escorts-in-doha" class="ev-tag">Doha</a>
                         <a href="female-escorts-in-hyderabad" class="ev-tag">Hyderabad</a>
                         <a href="female-escorts-in-manila" class="ev-tag">Manila</a>
                         <a href="female-escorts-in-mumbai" class="ev-tag">Mumbai</a>
                         <a href="female-escorts-in-muscat" class="ev-tag">Muscat</a>
+                        </div>
+                        <div class="ev-popular-row">
                         <a href="female-escorts-in-new-delhi" class="ev-tag">New Delhi</a>
                         <a href="female-escorts-in-pune" class="ev-tag">Pune</a>
                         <a href="female-escorts-in-riyadh" class="ev-tag">Riyadh</a>
                     </div>
+                </div>
+                <div class="ev-popular-scroller" data-popular-scroller>
+                    <button type="button" class="ev-popular-scroller__btn" data-scroll-prev aria-label="Scroll left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div class="ev-popular-scroller__track" data-scroll-track>
+                        <div class="ev-popular-scroller__thumb" data-scroll-thumb></div>
+                    </div>
+                    <button type="button" class="ev-popular-scroller__btn" data-scroll-next aria-label="Scroll right">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -351,6 +494,134 @@
             window.__evooryHomepageLegacyListener = true;
             document.addEventListener('livewire:navigated', syncLegacyCss);
         }
+    })();
+    </script>
+
+    {{-- Custom horizontal scrollbar for the popular-locations row.
+         Native scrollbar is hidden (CSS above) and we render our own UI:
+         left/right arrow buttons + a draggable thumb. Thumb width and
+         position are kept in sync with the underlying scrollLeft. --}}
+    <script>
+    (function () {
+        function initScroller(scroller) {
+            if (!scroller || scroller.dataset.bound === '1') return;
+            scroller.dataset.bound = '1';
+
+            var tags = scroller.parentElement.querySelector('.ev-popular-tags');
+            var prevBtn = scroller.querySelector('[data-scroll-prev]');
+            var nextBtn = scroller.querySelector('[data-scroll-next]');
+            var track = scroller.querySelector('[data-scroll-track]');
+            var thumb = scroller.querySelector('[data-scroll-thumb]');
+            if (!tags || !track || !thumb) return;
+
+            function updateThumb() {
+                var sw = tags.scrollWidth;
+                var cw = tags.clientWidth;
+                if (sw <= cw + 1) {
+                    // Nothing to scroll — hide the whole scrollbar.
+                    scroller.style.display = 'none';
+                    return;
+                }
+                scroller.style.display = '';
+
+                var trackW = track.clientWidth;
+                var ratio = cw / sw;
+                var thumbW = Math.max(32, Math.floor(trackW * ratio));
+                var maxThumbLeft = trackW - thumbW;
+                var scrollRatio = sw - cw > 0 ? tags.scrollLeft / (sw - cw) : 0;
+                var thumbLeft = Math.round(maxThumbLeft * scrollRatio);
+
+                thumb.style.width = thumbW + 'px';
+                thumb.style.left = thumbLeft + 'px';
+
+                prevBtn.disabled = tags.scrollLeft <= 0;
+                nextBtn.disabled = tags.scrollLeft >= (sw - cw - 1);
+            }
+
+            // Initial paint + on resize.
+            updateThumb();
+            window.addEventListener('resize', updateThumb);
+
+            // Scroll position changes (finger swipe / wheel) → repaint thumb.
+            tags.addEventListener('scroll', updateThumb, { passive: true });
+
+            // Arrow buttons scroll a fixed step.
+            function step(delta) {
+                tags.scrollBy({ left: delta, behavior: 'smooth' });
+            }
+            prevBtn.addEventListener('click', function () { step(-200); });
+            nextBtn.addEventListener('click', function () { step(200); });
+
+            // Click on empty track → jump to that position.
+            track.addEventListener('mousedown', function (e) {
+                if (e.target === thumb) return;
+                var rect = track.getBoundingClientRect();
+                var clickX = e.clientX - rect.left;
+                var thumbW = thumb.offsetWidth;
+                var targetThumbLeft = Math.max(0, Math.min(track.clientWidth - thumbW, clickX - thumbW / 2));
+                var maxThumbLeft = track.clientWidth - thumbW;
+                var scrollRatio = maxThumbLeft > 0 ? targetThumbLeft / maxThumbLeft : 0;
+                tags.scrollTo({ left: scrollRatio * (tags.scrollWidth - tags.clientWidth), behavior: 'smooth' });
+            });
+
+            // Drag the thumb (mouse + touch).
+            var dragging = false;
+            var dragStartX = 0;
+            var dragStartThumbLeft = 0;
+
+            function startDrag(clientX) {
+                dragging = true;
+                dragStartX = clientX;
+                dragStartThumbLeft = parseFloat(thumb.style.left || '0');
+                thumb.classList.add('is-dragging');
+            }
+            function moveDrag(clientX) {
+                if (!dragging) return;
+                var dx = clientX - dragStartX;
+                var thumbW = thumb.offsetWidth;
+                var maxThumbLeft = track.clientWidth - thumbW;
+                var newThumbLeft = Math.max(0, Math.min(maxThumbLeft, dragStartThumbLeft + dx));
+                var scrollRatio = maxThumbLeft > 0 ? newThumbLeft / maxThumbLeft : 0;
+                tags.scrollLeft = scrollRatio * (tags.scrollWidth - tags.clientWidth);
+            }
+            function endDrag() {
+                if (!dragging) return;
+                dragging = false;
+                thumb.classList.remove('is-dragging');
+            }
+
+            thumb.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                startDrag(e.clientX);
+            });
+            document.addEventListener('mousemove', function (e) {
+                if (dragging) moveDrag(e.clientX);
+            });
+            document.addEventListener('mouseup', endDrag);
+
+            thumb.addEventListener('touchstart', function (e) {
+                if (!e.touches[0]) return;
+                startDrag(e.touches[0].clientX);
+            }, { passive: true });
+            document.addEventListener('touchmove', function (e) {
+                if (dragging && e.touches[0]) {
+                    e.preventDefault();
+                    moveDrag(e.touches[0].clientX);
+                }
+            }, { passive: false });
+            document.addEventListener('touchend', endDrag);
+            document.addEventListener('touchcancel', endDrag);
+        }
+
+        function initAll() {
+            document.querySelectorAll('[data-popular-scroller]').forEach(initScroller);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAll);
+        } else {
+            initAll();
+        }
+        document.addEventListener('livewire:navigated', initAll);
     })();
     </script>
 

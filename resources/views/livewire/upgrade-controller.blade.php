@@ -1,19 +1,46 @@
-@section('headerform')
-<div class="nav-bar navbar-top-nav">
-    <div class="container-fluid" style="background:transparent !important;">
-      <a class="back-link" href="/my-profile/{{$profile->slug}}/{{$profile->id}}"     >
+<div class="evoory-upgrade-controller">
+{{-- Back-link sub-header. Previously this was rendered via
+     @section('headerform') so the legacy app.blade.php layout's
+     @yield('headerform') would slot it inside <header id="header">,
+     but that pattern was triggering Livewire's multiple-root-elements
+     check after wire:navigate. Rendering it inline keeps the markup
+     inside the component's single root and gives the same visual
+     result. --}}
+<div class="nav-bar navbar-top-nav ev-upgrade-subheader">
+    <div class="container-fluid ev-upgrade-subheader__inner" style="background:transparent !important;">
+      <a class="back-link" href="/my-profile/{{$profile->slug}}/{{$profile->id}}">
         <i class="fa fa-angle-left fa-fw"></i>
-        <span class="hidden-xs" style="color: #C1F11D !important;">Back to Profile</span>
+        <span style="color: #C1F11D !important;">Back</span>
       </a>
       <div class="title">
-        <h1>
-          Upgrade for {{ $profile->name }}</h1>
+        <h1>Upgrade for {{ $profile->name }}</h1>
       </div>
     </div>
   </div>
-@endsection
-
-<div class="evoory-upgrade-controller">
+  <style>
+    .ev-upgrade-subheader__inner {
+      display: flex !important;
+      align-items: center;
+      gap: 0px;
+      flex-wrap: nowrap;
+    }
+    .ev-upgrade-subheader__inner .back-link {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ev-upgrade-subheader__inner .title {
+      flex: 1;
+      min-width: 0;
+    }
+    .ev-upgrade-subheader__inner .title h1 {
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
 <style>
 /* === Evoory Dark Theme === */
 
@@ -21,8 +48,28 @@
    We add `evoory-upgrade-controller-active` to <body> via JS and remove it on
    navigation away, so this rule cannot leak into other pages via wire:navigate. */
 body.evoory-upgrade-controller-active { background: #000 !important; }
-body.evoory-upgrade-controller-active #header .nav-bar { background: #131616 !important; }
+body.evoory-upgrade-controller-active #header .nav-bar { background: #1f2222 !important; }
 body.evoory-upgrade-controller-active #header { margin-bottom: 0px !important; }
+
+/* Mobile: hide only the top nav (My Profile / My Account / Sign Out
+   buttons row) — the page's `< Back ... Upgrade for X` sub-header lives
+   in the same #header wrapper via @yield('headerform') so we can't hide
+   the whole element; target only the .ev-header bar inside it. */
+@media (max-width: 768px) {
+    body.evoory-upgrade-controller-active #header .ev-header { display: none !important; }
+    /* Add side gutter so VIP/Account Balance/Payment Method cards
+       don't touch the viewport edges. The Bootstrap .row negative
+       margin chain defeats container-level padding, so apply the
+       margin directly to the .block cards inside .checkout-fields. */
+    body.evoory-upgrade-controller-active .evoory-upgrade-controller .checkout-fields .block {
+        margin-left: 16px !important;
+        margin-right: 16px !important;
+    }
+    body.evoory-upgrade-controller-active .evoory-upgrade-controller .ev-upgrade-subheader__inner {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+}
 body.evoory-upgrade-controller-active #header .nav-bar .back-link { color: #C1F11D !important; text-decoration: none; }
 body.evoory-upgrade-controller-active #header .nav-bar .title h1 a { color: #fff !important; }
 body.evoory-upgrade-controller-active #footer { background: #0D1011 !important; border-top: 0px !important; }
@@ -243,7 +290,7 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
         width: 100% !important;
         border-top: 1px solid #2a2a2a;
     }
-    .upgrade-button-wrapper.mobile-fixed .checkout-button { width: 100% !important; margin: 0 !important; position: static !important; }
+    .upgrade-button-wrapper.mobile-fixed .checkout-button { width: 90% !important; margin: 0 !important; position: static !important; }
     body.has-fixed-button { padding-bottom: 90px !important; }
 }
 
@@ -402,7 +449,7 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
                     
                     <!-- Upgrade Button - Shows after package selection -->
                     <div class='upgrade-button-wrapper text-center' style='display: none; margin: 30px 0;'>
-                        <button class='btn btn-primary btn-lg checkout-button' type='button' style='padding: 15px 40px; font-size: 18px;'>
+                        <button class='btn btn-primary btn-lg checkout-button' type='button' style='padding: 10px 40px; font-size: 18px;'>
                             Proceed Upgrade <i class='fa fa-arrow-right'></i>
                         </button>
                     </div>

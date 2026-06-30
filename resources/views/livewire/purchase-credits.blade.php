@@ -1,5 +1,5 @@
 <style>
-#header .nav-bar { background: #131616 !important; }
+#header .nav-bar { background: #1f2222 !important; }
 #header { margin-bottom: 0px !important; }
 .backclass { background: #0a0a0a !important; }
 
@@ -644,9 +644,6 @@
     }
     
     function initPrimaryGatewayIframe() {
-        console.log('=== initPrimaryGatewayIframe CALLED ===');
-
-        var $container = document.getElementById('primary-gateway-container');
         var $loading = document.getElementById('primary-gateway-loading');
         var $iframe = document.getElementById('primary-gateway-iframe');
 
@@ -656,27 +653,25 @@
         }
 
         if (selectedAmount < 10 || selectedAmount > 100) {
-            $container.innerHTML = '<p class="text-danger p-3">Please enter a valid amount between $10 and $100.</p>';
+            $iframe.style.display = 'none';
+            $loading.style.display = 'block';
+            $loading.innerHTML = '<p class="text-danger">Please enter a valid amount between $10 and $100.</p>';
             return;
         }
 
-        // Clear any previous fallback link / error state and reset visibility.
-        var $fallback = document.getElementById('primary-gateway-fallback');
-        if ($fallback) $fallback.remove();
+        var $existingCta = document.getElementById('primary-gateway-cta');
+        if ($existingCta) $existingCta.remove();
+
         $loading.style.display = 'block';
         $loading.innerHTML = '<i class="fa fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading secure payment form...</p>';
         $iframe.style.display = 'none';
 
-        // Generate a unique reference ID
         var referenceId = 'CREDITS_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
-        // Store reference for callback
         window.primaryPaymentReference = {
             referenceId: referenceId,
             amount: selectedAmount
         };
 
-        // Build the external payment URL
         var callbackUrl = encodeURIComponent(window.location.origin + '/payment/credits-callback?reference_id=' + referenceId);
 
         var externalPaymentUrl = 'https://myadsnetwork.com/external-payment/checkout' +
@@ -685,52 +680,12 @@
             '&currency=USD' +
             '&callback_url=' + callbackUrl +
             '&reference_id=' + referenceId +
-            '&customer_email=' + encodeURIComponent('{{ auth()->user()->email }}') +
-            '&embed=1';
+            '&customer_email=' + encodeURIComponent('{{ auth()->user()->email }}');
 
-        console.log('Loading iframe:', externalPaymentUrl);
-
-        var loaded = false;
-
-        // If the gateway sends `X-Frame-Options: DENY/SAMEORIGIN` (or fails to
-        // respond at all), the iframe's `onload` event never fires and the
-        // spinner spins forever — that's the most common "primary gateway not
-        // working" symptom. Race the load against an 8s timeout and degrade
-        // gracefully by offering to open the gateway in a new tab.
-        var timeoutId = setTimeout(function() {
-            if (loaded) return;
-            console.warn('Primary gateway iframe did not load in 8s — falling back to new-tab link.');
-            $iframe.style.display = 'none';
-            $loading.style.display = 'none';
-
-            // Build a non-embedded URL for the new-tab path (gateway usually
-            // requires `embed=0` or omitted for a top-level checkout).
-            var topLevelUrl = externalPaymentUrl.replace(/&embed=1$/, '');
-
-            var fallback = document.createElement('div');
-            fallback.id = 'primary-gateway-fallback';
-            fallback.style.cssText = 'text-align:center;padding:24px;background:#1a1f28;border:1px solid #2a3241;border-radius:8px;color:#fff;';
-            fallback.innerHTML =
-                '<p style="margin-bottom:12px;color:#f87171;"><i class="fa fa-exclamation-triangle"></i> ' +
-                'The payment form couldn’t load inside this page.</p>' +
-                '<a href="' + topLevelUrl + '" target="_blank" rel="noopener" ' +
-                'style="display:inline-block;background:#C1F11D;color:#000;font-weight:600;' +
-                'padding:10px 22px;border-radius:22px;text-decoration:none;">' +
-                'Open secure payment in a new window</a>' +
-                '<p style="margin-top:14px;font-size:12px;color:#9aa3b2;">' +
-                'After completing the payment, return to this page — your credits will be added automatically.</p>';
-            $container.appendChild(fallback);
-        }, 8000);
-
-        // Show iframe when loaded
-        $iframe.onload = function() {
-            loaded = true;
-            clearTimeout(timeoutId);
+        $iframe.onload = function () {
             $loading.style.display = 'none';
             $iframe.style.display = 'block';
         };
-
-        // Set iframe source
         $iframe.src = externalPaymentUrl;
     }
     

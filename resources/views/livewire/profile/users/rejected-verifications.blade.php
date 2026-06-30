@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 <style>
     .ev-back-bar {
-        background: #131616;
+        background: #1f2222;
         padding: 12px 0;
     }
     .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }

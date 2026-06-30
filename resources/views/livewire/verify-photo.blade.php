@@ -2,7 +2,7 @@
 <style>
 /* Evoory Theme - Verify Photo Page */
 .backclass { background: #000 !important; }
-#header .nav-bar { background: #131616 !important; }
+#header .nav-bar { background: #1f2222 !important; }
 #header { margin-bottom: 0px !important; }
 .content-wrapper, #content, .container-fluid { background: #0a0a0a !important; }
 

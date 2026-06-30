@@ -513,6 +513,9 @@ header .ev-header-account { display:none; }
 
         <div id="fb-root"></div>
         @include('components.layouts.footer-evoory')
+
+        {{-- Mobile bottom nav (fixed at viewport bottom on ≤768px). --}}
+        @include('components.mobile-user-bottom-nav')
         @yield('advancesearch')
         @yield('homepopup')
         

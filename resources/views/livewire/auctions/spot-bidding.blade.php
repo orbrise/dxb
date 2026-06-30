@@ -18,7 +18,7 @@
 
 /* Page background */
 body { background: #000 !important; }
-#header .nav-bar { background: #131616 !important; }
+#header .nav-bar { background: #1f2222 !important; }
 #header { margin-bottom: 0px !important; }
 #header .nav-bar .back-link { color: #C1F11D !important; text-decoration: none; }
 #header .nav-bar .title h1 { color: #fff !important; }
