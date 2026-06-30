@@ -486,8 +486,14 @@ body { background: #0a0a0a !important; }
 }
 
 @media (max-width: 768px) {
-    /* Header spacing */
-    #header { margin-bottom: 0 !important; }
+    /* Hide the global top header (logo bar) on mobile — keep only
+       the page's own sub-header (Back / Verification Application).
+       The app-evoory layout uses <header class="ev-header"> (and
+       sometimes .ev-header-simple / .ev-header-account); none of
+       them have an #id, so target by class. */
+    header.ev-header,
+    header.ev-header-simple,
+    header.ev-header-account { display: none !important; }
 
     /* Page header - mobile nav style */
     .ev-page-header {
