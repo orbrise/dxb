@@ -166,21 +166,117 @@
 
     // -----------------------------------------------------------------------
     // 3. "What's new" horizontal scroll indicator
+    //    Thumb width is computed from viewport/content ratio; supports mouse
+    //    drag, touch drag, click-on-track to jump, and arrow stepping.
+    //    Vertical wheel is translated to horizontal scroll while pointer is
+    //    over the row.
     // -----------------------------------------------------------------------
     (function () {
         var scroll = document.querySelector('.ev-whatsnew-scroll');
         if (!scroll) return;
+        var track = document.querySelector('.ev-scroll-track');
         var thumb = document.querySelector('.ev-scroll-thumb');
         var leftBtn = document.querySelector('.ev-scroll-left');
         var rightBtn = document.querySelector('.ev-scroll-right');
-        if (thumb) {
-            scroll.addEventListener('scroll', function () {
-                var pct = scroll.scrollLeft / (scroll.scrollWidth - scroll.clientWidth);
-                thumb.style.transform = 'translateX(' + (pct * 30) + 'px)';
-            });
+        if (!track || !thumb) return;
+
+        function update() {
+            var sw = scroll.scrollWidth;
+            var cw = scroll.clientWidth;
+            var indicators = document.querySelector('.ev-whatsnew-indicators');
+            if (sw <= cw + 1) {
+                if (indicators) indicators.style.display = 'none';
+                return;
+            }
+            if (indicators) indicators.style.display = '';
+
+            var trackW = track.clientWidth;
+            var ratio = cw / sw;
+            var thumbW = Math.max(32, Math.floor(trackW * ratio));
+            var maxThumbLeft = trackW - thumbW;
+            var scrollRatio = (sw - cw) > 0 ? scroll.scrollLeft / (sw - cw) : 0;
+            var thumbLeft = Math.round(maxThumbLeft * scrollRatio);
+
+            thumb.style.width = thumbW + 'px';
+            thumb.style.left = thumbLeft + 'px';
+
+            if (leftBtn) leftBtn.disabled = scroll.scrollLeft <= 0;
+            if (rightBtn) rightBtn.disabled = scroll.scrollLeft >= (sw - cw - 1);
         }
+
+        update();
+        window.addEventListener('resize', update);
+        scroll.addEventListener('scroll', update, { passive: true });
+
         if (leftBtn) leftBtn.addEventListener('click', function () { scroll.scrollBy({ left: -210, behavior: 'smooth' }); });
         if (rightBtn) rightBtn.addEventListener('click', function () { scroll.scrollBy({ left: 210, behavior: 'smooth' }); });
+
+        // Click on empty track → jump to that position.
+        track.addEventListener('mousedown', function (e) {
+            if (e.target === thumb) return;
+            var rect = track.getBoundingClientRect();
+            var clickX = e.clientX - rect.left;
+            var thumbW = thumb.offsetWidth;
+            var targetThumbLeft = Math.max(0, Math.min(track.clientWidth - thumbW, clickX - thumbW / 2));
+            var maxThumbLeft = track.clientWidth - thumbW;
+            var scrollRatio = maxThumbLeft > 0 ? targetThumbLeft / maxThumbLeft : 0;
+            scroll.scrollTo({ left: scrollRatio * (scroll.scrollWidth - scroll.clientWidth), behavior: 'smooth' });
+        });
+
+        // Drag the thumb (mouse + touch).
+        var dragging = false;
+        var dragStartX = 0;
+        var dragStartThumbLeft = 0;
+
+        function startDrag(clientX) {
+            dragging = true;
+            dragStartX = clientX;
+            dragStartThumbLeft = parseFloat(thumb.style.left || '0');
+            thumb.classList.add('is-dragging');
+        }
+        function moveDrag(clientX) {
+            if (!dragging) return;
+            var dx = clientX - dragStartX;
+            var thumbW = thumb.offsetWidth;
+            var maxThumbLeft = track.clientWidth - thumbW;
+            var newThumbLeft = Math.max(0, Math.min(maxThumbLeft, dragStartThumbLeft + dx));
+            var scrollRatio = maxThumbLeft > 0 ? newThumbLeft / maxThumbLeft : 0;
+            scroll.scrollLeft = scrollRatio * (scroll.scrollWidth - scroll.clientWidth);
+        }
+        function endDrag() {
+            if (!dragging) return;
+            dragging = false;
+            thumb.classList.remove('is-dragging');
+        }
+
+        thumb.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            startDrag(e.clientX);
+        });
+        document.addEventListener('mousemove', function (e) {
+            if (dragging) moveDrag(e.clientX);
+        });
+        document.addEventListener('mouseup', endDrag);
+
+        thumb.addEventListener('touchstart', function (e) {
+            if (!e.touches[0]) return;
+            startDrag(e.touches[0].clientX);
+        }, { passive: true });
+        document.addEventListener('touchmove', function (e) {
+            if (dragging && e.touches[0]) {
+                e.preventDefault();
+                moveDrag(e.touches[0].clientX);
+            }
+        }, { passive: false });
+        document.addEventListener('touchend', endDrag);
+        document.addEventListener('touchcancel', endDrag);
+
+        // Vertical mouse wheel over the row → horizontal scroll.
+        scroll.addEventListener('wheel', function (e) {
+            if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+            e.preventDefault();
+            scroll.scrollLeft += e.deltaY;
+        }, { passive: false });
     })();
 
     // -----------------------------------------------------------------------

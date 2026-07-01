@@ -83,7 +83,7 @@
         <span>Phone</span>
       </a>
       <a class="list-group-item send-message1" href="javascript:void(0)" style="background-color: #131616 !important;">
-        <img src="https://assets.massagerepublic.com.co/assets/newtheme/msg.svg" width="16" height="16" alt="Message">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 6H11.25M4.5 9H11.25M4.5 12H8.25M15.75 8.25C15.75 12.3922 12.3922 15.75 8.25 15.75H0.75V8.25C0.75 4.10775 4.10775 0.75 8.25 0.75C12.3922 0.75 15.75 4.10775 15.75 8.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>Message</span>
       </a>
       @if(!empty($user->website))
@@ -94,11 +94,11 @@
       </a>
       @endif
       <a class="list-group-item ask-question1" href="javascript:void(0)">
-        <img src="https://assets.massagerepublic.com.co/assets/newtheme/question.svg" width="16" height="16" alt="Message">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.3125 9C16.3125 10.9394 15.5421 12.7994 14.1707 14.1707C12.7994 15.5421 10.9394 16.3125 9 16.3125C7.0606 16.3125 5.20064 15.5421 3.82928 14.1707C2.45792 12.7994 1.6875 10.9394 1.6875 9C1.6875 7.0606 2.45792 5.20064 3.82928 3.82928C5.20064 2.45792 7.0606 1.6875 9 1.6875C10.9394 1.6875 12.7994 2.45792 14.1707 3.82928C15.5421 5.20064 16.3125 7.0606 16.3125 9ZM18 9C18 11.3869 17.0518 13.6761 15.364 15.364C13.6761 17.0518 11.3869 18 9 18C6.61305 18 4.32387 17.0518 2.63604 15.364C0.948212 13.6761 0 11.3869 0 9C0 6.61305 0.948212 4.32387 2.63604 2.63604C4.32387 0.948212 6.61305 0 9 0C11.3869 0 13.6761 0.948212 15.364 2.63604C17.0518 4.32387 18 6.61305 18 9ZM5.54288 5.61375C5.22263 6.09675 5.0625 6.573 5.0625 7.0425C5.0625 7.27125 5.16375 7.4835 5.36625 7.67925C5.56875 7.875 5.81663 7.9725 6.10988 7.97175C6.60863 7.97175 6.94725 7.692 7.12575 7.1325C7.31475 6.59775 7.54575 6.19275 7.81875 5.9175C8.09175 5.643 8.517 5.50575 9.0945 5.50575C9.588 5.50575 9.99113 5.64187 10.3039 5.91412C10.6159 6.18712 10.7719 6.52163 10.7719 6.91763C10.7732 7.11629 10.7203 7.31156 10.6189 7.48238C10.5146 7.65578 10.3875 7.81433 10.2409 7.95375C10.0043 8.17037 9.76121 8.37972 9.51188 8.5815C9.12937 8.89875 8.82487 9.1725 8.59838 9.40275C8.37337 9.63375 8.19225 9.90112 8.055 10.2049C7.69275 11.6055 9.57375 11.718 10.008 10.7179C10.0605 10.6219 10.1404 10.5154 10.2476 10.3984C10.3556 10.2821 10.4989 10.1471 10.6774 9.99338C11.1326 9.61429 11.5804 9.22646 12.0206 8.83012C12.2696 8.60063 12.4845 8.32687 12.6653 8.00887C12.852 7.67031 12.9459 7.28842 12.9375 6.90188C12.9375 6.36788 12.7785 5.87288 12.4605 5.41687C12.1433 4.96012 11.6933 4.59937 11.1105 4.33462C10.5278 4.06987 9.85575 3.9375 9.0945 3.9375C8.2755 3.9375 7.55888 4.09613 6.94462 4.41337C6.33037 4.73063 5.86312 5.1315 5.54288 5.61375ZM7.95038 13.5787C7.95038 13.8771 8.0689 14.1633 8.27988 14.3742C8.49086 14.5852 8.77701 14.7037 9.07538 14.7037C9.37374 14.7037 9.65989 14.5852 9.87087 14.3742C10.0818 14.1633 10.2004 13.8771 10.2004 13.5787C10.2004 13.2804 10.0818 12.9942 9.87087 12.7833C9.65989 12.5723 9.37374 12.4537 9.07538 12.4537C8.77701 12.4537 8.49086 12.5723 8.27988 12.7833C8.0689 12.9942 7.95038 13.2804 7.95038 13.5787Z" fill="currentColor"/></svg>
         <span>Ask Question</span>
       </a>
       <a class="list-group-item add-review1" href="javascript:void(0)">
-        <img src="https://assets.massagerepublic.com.co/assets/newtheme/review.svg" width="16" height="16" alt="Message">
+        <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.25 10.3192H5.63125C5.74458 10.3192 5.85452 10.2977 5.96105 10.2547C6.06758 10.2117 6.16307 10.1472 6.2475 10.0612L10.2425 6.01952C10.37 5.89053 10.4658 5.74348 10.5298 5.57837C10.5938 5.41327 10.6256 5.25217 10.625 5.09509C10.6244 4.93801 10.589 4.78408 10.5187 4.63331C10.4485 4.48253 10.3564 4.34265 10.2425 4.21366L9.4775 3.39673C9.35 3.26774 9.20833 3.17114 9.0525 3.10693C8.89667 3.04272 8.73375 3.01033 8.56375 3.00976C8.40792 3.00976 8.24868 3.04215 8.08605 3.10693C7.92342 3.17171 7.77807 3.26831 7.65 3.39673L3.655 7.4384C3.57 7.5244 3.50625 7.62128 3.46375 7.72906C3.42125 7.83684 3.4 7.94777 3.4 8.06185V9.45924C3.4 9.70289 3.4816 9.90727 3.6448 10.0724C3.808 10.2375 4.00973 10.3197 4.25 10.3192ZM4.675 9.02928V8.21234L6.82125 6.04102L7.24625 6.42799L7.62875 6.85795L5.4825 9.02928H4.675ZM7.24625 6.42799L7.62875 6.85795L6.82125 6.04102L7.24625 6.42799ZM7.79875 10.3192H12.75C12.9908 10.3192 13.1928 10.2366 13.356 10.0715C13.5192 9.90641 13.6006 9.70232 13.6 9.45924C13.5994 9.21617 13.5178 9.01208 13.3552 8.84697C13.1926 8.68186 12.9908 8.59931 12.75 8.59931H9.49875L7.79875 10.3192ZM3.4 13.7589L1.445 15.7367C1.17583 16.0091 0.867568 16.0701 0.520201 15.9199C0.172835 15.7697 -0.000565282 15.5008 1.38436e-06 15.1133V1.71986C1.38436e-06 1.2469 0.166601 0.842159 0.499801 0.50564C0.833001 0.16912 1.23307 0.000573287 1.7 0H15.3C15.7675 0 16.1678 0.168547 16.501 0.50564C16.8342 0.842733 17.0006 1.24747 17 1.71986V12.039C17 12.512 16.8337 12.917 16.501 13.2541C16.1684 13.5912 15.7681 13.7595 15.3 13.7589H3.4ZM2.6775 12.039H15.3V1.71986H1.7V13.0065L2.6775 12.039Z" fill="currentColor"/></svg>
         <span>Add Review</span>
       </a>
     </div>
@@ -148,46 +148,91 @@
                   <span>Phone</span>
                 </a>
                 <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--filled send-message1">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 5.3H9.85M4 7.9H9.85M4 10.5H7.25M13.75 7.25C13.75 10.8399 10.8399 13.75 7.25 13.75H0.75V7.25C0.75 3.66005 3.66005 0.75 7.25 0.75C10.8399 0.75 13.75 3.66005 13.75 7.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <span>Message</span>
                 </a>
                 <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--ghost ask-question1">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.5938 7.5C13.5938 9.11616 12.9517 10.6661 11.8089 11.8089C10.6661 12.9517 9.11616 13.5938 7.5 13.5938C5.88384 13.5938 4.33387 12.9517 3.19107 11.8089C2.04827 10.6661 1.40625 9.11616 1.40625 7.5C1.40625 5.88384 2.04827 4.33387 3.19107 3.19107C4.33387 2.04827 5.88384 1.40625 7.5 1.40625C9.11616 1.40625 10.6661 2.04827 11.8089 3.19107C12.9517 4.33387 13.5938 5.88384 13.5938 7.5ZM15 7.5C15 9.48912 14.2098 11.3968 12.8033 12.8033C11.3968 14.2098 9.48912 15 7.5 15C5.51088 15 3.60322 14.2098 2.1967 12.8033C0.790176 11.3968 0 9.48912 0 7.5C0 5.51088 0.790176 3.60322 2.1967 2.1967C3.60322 0.790176 5.51088 0 7.5 0C9.48912 0 11.3968 0.790176 12.8033 2.1967C14.2098 3.60322 15 5.51088 15 7.5ZM4.61906 4.67812C4.35219 5.08062 4.21875 5.4775 4.21875 5.86875C4.21875 6.05938 4.30312 6.23625 4.47188 6.39937C4.64062 6.5625 4.84719 6.64375 5.09156 6.64313C5.50719 6.64313 5.78938 6.41 5.93813 5.94375C6.09562 5.49813 6.28813 5.16062 6.51562 4.93125C6.74312 4.7025 7.0975 4.58813 7.57875 4.58813C7.99 4.58813 8.32594 4.70156 8.58656 4.92844C8.84656 5.15594 8.97656 5.43469 8.97656 5.76469C8.9777 5.93024 8.93361 6.09297 8.84906 6.23531C8.7622 6.37982 8.65625 6.51195 8.53406 6.62813C8.33694 6.80865 8.13434 6.9831 7.92656 7.15125C7.60781 7.41562 7.35406 7.64375 7.16531 7.83562C6.97781 8.02812 6.82687 8.25094 6.7125 8.50406C6.41062 9.67125 7.97813 9.765 8.34 8.93156C8.38375 8.85156 8.45031 8.76281 8.53969 8.66531C8.62969 8.56844 8.74906 8.45594 8.89781 8.32781C9.27713 8.01191 9.65032 7.68872 10.0172 7.35844C10.2247 7.16719 10.4038 6.93906 10.5544 6.67406C10.71 6.39193 10.7882 6.07368 10.7812 5.75156C10.7812 5.30656 10.6488 4.89406 10.3837 4.51406C10.1194 4.13344 9.74438 3.83281 9.25875 3.61219C8.77313 3.39156 8.21312 3.28125 7.57875 3.28125C6.89625 3.28125 6.29906 3.41344 5.78719 3.67781C5.27531 3.94219 4.88594 4.27625 4.61906 4.67812ZM6.62531 11.3156C6.62531 11.5643 6.72408 11.8027 6.8999 11.9785C7.07572 12.1544 7.31417 12.2531 7.56281 12.2531C7.81145 12.2531 8.04991 12.1544 8.22573 11.9785C8.40154 11.8027 8.50031 11.5643 8.50031 11.3156C8.50031 11.067 8.40154 10.8285 8.22573 10.6527C8.04991 10.4769 7.81145 10.3781 7.56281 10.3781C7.31417 10.3781 7.07572 10.4769 6.8999 10.6527C6.72408 10.8285 6.62531 11.067 6.62531 11.3156Z" fill="currentColor"/></svg>
                   <span>Ask</span>
                 </a>
                 <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--ghost add-review1">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.75 9.02928H4.96875C5.06875 9.02928 5.16575 9.01047 5.25975 8.97285C5.35375 8.93522 5.438 8.87879 5.5125 8.80355L9.0375 5.26708C9.15 5.15421 9.2345 5.02555 9.291 4.88108C9.3475 4.73661 9.3755 4.59565 9.375 4.45821C9.3745 4.32076 9.34325 4.18607 9.28125 4.05415C9.21925 3.92222 9.138 3.79982 9.0375 3.68695L8.3625 2.97214C8.25 2.85927 8.125 2.77475 7.9875 2.71856C7.85 2.66238 7.70625 2.63404 7.55625 2.63354C7.41875 2.63354 7.27825 2.66188 7.13475 2.71856C6.99125 2.77525 6.863 2.85977 6.75 2.97214L3.225 6.5086C3.15 6.58385 3.09375 6.66862 3.05625 6.76293C3.01875 6.85723 3 6.9543 3 7.05412V8.27684C3 8.49003 3.072 8.66886 3.216 8.81333C3.36 8.9578 3.538 9.02978 3.75 9.02928ZM4.125 7.90062V7.1858L6.01875 5.28589L6.39375 5.62449L6.73125 6.00071L4.8375 7.90062H4.125ZM6.39375 5.62449L6.73125 6.00071L6.01875 5.28589L6.39375 5.62449ZM6.88125 9.02928H11.25C11.4625 9.02928 11.6407 8.95704 11.7847 8.81257C11.9287 8.66811 12.0005 8.48953 12 8.27684C11.9995 8.06415 11.9275 7.88557 11.784 7.7411C11.6405 7.59663 11.4625 7.5244 11.25 7.5244H8.38125L6.88125 9.02928ZM3 12.039L1.275 13.7696C1.0375 14.0079 0.765501 14.0613 0.459001 13.9299C0.152501 13.7985 -0.000498778 13.5632 1.2215e-06 13.2241V1.50488C1.2215e-06 1.09104 0.147001 0.736889 0.441001 0.442435C0.735001 0.14798 1.088 0.000501627 1.5 0H13.5C13.9125 0 14.2657 0.147478 14.5597 0.442435C14.8537 0.737391 15.0005 1.09154 15 1.50488V10.5342C15 10.948 14.8532 11.3024 14.5597 11.5974C14.2662 11.8923 13.913 12.0395 13.5 12.039H3ZM2.3625 10.5342H13.5V1.50488H1.5V11.3807L2.3625 10.5342Z" fill="currentColor"/></svg>
                   <span>Review</span>
                 </a>
               </div>
               <style>
-                .ev-profile-actions {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                  padding: 12px 0 14px;
+                /* `visible-xs` is also on this container, and the legacy
+                   Bootstrap bundle forces `.visible-xs { display: block !important }`
+                   under 767px. That kills our flex layout, so the buttons size to
+                   their text and end up unequal. Override with !important here. */
+                /* Desktop: keep the bar completely hidden (it's marked
+                   .visible-xs and is for mobile only). */
+                .ev-profile-actions { display: none !important; }
+
+                @media (max-width: 767px) {
+                  .ev-profile-actions,
+                  .ev-profile-actions.visible-xs {
+                    display: flex !important;
+                    align-items: stretch;
+                    gap: 8px;
+                    padding: 14px 16px;
+                    background: #2a3505;
+                    margin-top: 18px;
+                    margin-bottom: 4px;
+                    box-sizing: border-box;
+                    /* box-shadow trick: a massive spread paints the bar's colour
+                       out to ~100vmax in every direction, while `clip-path` keeps
+                       the paint only on the horizontal axis. */
+                    box-shadow: 0 0 0 100vmax #2a3505;
+                    -webkit-clip-path: inset(0 -100vmax);
+                    clip-path: inset(0 -100vmax);
+                  }
+                  /* For the box-shadow paint to be visible, no ancestor may have
+                     overflow:hidden. The legacy listing bundle sets it on a few
+                     ancestors — override on mobile only, scoped to this page. */
+                  body:has(.ev-profile-actions) article[data-listing],
+                  body:has(.ev-profile-actions) article[data-listing] > .row,
+                  body:has(.ev-profile-actions) #listing-content,
+                  body:has(.ev-profile-actions) .listing-li,
+                  body:has(.ev-profile-actions) .content-wrapper,
+                  body:has(.ev-profile-actions) #content,
+                  body:has(.ev-profile-actions) .container-fluid,
+                  body:has(.ev-profile-actions) main {
+                    overflow: visible !important;
+                    overflow-x: visible !important;
+                  }
                 }
                 .ev-profile-actions__btn {
                   display: inline-flex !important;
                   align-items: center;
                   justify-content: center;
-                  gap: 6px;
-                  flex: 1;
-                  min-height: 44px;
-                  padding: 8px 10px;
-                  border-radius: 10px;
+                  gap: 2px;
+                  flex: 1 1 0;
+                  min-width: 0;
+                  height: 35px;
+                  padding: 0 6px;
+                  border-radius: 5px;
                   font-size: 14px;
                   font-weight: 600;
                   text-decoration: none !important;
                   white-space: nowrap;
+                  box-sizing: border-box;
+                  line-height: 1;
+                  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
                 }
                 .ev-profile-actions__btn svg {
-                  width: 18px !important;
-                  height: 18px !important;
+                  width: 16px !important;
+                  height: 16px !important;
                   transform: none !important;
                   -webkit-transform: none !important;
                   margin: 0 !important;
                   display: block;
+                  flex-shrink: 0;
+                }
+                .ev-profile-actions__btn span {
+                  display: inline-block;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
                 }
                 .ev-profile-actions__btn--filled {
                   background: #C1F11D;
@@ -197,15 +242,17 @@
                 .ev-profile-actions__btn--filled:hover,
                 .ev-profile-actions__btn--filled:focus {
                   background: #b5e600;
+                  border-color: #b5e600;
                   color: #000 !important;
                 }
                 .ev-profile-actions__btn--ghost {
-                  background: transparent;
+                  background: #131616;
                   color: #fff !important;
                   border: 1px solid #2a3241;
                 }
                 .ev-profile-actions__btn--ghost:hover,
                 .ev-profile-actions__btn--ghost:focus {
+                  background: #1a1f1f;
                   border-color: #C1F11D;
                   color: #C1F11D !important;
                 }

@@ -225,7 +225,7 @@
             background: #C1F11D;
             color: #000 !important;
             text-align: center;
-            padding: 12px 24px;
+            padding: 6px 24px;
             border-radius: 50px;
             font-weight: 600;
             font-size: 18px;
