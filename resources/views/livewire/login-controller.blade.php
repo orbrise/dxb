@@ -282,12 +282,15 @@
   .ev-remember span{font-size:14px;color:#ccc}
   .ev-forgot{color:#C1F11D;font-size:13px}
 
-  .ev-login-actions{margin-top:24px}
+  .ev-login-actions{margin-top:24px;display:flex;justify-content:center;}
   .ev-btn-signin{
-    width:100%;
-    height:48px;
-    border-radius:5px;
-    font-size:16px;
+    width:auto;
+    min-width:0;
+    max-width:100%;
+    height:40px;
+    padding:0 140px;
+    border-radius:999px;
+    font-size:15px;
     font-weight:600;
   }
   .ev-btn-register{display:none}

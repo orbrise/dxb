@@ -175,7 +175,7 @@
                     display: flex !important;
                     align-items: stretch;
                     gap: 8px;
-                    padding: 14px 16px;
+                    padding: 14px 0px;
                     background: #2a3505;
                     margin-top: 18px;
                     margin-bottom: 4px;

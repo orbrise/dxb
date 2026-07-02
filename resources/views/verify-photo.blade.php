@@ -685,9 +685,8 @@ body { background: #0a0a0a !important; }
                     <div style="padding-top: 16px;">
                         <div style="display:flex;flex-direction:column;align-items:center;">
                             <button type="button" class="btn-open-camera" id="openVerificationCamera">
-                                <i class="fas fa-spinner fa-spin" style="display:none !important;" id="cameraSpinner"></i>
                                 <i class="fas fa-video" id="cameraIcon"></i>
-                                Open Camera
+                                <span id="cameraBtnLabel">Open Camera</span>
                             </button>
                             {{-- Hidden file input — used as a fallback if getUserMedia fails (no permission, no camera, or insecure context). --}}
                             <input type="file" id="openVerificationCameraInput" accept="image/*" capture="user" style="display:none;" />
@@ -786,6 +785,15 @@ body { background: #0a0a0a !important; }
             backdrop.className = 'modal-backdrop fade show in';
             document.body.appendChild(backdrop);
         }
+        // Scroll to the modal so the user immediately sees the camera view
+        // (or the captured preview) rather than being left staring at the
+        // instructions above.
+        window.requestAnimationFrame(function () {
+            var target = modalEl.querySelector('.modal-dialog') || modalEl;
+            var rect = target.getBoundingClientRect();
+            var top = rect.top + (window.pageYOffset || document.documentElement.scrollTop) - 20;
+            window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+        });
     }
 
     function hideModal() {
@@ -858,31 +866,45 @@ body { background: #0a0a0a !important; }
         || location.hostname === '127.0.0.1';
     var supportsGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
+    function setCameraBtnBusy(busy) {
+        var cameraIcon = $id('cameraIcon');
+        var btn = $id('openVerificationCamera');
+        if (!btn) return;
+        var existing = btn.querySelector('.ev-camera-spinner');
+        if (busy) {
+            if (cameraIcon) cameraIcon.style.display = 'none';
+            if (!existing) {
+                var s = document.createElement('i');
+                s.className = 'fas fa-spinner fa-spin ev-camera-spinner';
+                s.style.marginRight = '6px';
+                btn.insertBefore(s, btn.firstChild);
+            }
+        } else {
+            if (existing) existing.parentNode.removeChild(existing);
+            if (cameraIcon) cameraIcon.style.display = 'inline-block';
+        }
+    }
+
     function handleOpenCamera() {
         var video = $id('verificationVideo');
-        var spinner = $id('cameraSpinner');
-        var cameraIcon = $id('cameraIcon');
 
         if (!supportsGetUserMedia || !secureCtx) {
             useFileFallback();
             return;
         }
 
-        if (spinner) spinner.style.display = 'inline-block';
-        if (cameraIcon) cameraIcon.style.display = 'none';
+        setCameraBtnBusy(true);
 
         navigator.mediaDevices.getUserMedia({
             video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
         }).then(function (stream) {
             window.__verifyStream = stream;
             if (video) { video.srcObject = stream; video.play(); }
-            if (spinner) spinner.style.display = 'none';
-            if (cameraIcon) cameraIcon.style.display = 'inline-block';
+            setCameraBtnBusy(false);
             showModal();
         }).catch(function (err) {
             console.warn('[verify-photo] getUserMedia failed, falling back to file input:', err);
-            if (spinner) spinner.style.display = 'none';
-            if (cameraIcon) cameraIcon.style.display = 'inline-block';
+            setCameraBtnBusy(false);
             useFileFallback();
         });
     }
@@ -1052,9 +1074,11 @@ body { background: #0a0a0a !important; }
     }
 
     function init() {
-        var spinner = $id('cameraSpinner');
+        // No spinner in the DOM by default — setCameraBtnBusy() inserts it
+        // only while getUserMedia is in flight and removes it as soon as
+        // the promise settles, so the button reads "🎥 Open Camera" until
+        // the user actually taps it.
         var cameraIcon = $id('cameraIcon');
-        if (spinner) spinner.style.display = 'none';
         if (cameraIcon) cameraIcon.style.display = 'inline-block';
         bindFileInput();
         initProfileSearch();

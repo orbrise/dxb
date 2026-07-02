@@ -12,7 +12,25 @@ use Livewire\Attributes\On;
 class PurchaseCredits extends Component
 {
     public $amount = 100;
-    
+
+    /**
+     * Users who signed in via Google (or any other flow that skipped wallet
+     * creation) reach this page without a `wallets` row, and the Blade view
+     * dereferences `wallet->balance`, which fatals on null. Create one up
+     * front so the render, the JS, and the payment callbacks all see a real
+     * wallet from the first request.
+     */
+    public function mount()
+    {
+        $user = Auth::user();
+        if ($user && !$user->wallet) {
+            $user->wallet()->create(['balance' => 0]);
+            // Refresh the relationship so subsequent $user->wallet reads in
+            // this request return the newly-created row instead of null.
+            $user->load('wallet');
+        }
+    }
+
     protected $rules = [
         'amount' => 'required|numeric|min:10|max:100',
     ];

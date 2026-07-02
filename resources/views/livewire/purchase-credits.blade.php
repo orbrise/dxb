@@ -422,7 +422,7 @@
                 </div>
                 <div>
                     <div class="ev-balance-label">Current Balance</div>
-                    <div class="ev-balance-amount">${{ auth()->user()->wallet->balance ?? 0 }}</div>
+                    <div class="ev-balance-amount">${{ number_format((float) (optional(auth()->user()->wallet)->balance ?? 0), 0) }}</div>
                 </div>
             </div>
 

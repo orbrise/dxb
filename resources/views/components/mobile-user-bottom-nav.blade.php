@@ -41,11 +41,12 @@
     justify-content: center;
     gap: 4px;
     padding: 6px 4px;
-    color: #8b9298 !important;
+    color: #fff !important;
     text-decoration: none !important;
     font-size: 11px;
     border-radius: 8px;
     line-height: 1;
+    transition: color 0.15s ease;
 }
 .ev-mobile-bottom-nav__item svg {
     width: 22px !important;
@@ -61,7 +62,9 @@
     line-height: 1;
     white-space: nowrap;
 }
-.ev-mobile-bottom-nav__item:not(.is-active):hover { color: #fff !important; }
+.ev-mobile-bottom-nav__item:hover,
+.ev-mobile-bottom-nav__item:focus,
+.ev-mobile-bottom-nav__item:active,
 .ev-mobile-bottom-nav__item.is-active,
 .ev-mobile-bottom-nav__item.is-active:hover,
 .ev-mobile-bottom-nav__item.is-active:focus { color: #C1F11D !important; }

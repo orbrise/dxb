@@ -7,40 +7,79 @@
      inside the component's single root and gives the same visual
      result. --}}
 <div class="nav-bar navbar-top-nav ev-upgrade-subheader">
-    <div class="container-fluid ev-upgrade-subheader__inner" style="background:transparent !important;">
-      <a class="back-link" href="/my-profile/{{$profile->slug}}/{{$profile->id}}">
+    <div class="container-fluid ev-upgrade-subheader__inner"
+         style="background:transparent !important; display:flex; align-items:center; gap:12px; flex-wrap:nowrap; position:relative;">
+      {{-- Back link is absolutely positioned on the left so the title
+           can be perfectly centered in the row regardless of the back
+           link's width. --}}
+      <a class="back-link" href="/my-profile/{{$profile->slug}}/{{$profile->id}}"
+         style="position:absolute; left:16px; top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; gap:4px; z-index:2;">
         <i class="fa fa-angle-left fa-fw"></i>
         <span style="color: #C1F11D !important;">Back</span>
       </a>
-      <div class="title">
-        <h1>Upgrade for {{ $profile->name }}</h1>
+      <div class="title" style="flex:1 1 auto; min-width:0; text-align:center;">
+        <h1 style="margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:18px; padding:0 70px;">Upgrade for {{ $profile->name }}</h1>
       </div>
     </div>
   </div>
+  @push('css')
   <style>
-    .ev-upgrade-subheader__inner {
+    /* Sub-header + select-days layout, pushed to <head> so it survives
+       every wire:navigate re-mount. Same rules previously lived in a
+       <style> tag inside the component body but morphdom occasionally
+       failed to keep them active after a round-trip (Home → back to
+       Upgrade), causing the "Back" link and title to jam together. */
+    .evoory-upgrade-controller .ev-upgrade-subheader .ev-upgrade-subheader__inner {
       display: flex !important;
-      align-items: center;
-      gap: 0px;
-      flex-wrap: nowrap;
+      align-items: center !important;
+      gap: 12px !important;
+      flex-wrap: nowrap !important;
+      position: relative !important;
     }
-    .ev-upgrade-subheader__inner .back-link {
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+    .evoory-upgrade-controller .ev-upgrade-subheader__inner .back-link {
+      position: absolute !important;
+      left: 16px !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      z-index: 2 !important;
     }
-    .ev-upgrade-subheader__inner .title {
-      flex: 1;
-      min-width: 0;
+    .evoory-upgrade-controller .ev-upgrade-subheader__inner .title {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      text-align: center !important;
     }
-    .ev-upgrade-subheader__inner .title h1 {
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .evoory-upgrade-controller .ev-upgrade-subheader__inner .title h1 {
+      margin: 0 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      font-size: 18px !important;
+      padding: 0 70px !important;
+    }
+    /* Select-days block flex row: VIP name + Back-to-selection pill. */
+    .evoory-upgrade-controller .upgrade-duration .upgrade-title {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 12px !important;
+      flex-wrap: nowrap !important;
+    }
+    .evoory-upgrade-controller .upgrade-duration .upgrade-title .upgrade-name {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      margin: 0 !important;
+    }
+    .evoory-upgrade-controller .upgrade-duration .upgrade-title [data-listing-upgrade-form-back-to-upgrade-selection-btn] {
+      flex-shrink: 0 !important;
     }
   </style>
+  @endpush
 <style>
 /* === Evoory Dark Theme === */
 
@@ -210,7 +249,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
     padding: 10px 20px;
     border-radius: 22px;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     z-index: 10;
 }
 .selected-badge i { margin-right: 5px; }
@@ -227,7 +266,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
     color: #000 !important;
     border: none !important;
     border-radius: 22px !important;
-    font-weight: 600 !important;
+    font-weight: 400 !important;
 }
 .checkout-button:hover { background: #d4f84d !important; color: #000 !important; }
 
@@ -276,7 +315,46 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
 
 /* Mobile */
 @media (max-width: 767px) {
-    .upgrade-type.active .selected-badge { display: block !important; }
+    /* Selected badge: don't stretch full-width on mobile — inline pill only,
+       with tighter padding so it doesn't dominate the card. */
+    .upgrade-type.active .selected-badge {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: auto !important;
+        max-width: none !important;
+        padding: 6px 50px !important;
+        font-size: 13px !important;
+        border-radius: 999px !important;
+        margin-top: 6px !important;
+    }
+    /* Same treatment for the Choose button so the two states match. */
+    .choose-package-btn {
+        padding: 6px 20px !important;
+        font-size: 13px !important;
+        border-radius: 999px !important;
+    }
+    /* Package preview image — the fixed sizes (45/60/94px) look tiny on a
+       full-width mobile card. Scale each tier up proportionally. */
+    .upgrade-type .profile-preview { padding: 14px !important; gap: 14px !important; }
+    .upgrade-type-free .profile-preview > div,
+    .upgrade-type-basic .profile-preview > div:first-child {
+        width: 90px !important;
+        height: 90px !important;
+    }
+    .upgrade-type-featured .profile-preview > div:first-child {
+        width: 110px !important;
+        height: 110px !important;
+    }
+    .upgrade-type-vip .profile-preview > div:first-child {
+        width: 140px !important;
+        height: 140px !important;
+    }
+    .upgrade-type .profile-preview img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
     .upgrade-button-wrapper.mobile-fixed {
         position: fixed !important;
         bottom: 0 !important;
@@ -307,7 +385,7 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
         <div class="content-wrapper no-sidebar">
           <div id="content">
             
-            <form class="simple_form upgrade-listing-form upgrade-listing-form-init  free-visible" id="new_upgrade_process">
+            <form class="simple_form upgrade-listing-form upgrade-listing-form-init  free-visible" id="new_upgrade_process" onsubmit="return false;">
               <div class="upgrade-type-selector">
                 <div class="row">
                   <div class="col-lg-offset-1 col-lg-10">
@@ -449,7 +527,7 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
                     
                     <!-- Upgrade Button - Shows after package selection -->
                     <div class='upgrade-button-wrapper text-center' style='display: none; margin: 30px 0;'>
-                        <button class='btn btn-primary btn-lg checkout-button' type='button' style='padding: 10px 40px; font-size: 18px;'>
+                        <button class='btn btn-primary btn-lg checkout-button' type='button' style='padding: 10px 40px; font-size: 16px;'>
                             Proceed Upgrade <i class='fa fa-arrow-right'></i>
                         </button>
                     </div>
@@ -459,14 +537,20 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
                       <div class="row">
                         <div class="col-sm-9 col-md-7 col-md-offset-1 col-lg-6 col-lg-offset-3">
                         <div class="block pb-0 mb-3 upgrade-duration">
-                          <div class="upgrade-title d-flex justify-content-between align-items-center mt-0 mb-3">
-                            <h2 class="upgrade-name font-weight-bold my-0 mr-2" data-listing-upgrade-form-selected-upgrade-type-display=""></h2>
-                            <a class="btn btn-primary d-flex align-items-center justify-content-center" data-listing-upgrade-form-back-to-upgrade-selection-btn="" href="#">
+                          <div class="upgrade-title d-flex justify-content-between align-items-center mt-0 mb-3"
+                               style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:nowrap;">
+                            <h2 class="upgrade-name font-weight-bold my-0 mr-2" data-listing-upgrade-form-selected-upgrade-type-display=""
+                                style="flex:1 1 auto; min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></h2>
+                            <a class="btn btn-primary d-flex align-items-center justify-content-center" data-listing-upgrade-form-back-to-upgrade-selection-btn="" href="#"
+                               style="flex-shrink:0;">
                               <i class="fa fa-angle-left" style="color:#000"></i>
                               <span class="ml-2" style="color:#000">Back to selection</span>
                             </a>
                           </div>
                           <div class="border-top padding-top">
+                            <p class="upgrade-duration__hint" style="margin:0 0 10px;color:#c8ccd0;font-size:14px;font-weight:500;">
+                              Select the number of days you want to upgrade for:
+                            </p>
                             <div class="upgrade-duration__radios mb-3"></div>
                             <div class="text-right w-100 pb-3">
                               <strong class="lead">Total: $ <span id="famount"></span></strong>
@@ -554,11 +638,15 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
                         </div>
                         
                         <!-- PayPal Payment Section -->
-                        <div id="paypal-payment-section" class="block p-0 mb-3 payment-section" style="display: none;background: #f0f0f0;">
-                          <div class="p-3" style="color:#4e4e4e">
-                            <p>You will be charged <strong>$<span class="payment-amount"></span></strong> via PayPal.</p>
-                            <div id="paypal-button-container" class="mt-3"></div>
-                            <p class="small text-muted text-center mt-3" style="color:#4e4e4e">Secure payment processing by PayPal. You can use your PayPal account or credit/debit card.</p>
+                        <div id="paypal-payment-section" class="block p-0 mb-3 payment-section" style="display: none; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;">
+                          <div class="p-3">
+                            <p style="color:#fff !important;">You will be charged <strong style="color:#C1F11D !important;">$<span class="payment-amount"></span></strong> via PayPal.</p>
+                            {{-- PayPal renders its own white card inside this container.
+                                 The wrapper above is dark to match the rest of the page
+                                 so the "You will be charged" line and the footer note
+                                 stay legible in the site's dark theme. --}}
+                            <div id="paypal-button-container" class="mt-3" style="background:#fff; border-radius:6px; padding:12px;"></div>
+                            <p class="small text-center mt-3" style="color:#9aa3b2 !important;">Secure payment processing by PayPal. You can use your PayPal account or credit/debit card.</p>
                           </div>
                         </div>
                         
@@ -600,30 +688,51 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
         }
     }
 
-    function syncApp2Css() {
-        var onUpgrade = !!document.querySelector('.evoory-upgrade-controller');
-        var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/app2.css"]');
-        var stashed = window.__evooryStashedApp2Css;
-
-        if (!onUpgrade && live) {
-            window.__evooryStashedApp2Css = live.getAttribute('href');
-            live.parentNode.removeChild(live);
-        } else if (onUpgrade && !live && stashed) {
-            var link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = stashed;
-            document.head.appendChild(link);
-        }
+    // Re-attach app.css / app2.css / app3.css when we're on the upgrade
+    // page but they've been stripped by another page's script (namely
+    // homepage-evoory's stripLegacyCss). Stash the href on first sight
+    // so we can restore even after the browser has completely removed
+    // the <link> element.
+    function ensureLegacyBundle() {
+        var LEGACY = ['app.css', 'app2.css', 'app3.css'];
+        window.__evooryStashedLegacyCss = window.__evooryStashedLegacyCss || {};
+        var stash = window.__evooryStashedLegacyCss;
+        LEGACY.forEach(function (name) {
+            var live = document.querySelector('link[rel="stylesheet"][href*="assets/css/' + name + '"]');
+            if (live) {
+                // Cache the current href so we can rebuild if it gets
+                // removed later.
+                stash[name] = live.getAttribute('href');
+            } else if (stash[name]) {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = stash[name];
+                document.head.appendChild(link);
+            }
+        });
     }
 
     syncBodyClass();
-    syncApp2Css();
+    ensureLegacyBundle();
 
     if (!window.evooryUpgradeNavListener) {
         window.evooryUpgradeNavListener = true;
+        // Fire on navigate (pre-render): restore legacy CSS before the
+        // destination paints. Called unconditionally because
+        // ensureLegacyBundle is idempotent — if the sheets are already
+        // in <head> it does nothing, so an unnecessary call on an
+        // evoory-layout destination is harmless (the destination's own
+        // strip script will remove them again a moment later).
+        document.addEventListener('livewire:navigate', function () {
+            ensureLegacyBundle();
+        });
+        // Fire on navigated (post-render): keep body class + legacy CSS
+        // in sync with the actual page state.
         document.addEventListener('livewire:navigated', function () {
             syncBodyClass();
-            syncApp2Css();
+            if (document.querySelector('.evoory-upgrade-controller')) {
+                ensureLegacyBundle();
+            }
         });
     }
 })();
@@ -664,18 +773,26 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
         return null;
     }
     
-    // Set Livewire property
-    function setLivewireProperty(name, value) {
+    // Set Livewire property. `defer=true` writes the value into the
+    // component but skips the server round-trip + re-render — critical
+    // for calls that happen while the user is mid-flow, because any
+    // re-render wipes JS-driven UI state (active package, checkout
+    // fields visibility, etc.) and drops the user back to the initial
+    // package-selection screen.
+    function setLivewireProperty(name, value, defer) {
         var component = getLivewireComponent();
-        if (component) {
-            if (typeof component.set === 'function') {
-                component.set(name, value);
-            } else if (typeof component.$set === 'function') {
-                component.$set(name, value);
-            } else {
-                // Direct property assignment for Livewire 3
-                component[name] = value;
-            }
+        if (!component) return;
+        if (defer && typeof component.set === 'function') {
+            // Livewire 3 signature: set(name, value, defer)
+            component.set(name, value, false);
+            return;
+        }
+        if (typeof component.set === 'function') {
+            component.set(name, value);
+        } else if (typeof component.$set === 'function') {
+            component.$set(name, value);
+        } else {
+            component[name] = value;
         }
     }
     
@@ -782,9 +899,24 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
         
         // Payment method click
         $(document).off('click.upgrade', '.payment-method-option').on('click.upgrade', '.payment-method-option', function(e) {
+            // If the click landed on a real link inside the option (e.g. the
+            // "Purchase account balance" link inside the Account Balance row),
+            // don't intercept — let the browser navigate normally.
+            if ($(e.target).closest('a[href]').length) return;
+            // Otherwise prevent the label→radio→form click chain from bubbling
+            // into <form id="new_upgrade_process">. Without this, PayPal's
+            // async SDK render into #paypal-button-container has previously
+            // coincided with an implicit form submission on some browsers,
+            // which reloads the page and drops the user back on the
+            // package-selection step.
+            e.preventDefault();
+            e.stopPropagation();
             if ($(this).hasClass('disabled')) return false;
             var method = $(this).data('payment-method');
+            // Manually update the radio state since we just prevented the
+            // native label→input click chain.
             $('.payment-method-option').removeClass('selected');
+            $('.payment-method-option input[type="radio"]').prop('checked', false);
             $(this).addClass('selected').find('input[type="radio"]').prop('checked', true);
             $('.payment-section').hide();
             $('#' + method + '-payment-section').show();
@@ -993,10 +1125,13 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
         
         $container.empty();
         
-        // Set Livewire properties
-        setLivewireProperty('selectedPackage', selectedPackageId);
-        setLivewireProperty('selectedDuration', selectedDuration);
-        setLivewireProperty('selectedAmount', selectedPrice);
+        // Set Livewire properties in "defer" mode — we only need the
+        // backend to know these values at the moment onApprove dispatches
+        // handlePayPalApproval, so batching the writes prevents an
+        // immediate re-render that would wipe the current UI state.
+        setLivewireProperty('selectedPackage', selectedPackageId, true);
+        setLivewireProperty('selectedDuration', selectedDuration, true);
+        setLivewireProperty('selectedAmount', selectedPrice, true);
         
         try {
             paypal.Buttons({
@@ -1031,10 +1166,18 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
         initUpgradePage();
     }
     
-    // Re-init on Livewire navigation
+    // Re-init on Livewire navigation. Detect the upgrade page by DOM
+    // presence rather than URL substring — the router path may be
+    // /my-profile/{slug}/{id}/upgrade or a rewrite, so checking for the
+    // component root is the reliable signal. Also reset all the JS state
+    // that would otherwise leak from the previous visit and confuse the
+    // duration/payment flows.
     document.addEventListener('livewire:navigated', function() {
-        if (window.location.pathname.includes('/upgrade')) {
-            window.upgradePageInitialized = false; // Allow re-init
+        if (document.querySelector('.evoory-upgrade-controller')) {
+            window.upgradePageInitialized = false;
+            selectedPackageId = null;
+            selectedDuration = null;
+            selectedPrice = null;
             setTimeout(initUpgradePage, 100);
         }
     });
