@@ -778,14 +778,25 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
     // for calls that happen while the user is mid-flow, because any
     // re-render wipes JS-driven UI state (active package, checkout
     // fields visibility, etc.) and drops the user back to the initial
-    // package-selection screen.
+    // package-selection screen. iOS Safari specifically: with ITP,
+    // Livewire XHRs during a defer commit can fail with 500 and
+    // trigger Livewire's error overlay (a "500 Server Error" popup
+    // that briefly appears before PayPal renders). Writing to
+    // `component.$wire[name]` is a pure local mutation — no network
+    // round trip, no error overlay, batched with the next real action.
     function setLivewireProperty(name, value, defer) {
         var component = getLivewireComponent();
         if (!component) return;
-        if (defer && typeof component.set === 'function') {
-            // Livewire 3 signature: set(name, value, defer)
-            component.set(name, value, false);
-            return;
+        if (defer) {
+            try {
+                if (component.$wire && (name in component.$wire || typeof component.$wire[name] !== 'undefined')) {
+                    component.$wire[name] = value;
+                    return;
+                }
+            } catch (e) { /* fall through */ }
+            // Fallback: direct assignment on the component instance.
+            // Still local, no XHR.
+            try { component[name] = value; return; } catch (e) { /* fall through */ }
         }
         if (typeof component.set === 'function') {
             component.set(name, value);

@@ -438,7 +438,7 @@
                 <div class="d-flex align-items-center">
                   <div class="amount-input-group">
                     <span class="dollar-sign">$</span>
-                    <input type="number" wire:model.live="amount" min="10" max="100" maxlength="5" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" value="100" id="amount" />
+                    <input type="number" wire:model.live="amount" min="5" step="1" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" value="10" id="amount" />
                   </div>
                   <span class="choose-amount-label">Choose amount</span>
                 </div>
@@ -586,7 +586,7 @@
                 updateAmountDisplay(selectedAmount);
                 
                 // Reinitialize payment method if valid amount
-                if (selectedAmount >= 10 && selectedAmount <= 100) {
+                if (selectedAmount >= 5) {
                     if (selectedPaymentMethod === 'primary') {
                         clearTimeout(window.primaryInitTimeout);
                         window.primaryInitTimeout = setTimeout(initPrimaryGatewayIframe, 500);
@@ -652,10 +652,10 @@
             selectedAmount = parseFloat(amountInput.value) || 0;
         }
 
-        if (selectedAmount < 10 || selectedAmount > 100) {
+        if (selectedAmount < 5) {
             $iframe.style.display = 'none';
             $loading.style.display = 'block';
-            $loading.innerHTML = '<p class="text-danger">Please enter a valid amount between $10 and $100.</p>';
+            $loading.innerHTML = '<p class="text-danger">Please enter an amount of at least $5.</p>';
             return;
         }
 
@@ -700,8 +700,8 @@
             selectedAmount = parseFloat(amountInput.value) || 0;
         }
         
-        if (selectedAmount < 10 || selectedAmount > 100) {
-            $container.innerHTML = '<p class="text-danger">Please enter a valid amount between $10 and $100.</p>';
+        if (selectedAmount < 5) {
+            $container.innerHTML = '<p class="text-danger">Please enter an amount of at least $5.</p>';
             return;
         }
         

@@ -97,9 +97,9 @@
                         <span class="ev-btn-signin-label" wire:loading.remove wire:target="loginNow">
                             <span>Sign in</span>
                         </span>
-                        <span wire:loading wire:target="loginNow">
+                        <span class="ev-btn-signin-label" wire:loading wire:target="loginNow" style="gap:6px;white-space:nowrap;">
                             <svg class="ev-spinner" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                            Signing in...
+                            <span>Signing in...</span>
                         </span>
                     </button>
                 </div>
@@ -288,10 +288,11 @@
     min-width:0;
     max-width:100%;
     height:40px;
-    padding:0 140px;
+    padding:0 60px;
     border-radius:999px;
     font-size:15px;
     font-weight:600;
+    white-space:nowrap;
   }
   .ev-btn-register{display:none}
 

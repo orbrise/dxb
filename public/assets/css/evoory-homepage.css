@@ -1500,3 +1500,107 @@ button.btn.btn-primary#submit[type="submit"]:hover {
         object-position: top !important;
     }
 }
+
+/* Mobile listings (<=567px):
+   Below the desktop breakpoint (568px) the legacy layout floats the
+   thumbs onto a second line and the big image dominates the viewport.
+   Force a compact side-by-side layout — main image on the left, side
+   thumbs stacked vertically on the right.
+
+   Fully fluid — no hardcoded aspect ratios per breakpoint. The row is
+   flex with `align-items: stretch`, so the side thumb column
+   automatically stretches to match the height the main image derived
+   from its own natural aspect at whatever the current viewport width
+   is. Each thumb inside the column uses `flex: 1` so N thumbs split
+   the column into N equal cells, and `object-fit: cover` fills each
+   cell without distortion regardless of the source image's aspect. */
+@media (max-width: 567px) {
+    .listings .listing-li > .thumbs,
+    .listings .listing-li .thumbs {
+        display: flex !important;
+        align-items: stretch !important;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+        float: none !important;
+    }
+    /* Main image column: takes ~70% of row width. Locked to a 4:5 portrait
+       aspect ratio so every listing renders the same height regardless of
+       the source photo's natural dimensions. object-fit: cover crops
+       oversized images, object-position: top keeps faces visible. */
+    .listings .listing-li .thumbs .main-thumbs {
+        flex: 0 0 70% !important;
+        float: none !important;
+        margin: 0 !important;
+        aspect-ratio: 5 / 5 !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    .listings .listing-li .thumbs .main-thumbs > a,
+    .listings .listing-li .thumbs .main-thumbs .img-wrapper,
+    .listings .listing-li .thumbs .main-thumbs .image-wrapper {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+    }
+    .listing-li .thumbs .main-thumbs img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        object-position: top !important;
+        display: block !important;
+    }
+    /* Side thumbs column: takes remaining ~30%, becomes a vertical
+       flexbox whose total height is stretched by the parent to match
+       the main image column. */
+    .listings .listing-li .thumbs .other-thumbs {
+        flex: 0 0 30% !important;
+        margin: 0 !important;
+        float: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        min-width: 0 !important;
+    }
+    /* Each thumb: equal share of the column height (flex:1 with
+       min-height:0 so children don't overflow the flex allocation). */
+    .listings .listing-li .thumbs .other-thumbs > .thumb {
+        clear: none !important;
+        float: none !important;
+        flex: 1 1 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+    .listing-li .thumbs .other-thumbs .thumb .img-wrapper,
+    .listing-li .thumbs .other-thumbs .thumb .image-wrapper {
+        width: 100% !important;
+        height: 100% !important;
+        display: block !important;
+        overflow: hidden !important;
+    }
+    /* Fill the cell with object-fit:cover — no aspect ratio needed. */
+    .listing-li .thumbs .other-thumbs .thumb img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        object-position: top !important;
+        display: block !important;
+    }
+    /* Preserve outer corner rounding on the thumb column.
+       The .thumb has overflow:hidden, so applying border-radius directly
+       to it guarantees the image is clipped at the rounded corner
+       regardless of what the inner wrappers do. */
+    .listings .listing-li .thumbs .other-thumbs > .thumb:first-child {
+        border-top-right-radius: 12px !important;
+    }
+    .listings .listing-li .thumbs .other-thumbs > .thumb:last-child {
+        border-bottom-right-radius: 12px !important;
+    }
+    .listings .listing-li .thumbs .other-thumbs > .thumb:only-child {
+        border-top-right-radius: 12px !important;
+        border-bottom-right-radius: 12px !important;
+    }
+}

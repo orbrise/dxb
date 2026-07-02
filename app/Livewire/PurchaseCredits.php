@@ -11,7 +11,7 @@ use Livewire\Attributes\On;
 #[Layout('components.layouts.app-evoory')]
 class PurchaseCredits extends Component
 {
-    public $amount = 100;
+    public $amount = 10;
 
     /**
      * Users who signed in via Google (or any other flow that skipped wallet
@@ -32,14 +32,13 @@ class PurchaseCredits extends Component
     }
 
     protected $rules = [
-        'amount' => 'required|numeric|min:10|max:100',
+        'amount' => 'required|numeric|min:5',
     ];
-    
+
     protected $messages = [
         'amount.required' => 'Amount is required.',
         'amount.numeric' => 'Amount must be a number.',
-        'amount.min' => 'Minimum amount is $10.',
-        'amount.max' => 'Maximum amount is $100.',
+        'amount.min' => 'Minimum amount is $5.',
     ];
     
     public function updated($propertyName)
@@ -94,10 +93,10 @@ class PurchaseCredits extends Component
     public function processPrimaryPayment($amount, $referenceId)
     {
         // Validate amount
-        if ($amount < 10 || $amount > 100) {
+        if ($amount < 5) {
             $this->dispatch('showMessage', [
                 'type' => 'error',
-                'message' => 'Invalid amount. Please enter an amount between $10 and $100.'
+                'message' => 'Invalid amount. Minimum amount is $5.'
             ]);
             return;
         }

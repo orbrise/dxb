@@ -625,6 +625,33 @@
         font-size: 14px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
+    /* On mobile: render as an opaque full-width top banner so the
+       alert doesn't ghost over the profile card underneath. */
+    @media (max-width: 768px) {
+        #ev-success-float {
+            top: 0;
+            left: 0;
+            right: 0;
+            min-width: 0;
+            max-width: none;
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+            border-top: none;
+            padding: 12px 44px 12px 16px;
+            font-size: 13px;
+            line-height: 1.4;
+            background: #1a2100;
+            color: #C1F11D;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        #ev-success-float > button {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            float: none !important;
+        }
+    }
 
     /* Main grid (desktop default) — moved out of inline style so
        the media-query override below can win cleanly. */
