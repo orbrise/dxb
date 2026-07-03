@@ -394,6 +394,34 @@
         margin-bottom: 4px;
     }
 
+    /* Verify photos card - status pill */
+    .ev-verify-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 10px;
+        line-height: 1.4;
+    }
+    .ev-verify-status-verified {
+        color: #C1F11D;
+        background: rgba(193, 241, 29, 0.1);
+        border: 1px solid rgba(193, 241, 29, 0.35);
+    }
+    .ev-verify-status-pending {
+        color: #ffc107;
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.4);
+    }
+    .ev-verify-status-rejected {
+        color: #ff6b6b;
+        background: rgba(220, 53, 69, 0.12);
+        border: 1px solid rgba(220, 53, 69, 0.35);
+    }
+
     /* Link preview box */
     .ev-link-preview {
         float: right;
@@ -1247,8 +1275,39 @@
                 <span class="ev-label">Preview</span>
             </div>
             <h3>Verify photos</h3>
-            <p>Verified profiles get more enquiries.</p>
-            <a class="ev-btn ev-btn-accent" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Verify now</a>
+            @php
+                if ($user->photoverify) {
+                    $verifyStatus = 'verified';
+                } elseif ($user->rejectedVerification) {
+                    $verifyStatus = 'rejected';
+                } elseif (\App\Models\VerificationPhoto::where('profile_id', $user->id)->where('status', 'pending')->exists()) {
+                    $verifyStatus = 'pending';
+                } else {
+                    $verifyStatus = 'none';
+                }
+            @endphp
+            @if($verifyStatus === 'verified')
+                <div class="ev-verify-status ev-verify-status-verified">
+                    <i class="fa fa-check-circle"></i> Verified
+                </div>
+                <p>Your photo has been verified.</p>
+                <a class="ev-btn ev-btn-outline" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Verify another profile</a>
+            @elseif($verifyStatus === 'pending')
+                <div class="ev-verify-status ev-verify-status-pending">
+                    <i class="fa fa-clock"></i> Pending review
+                </div>
+                <p>Your photo is under review. This can take up to 48 hours.</p>
+                <a class="ev-btn ev-btn-outline" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Verify another profile</a>
+            @elseif($verifyStatus === 'rejected')
+                <div class="ev-verify-status ev-verify-status-rejected">
+                    <i class="fa fa-times-circle"></i> Rejected
+                </div>
+                <p>Your last verification was rejected. Please resubmit.</p>
+                <a class="ev-btn ev-btn-accent" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Resubmit</a>
+            @else
+                <p>Verified profiles get more enquiries.</p>
+                <a class="ev-btn ev-btn-accent" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Verify now</a>
+            @endif
             <br>
             <a class="ev-share-link" href="javascript:void(0)" data-copy-btn="#verifLink">
                 <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 -960 960 960" width="16">

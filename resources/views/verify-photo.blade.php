@@ -146,10 +146,10 @@ body { background: #0a0a0a !important; }
     background: #C1F11D;
     color: #000;
     border: none;
-    border-radius: 24px;
-    padding: 10px 28px;
-    font-size: 15px;
-    font-weight: 700;
+    border-radius: 999px;
+    padding: 8px 26px;
+    font-size: 14px;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -403,27 +403,45 @@ body { background: #0a0a0a !important; }
     padding: 0;
     position: relative;
 }
-#verificationCameraModal .btn-success,
-#verificationCameraModal .btn-primary {
+#verificationCameraModal .btn-success {
     background: #C1F11D;
     color: #000;
     border: none;
     font-weight: 600;
-    padding: 8px 16px;
-    border-radius: 6px;
+    font-size: 13px;
+    padding: 6px 20px;
+    border-radius: 999px;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+#verificationCameraModal .btn-primary {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #fff;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 5px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 #verificationCameraModal .btn-primary:disabled {
-    background: #0D1011;
-    color: #666;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.35);
     cursor: not-allowed;
 }
 #verificationCameraModal .btn-default {
     background: #2a2a2a;
     color: #fff;
     border: 1px solid #444;
-    padding: 8px 16px;
-    border-radius: 6px;
+    font-size: 13px;
+    padding: 6px 20px;
+    border-radius: 999px;
     cursor: pointer;
 }
 #verificationCameraModal .modal-footer-row {
@@ -585,9 +603,9 @@ body { background: #0a0a0a !important; }
     .btn-open-camera {
         width: 100% !important;
         justify-content: center !important;
-        border-radius: 5px !important;
-        padding: 14px 24px !important;
-        font-size: 15px !important;
+        border-radius: 999px !important;
+        padding: 10px 24px !important;
+        font-size: 14px !important;
     }
 
     /* QR section */
@@ -600,9 +618,6 @@ body { background: #0a0a0a !important; }
         border-radius: 5px !important;
         padding: 12px 14px !important;
     }
-
-    /* Hide profile selector on mobile if profile is already known */
-    .profile-selector { display: none !important; }
 }
 </style>
 @endpush
@@ -706,11 +721,13 @@ body { background: #0a0a0a !important; }
                                         </button>
                                     </div>
                                     <div class="modal-body">
-                                        <button class="btn btn-circle" data-btn-change=""
-                                                style="position:absolute;top:1rem;left:1rem;display:flex;align-items:center;z-index:1;padding:4px;background:rgba(0,0,0,0.5);border:none;border-radius:50%;cursor:pointer"
-                                                title="Flip camera" type="button">
-                                            <svg width="28" height="28" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38.35 28">
-                                                <path d="M14.83,25.6c-3.86-.37-7.28-1.22-9.83-2.4-3.12-1.43-5-3.35-5-5.5s2.02-4.21,5.34-5.65v2.01c-1.97,1.05-3.13,2.31-3.13,3.65,0,1.5,1.48,2.92,3.92,4.04,2.25,1.03,5.26,1.79,8.71,2.14v-2.26l.15.1,2.33,1.52,2.33,1.52.08.05-.05.03-.03.02-2.33,1.52-2.33,1.52-.15.1v-2.4h0Z" fill="#fff" fill-rule="evenodd"/>
+                                        <button class="btn btn-circle" id="verificationFlipBtn" data-btn-change=""
+                                                style="position:absolute;top:12px;left:12px;display:flex;align-items:center;justify-content:center;z-index:2;width:40px;height:40px;padding:0;background:rgba(0,0,0,0.55);border:none;border-radius:50%;cursor:pointer;transition:background 0.15s ease"
+                                                title="Switch camera" aria-label="Switch camera" type="button">
+                                            {{-- Material "flip_camera_android" — camera silhouette with two arrows,
+                                                 the standard cross-platform glyph for front/back camera swap. --}}
+                                            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#fff">
+                                                <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.1-.89-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z"/>
                                             </svg>
                                         </button>
                                         <div class="capture-wrapper">
@@ -865,6 +882,58 @@ body { background: #0a0a0a !important; }
         || location.hostname === 'localhost'
         || location.hostname === '127.0.0.1';
     var supportsGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    // Which camera we're currently streaming from. Persisted across
+    // open/close cycles so re-opening the modal remembers the last choice.
+    if (typeof window.__verifyFacing === 'undefined') window.__verifyFacing = 'user';
+
+    function stopStream() {
+        if (window.__verifyStream) {
+            window.__verifyStream.getTracks().forEach(function (t) { t.stop(); });
+            window.__verifyStream = null;
+        }
+    }
+
+    function startStream(facing) {
+        return navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: facing }
+        });
+    }
+
+    function maybeShowFlipBtn() {
+        // Default: keep the button visible (set in the inline style). Only
+        // hide when we can confirm the device actually has just one camera —
+        // that way the button never invisibly disappears on environments
+        // where enumerateDevices is unreliable or restricted.
+        var btn = $id('verificationFlipBtn');
+        if (!btn || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+        navigator.mediaDevices.enumerateDevices().then(function (devices) {
+            var cams = devices.filter(function (d) { return d.kind === 'videoinput'; });
+            if (cams.length <= 1) btn.style.display = 'none';
+        }).catch(function () { /* keep the default (visible) */ });
+    }
+
+    function flipCamera() {
+        var btn = $id('verificationFlipBtn');
+        if (btn) btn.setAttribute('disabled', 'disabled');
+        var target = window.__verifyFacing === 'user' ? 'environment' : 'user';
+        stopStream();
+        startStream(target).then(function (stream) {
+            window.__verifyStream = stream;
+            window.__verifyFacing = target;
+            var video = $id('verificationVideo');
+            if (video) { video.srcObject = stream; video.play(); }
+        }).catch(function (err) {
+            console.warn('[verify-photo] flip failed, restoring previous camera:', err);
+            // Best-effort restore of the camera we had before the flip attempt.
+            startStream(window.__verifyFacing).then(function (stream) {
+                window.__verifyStream = stream;
+                var video = $id('verificationVideo');
+                if (video) { video.srcObject = stream; video.play(); }
+            }).catch(function () { /* nothing else we can do */ });
+        }).then(function () {
+            if (btn) btn.removeAttribute('disabled');
+        });
+    }
 
     function setCameraBtnBusy(busy) {
         var cameraIcon = $id('cameraIcon');
@@ -895,13 +964,14 @@ body { background: #0a0a0a !important; }
 
         setCameraBtnBusy(true);
 
-        navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
-        }).then(function (stream) {
+        startStream(window.__verifyFacing).then(function (stream) {
             window.__verifyStream = stream;
             if (video) { video.srcObject = stream; video.play(); }
             setCameraBtnBusy(false);
             showModal();
+            // enumerateDevices returns labelled + counted devices only after
+            // permission has been granted, so check now that the stream is live.
+            maybeShowFlipBtn();
         }).catch(function (err) {
             console.warn('[verify-photo] getUserMedia failed, falling back to file input:', err);
             setCameraBtnBusy(false);
@@ -967,6 +1037,8 @@ body { background: #0a0a0a !important; }
             if (openBtn) { e.preventDefault(); handleOpenCamera(); return; }
             var closeBtn = e.target.closest('#verificationCameraModal [data-dismiss="modal"]');
             if (closeBtn) { e.preventDefault(); hideModal(); return; }
+            var flipBtn = e.target.closest('#verificationFlipBtn');
+            if (flipBtn) { e.preventDefault(); flipCamera(); return; }
             var captureBtn = e.target.closest('#captureVerificationBtn');
             if (captureBtn) { e.preventDefault(); handleCapture(); return; }
             var submitBtn = e.target.closest('#submitVerificationBtn');

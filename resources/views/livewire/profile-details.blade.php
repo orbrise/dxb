@@ -206,14 +206,14 @@
                   display: inline-flex !important;
                   align-items: center;
                   justify-content: center;
-                  gap: 2px;
+                  gap: 5px;
                   flex: 1 1 0;
                   min-width: 0;
-                  height: 35px;
-                  padding: 0 6px;
+                  height: 38px;
+                  padding: 0 10px;
                   border-radius: 5px;
-                  font-size: 14px;
-                  font-weight: 600;
+                  font-size: 15px;
+                  font-weight: 500;
                   text-decoration: none !important;
                   white-space: nowrap;
                   box-sizing: border-box;
@@ -221,8 +221,8 @@
                   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
                 }
                 .ev-profile-actions__btn svg {
-                  width: 16px !important;
-                  height: 16px !important;
+                  width: 20px !important;
+                  height: 20px !important;
                   transform: none !important;
                   -webkit-transform: none !important;
                   margin: 0 !important;
@@ -238,6 +238,7 @@
                   background: #C1F11D;
                   color: #000 !important;
                   border: 1px solid #C1F11D;
+                  font-size: 12px;
                 }
                 .ev-profile-actions__btn--filled:hover,
                 .ev-profile-actions__btn--filled:focus {
@@ -246,14 +247,14 @@
                   color: #000 !important;
                 }
                 .ev-profile-actions__btn--ghost {
-                  background: #131616;
+                  background: transparent;
                   color: #fff !important;
-                  border: 1px solid #2a3241;
+                  border: 1px solid transparent;
                 }
                 .ev-profile-actions__btn--ghost:hover,
                 .ev-profile-actions__btn--ghost:focus {
-                  background: #1a1f1f;
-                  border-color: #C1F11D;
+                  background: transparent;
+                  border-color: transparent;
                   color: #C1F11D !important;
                 }
               </style>
