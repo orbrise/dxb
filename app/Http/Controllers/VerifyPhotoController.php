@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\VerificationPhotoSubmitted;
 use App\Models\VerificationPhoto;
 use App\Models\UsersProfile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class VerifyPhotoController extends Controller
@@ -81,6 +83,27 @@ public function store(Request $request, $slug, $id)
         'photo' => $filename,
         'status' => 'pending'
     ]);
+
+    // Notify the account owner that we've received the submission and it's
+    // pending moderator review. Wrapped in try/catch so a transient SMTP
+    // problem never blocks the user's success redirect (they've already
+    // uploaded — no reason to fail the flow over a mail hiccup).
+    try {
+        $recipient = optional(auth()->user())->email ?? optional($user->user)->email;
+        if ($recipient) {
+            Mail::to($recipient)->send(new VerificationPhotoSubmitted([
+                'userName' => optional(auth()->user())->name ?? optional($user->user)->name ?? '',
+                'profileName' => $user->name,
+                'profileUrl' => url('my-profile/'.$user->slug.'/'.$user->id),
+            ]));
+        }
+    } catch (\Throwable $e) {
+        \Log::warning('Failed to send verification-submitted email', [
+            'user_id' => $user->user_id,
+            'profile_id' => $user->id,
+            'error' => $e->getMessage(),
+        ]);
+    }
 
     return redirect('my-profile/'.$user->slug.'/'.$user->id)
         ->with('success', 'Verification photo uploaded successfully!');

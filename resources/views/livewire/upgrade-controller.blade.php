@@ -147,13 +147,16 @@ body.evoory-upgrade-controller-active .auth-button-group .btn-navbar-header:firs
 }
 body.evoory-upgrade-controller-active #main-nav { display: none !important; }
 
-/* Base functional styles */
-.upgrade-listing-form-init { visibility: visible; }
-#allpackages { display: block; }
-.checkout-fields { display: none; margin-top: 0px; padding-top: 7px; }
-#paypal-button-container { margin-top: 20px; width: 100%; }
-.payment-options li label.selected { border-left: 3px solid #C1F11D; }
-.form-group { margin-bottom: 10px; }
+/* Base functional styles — all scoped to .evoory-upgrade-controller so
+   they can never leak into the homepage/other pages if this <style>
+   tag survives a wire:navigate morph. Same reason as the body-class
+   scoping above. */
+.evoory-upgrade-controller .upgrade-listing-form-init { visibility: visible; }
+.evoory-upgrade-controller #allpackages { display: block; }
+.evoory-upgrade-controller .checkout-fields { display: none; margin-top: 0px; padding-top: 7px; }
+.evoory-upgrade-controller #paypal-button-container { margin-top: 20px; width: 100%; }
+.evoory-upgrade-controller .payment-options li label.selected { border-left: 3px solid #C1F11D; }
+.evoory-upgrade-controller .form-group { margin-bottom: 10px; }
 
 /* Package Cards */
 .upgrade-type-selector { padding: 20px 0; }
@@ -252,7 +255,13 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
     font-weight: 500;
     z-index: 10;
 }
-.selected-badge i { margin-right: 5px; }
+.selected-badge i { margin-right: 5px; color: #000 !important; }
+/* Badge is a <span>; the scoped `.evoory-upgrade-controller span { color:#fff }`
+   rule below would win on specificity and turn the "Selected" text white against
+   the lime background. Pin to black here with !important so the badge stays
+   legible. */
+.evoory-upgrade-controller .selected-badge,
+.evoory-upgrade-controller .selected-badge i { color: #000 !important; }
 
 /* Price & text */
 .u-price strong { color: #fff; }
@@ -297,16 +306,29 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
 .payment-method-option label { cursor: pointer; margin-bottom: 0; }
 .payment-method-option .account-balance-amount { margin-left: auto; color: #28a745; font-weight: bold; }
 
-/* Dark theme for sections */
-.alert-info { background: #1a1a1a; border: 1px solid #2a2a2a; color: #ccc; border-radius: 8px; }
-.upgrade-duration { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; }
-.block { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; }
-.border-top { border-color: #2a2a2a !important; }
+/* Dark theme for sections — scoped. `.block` and `.border-top` are
+   Bootstrap-style classes that exist on many other pages (homepage
+   search cards, listing rows, etc.), so leaking them would repaint
+   half the site dark and rounded. */
+.evoory-upgrade-controller .alert-info { background: #1a1a1a; border: 1px solid #2a2a2a; color: #ccc; border-radius: 8px; }
+.evoory-upgrade-controller .upgrade-duration { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; }
+.evoory-upgrade-controller .block { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; }
+.evoory-upgrade-controller .border-top { border-color: #2a2a2a !important; }
 
-/* Text colors */
-.upgrade-name, .payment-options-box__title, .lead, h2 { color: #fff !important; }
-p, span, label, strong { color: #fff; }
-a.text-warning:focus, a.text-warning { color: #C1F11D; }
+/* Text colors — scoped. The bare `p, span, label, strong { color:#fff }`
+   and unqualified `h2` were the widest-blast rules in the file; they
+   would repaint text across the entire homepage if this <style> tag
+   survived a morph. */
+.evoory-upgrade-controller .upgrade-name,
+.evoory-upgrade-controller .payment-options-box__title,
+.evoory-upgrade-controller .lead,
+.evoory-upgrade-controller h2 { color: #fff !important; }
+.evoory-upgrade-controller p,
+.evoory-upgrade-controller span,
+.evoory-upgrade-controller label,
+.evoory-upgrade-controller strong { color: #fff; }
+.evoory-upgrade-controller a.text-warning:focus,
+.evoory-upgrade-controller a.text-warning { color: #C1F11D; }
 
 /* Bottom text */
 .upgrade-types-bottom-text { margin-top: 40px; text-align: center; }
@@ -1026,8 +1048,19 @@ a.text-warning:focus, a.text-warning { color: #C1F11D; }
                 }
                 var html = '';
                 if (tiers.length > 0) {
+                    // Use inline styles instead of Bootstrap 4 utility
+                    // classes (d-flex/align-items-center/pl-0/my-2/ml-2):
+                    // the homepage strips the legacy Bootstrap bundle on
+                    // arrival, and if the user navigates Home → Upgrade
+                    // the utility classes are gone and the radios collapse
+                    // into an unspaced "[○20 days for $33]" mash. Inline
+                    // styles don't care whether the bundle is present.
                     tiers.forEach(function(t) {
-                        html += '<div class="radio radio--custom my-2"><label class="d-flex align-items-center pl-0"><input class="ml-2" name="duration" type="radio" data-price="' + t.price + '" value="' + t.days + '"><span>' + t.days + ' days for $' + t.price + '</span></label></div>';
+                        html += '<div style="margin: 8px 0;">'
+                             + '<label style="display: flex; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer; color: #fff; font-size: 15px; margin: 0;">'
+                             + '<input name="duration" type="radio" data-price="' + t.price + '" value="' + t.days + '" style="accent-color: #C1F11D; width: 18px; height: 18px; cursor: pointer; margin: 0;">'
+                             + '<span style="color: #fff;">' + t.days + ' days for $' + t.price + '</span>'
+                             + '</label></div>';
                     });
                 } else {
                     html = '<p class="text-danger">No pricing available.</p>';

@@ -138,13 +138,27 @@
         .ev-popular-scroller__thumb.is-dragging { cursor: grabbing; }
     }
 
-    /* "List now" / "Go" lime buttons — text must stay legible (black on lime). */
+    /* "List now" / "Go" lime buttons — background + text must stay lime/black.
+       After a wire:navigate hop from the upgrade page (which lives on a
+       different layout), evoory-theme.css occasionally loses to leftover
+       legacy button rules and the Go <button> renders as a dark transparent
+       pill. Pin background + color here so it can't happen. */
     a.ev-btn-primary,
     a.ev-btn-primary:link,
     a.ev-btn-primary:visited,
     a.ev-btn-primary:hover,
     a.ev-btn-primary:focus,
-    a.ev-btn-primary:active { color: #000 !important; }
+    a.ev-btn-primary:active,
+    button.ev-btn-primary,
+    button.ev-btn-primary:hover,
+    button.ev-btn-primary:focus,
+    button.ev-btn-primary:active {
+        background: #C1F11D !important;
+        background-color: #C1F11D !important;
+        color: #000 !important;
+        border: none !important;
+    }
+    button.ev-btn-primary:hover { background: #d4f84d !important; background-color: #d4f84d !important; }
 
     /* "male escorts" / "shemale escorts" inline text links in the search note. */
     .ev-search-note a,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\VerificationPhoto;
+use App\Mail\VerificationApproved;
 use App\Mail\VerificationRejected;
 use Illuminate\Support\Facades\Mail;
  
@@ -38,9 +39,24 @@ class VerificationController extends Controller
             'verified_at' => now(),
             'verified_by' => auth()->id()
         ]);
-        
+
         $photo->profile->update(['is_verified' => true]);
-        
+
+        // Notify the owner that their listing has been verified. Same
+        // try/catch pattern as reject() so a mail hiccup never blocks the
+        // JSON response the admin panel is waiting on.
+        if ($photo->profile && $photo->user && $photo->user->email) {
+            try {
+                Mail::to($photo->user->email)->send(new VerificationApproved([
+                    'profileName' => $photo->profile->name,
+                    'userName' => $photo->user->name ?? $photo->profile->name,
+                    'profileUrl' => url('my-profile/'.$photo->profile->slug.'/'.$photo->profile->id),
+                ]));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send verification approval email: ' . $e->getMessage());
+            }
+        }
+
         return response()->json(['success' => true]);
     }
     

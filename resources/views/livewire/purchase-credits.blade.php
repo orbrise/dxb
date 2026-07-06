@@ -40,7 +40,7 @@
 }
 
 .purchase-credits-page .choose-amount-label {
-    color: #999;
+    color: #fff;
     font-size: 15px;
     margin-left: 15px;
 }

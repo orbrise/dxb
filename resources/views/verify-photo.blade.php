@@ -273,7 +273,7 @@ body { background: #0a0a0a !important; }
 .profile-search-wrapper {
     position: relative;
     flex: 1;
-    max-width: 400px;
+    max-width: 520px;
 }
 .profile-search-wrapper .search-group {
     display: flex;
@@ -327,7 +327,7 @@ body { background: #0a0a0a !important; }
 }
 #profileSearch {
     background: #1a1a1a;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #C1F11D;
     color: #fff;
     padding: 6px 12px;
     font-size: 14px;
@@ -732,7 +732,7 @@ body { background: #0a0a0a !important; }
                                         </button>
                                         <div class="capture-wrapper">
                                             <video autoplay="" id="verificationVideo" playsInline="true" style="width:100%;background:#000"></video>
-                                            <div class="hidden" id="verificationPreview" style="position:absolute;top:0;left:0;right:0;bottom:0"></div>
+                                            <div class="hidden" id="verificationPreview" style="width:100%;background:#000"></div>
                                         </div>
                                     </div>
                                     <div class="modal-footer-row">
@@ -830,8 +830,12 @@ body { background: #0a0a0a !important; }
         var captureBtn = $id('captureVerificationBtn');
         var preview = $id('verificationPreview');
         var submitBtn = $id('submitVerificationBtn');
+        var flipBtn = $id('verificationFlipBtn');
         if (video) video.style.display = '';
         if (captureBtn) captureBtn.style.display = '';
+        // Reset the flip button to its default visible state; maybeShowFlipBtn()
+        // will hide it again on the next open if only one camera is present.
+        if (flipBtn) flipBtn.style.display = 'flex';
         if (preview) { preview.classList.add('hidden'); preview.innerHTML = ''; }
         if (submitBtn) { submitBtn.disabled = true; delete submitBtn.dataset.imageData; }
     }
@@ -845,12 +849,14 @@ body { background: #0a0a0a !important; }
             var video = $id('verificationVideo');
             var captureBtn = $id('captureVerificationBtn');
             var submitBtn = $id('submitVerificationBtn');
+            var flipBtn = $id('verificationFlipBtn');
             if (preview) {
-                preview.innerHTML = '<img src="' + imageData + '" style="width:100%;height:100%;object-fit:contain">';
+                preview.innerHTML = '<img src="' + imageData + '" style="width:100%;height:auto;display:block">';
                 preview.classList.remove('hidden');
             }
             if (video) video.style.display = 'none';
             if (captureBtn) captureBtn.style.display = 'none';
+            if (flipBtn) flipBtn.style.display = 'none';
             if (submitBtn) {
                 submitBtn.removeAttribute('disabled');
                 submitBtn.dataset.imageData = imageData;
@@ -991,12 +997,14 @@ body { background: #0a0a0a !important; }
         var preview = $id('verificationPreview');
         var captureBtn = $id('captureVerificationBtn');
         var submitBtn = $id('submitVerificationBtn');
+        var flipBtn = $id('verificationFlipBtn');
         if (preview) {
-            preview.innerHTML = '<img src="' + imageData + '" style="width:100%;height:100%;object-fit:contain">';
+            preview.innerHTML = '<img src="' + imageData + '" style="width:100%;height:auto;display:block">';
             preview.classList.remove('hidden');
         }
         video.style.display = 'none';
         if (captureBtn) captureBtn.style.display = 'none';
+        if (flipBtn) flipBtn.style.display = 'none';
         if (submitBtn) {
             submitBtn.removeAttribute('disabled');
             submitBtn.dataset.imageData = imageData;
