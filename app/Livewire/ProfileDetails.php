@@ -140,22 +140,47 @@ public $reportDescription;
 
     public function postreview()
     {
+        if (!auth()->check()) {
+            session()->flash('rerror', 'You must be logged in to post a review.');
+            return;
+        }
+
         $this->validate([
             'star' => 'required|numeric|min:1|max:5',
             'review' => 'required|min:10'
+        ], [
+            'star.required' => 'Please pick a star rating before posting.',
+            'star.min' => 'Please pick a star rating before posting.',
+            'review.required' => 'Please write a short review.',
+            'review.min' => 'Review must be at least 10 characters.',
         ]);
-    
-        Review::create([
-            'user_id' => auth()->id(),
-            'profile_id' => $this->profileid,
-            'review' => $this->review,
-            'star' => $this->star,
-            'status' => 'pending'
-        ]);
-    
+
+        try {
+            Review::create([
+                'user_id' => auth()->id(),
+                'profile_id' => $this->profileid,
+                'review' => $this->review,
+                'star' => $this->star,
+                'status' => 'pending'
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Review submission failed: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'profile_id' => $this->profileid,
+            ]);
+            session()->flash('rerror', 'Could not save the review. Please try again.');
+            return;
+        }
+
         $this->reset(['star', 'review']);
         $this->showReviewModal = false;
-        session()->flash('rmessage', 'Review Posted successfully.');
+        session()->flash('rmessage', 'Review posted successfully. It will be visible after moderation.');
+
+        // Mirror the message / report modal pattern — dispatch a browser
+        // event so the JS side can call .modal("hide") and clean up the
+        // Bootstrap backdrop. Without this the Livewire re-render swaps
+        // the modal body out but Bootstrap's backdrop is orphaned.
+        $this->dispatch('closeReviewModal');
     }
 
     public function askquestion(){

@@ -87,12 +87,21 @@ Route::post('/cities/search', 'App\Http\Controllers\Api\CityController@search')-
 
 // Claim-your-profile endpoints. throttle:10,1 caps total API hits per IP
 // (the controller also rate-limits per-phone for OTP-send specifically).
+// WhatsApp uses send-otp/verify-otp (server-owned OTP via Wasender). SMS
+// uses precheck-sms + verify-sms-firebase (browser-side Firebase Phone
+// Auth; server just verifies the returned ID token).
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/profile/{id}/claim/send-otp', [\App\Http\Controllers\ProfileClaimController::class, 'sendOtp'])
         ->name('profile.claim.send-otp')
         ->where('id', '[0-9]+');
     Route::post('/profile/{id}/claim/verify-otp', [\App\Http\Controllers\ProfileClaimController::class, 'verifyOtp'])
         ->name('profile.claim.verify-otp')
+        ->where('id', '[0-9]+');
+    Route::post('/profile/{id}/claim/precheck-sms', [\App\Http\Controllers\ProfileClaimController::class, 'precheckSms'])
+        ->name('profile.claim.precheck-sms')
+        ->where('id', '[0-9]+');
+    Route::post('/profile/{id}/claim/verify-sms-firebase', [\App\Http\Controllers\ProfileClaimController::class, 'verifySmsFirebase'])
+        ->name('profile.claim.verify-sms-firebase')
         ->where('id', '[0-9]+');
 });
 

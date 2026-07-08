@@ -471,7 +471,7 @@
                       <div class="ev-claim-text">
                           <h4>Is This Your Profile?</h4>
                           <p>If this listing belongs to you but was posted by someone else, you can verify your ownership and claim it. We will transfer it securely to your original account.</p>
-                          <button type="button" class="ev-claim-cta" onclick="document.getElementById('profile-claim-modal').classList.add('is-open');document.body.style.overflow='hidden';">Claim Now</button>
+                          <button type="button" class="ev-claim-cta" onclick="var m=document.getElementById('profile-claim-modal');m.removeAttribute('hidden');m.classList.add('is-open');document.body.style.overflow='hidden';">Claim Now</button>
                       </div>
                   </div>
               </div>
@@ -609,13 +609,18 @@
                           <p class="ev-claim-blurb">Your profile ownership verification has been logged successfully. The profile is now linked to your account, and we've sent your login credentials to the email you provided.</p>
                           <a href="{{ url('my-account') }}" class="ev-claim-primary ev-claim-primary--center">Go To My Dashboard <span aria-hidden="true">›</span></a>
                       </div>
+
+                      {{-- Invisible reCAPTCHA host for Firebase Phone Auth.
+                           firebase.auth.RecaptchaVerifier needs an existing
+                           DOM node to attach to; without it the SDK throws
+                           auth/argument-error before the SMS is sent. --}}
+                      <div id="ev-claim-recaptcha" style="position:absolute;bottom:0;right:0;width:0;height:0;overflow:hidden;"></div>
                   </div>
               </div>
 
               <style>
                   /* Claim card (shown inside About tab content) */
                   .ev-claim-card {
-                      display: none !important;
                       margin: 16px 0 0;
                       padding: 18px 18px;
                       background: #15191B;
@@ -773,6 +778,26 @@
                   .ev-claim-success-title { margin: 0 0 10px; text-align: center; font-size: 20px; font-weight: 600; }
               </style>
 
+              {{-- Firebase Phone Auth SDK (v8 compat build — same as used
+                   in the oobben project). Only loaded when the SMS channel
+                   is available (project id configured). If the config is
+                   missing we skip the SDK entirely and the SMS radio
+                   silently falls back to a "not configured" message so the
+                   WhatsApp channel keeps working. --}}
+              @php
+                  $firebaseWebConfig = [
+                      'apiKey' => config('services.firebase.api_key'),
+                      'authDomain' => config('services.firebase.auth_domain'),
+                      'projectId' => config('services.firebase.project_id'),
+                      'appId' => config('services.firebase.app_id'),
+                  ];
+                  $firebaseEnabled = !empty($firebaseWebConfig['apiKey']) && !empty($firebaseWebConfig['projectId']);
+              @endphp
+              @if($firebaseEnabled)
+              <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+              <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-auth.js"></script>
+              @endif
+
               <script>
                   (function () {
                       var modal = document.getElementById('profile-claim-modal');
@@ -783,6 +808,12 @@
                       var csrf = document.querySelector('meta[name="csrf-token"]')
                           ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                           : @json(csrf_token());
+
+                      var firebaseConfig = @json($firebaseWebConfig);
+                      var firebaseEnabled = @json($firebaseEnabled);
+                      var firebaseApp = null;         // firebase.app() handle
+                      var firebaseRecaptcha = null;   // RecaptchaVerifier instance
+                      var firebaseConfirmation = null; // confirmationResult from signInWithPhoneNumber
 
                       function panels() { return modal.querySelectorAll('[data-step-panel]'); }
                       function setStep(name) {
@@ -866,9 +897,42 @@
                           return { ok: res.ok && data.ok, status: res.status, data: data };
                       }
 
+                      // Lazy-init Firebase. We don't do this on modal open
+                      // because the SDK may not be present (config missing)
+                      // and the RecaptchaVerifier attaches to a real DOM
+                      // node which we only need once the user actually
+                      // hits Continue on the SMS channel.
+                      function ensureFirebase() {
+                          if (!firebaseEnabled) return null;
+                          if (typeof firebase === 'undefined' || !firebase.auth) return null;
+                          if (!firebaseApp) {
+                              try {
+                                  firebaseApp = firebase.apps && firebase.apps.length
+                                      ? firebase.app()
+                                      : firebase.initializeApp(firebaseConfig);
+                              } catch (e) {
+                                  console.error('Firebase init failed', e);
+                                  return null;
+                              }
+                          }
+                          if (!firebaseRecaptcha) {
+                              try {
+                                  firebaseRecaptcha = new firebase.auth.RecaptchaVerifier('ev-claim-recaptcha', {
+                                      size: 'invisible',
+                                  });
+                              } catch (e) {
+                                  console.error('Firebase recaptcha init failed', e);
+                                  return null;
+                              }
+                          }
+                          return firebase.auth();
+                      }
+
                       async function sendOtp(btn) {
                           var phone = getFullPhone();
                           var email = getVal('#ev-claim-email');
+                          var countryCode = getVal('#ev-claim-dial').replace(/\D/g, '');
+                          var channel = getChannel();
                           if (!phone || phone.replace(/\D/g, '').length < 7) {
                               showError('Please enter a valid phone number.');
                               return;
@@ -877,9 +941,62 @@
                               showError('Please enter a valid email address.');
                               return;
                           }
+
                           busy(btn, true);
+
+                          if (channel === 'sms') {
+                              // SMS path: Firebase Phone Auth sends the OTP
+                              // from the browser. Pre-check on the server
+                              // first so we don't burn a paid SMS on an
+                              // obviously-invalid attempt.
+                              if (!firebaseEnabled) {
+                                  busy(btn, false);
+                                  showError('SMS is not available right now. Please use WhatsApp.');
+                                  return;
+                              }
+                              var pre = await api('/profile/' + profileId + '/claim/precheck-sms', {
+                                  phone: phone, country_code: countryCode, email: email,
+                              });
+                              if (!pre.ok) {
+                                  busy(btn, false);
+                                  showError((pre.data && pre.data.message) || 'Could not start SMS verification.');
+                                  return;
+                              }
+                              var auth = ensureFirebase();
+                              if (!auth) {
+                                  busy(btn, false);
+                                  showError('SMS verification is not configured. Please use WhatsApp.');
+                                  return;
+                              }
+                              try {
+                                  firebaseConfirmation = await auth.signInWithPhoneNumber(phone, firebaseRecaptcha);
+                              } catch (err) {
+                                  busy(btn, false);
+                                  console.error('Firebase signInWithPhoneNumber failed', err);
+                                  // Reset the reCAPTCHA so the user can
+                                  // retry — otherwise the widget is stuck
+                                  // in a used state after a failure.
+                                  try {
+                                      if (firebaseRecaptcha && firebaseRecaptcha.clear) firebaseRecaptcha.clear();
+                                  } catch (e) {}
+                                  firebaseRecaptcha = null;
+                                  showError((err && err.message) || 'Could not send the SMS code.');
+                                  return;
+                              }
+                              busy(btn, false);
+                              var mask1 = modal.querySelector('[data-claim-phone-mask]');
+                              if (mask1) mask1.textContent = maskPhone(phone);
+                              setStep('code');
+                              setTimeout(function () {
+                                  var first = modal.querySelector('[data-otp-cell]');
+                                  if (first) first.focus();
+                              }, 40);
+                              return;
+                          }
+
+                          // WhatsApp path: server generates + delivers OTP.
                           var r = await api('/profile/' + profileId + '/claim/send-otp', {
-                              phone: phone, email: email, channel: getChannel(),
+                              phone: phone, country_code: countryCode, email: email, channel: channel,
                           });
                           busy(btn, false);
                           if (!r.ok) { showError((r.data && r.data.message) || 'Could not send the code.'); return; }
@@ -895,7 +1012,40 @@
                       async function verifyOtp(btn) {
                           var code = getOtp();
                           if (code.length < 4) { showError('Please enter the full code.'); return; }
+                          var channel = getChannel();
                           busy(btn, true);
+
+                          if (channel === 'sms') {
+                              // Confirm the SMS OTP with Firebase, then post
+                              // the ID token to the server for verification.
+                              if (!firebaseConfirmation) {
+                                  busy(btn, false);
+                                  showError('Please request a new code.');
+                                  return;
+                              }
+                              var idToken = '';
+                              try {
+                                  var result = await firebaseConfirmation.confirm(code);
+                                  idToken = await result.user.getIdToken();
+                              } catch (err) {
+                                  busy(btn, false);
+                                  console.error('Firebase confirm failed', err);
+                                  showError((err && err.message) || 'The code is incorrect.');
+                                  return;
+                              }
+                              var vs = await api('/profile/' + profileId + '/claim/verify-sms-firebase', {
+                                  id_token: idToken,
+                                  email: getVal('#ev-claim-email'),
+                              });
+                              busy(btn, false);
+                              if (!vs.ok) {
+                                  showError((vs.data && vs.data.message) || 'Verification failed.');
+                                  return;
+                              }
+                              setStep('success');
+                              return;
+                          }
+
                           var r = await api('/profile/' + profileId + '/claim/verify-otp', {
                               phone: getFullPhone(),
                               email: getVal('#ev-claim-email'),
@@ -1311,6 +1461,11 @@
               </li>
             </ul>
             <form wire:submit.prevent="postreview">
+              @if (session()->has('rerror'))
+              <div class="alert alert-danger mb-3">
+                {{ session('rerror') }}
+              </div>
+              @endif
               <div class="form-group">
                 <textarea wire:model="review" class="form-control" rows="6"
                   placeholder="Your review (minimum 10 characters)"></textarea>
@@ -1952,6 +2107,30 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           // Listen for close report modal event
           window.addEventListener('closeReportModal', event => {
             $(".reportModal").modal("hide");
+          });
+
+          // Listen for close review modal event. Bootstrap's own hide()
+          // handles the panel; we also explicitly strip any orphaned
+          // backdrop and restore scroll on <body> because a Livewire
+          // re-render mid-hide can leave those behind.
+          window.addEventListener('closeReviewModal', event => {
+            $(".reviewmodal").modal("hide");
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+
+            const notification = $(`
+              <div class="alert alert-success" style="position: fixed; top: 20px; right: 20px; z-index: 10000; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: slideInRight 0.3s ease-out;">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+                <strong><i class="fa fa-check-circle"></i> Thanks!</strong><br>
+                Your review has been submitted and is awaiting moderation.
+              </div>
+            `);
+            $('body').append(notification);
+            setTimeout(() => {
+              notification.fadeOut(400, function() { $(this).remove(); });
+            }, 5000);
           });
           
           // Listen for close message modal event

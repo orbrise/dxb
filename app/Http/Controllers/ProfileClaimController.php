@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\ProfileClaimCredentials;
 use App\Models\User;
 use App\Models\UsersProfile;
-use App\Services\InfobipMessagingService;
+use App\Services\FirebaseTokenVerifier;
+use App\Services\WasenderMessagingService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,51 +29,48 @@ use Illuminate\Support\Str;
  * and at the same time provide an email so we can transfer the
  * placeholder user record into their hands.
  *
- * Flow:
- *   POST  /profile/{id}/claim/send-otp     ← validates phone match + email
- *                                             availability, generates a
- *                                             6-digit OTP, hashes it into
- *                                             profile_claim_attempts, and
- *                                             ships the plaintext to the
- *                                             user via Infobip (SMS or
- *                                             WhatsApp).
- *   POST  /profile/{id}/claim/verify-otp   ← compares the entered code
- *                                             against the stored hash on
- *                                             the latest attempt; on match
- *                                             updates the placeholder user
- *                                             with the provided email + a
- *                                             new generated password,
- *                                             claims every other profile
- *                                             that shares the same phone
- *                                             (per explicit user
- *                                             instruction), emails the
- *                                             credentials, and logs the
- *                                             user in.
+ * Two channels:
+ *   WhatsApp — server-owned OTP: generate locally, hash into
+ *              profile_claim_attempts, deliver plaintext via Wasender,
+ *              verify against the stored hash. Endpoints:
+ *                POST /profile/{id}/claim/send-otp
+ *                POST /profile/{id}/claim/verify-otp
+ *   SMS      — Firebase Phone Auth owns OTP: browser sends the SMS via
+ *              Google (with reCAPTCHA), returns an ID token which we
+ *              verify server-side and extract the phone_number claim
+ *              from. Endpoints:
+ *                POST /profile/{id}/claim/precheck-sms       (pre-flight)
+ *                POST /profile/{id}/claim/verify-sms-firebase (finalise)
+ *
+ * On successful verification (either channel) we update the placeholder
+ * user with the entered email + a new generated password, sweep sibling
+ * profiles sharing the same phone into the same account, email the
+ * credentials, and log the user in.
  *
  * Phone matching is done after normalising to digits only, so "+971 552
  * 092466" and "00971552092466" both match the stored "971552092466".
  */
 class ProfileClaimController extends Controller
 {
-    // Local-OTP lifecycle constants. Infobip just delivers the text; we
-    // own generation, expiry, and verification.
+    // Local-OTP lifecycle constants. Wasender just delivers the text; we
+    // own generation, expiry, and verification. Firebase channel uses its
+    // own lifecycle server-side (we just verify the returned ID token).
     private const OTP_LENGTH = 6;
-    // Tracks the WhatsApp `authentication` template's hard-coded footer
-    // ("Expires in 5 minutes.") so the code we accept locally matches what
-    // the user reads on the device. Adjust both in lockstep if you swap
-    // templates.
     private const OTP_TTL_MINUTES = 5;
 
-    public function __construct(private InfobipMessagingService $messenger)
-    {
+    public function __construct(
+        private WasenderMessagingService $messenger,
+        private FirebaseTokenVerifier $firebase,
+    ) {
     }
 
     public function sendOtp(Request $request, int $profileId): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'phone'   => ['required', 'string', 'min:6', 'max:32'],
-            'email'   => ['required', 'email', 'max:191'],
-            'channel' => ['required', 'in:whatsapp,sms'],
+            'phone'        => ['required', 'string', 'min:6', 'max:32'],
+            'country_code' => ['required', 'string', 'min:1', 'max:6'],
+            'email'        => ['required', 'email', 'max:191'],
+            'channel'      => ['required', 'in:whatsapp,sms'],
         ]);
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
@@ -86,6 +84,15 @@ class ProfileClaimController extends Controller
         $email = strtolower(trim($request->input('email')));
         $phoneRaw = $request->input('phone');
         $phoneDigits = $this->normalisePhone($phoneRaw);
+        $countryCode = $this->normalisePhone($request->input('country_code'));
+        // Wasender's send-message endpoint splits phone into mobile_code +
+        // mobile. Derive the local part by stripping the leading country
+        // code from the concatenated digits; fall back to the raw digits
+        // if the prefix doesn't match, so a mis-selected dropdown still
+        // sends something the gateway can attempt to route.
+        $localNumber = ($countryCode !== '' && str_starts_with($phoneDigits, $countryCode))
+            ? substr($phoneDigits, strlen($countryCode))
+            : $phoneDigits;
         if ($phoneDigits === '') {
             return response()->json(['ok' => false, 'message' => 'Please enter a valid phone number.'], 422);
         }
@@ -111,7 +118,7 @@ class ProfileClaimController extends Controller
         }
 
         // Cooldown: 60s between sends for the same (profile, phone) pair,
-        // up to 6 sends per phone per hour. Infobip will also throttle
+        // up to 6 sends per phone per hour. Wasender will also throttle
         // upstream, but we don't want to burn quota on retry floods.
         $cooldownHit = \DB::table('profile_claim_attempts')
             ->where('profile_id', $profileId)
@@ -146,14 +153,13 @@ class ProfileClaimController extends Controller
         $body = "Your evoory profile claim code is: {$code}. It expires in "
             . self::OTP_TTL_MINUTES . ' minutes. Do not share this code.';
 
-        $e164 = '+' . $phoneDigits;
+        // Wasender is a WhatsApp-only gateway — both "whatsapp" and "sms"
+        // channel selections route through the same send path. sendWhatsAppOtp
+        // uses the template endpoint when WASENDER_TEMPLATE_ID is set (the
+        // only path that reliably delivers outside the 24-hour customer
+        // window) and falls back to free-form send-message otherwise.
         $channel = $request->input('channel');
-        // WhatsApp uses the authentication template path (sendWhatsAppOtp),
-        // which delivers to any recipient without requiring an inbound
-        // message in the previous 24 hours. SMS stays free-form.
-        $result = $channel === 'whatsapp'
-            ? $this->messenger->sendWhatsAppOtp($e164, $code, $body)
-            : $this->messenger->sendSms($e164, $body);
+        $result = $this->messenger->sendWhatsAppOtp($countryCode, $localNumber, $code, $body);
         if (!$result['success']) {
             return response()->json(['ok' => false, 'message' => $result['error'] ?? 'Could not send the code.'], 502);
         }
@@ -224,10 +230,10 @@ class ProfileClaimController extends Controller
 
         // Local verification. We compare against the hash on the most
         // recent attempt row, after first checking it isn't expired.
-        // In dev mode (Infobip not configured) the simulated-send path
+        // In dev mode (Wasender not configured) the simulated-send path
         // still recorded a real hash, so the same check applies — except
         // we also accept the literal "000000" as a tester escape hatch
-        // so QA can drive the flow without a working SMS account.
+        // so QA can drive the flow without a working messaging account.
         $hashMatches = $latest->otp_hash && Hash::check($code, $latest->otp_hash);
         $devEscape = app()->environment('local', 'testing')
             && !$this->messenger->isConfigured()
@@ -253,15 +259,179 @@ class ProfileClaimController extends Controller
             ], 422);
         }
 
-        // Code is approved. Atomically:
-        //   1. update the placeholder user (the one currently owning the
-        //      claimed profile) with the supplied email + a fresh password
-        //      so future logins use real credentials;
-        //   2. mark the user verified;
-        //   3. ensure every other profile that shares the same phone is
-        //      pointed at the same user — per the explicit instruction,
-        //      one phone = one owner = all matching profiles in one
-        //      dashboard.
+        // Code is approved. Finalise: update the placeholder user, sweep
+        // sibling profiles, email credentials, login. Then mark the
+        // attempt row verified.
+        $userId = $this->completeClaim($profile, $phoneDigits, $email);
+
+        \DB::table('profile_claim_attempts')
+            ->where('id', $latest->id)
+            ->update([
+                'user_id'     => $userId,
+                'verified_at' => Carbon::now(),
+                'updated_at'  => Carbon::now(),
+            ]);
+
+        Auth::loginUsingId($userId);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Verification successful.',
+            'redirect' => url('my-account'),
+        ]);
+    }
+
+    /**
+     * Pre-flight for the SMS (Firebase) channel: run the same validation
+     * as sendOtp — email available, phone matches profile, rate limits —
+     * without actually sending anything. Firebase's browser SDK will send
+     * the SMS on its own; we call this first so a paid Firebase SMS isn't
+     * burned on an obviously-invalid attempt.
+     */
+    public function precheckSms(Request $request, int $profileId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'phone'        => ['required', 'string', 'min:6', 'max:32'],
+            'country_code' => ['required', 'string', 'min:1', 'max:6'],
+            'email'        => ['required', 'email', 'max:191'],
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $profile = UsersProfile::find($profileId);
+        if (!$profile) {
+            return response()->json(['ok' => false, 'message' => 'Profile not found.'], 404);
+        }
+
+        $email = strtolower(trim($request->input('email')));
+        $phoneDigits = $this->normalisePhone($request->input('phone'));
+        if ($phoneDigits === '') {
+            return response()->json(['ok' => false, 'message' => 'Please enter a valid phone number.'], 422);
+        }
+
+        if (User::where('email', $email)->exists()) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'That email is already registered. Please sign in instead, or use a different email.',
+            ], 422);
+        }
+        if (!$this->profilePhoneMatches($profile, $phoneDigits)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Phone number is not matched with the profile on file.',
+            ], 422);
+        }
+
+        // No DB insert here. If we recorded an attempt row now and
+        // Firebase then failed to send (region blocked, quota exceeded,
+        // reCAPTCHA rejected), the row would sit in the cooldown window
+        // blocking a legitimate retry. Firebase enforces its own
+        // per-phone throttling upstream, and the throttle:10,1 route
+        // middleware caps our own IP-level abuse — that's enough here.
+        // The attempt row lands in verify-sms-firebase on success.
+        return response()->json(['ok' => true, 'message' => 'Precheck passed.']);
+    }
+
+    /**
+     * SMS (Firebase) final step. The browser has already prompted the
+     * user for the SMS OTP via Firebase Phone Auth and received an ID
+     * token from confirmationResult.user.getIdToken(). We verify that
+     * token, extract the phone_number claim, re-check it matches the
+     * profile, and then run the same completeClaim path the WhatsApp
+     * channel does.
+     */
+    public function verifySmsFirebase(Request $request, int $profileId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'id_token' => ['required', 'string', 'min:20'],
+            'email'    => ['required', 'email', 'max:191'],
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $profile = UsersProfile::find($profileId);
+        if (!$profile) {
+            return response()->json(['ok' => false, 'message' => 'Profile not found.'], 404);
+        }
+
+        $email = strtolower(trim($request->input('email')));
+        if (User::where('email', $email)->exists()) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'That email is already registered. Please sign in instead.',
+            ], 422);
+        }
+
+        try {
+            $claims = $this->firebase->verify((string) $request->input('id_token'));
+        } catch (\Throwable $e) {
+            Log::warning('Firebase token verify failed: ' . $e->getMessage(), [
+                'profile_id' => $profileId,
+            ]);
+            return response()->json([
+                'ok' => false,
+                'message' => 'SMS verification could not be confirmed. Please try again.',
+            ], 401);
+        }
+
+        $verifiedPhone = (string) ($claims['phone_number'] ?? '');
+        $phoneDigits = $this->normalisePhone($verifiedPhone);
+        if ($phoneDigits === '') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'SMS verification did not include a phone number.',
+            ], 422);
+        }
+
+        // Trust the Firebase-verified phone over anything the browser
+        // sent — that's the whole point of verifying the token.
+        if (!$this->profilePhoneMatches($profile, $phoneDigits)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'The verified phone does not match the profile on file.',
+            ], 422);
+        }
+
+        $userId = $this->completeClaim($profile, $phoneDigits, $email);
+
+        // Record the audit row now that the claim actually succeeded.
+        // precheck-sms intentionally doesn't insert (see the comment
+        // there) so an SMS row lands only when Firebase has confirmed
+        // the phone was verified end-to-end.
+        \DB::table('profile_claim_attempts')->insert([
+            'profile_id'  => $profileId,
+            'user_id'     => $userId,
+            'phone'       => $phoneDigits,
+            'email'       => $email,
+            'channel'     => 'sms',
+            'otp_hash'    => null,
+            'expires_at'  => null,
+            'sent_at'     => Carbon::now(),
+            'verified_at' => Carbon::now(),
+            'ip'          => $request->ip(),
+            'user_agent'  => substr((string) $request->userAgent(), 0, 255),
+            'created_at'  => Carbon::now(),
+            'updated_at'  => Carbon::now(),
+        ]);
+
+        Auth::loginUsingId($userId);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Verification successful.',
+            'redirect' => url('my-account'),
+        ]);
+    }
+
+    /**
+     * Atomic user transfer + sibling profile sweep + credentials email.
+     * Both the WhatsApp local-OTP path and the SMS Firebase path funnel
+     * through here so the post-verification behaviour stays identical.
+     */
+    protected function completeClaim(UsersProfile $profile, string $phoneDigits, string $email): int
+    {
         $generatedPassword = Str::random(8) . rand(10, 99);
 
         $userId = DB::transaction(function () use ($profile, $phoneDigits, $email, $generatedPassword) {
@@ -293,7 +463,7 @@ class ProfileClaimController extends Controller
 
             // Sweep up sibling profiles that share the same phone digits.
             // Match against the digit-suffix of phone/phone2 so reformatted
-            // numbers still get picked up. We re-point them at the same
+            // numbers still get picked up. Re-point them at the same
             // owning user record.
             $relatedIds = UsersProfile::query()
                 ->where('id', '!=', $profile->id)
@@ -310,14 +480,6 @@ class ProfileClaimController extends Controller
 
             return $user->id;
         });
-
-        \DB::table('profile_claim_attempts')
-            ->where('id', $latest->id)
-            ->update([
-                'user_id'     => $userId,
-                'verified_at' => Carbon::now(),
-                'updated_at'  => Carbon::now(),
-            ]);
 
         // Send credentials email. Failures are non-fatal — the claim has
         // already succeeded; we just log so support can resend manually.
@@ -336,13 +498,7 @@ class ProfileClaimController extends Controller
             ]);
         }
 
-        Auth::loginUsingId($userId);
-
-        return response()->json([
-            'ok' => true,
-            'message' => 'Verification successful.',
-            'redirect' => url('my-account'),
-        ]);
+        return $userId;
     }
 
     /**
