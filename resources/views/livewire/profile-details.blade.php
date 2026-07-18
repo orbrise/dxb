@@ -1533,25 +1533,23 @@
                   <i class="fa fa-envelope fa-inline"></i>Send Message </a>
               </li>
             </ul>
-            <form wire:submit.prevent="postreview">
-              @if (session()->has('rerror'))
-              <div class="alert alert-danger mb-3">
-                {{ session('rerror') }}
-              </div>
-              @endif
+            {{-- Plain HTTP-POST form. Bypasses Livewire because the profile page's
+                 Livewire state can end up corrupted (Snapshot missing on morph) on
+                 this route, which was silently swallowing wire:submit. Endpoint:
+                 POST /profile/{id}/review — returns JSON. --}}
+            <form id="reviewPostForm" action="{{ route('profile.review', ['id' => $profileid]) }}"
+                  method="post" wire:ignore>
+              @csrf
+              <div id="reviewFormError" class="alert alert-danger mb-3" style="display:none;"></div>
+
               <div class="form-group">
-                <textarea wire:model="review" class="form-control" rows="6"
+                <textarea id="reviewTextInput" name="review" class="form-control" rows="6"
                   placeholder="Your review (minimum 10 characters)"></textarea>
-                @error('review')
-                <div class="validation-error" style="display: block;">
-                  <span class="tooltip"></span>{{ $message }}
-                </div>
-                @enderror
               </div>
-              
+
               <div class="form-group">
                 <label class="control-label">Rating <span class="text-danger">*</span></label>
-                <div class="star-rating editable" id="reviewStarRating" style="margin-top: 10px;" wire:ignore>
+                <div class="star-rating editable" id="reviewStarRating" style="margin-top: 10px;">
                   <span class="stars">
                     <span class="star" data-rating="1"></span>
                     <span class="star" data-rating="2"></span>
@@ -1560,23 +1558,13 @@
                     <span class="star" data-rating="5"></span>
                   </span>
                 </div>
-                <input type="hidden" wire:model="star" id="hiddenStarInput">
+                <input type="hidden" name="star" id="hiddenStarInput" value="">
               </div>
-              @error('star')
-              <div class="text-danger small mb-2">{{ $message }}</div>
-              @enderror
-              
-              @if (session()->has('rmessage'))
-              <div class="alert alert-success mb-3">
-                {{ session('rmessage') }}
-              </div>
-              @endif
-              
+
               <div style="text-align:center;">
-                <button type="submit" wire:loading.attr="disabled" wire:target="postreview"
+                <button type="submit" id="reviewSubmitBtn"
                   style="background:#c8ff00;color:#000;font-weight:500;font-size:16px;border:none;border-radius:50px;padding:5px 40px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
-                  <span wire:loading.remove wire:target="postreview">Post review <span style="font-family:'Font Awesome 5 Free',sans-serif;font-weight:900;font-size:12px;display:inline-block;">&#xf054;</span></span>
-                  <span wire:loading wire:target="postreview">Posting...</span>
+                  <span id="reviewSubmitLabel">Post review <span style="font-family:'Font Awesome 5 Free',sans-serif;font-weight:900;font-size:12px;display:inline-block;">&#xf054;</span></span>
                 </button>
               </div>
             </form>
@@ -1626,19 +1614,21 @@
               </li>
               <li>Your question will be visible if the advertiser replies publicly.</li>
             </ul>
-            <form wire:submit.prevent='askquestion' id="new_listing_question" novalidate="novalidate" accept-charset="UTF-8">
+            {{-- Plain HTTP-POST form (same reason as reviewPostForm above). --}}
+            <form id="questionPostForm" action="{{ route('profile.question', ['id' => $profileid]) }}"
+                  method="post" novalidate accept-charset="UTF-8" wire:ignore>
+              @csrf
+              <div id="questionFormError" class="alert alert-danger mb-3" style="display:none;"></div>
               <div style="margin-bottom:20px;">
-                <textarea wire:model='question' rows="5"
-                  data-validations-wait-for-submit="true" data-validations="presence length(10,240)"
-                  data-validations-minlength-message="Your question needs to be at least 10 characters long"
-                  maxlength="240" name="listing_question[question]" id="listing_question_question"
+                <textarea name="question" rows="5" maxlength="240"
+                  id="listing_question_question"
                   placeholder="Type your question here..."
                   style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:5px;color:#fff;padding:12px 14px;font-size:14px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
               </div>
               <div style="text-align:center;">
-                <button data-btn-submit="" type="submit"
+                <button type="submit" id="questionSubmitBtn"
                   style="background:#c8ff00;color:#000;font-weight:500;font-size:16px;border:none;border-radius:50px;padding:5px 40px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
-                  Ask <span style="font-family:'Font Awesome 5 Free',sans-serif;font-weight:900;font-size:12px;display:inline-block;">&#xf054;</span>
+                  <span id="questionSubmitLabel">Ask <span style="font-family:'Font Awesome 5 Free',sans-serif;font-weight:900;font-size:12px;display:inline-block;">&#xf054;</span></span>
                 </button>
               </div>
             </form>
@@ -2097,12 +2087,9 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             }
           });
           
-          // Update hidden input
-          $('#hiddenStarInput').val(rating);
-          
-          // Update Livewire model using defer to prevent immediate re-render
-          @this.set('star', rating, false);
-          
+          const hidden = document.getElementById('hiddenStarInput');
+          if (hidden) hidden.value = rating;
+
           return false;
         });
         
@@ -2134,10 +2121,114 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           $("a.add-review1").off('click').on('click', function() {
             $("div.reviewmodal").modal("show");
           });
+
+          // Plain HTTP AJAX review submission — see form comment for why.
+          $(document).off('submit.reviewpost').on('submit.reviewpost', '#reviewPostForm', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $btn = $('#reviewSubmitBtn');
+            const $err = $('#reviewFormError');
+            const $label = $('#reviewSubmitLabel');
+            const originalLabel = $label.html();
+            $err.hide().text('');
+            $btn.prop('disabled', true);
+            $label.text('Posting...');
+
+            $.ajax({
+              url: $form.attr('action'),
+              method: 'POST',
+              data: $form.serialize(),
+              dataType: 'json',
+              headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+            }).done(function(resp) {
+              $("div.reviewmodal").modal("hide");
+              $('.modal-backdrop').remove();
+              $('body').removeClass('modal-open');
+              const notification = $(
+                '<div class="alert alert-success" style="position:fixed;top:20px;right:20px;z-index:10000;min-width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">' +
+                '<strong><i class="fa fa-check-circle"></i> Thanks!</strong><br>' +
+                (resp && resp.message ? resp.message : 'Review submitted for moderation.') +
+                '</div>'
+              );
+              $('body').append(notification);
+              setTimeout(function() { notification.fadeOut(400, function(){ $(this).remove(); }); }, 5000);
+              $form.find('textarea[name="review"]').val('');
+              $form.find('input[name="star"]').val('');
+              $('#reviewStarRating .star').removeClass('selected');
+            }).fail(function(xhr) {
+              let msg = 'Could not save the review. Please try again.';
+              if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+              } else if (xhr.status === 401) {
+                msg = (xhr.responseJSON && xhr.responseJSON.error) || 'You must be logged in to post a review.';
+              } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                msg = xhr.responseJSON.error;
+              }
+              $err.text(msg).show();
+            }).always(function() {
+              $btn.prop('disabled', false);
+              $label.html(originalLabel);
+            });
+          });
           $("a.ask-question1").off('click').on('click', function() {
             $("div.askq").modal({
               backdrop: 'static',
               keyboard: false
+            });
+          });
+
+          // Plain HTTP AJAX question submission — mirror of reviewPostForm.
+          $(document).off('submit.questionpost').on('submit.questionpost', '#questionPostForm', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $btn = $('#questionSubmitBtn');
+            const $err = $('#questionFormError');
+            const $label = $('#questionSubmitLabel');
+            const originalLabel = $label.html();
+            $err.hide().text('');
+            $btn.prop('disabled', true);
+            $label.text('Asking...');
+
+            $.ajax({
+              url: $form.attr('action'),
+              method: 'POST',
+              data: $form.serialize(),
+              dataType: 'json',
+              headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+            }).done(function(resp) {
+              $("div.askq").modal("hide");
+              $('.modal-backdrop').remove();
+              $('body').removeClass('modal-open');
+              const notification = $(
+                '<div class="alert alert-success" style="position:fixed;top:20px;right:20px;z-index:10000;min-width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">' +
+                '<strong><i class="fa fa-check-circle"></i> Sent!</strong><br>' +
+                (resp && resp.message ? resp.message : 'Your question has been submitted.') +
+                '</div>'
+              );
+              $('body').append(notification);
+              setTimeout(function() { notification.fadeOut(400, function(){ $(this).remove(); }); }, 5000);
+              $form.find('textarea[name="question"]').val('');
+            }).fail(function(xhr) {
+              let msg = 'Could not send the question. Please try again.';
+              if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+              } else if (xhr.status === 401) {
+                msg = (xhr.responseJSON && xhr.responseJSON.error) || 'You must be logged in to ask a question.';
+              } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                msg = xhr.responseJSON.error;
+              }
+              $err.text(msg).show();
+            }).always(function() {
+              $btn.prop('disabled', false);
+              $label.html(originalLabel);
             });
           });
           $("a.send-message1").off('click').on('click', function() {
@@ -2168,9 +2259,16 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             return false;
           });
           
-          // Track phone click when user clicks the actual tel: link
+          // Track phone click when user clicks the actual tel: link.
+          // Find the component id from the DOM root — this script runs in
+          // the pushed stack scope where the Blade this-directive would
+          // bake an unresolvable snapshot id.
           $("a.tel").off('click').on('click', function() {
-            @this.call('trackPhoneClick');
+            const root = document.querySelector('.profile-details-page[wire\\:id]');
+            if (root && window.Livewire) {
+              const wire = window.Livewire.find(root.getAttribute('wire:id'));
+              if (wire && typeof wire.call === 'function') wire.call('trackPhoneClick');
+            }
           });
           
           $(".report-link").off('click').on('click', function() {

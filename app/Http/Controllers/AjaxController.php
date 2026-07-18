@@ -10,6 +10,8 @@ use App\Models\Currency;
 use App\Models\Package;
 use App\Models\Country;
 use App\Models\ProfileVisit;
+use App\Models\Review;
+use App\Models\Question;
 
 class AjaxController extends Controller
 {
@@ -115,6 +117,63 @@ class AjaxController extends Controller
         return response()->json([
             'filename' => $filename,
             'original' => $original,
+        ]);
+    }
+
+    public function postReview($profileId, Request $request)
+    {
+        if (!auth()->check()) {
+            return response()->json(['error' => 'You must be logged in to post a review.'], 401);
+        }
+
+        $validated = $request->validate([
+            'star' => 'required|numeric|min:1|max:5',
+            'review' => 'required|string|min:10',
+        ], [
+            'star.required' => 'Please pick a star rating before posting.',
+            'star.min' => 'Please pick a star rating before posting.',
+            'review.required' => 'Please write a short review.',
+            'review.min' => 'Review must be at least 10 characters.',
+        ]);
+
+        Review::create([
+            'user_id' => auth()->id(),
+            'profile_id' => (int) $profileId,
+            'review' => $validated['review'],
+            'star' => (int) $validated['star'],
+            'status' => 'pending',
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Review posted successfully. It will be visible after moderation.',
+        ]);
+    }
+
+    public function postQuestion($profileId, Request $request)
+    {
+        if (!auth()->check()) {
+            return response()->json(['error' => 'You must be logged in to ask a question.'], 401);
+        }
+
+        $validated = $request->validate([
+            'question' => 'required|string|min:10|max:240',
+        ], [
+            'question.required' => 'Please type a question before submitting.',
+            'question.min' => 'Your question needs to be at least 10 characters long.',
+            'question.max' => 'Your question can be at most 240 characters long.',
+        ]);
+
+        $q = new Question;
+        $q->user_id = auth()->id();
+        $q->profile_id = (int) $profileId;
+        $q->question = $validated['question'];
+        $q->status = 0;
+        $q->save();
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'We will send an email when/if it is answered.',
         ]);
     }
 }
