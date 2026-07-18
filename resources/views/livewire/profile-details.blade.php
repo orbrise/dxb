@@ -458,11 +458,12 @@
               </div>{{-- /ev-details-card --}}
 
               {{-- "Is This Your Profile?" claim card.
-                   Hidden once the viewer is signed in and already owns the
-                   profile so a logged-in profile owner doesn't see their own
-                   claim CTA. The actual three-step modal (phone → code →
+                   Hidden when: (1) the profile has already been claimed
+                   (any verified_at row in profile_claim_attempts), or
+                   (2) the viewer is signed in and is the profile owner
+                   or an admin. The three-step modal (phone → code →
                    success) lives further down inside #profile-claim-modal. --}}
-              @if(!Auth::check() || (Auth::id() !== ($user->id ?? null) && Auth::user()?->type != 1))
+              @if(!($profileClaimed ?? false) && (!Auth::check() || (Auth::id() !== ($user->id ?? null) && Auth::user()?->type != 1)))
               <div class="ev-claim-card" id="ev-claim-card">
                   <div class="ev-claim-card-inner">
                       <div class="ev-claim-icon">
@@ -477,8 +478,13 @@
               </div>
 
               {{-- Claim modal — three stacked panels controlled by the
-                   data-step attribute set in JS: phone → code → success. --}}
-              <div class="ev-claim-modal" id="profile-claim-modal" data-step="phone" data-profile-id="{{ $user->id ?? '' }}" role="dialog" aria-modal="true" aria-labelledby="ev-claim-title" hidden>
+                   data-step attribute set in JS: phone → code → success.
+                   wire:ignore is critical: without it a Livewire re-render
+                   from any other component on the page (review/askq/msg
+                   modals sharing the same view) morphs this DOM subtree
+                   and reverts our client-side setStep('code') back to
+                   the phone step, making the modal appear stuck. --}}
+              <div class="ev-claim-modal" id="profile-claim-modal" data-step="phone" data-profile-id="{{ $user->id ?? '' }}" data-claim-js-version="v3-poll" role="dialog" aria-modal="true" aria-labelledby="ev-claim-title" hidden wire:ignore>
                   <div class="ev-claim-modal-overlay" onclick="window.profileClaimClose && window.profileClaimClose()"></div>
                   <div class="ev-claim-modal-panel">
                       <button type="button" class="ev-claim-close" aria-label="Close" onclick="window.profileClaimClose && window.profileClaimClose()">&times;</button>
@@ -607,16 +613,27 @@
                           </div>
                           <h2 class="ev-claim-success-title">Verification Successful</h2>
                           <p class="ev-claim-blurb">Your profile ownership verification has been logged successfully. The profile is now linked to your account, and we've sent your login credentials to the email you provided.</p>
-                          <a href="{{ url('my-account') }}" class="ev-claim-primary ev-claim-primary--center">Go To My Dashboard <span aria-hidden="true">›</span></a>
+                          {{-- Inline color/background overrides the site's
+                               global "a { color: … }" rule, which was
+                               matching the lime background and hiding the
+                               label on both desktop and mobile. --}}
+                          <a href="{{ url('my-account') }}" class="ev-claim-primary ev-claim-primary--center"
+                             style="color:#000 !important;background:#C1F11D !important;text-decoration:none !important;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 24px;border-radius:24px;font-weight:600;font-size:14px;margin:8px auto 0;">
+                              Go To My Dashboard <span aria-hidden="true" style="color:#000 !important;">›</span>
+                          </a>
                       </div>
 
-                      {{-- Invisible reCAPTCHA host for Firebase Phone Auth.
-                           firebase.auth.RecaptchaVerifier needs an existing
-                           DOM node to attach to; without it the SDK throws
-                           auth/argument-error before the SMS is sent. --}}
-                      <div id="ev-claim-recaptcha" style="position:absolute;bottom:0;right:0;width:0;height:0;overflow:hidden;"></div>
                   </div>
               </div>
+
+              {{-- Invisible reCAPTCHA host for Firebase Phone Auth. Sits
+                   at the top-level of the page (not inside the modal) so
+                   Firebase's iframe insertion, badge rendering, and any
+                   fallback challenge don't fight the modal's overflow /
+                   z-index. Zero-size containers cause the SDK to hang on
+                   some versions, so it has real dimensions and is hidden
+                   via visibility, not display. --}}
+              <div id="ev-claim-recaptcha" style="position:fixed;bottom:0;right:0;width:80px;height:80px;visibility:hidden;pointer-events:none;"></div>
 
               <style>
                   /* Claim card (shown inside About tab content) */
@@ -815,6 +832,12 @@
                       var firebaseRecaptcha = null;   // RecaptchaVerifier instance
                       var firebaseConfirmation = null; // confirmationResult from signInWithPhoneNumber
 
+                      // Lightweight console-only debug helper so we can
+                      // trace flow if something regresses. No DOM output.
+                      function debug(msg) {
+                          try { console.log('[claim] ' + msg); } catch (e) {}
+                      }
+
                       function panels() { return modal.querySelectorAll('[data-step-panel]'); }
                       function setStep(name) {
                           modal.setAttribute('data-step', name);
@@ -945,52 +968,96 @@
                           busy(btn, true);
 
                           if (channel === 'sms') {
-                              // SMS path: Firebase Phone Auth sends the OTP
-                              // from the browser. Pre-check on the server
-                              // first so we don't burn a paid SMS on an
-                              // obviously-invalid attempt.
+                              debug('SMS flow start · phone=' + phone);
                               if (!firebaseEnabled) {
                                   busy(btn, false);
+                                  debug('firebase not enabled (config missing)');
                                   showError('SMS is not available right now. Please use WhatsApp.');
                                   return;
                               }
+                              debug('calling precheck-sms endpoint');
                               var pre = await api('/profile/' + profileId + '/claim/precheck-sms', {
                                   phone: phone, country_code: countryCode, email: email,
                               });
+                              debug('precheck response ok=' + pre.ok + ' status=' + pre.status);
                               if (!pre.ok) {
                                   busy(btn, false);
                                   showError((pre.data && pre.data.message) || 'Could not start SMS verification.');
                                   return;
                               }
                               var auth = ensureFirebase();
+                              debug('ensureFirebase auth=' + !!auth + ' recaptcha=' + !!firebaseRecaptcha);
                               if (!auth) {
                                   busy(btn, false);
                                   showError('SMS verification is not configured. Please use WhatsApp.');
                                   return;
                               }
+                              // Non-await style: kick off signInWithPhoneNumber
+                              // and poll for either the confirmation result
+                              // or an error to appear. Polling side-steps
+                              // any async/await plumbing issues.
+                              debug('calling signInWithPhoneNumber…');
+                              window.firebaseClaimConfirmation = null;
+                              window.firebaseClaimError = null;
                               try {
-                                  firebaseConfirmation = await auth.signInWithPhoneNumber(phone, firebaseRecaptcha);
+                                  auth.signInWithPhoneNumber(phone, firebaseRecaptcha)
+                                      .then(function (result) {
+                                          debug('signInWithPhoneNumber RESOLVED · sessionInfo present=' + !!(result && result.verificationId));
+                                          window.firebaseClaimConfirmation = result;
+                                      })
+                                      .catch(function (err) {
+                                          debug('signInWithPhoneNumber REJECTED · ' + (err && err.code) + ' · ' + (err && err.message));
+                                          window.firebaseClaimError = err;
+                                      });
                               } catch (err) {
                                   busy(btn, false);
-                                  console.error('Firebase signInWithPhoneNumber failed', err);
-                                  // Reset the reCAPTCHA so the user can
-                                  // retry — otherwise the widget is stuck
-                                  // in a used state after a failure.
-                                  try {
-                                      if (firebaseRecaptcha && firebaseRecaptcha.clear) firebaseRecaptcha.clear();
-                                  } catch (e) {}
-                                  firebaseRecaptcha = null;
+                                  debug('signInWithPhoneNumber THREW sync · ' + (err && err.message));
                                   showError((err && err.message) || 'Could not send the SMS code.');
                                   return;
                               }
-                              busy(btn, false);
-                              var mask1 = modal.querySelector('[data-claim-phone-mask]');
-                              if (mask1) mask1.textContent = maskPhone(phone);
-                              setStep('code');
-                              setTimeout(function () {
-                                  var first = modal.querySelector('[data-otp-cell]');
-                                  if (first) first.focus();
-                              }, 40);
+
+                              debug('polling for confirmation…');
+                              var pollStart = Date.now();
+                              var pollTicks = 0;
+                              var poll = setInterval(function () {
+                                  pollTicks++;
+                                  if (window.firebaseClaimConfirmation) {
+                                      clearInterval(poll);
+                                      firebaseConfirmation = window.firebaseClaimConfirmation;
+                                      busy(btn, false);
+                                      var mask1 = modal.querySelector('[data-claim-phone-mask]');
+                                      if (mask1) mask1.textContent = maskPhone(phone);
+                                      debug('advancing to code step after ' + pollTicks + ' polls');
+                                      setStep('code');
+                                      var codePanel = modal.querySelector('[data-step-panel="code"]');
+                                      var phonePanel = modal.querySelector('[data-step-panel="phone"]');
+                                      if (codePanel) { codePanel.removeAttribute('hidden'); codePanel.style.display = ''; }
+                                      if (phonePanel) { phonePanel.setAttribute('hidden', ''); phonePanel.style.display = 'none'; }
+                                      setTimeout(function () {
+                                          var first = modal.querySelector('[data-otp-cell]');
+                                          if (first) first.focus();
+                                      }, 40);
+                                      return;
+                                  }
+                                  if (window.firebaseClaimError) {
+                                      clearInterval(poll);
+                                      busy(btn, false);
+                                      var err = window.firebaseClaimError;
+                                      try {
+                                          if (firebaseRecaptcha && firebaseRecaptcha.clear) firebaseRecaptcha.clear();
+                                      } catch (e) {}
+                                      firebaseRecaptcha = null;
+                                      showError((err && err.message) || 'Could not send the SMS code.');
+                                      return;
+                                  }
+                                  if (Date.now() - pollStart > 30000) {
+                                      clearInterval(poll);
+                                      busy(btn, false);
+                                      debug('POLL TIMEOUT after ' + pollTicks + ' polls · ' + (Date.now() - pollStart) + 'ms · fbConfirm=' + !!window.firebaseClaimConfirmation + ' · fbError=' + !!window.firebaseClaimError);
+                                      showError('SMS request timed out. Check the debug line above.');
+                                      return;
+                                  }
+                              }, 300);
                               return;
                           }
 
@@ -1018,14 +1085,20 @@
                           if (channel === 'sms') {
                               // Confirm the SMS OTP with Firebase, then post
                               // the ID token to the server for verification.
-                              if (!firebaseConfirmation) {
+                              // Prefer the window-stashed confirmation over
+                              // the closure var — the polling in sendOtp
+                              // writes there first (some SDK builds don't
+                              // propagate the closure-scoped assignment
+                              // reliably).
+                              var conf = window.firebaseClaimConfirmation || firebaseConfirmation;
+                              if (!conf) {
                                   busy(btn, false);
                                   showError('Please request a new code.');
                                   return;
                               }
                               var idToken = '';
                               try {
-                                  var result = await firebaseConfirmation.confirm(code);
+                                  var result = await conf.confirm(code);
                                   idToken = await result.user.getIdToken();
                               } catch (err) {
                                   busy(btn, false);

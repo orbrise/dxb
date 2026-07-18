@@ -135,7 +135,16 @@ public $reportDescription;
         $reviews = CacheService::getProfileReviews($this->profileid);
         $questions = CacheService::getProfileQuestions($this->profileid);
 
-        return view('livewire.profile-details', compact('user', 'images', 'rev', 'countries', 'reviews', 'questions', 'profile'));
+        // Hide the "Is This Your Profile?" claim CTA on profiles that
+        // have already been claimed. A verified_at row in
+        // profile_claim_attempts is the canonical signal — set by both
+        // the WhatsApp local-OTP path and the Firebase SMS path.
+        $profileClaimed = \DB::table('profile_claim_attempts')
+            ->where('profile_id', $this->profileid)
+            ->whereNotNull('verified_at')
+            ->exists();
+
+        return view('livewire.profile-details', compact('user', 'images', 'rev', 'countries', 'reviews', 'questions', 'profile', 'profileClaimed'));
     }
 
     public function postreview()

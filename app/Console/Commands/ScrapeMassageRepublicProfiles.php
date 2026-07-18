@@ -15,7 +15,8 @@ class ScrapeMassageRepublicProfiles extends Command
                             {--city= : MR city slug, e.g. dubai, delhi, lahore}
                             {--limit=50 : Maximum number of profiles to fetch}
                             {--no-import : Scrape only; skip writing to live tables}
-                            {--no-phone : Skip the Playwright phone-reveal step}';
+                            {--no-phone : Skip the Playwright phone-reveal step}
+                            {--require-phone : Only import profiles whose phone reveal succeeded — skip the rest}';
 
     protected $description = 'Scrape massagerepublic.com profiles for a given city and import them into the live users_profiles tables.';
 
@@ -58,6 +59,25 @@ class ScrapeMassageRepublicProfiles extends Command
         $saved = 0;
         $cityId = null;
 
+        // Batch-reveal all phones in one Chromium session before we start
+        // importing. Without this the importer spawns a fresh Node/browser/
+        // login per profile, which MR/Cloudflare throttles within a few
+        // requests and every phone comes back NULL.
+        if ($importEnabled && ! $this->option('no-phone')) {
+            $slugsToReveal = [];
+            foreach ($profiles as $p) {
+                $ext = $p['external_id'] ?? null;
+                if (! $ext) continue;
+                $existing = \App\Models\MassageRepublicProfile::where('external_id', $ext)->first();
+                if ($existing && $existing->imported_user_id) continue;
+                $slugsToReveal[] = $ext;
+            }
+            if (! empty($slugsToReveal)) {
+                $this->info('Batch-revealing phones for ' . count($slugsToReveal) . ' profile(s) in one session...');
+                $phoneWorker->preheat($slugsToReveal, '/female-escorts-in-' . ltrim($citySlug, '/'));
+            }
+        }
+
         foreach ($profiles as $profileData) {
             $row = MassageRepublicProfile::updateOrCreate(
                 ['external_id' => $profileData['external_id']],
@@ -75,6 +95,18 @@ class ScrapeMassageRepublicProfiles extends Command
             if ($row->imported_user_id) {
                 $this->line("  - {$row->external_id}: already imported (user #{$row->imported_user_id}), skipping");
                 continue;
+            }
+
+            // --require-phone: bail before touching users_profiles if the
+            // batch preheat failed to reveal a phone for this slug. Prevents
+            // ever inserting a row whose phone column would be NULL.
+            if ($this->option('require-phone') && ! $this->option('no-phone')) {
+                $cachedPhone = $phoneWorker->revealOne($row->external_id, '/female-escorts-in-' . ltrim($citySlug, '/'));
+                if (empty($cachedPhone)) {
+                    $reason = $phoneWorker->getLastError($row->external_id) ?: 'no phone returned';
+                    $this->line("  - {$row->external_id}: skipped (--require-phone; reveal failed: {$reason})");
+                    continue;
+                }
             }
 
             if ($cityId === null) {

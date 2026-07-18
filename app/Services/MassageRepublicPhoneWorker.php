@@ -26,6 +26,17 @@ class MassageRepublicPhoneWorker
     /** @var array<string,array{whatsapp:bool,telegram:bool,signal:bool,wechat:bool}>  slug → app presence flags from the reveal modal */
     protected array $lastApps = [];
 
+    /**
+     * Batched-reveal cache. Filled by preheat() so subsequent revealOne()
+     * calls don't have to spawn a fresh Node/Chromium/login per slug —
+     * which was hammering MR into Cloudflare-block territory.
+     *
+     * @var array<string,?string>  slug → phone (or null if reveal failed)
+     */
+    protected array $cache = [];
+    /** @var array<string,bool>  slug present in cache (so null means "we tried and failed") */
+    protected array $cacheHit = [];
+
     public function __construct()
     {
         $this->nodeBinary = env('NODE_BINARY', 'node');
@@ -92,19 +103,23 @@ class MassageRepublicPhoneWorker
             return [];
         }
 
+        $baseHost = trim(env('MASSAGE_REPUBLIC_HOST', 'massagerepublic.com'));
         $config = [
             'username' => $username,
             'password' => $password,
             'listingPath' => '/' . trim($listingPath, '/'),
             'slugs' => $slugs,
             'headless' => true,
+            // Forwarded to the worker so it hits the same host the scraper uses.
+            // Set MASSAGE_REPUBLIC_HOST=massagerepublic.tk in .env to flip
+            // both sides onto the open-traffic mirror.
+            'baseHost' => $baseHost,
         ];
 
         $hostIp = env('MASSAGE_REPUBLIC_HOST_IP');
-        $baseHost = env('MASSAGE_REPUBLIC_HOST', 'massagerepublic.com');
         if ($hostIp) {
             $firstIp = explode(',', $hostIp)[0];
-            $config['hostResolve'] = trim($baseHost) . ' ' . trim($firstIp);
+            $config['hostResolve'] = $baseHost . ' ' . trim($firstIp);
         }
 
         $configPath = $this->writeTempConfig($config);
@@ -124,7 +139,9 @@ class MassageRepublicPhoneWorker
             }
 
             $sawSlugLine = [];
-            $process->run(function ($type, $buffer) use (&$results, &$sawSlugLine) {
+            $processTimedOut = false;
+            try {
+                $process->run(function ($type, $buffer) use (&$results, &$sawSlugLine) {
                 if ($type !== Process::OUT) {
                     return;
                 }
@@ -173,14 +190,51 @@ class MassageRepublicPhoneWorker
                     }
                 }
             });
+            } catch (\Symfony\Component\Process\Exception\ProcessTimedOutException $timeout) {
+                // Symfony killed the worker for exceeding the per-batch
+                // wall clock. Don't rethrow — the batch is a diagnostic
+                // best-effort; mark all not-yet-emitted slugs with a
+                // clear reason so --require-phone can skip them
+                // cleanly instead of aborting the whole scrape run.
+                $processTimedOut = true;
+                Log::warning('MR phone worker: batch timed out', [
+                    'timeout_s' => $this->timeoutSecondsPerSlug * count($slugs),
+                    'slugs_emitted' => count($sawSlugLine),
+                    'slugs_total' => count($slugs),
+                ]);
+            }
 
-            if (! $process->isSuccessful()) {
-                $stderrTail = substr($process->getErrorOutput(), 0, 500);
+            // Always capture stderr — the worker writes step-by-step progress
+            // there ("[step … login: goto /sign-in") so we can pinpoint
+            // exactly where a hung batch stalled even when the process ran
+            // to Symfony's process timeout without emitting any per-slug
+            // JSON on stdout.
+            $stderrFull = $process->getErrorOutput();
+            if ($stderrFull !== '') {
+                Log::info('MR phone worker stderr', ['stderr' => substr($stderrFull, -4000)]);
+            }
+
+            if ($processTimedOut) {
+                // Pull last handful of step lines so caller sees where it stalled.
+                $lastSteps = [];
+                foreach (array_reverse(preg_split("/\r?\n/", $stderrFull) ?: []) as $line) {
+                    if (str_starts_with($line, '[step ')) {
+                        $lastSteps[] = $line;
+                        if (count($lastSteps) >= 3) break;
+                    }
+                }
+                $stallHint = $lastSteps ? implode(' | ', array_reverse($lastSteps)) : 'no step trace';
+                foreach (array_keys($this->lastErrors) as $s) {
+                    if (empty($sawSlugLine[$s]) && $this->lastErrors[$s] === null) {
+                        $this->lastErrors[$s] = 'worker timed out at: ' . $stallHint;
+                    }
+                }
+            } elseif (! $process->isSuccessful()) {
+                $stderrTail = substr($stderrFull, -500);
                 Log::warning('MR phone worker: non-zero exit', [
                     'exit_code' => $process->getExitCode(),
                     'stderr' => $stderrTail,
                 ]);
-                // Surface the exit reason to any slug that produced no JSON line.
                 foreach (array_keys($this->lastErrors) as $s) {
                     if (empty($sawSlugLine[$s]) && $this->lastErrors[$s] === null) {
                         $this->lastErrors[$s] = 'worker exited ' . $process->getExitCode() . ': ' . trim($stderrTail);
@@ -196,8 +250,35 @@ class MassageRepublicPhoneWorker
 
     public function revealOne(string $slug, string $listingPath = '/female-escorts-in-dubai'): ?string
     {
+        // Pre-warmed by preheat() — one shared browser session for the
+        // whole batch, so we don't hit MR/Cloudflare N times per city.
+        if (isset($this->cacheHit[$slug])) {
+            return $this->cache[$slug] ?? null;
+        }
         $result = $this->reveal([$slug], $listingPath);
         return $result[$slug] ?? null;
+    }
+
+    /**
+     * Batch-reveal phones for a list of slugs in a single worker session
+     * and cache the results. Call this once at the top of a scrape run;
+     * subsequent revealOne() calls will hit the cache.
+     *
+     * @param string[] $slugs
+     */
+    public function preheat(array $slugs, string $listingPath = '/female-escorts-in-dubai'): void
+    {
+        $slugs = array_values(array_filter(array_unique($slugs)));
+        // Skip anything already cached from a previous preheat call.
+        $slugs = array_values(array_filter($slugs, fn ($s) => ! isset($this->cacheHit[$s])));
+        if (empty($slugs)) {
+            return;
+        }
+        $results = $this->reveal($slugs, $listingPath);
+        foreach ($slugs as $s) {
+            $this->cache[$s] = $results[$s] ?? null;
+            $this->cacheHit[$s] = true;
+        }
     }
 
     protected function writeTempConfig(array $config): string

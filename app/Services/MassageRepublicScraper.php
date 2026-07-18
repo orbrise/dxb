@@ -95,6 +95,7 @@ class MassageRepublicScraper
         $page = 1;
         $fetchFailures = [];
         $skippedAgencies = 0;
+        $seenHrefs = [];
 
         // MR / Cloudflare rate-limits rapid sequential profile fetches; without
         // a pause we get ~3 profiles in, then everything 4xx/5xx silently.
@@ -108,7 +109,19 @@ class MassageRepublicScraper
                 break;
             }
 
+            // VIP spots repeat on every listing page, so drop cards we've
+            // already processed and break when a page adds nothing new.
+            $newCards = [];
             foreach ($cards as $card) {
+                if (isset($seenHrefs[$card['href']])) continue;
+                $seenHrefs[$card['href']] = true;
+                $newCards[] = $card;
+            }
+            if (empty($newCards)) {
+                break;
+            }
+
+            foreach ($newCards as $card) {
                 if (count($profiles) >= $limit) {
                     break 2;
                 }
@@ -394,6 +407,17 @@ class MassageRepublicScraper
      * (the detail page doesn't repeat them, which is why a detail-page scan
      * for "verified" always returned zero).
      *
+     * MR renders two blocks on each listing page:
+     *   1. Auction spots — a <div class="listings listings-spots …"> section
+     *                holding <div class="listing-li listing-li--spot …"> cards.
+     *                These are paid auction slots (agency ads) we deliberately
+     *                skip.
+     *   2. Ranked profiles — a <div class="listings border-top"> section
+     *                holding <div class="listing-li listing-li--flex …"> cards,
+     *                already ordered VIP → Featured → Basic by MR.
+     * We match only listing-li--flex so imports come from the ranked list and
+     * the top-of-page auction slots are ignored.
+     *
      * @return array<int, array{href:string, is_verified:bool, is_premium:bool}>
      */
     protected function extractProfileCards(string $html): array
@@ -407,22 +431,22 @@ class MassageRepublicScraper
         $doc->loadHTML($html);
         $xpath = new \DOMXPath($doc);
 
-        $listingPath = '/' . trim($this->listingPath, '/');
         $cards = [];
         $seen = [];
 
-        // Each listing tile is a <div class="listing-li …"> wrapping an <a>
-        // pointing at the profile slug. Verified badge is a descendant
-        // <span class="verified-image"> (title="Photos Verified by …").
-        $cardNodes = $xpath->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' listing-li ')]");
+        $cardNodes = $xpath->query(
+            "//*[contains(concat(' ', normalize-space(@class), ' '), ' listing-li--flex ')]"
+        );
+        // Match any /female-escorts-in-<city>/<slug> or /male-escorts-in-<city>/<slug>.
+        // Not tied to $this->listingPath because MR redirects some slugs
+        // (e.g. dubai stays but delhi → new-delhi in the actual href).
+        $profileHrefRegex = '#^/(?:fe)?male-escorts-in-[a-z0-9-]+/[a-z0-9][a-z0-9-]*$#i';
         foreach ($cardNodes as $card) {
             $href = null;
-            foreach ($xpath->query(".//a[starts-with(@href, '{$listingPath}/')]/@href", $card) as $hrefAttr) {
+            foreach ($xpath->query('.//a/@href', $card) as $hrefAttr) {
                 $candidate = trim($hrefAttr->nodeValue);
                 if ($candidate === '' || str_starts_with($candidate, '#')) continue;
-
-                $tail = substr($candidate, strlen($listingPath) + 1);
-                if ($tail === '' || ctype_digit($tail) || str_contains($tail, '/')) continue;
+                if (! preg_match($profileHrefRegex, $candidate)) continue;
 
                 $href = $candidate;
                 break;
@@ -435,29 +459,12 @@ class MassageRepublicScraper
                 $card
             );
             $isVerified = $verifiedHit && $verifiedHit->length > 0;
-            $isPremium = (bool) preg_match('/\bpremium\b/i', $card->getAttribute('class'));
 
             $cards[] = [
                 'href' => $href,
                 'is_verified' => $isVerified,
-                'is_premium' => $isPremium,
+                'is_premium' => true,
             ];
-        }
-
-        // Fallback for any layout where MR drops the listing-li wrapper —
-        // collect orphan profile links so we don't lose entries entirely.
-        if (empty($cards)) {
-            foreach ($xpath->query("//a[starts-with(@href, '{$listingPath}/')]/@href") as $hrefAttr) {
-                $candidate = trim($hrefAttr->nodeValue);
-                if ($candidate === '' || str_starts_with($candidate, '#')) continue;
-
-                $tail = substr($candidate, strlen($listingPath) + 1);
-                if ($tail === '' || ctype_digit($tail) || str_contains($tail, '/')) continue;
-                if (isset($seen[$candidate])) continue;
-                $seen[$candidate] = true;
-
-                $cards[] = ['href' => $candidate, 'is_verified' => false, 'is_premium' => false];
-            }
         }
 
         return $cards;
