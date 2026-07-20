@@ -44,8 +44,21 @@ class ScrapeMassageRepublicProfiles extends Command
 
         $scraper = new MassageRepublicScraper($username, $password);
 
+        // Skip cards whose external_id is already imported so re-runs walk
+        // further down the listing to find fresh profiles instead of hitting
+        // the same top-N cards every time. Only applies to the live import
+        // path — with --no-import we want to re-scrape everything.
+        $skipChecker = null;
+        if ($importEnabled) {
+            $skipChecker = function (string $externalId): bool {
+                return MassageRepublicProfile::where('external_id', $externalId)
+                    ->whereNotNull('imported_user_id')
+                    ->exists();
+            };
+        }
+
         try {
-            $profiles = $scraper->scrape($limit, $citySlug);
+            $profiles = $scraper->scrape($limit, $citySlug, $skipChecker);
         } catch (\Throwable $exception) {
             $this->error('Scraper error: ' . $exception->getMessage());
             return Command::FAILURE;

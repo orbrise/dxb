@@ -80,7 +80,7 @@ class MassageRepublicScraper
 
     protected ?string $lastLoginError = null;
 
-    public function scrape(int $limit = 50, ?string $citySlug = null): array
+    public function scrape(int $limit = 50, ?string $citySlug = null, ?callable $skipChecker = null): array
     {
         if ($citySlug !== null && $citySlug !== '') {
             $this->listingPath = '/' . trim($this->normalizeCitySlug($citySlug), '/');
@@ -95,6 +95,7 @@ class MassageRepublicScraper
         $page = 1;
         $fetchFailures = [];
         $skippedAgencies = 0;
+        $skippedAlreadyImported = 0;
         $seenHrefs = [];
 
         // MR / Cloudflare rate-limits rapid sequential profile fetches; without
@@ -127,6 +128,19 @@ class MassageRepublicScraper
                 }
 
                 $url = $this->normalizeUrl($card['href']);
+
+                // Skip cards whose external_id is already imported so that
+                // repeated --limit=N runs advance further down the listing
+                // instead of re-scraping the same top rows. The check runs
+                // BEFORE the detail-page fetch to save the network round-trip.
+                if ($skipChecker !== null) {
+                    $externalId = $this->extractExternalId($url);
+                    if ($externalId !== '' && $skipChecker($externalId)) {
+                        $skippedAlreadyImported++;
+                        continue;
+                    }
+                }
+
                 $html = $this->fetchUrlWithRetry($url);
 
                 if (! $html) {
@@ -173,6 +187,10 @@ class MassageRepublicScraper
 
         if ($skippedAgencies > 0) {
             \Log::info('MR scraper: agency listings skipped', ['count' => $skippedAgencies]);
+        }
+
+        if ($skippedAlreadyImported > 0) {
+            \Log::info('MR scraper: already-imported cards skipped', ['count' => $skippedAlreadyImported]);
         }
 
         return $profiles;
