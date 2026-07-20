@@ -156,6 +156,10 @@ Route::post('/profile/{id}/question', [\App\Http\Controllers\AjaxController::cla
     ->where('id', '[0-9]+')
     ->name('profile.question');
 
+Route::post('/profile/{id}/phone-click', [\App\Http\Controllers\AjaxController::class, 'trackPhoneClick'])
+    ->where('id', '[0-9]+')
+    ->name('profile.phone-click');
+
 // WhatsApp Webhook (outside admin middleware for Meta verification)
 Route::match(['get', 'post'], '/webhook/whatsapp', [\App\Http\Controllers\Admin\WhatsAppController::class, 'webhook'])->name('whatsapp.webhook');
 

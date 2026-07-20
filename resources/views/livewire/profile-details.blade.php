@@ -1830,7 +1830,7 @@
                 <p class="ev-call-note">Please tell me you found me on evoory.</p>
             </div>
             <div class="ev-mobile-modal-footer">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="21" viewBox="0 0 24 21" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M23.1939 14.2762L15.9794 2.4494C15.0272 0.888508 13.5868 0 11.9998 0C10.4128 0 8.97238 0.888508 8.02021 2.43739L0.805683 14.2762C0.268561 15.1527 0 16.0652 0 16.9297C0 17.6141 0.170902 18.2864 0.512707 18.8748C1.29398 20.2196 2.80768 21 4.67541 21H19.3242C21.1919 21 22.7056 20.2196 23.4869 18.8748C23.8287 18.2864 23.9996 17.6501 23.9996 16.9777C24.0118 16.0892 23.7432 15.1647 23.1939 14.2762ZM11.9998 5.93139C13.0374 5.93139 13.8919 6.77187 13.8919 7.79245C13.8919 8.81304 13.0496 9.65352 11.9998 9.65352C10.9622 9.65352 10.1077 8.81304 10.1077 7.79245C10.1077 6.75986 10.95 5.93139 11.9998 5.93139ZM14.0628 16.0892C14.0262 16.1372 13.0863 17.1938 11.5359 17.1938H11.3528C10.7302 17.1578 10.2175 16.8937 9.91235 16.4374C9.53392 15.8731 9.47289 15.1046 9.76586 14.2521L10.2664 12.7873C10.5471 11.9708 10.2786 11.8388 10.1321 11.7667L9.96118 11.7427C9.65599 11.7427 9.22874 11.9228 9.09446 11.9949C8.97238 12.0549 8.81369 12.0309 8.71603 11.9108C8.63058 11.7907 8.63058 11.6346 8.72824 11.5266C8.76486 11.4786 9.79027 10.3379 11.4383 10.434C12.0608 10.47 12.5735 10.7341 12.8787 11.1904C13.2694 11.7547 13.3182 12.5232 13.0252 13.3876L12.5247 14.8525C12.2439 15.669 12.5125 15.801 12.659 15.8731L12.8299 15.8971C13.1351 15.8971 13.5623 15.717 13.6966 15.6569C13.8309 15.5849 13.9774 15.6209 14.075 15.741C14.1605 15.825 14.1605 15.9811 14.0628 16.0892Z" fill="#A6B4B8"/></svg>
                 <p>Do not pay anyone in advance, as this is often used by scammers. Please report any suspicious profiles to us. For your safety, we recommend booking verified escorts.</p>
             </div>
         </div>
@@ -1874,12 +1874,13 @@
                     data-original-title="Signal"></a>
                   @endif
 
-                  @if($user->iswechat)
-                  <span class="icon-wechat phone-icon" data-toggle="tooltip" title=""
-                    data-original-title="WeChat"></span>
-                  @endif
+                  {{-- WeChat intentionally removed: uses a separate WeChat
+                       username as its identifier, not the phone number, so
+                       showing the icon without a wechat_id column is
+                       misleading. Re-enable only when a dedicated ID field
+                       and scraper detection are wired up. --}}
 
-                  @if(!$user->iswhatsapp && !$user->istelegram && !$user->issignal && !$user->iswechat)
+                  @if(!$user->iswhatsapp && !$user->istelegram && !$user->issignal)
                   <i class="phone-icon fa fa-phone"></i>
                   @endif
                   <span>
@@ -1892,7 +1893,7 @@
             <div class="clearfix"></div>
           </div>
           <div class="modal-footer modal-footer__disclaimer">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="21" viewBox="0 0 24 21" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M23.1939 14.2762L15.9794 2.4494C15.0272 0.888508 13.5868 0 11.9998 0C10.4128 0 8.97238 0.888508 8.02021 2.43739L0.805683 14.2762C0.268561 15.1527 0 16.0652 0 16.9297C0 17.6141 0.170902 18.2864 0.512707 18.8748C1.29398 20.2196 2.80768 21 4.67541 21H19.3242C21.1919 21 22.7056 20.2196 23.4869 18.8748C23.8287 18.2864 23.9996 17.6501 23.9996 16.9777C24.0118 16.0892 23.7432 15.1647 23.1939 14.2762ZM11.9998 5.93139C13.0374 5.93139 13.8919 6.77187 13.8919 7.79245C13.8919 8.81304 13.0496 9.65352 11.9998 9.65352C10.9622 9.65352 10.1077 8.81304 10.1077 7.79245C10.1077 6.75986 10.95 5.93139 11.9998 5.93139ZM14.0628 16.0892C14.0262 16.1372 13.0863 17.1938 11.5359 17.1938H11.3528C10.7302 17.1578 10.2175 16.8937 9.91235 16.4374C9.53392 15.8731 9.47289 15.1046 9.76586 14.2521L10.2664 12.7873C10.5471 11.9708 10.2786 11.8388 10.1321 11.7667L9.96118 11.7427C9.65599 11.7427 9.22874 11.9228 9.09446 11.9949C8.97238 12.0549 8.81369 12.0309 8.71603 11.9108C8.63058 11.7907 8.63058 11.6346 8.72824 11.5266C8.76486 11.4786 9.79027 10.3379 11.4383 10.434C12.0608 10.47 12.5735 10.7341 12.8787 11.1904C13.2694 11.7547 13.3182 12.5232 13.0252 13.3876L12.5247 14.8525C12.2439 15.669 12.5125 15.801 12.659 15.8731L12.8299 15.8971C13.1351 15.8971 13.5623 15.717 13.6966 15.6569C13.8309 15.5849 13.9774 15.6209 14.075 15.741C14.1605 15.825 14.1605 15.9811 14.0628 16.0892Z" fill="#A6B4B8"/></svg>
             <p class="mb-0 text-left">Do not pay anyone in advance, as this is often used by scammers. Please report any suspicious profiles to us. For your safety, we recommend booking verified escorts.</p>
           </div>
         </div>
@@ -2263,12 +2264,49 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           // Find the component id from the DOM root — this script runs in
           // the pushed stack scope where the Blade this-directive would
           // bake an unresolvable snapshot id.
+          //
+          // Also proactively tear down the call-me-now modal + backdrop.
+          // The tel: link hand-off to the OS "Pick an app" chooser can
+          // leave Bootstrap's modal state inconsistent — if the user
+          // cancels the OS dialog, the modal is hidden but the backdrop
+          // stays, blocking every click on the page underneath. Delay
+          // slightly so the browser gets to fire the tel: navigation
+          // before we mutate the DOM.
+          // Plain HTTP tracker via fetch — using $wire.call was triggering a
+          // Livewire commit that hit the same "Snapshot missing" morph bug
+          // seen on review/question flows, which then broke Bootstrap's
+          // internal modal state (dispose threw e[o] is not a function),
+          // leaving the second phone click unresponsive.
+          //
+          // sendBeacon (falling back to fetch keepalive) makes the request
+          // survive the tel: navigation without blocking it.
           $("a.tel").off('click').on('click', function() {
-            const root = document.querySelector('.profile-details-page[wire\\:id]');
-            if (root && window.Livewire) {
-              const wire = window.Livewire.find(root.getAttribute('wire:id'));
-              if (wire && typeof wire.call === 'function') wire.call('trackPhoneClick');
-            }
+            const profileId = {{ (int) $profileid }};
+            const url = '/profile/' + profileId + '/phone-click';
+            const token = ($('meta[name="csrf-token"]').attr('content')) || '';
+            const body = new FormData();
+            body.append('_token', token);
+            try {
+              if (navigator.sendBeacon) {
+                navigator.sendBeacon(url, body);
+              } else {
+                fetch(url, {
+                  method: 'POST',
+                  headers: { 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest' },
+                  body: body,
+                  keepalive: true,
+                });
+              }
+            } catch (e) { /* tracking is best-effort */ }
+
+            // Tear down the modal so the OS "Pick an app" hand-off (or a
+            // cancel) can't leave an orphaned backdrop blocking the page.
+            // Delayed so the browser gets to fire the tel: navigation first.
+            setTimeout(function() {
+              $('.callnow').modal('hide');
+              $('.modal-backdrop').remove();
+              $('body').removeClass('modal-open').css('overflow', '').css('padding-right', '');
+            }, 150);
           });
           
           $(".report-link").off('click').on('click', function() {

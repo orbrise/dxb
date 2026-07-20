@@ -179,7 +179,10 @@ class MassageRepublicImporter
             'iswhatsapp' => $apps['whatsapp'] ? 1 : 0,
             'istelegram' => $apps['telegram'] ? 1 : 0,
             'issignal'   => $apps['signal']   ? 1 : 0,
-            'iswechat'   => $apps['wechat']   ? 1 : 0,
+            // WeChat intentionally always 0 — no wechat_id column exists,
+            // so the UI can't render a meaningful contact link. See the
+            // matching skip in profile-details.blade.php phone modal.
+            'iswechat'   => 0,
             'orientation' => $this->lookupId('orientations', $attrs['orientation'] ?? null),
             'height' => $this->extractHeightCm($attrs['height'] ?? null),
             'haircolor' => $this->lookupId('hair_colors', $attrs['hair_color'] ?? null),

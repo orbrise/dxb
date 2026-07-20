@@ -12,6 +12,8 @@ use App\Models\Country;
 use App\Models\ProfileVisit;
 use App\Models\Review;
 use App\Models\Question;
+use App\Models\PhoneClick;
+use App\Models\UsersProfile;
 
 class AjaxController extends Controller
 {
@@ -148,6 +150,21 @@ class AjaxController extends Controller
             'ok' => true,
             'message' => 'Review posted successfully. It will be visible after moderation.',
         ]);
+    }
+
+    public function trackPhoneClick($profileId, Request $request)
+    {
+        try {
+            PhoneClick::recordClick((int) $profileId, $request);
+        } catch (\Throwable $e) {
+            // Fall back to the legacy counter if the click table isn't there.
+            try {
+                UsersProfile::where('id', (int) $profileId)->increment('phone_clicks');
+            } catch (\Throwable $e2) {
+                \Log::warning('trackPhoneClick failed', ['profile_id' => $profileId, 'error' => $e2->getMessage()]);
+            }
+        }
+        return response()->noContent();
     }
 
     public function postQuestion($profileId, Request $request)
