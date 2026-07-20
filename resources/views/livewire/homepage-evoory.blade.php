@@ -55,7 +55,7 @@
             background: transparent !important;
             border: 1px solid #2a3a4a !important;
             border-radius: 999px !important;
-            padding: 8px 18px !important;
+            padding: 5px 18px !important;
             font-size: 14px !important;
             white-space: nowrap !important;
             flex-shrink: 0 !important;

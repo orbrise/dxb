@@ -2645,8 +2645,11 @@ function initCitySearch() {
                         console.log('Processing city:', city.name, 'Count:', city.profile_count);
                         const citySlug = city.name.toLowerCase().replace(/\s+/g, '-');
 
-                        // Get country code for flag
-                        const countryCode = getCountryCode(city.country);
+                        // Prefer the server-provided ISO (batched DB lookup),
+                        // fall back to the JS hardcoded table only if missing.
+                        // This unblocks countries not in EvooryCountryCodes,
+                        // e.g. Algeria → DZ.
+                        const countryCode = city.iso || getCountryCode(city.country);
 
                         const opt = document.createElement('div');
                         opt.className = 'opt';
