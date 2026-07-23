@@ -103,20 +103,28 @@ class MassageRepublicPhoneWorker
             return [];
         }
 
-        $baseHost = trim(env('MASSAGE_REPUBLIC_HOST', 'massagerepublic.com'));
+        // The Playwright worker should hit the Cloudflare-free mirror
+        // (massagerepublic.tk) because .com serves an interstitial to
+        // headless browsers and the login form is never interactable.
+        // The scraper's CURL-based login, on the other hand, works fine
+        // against .com — so we let them target different hosts via
+        // MASSAGE_REPUBLIC_HOST_WORKER (worker-only override); if that
+        // isn't set we fall back to MASSAGE_REPUBLIC_HOST, then the .tk
+        // mirror as final default.
+        $baseHost = trim(env('MASSAGE_REPUBLIC_HOST_WORKER')
+            ?: env('MASSAGE_REPUBLIC_HOST')
+            ?: 'massagerepublic.tk');
         $config = [
             'username' => $username,
             'password' => $password,
             'listingPath' => '/' . trim($listingPath, '/'),
             'slugs' => $slugs,
             'headless' => true,
-            // Forwarded to the worker so it hits the same host the scraper uses.
-            // Set MASSAGE_REPUBLIC_HOST=massagerepublic.tk in .env to flip
-            // both sides onto the open-traffic mirror.
             'baseHost' => $baseHost,
         ];
 
-        $hostIp = env('MASSAGE_REPUBLIC_HOST_IP');
+        $hostIp = env('MASSAGE_REPUBLIC_HOST_WORKER_IP')
+            ?: env('MASSAGE_REPUBLIC_HOST_IP');
         if ($hostIp) {
             $firstIp = explode(',', $hostIp)[0];
             $config['hostResolve'] = $baseHost . ' ' . trim($firstIp);

@@ -144,6 +144,23 @@ public $reportDescription;
             ->whereNotNull('verified_at')
             ->exists();
 
+        // Browser-tab title: mirror the on-page H1 pattern
+        // "{Name} – {Nationality} escort in {City}". Falls back
+        // gracefully when the nationality relation is missing.
+        // Shared into the view bag so the layout's <title> picks it up
+        // via $pageTitle (see components/layouts/app-evoory.blade.php).
+        $ptCity = optional(optional($user)->gcity)->name ?? ($this->cityname ?: 'Dubai');
+        $ptNationality = optional(optional($user)->getcountry)->nationality ?? '';
+        $ptName = ucfirst(trim((string) optional($user)->name));
+        $pageTitle = $ptName !== ''
+            ? ($ptName . ($ptNationality !== '' ? ' – ' . $ptNationality : '') . ' escort in ' . $ptCity)
+            : 'Escort profile in ' . $ptCity;
+        $pageDescription = trim(\Str::of((string) optional($user)->about)->stripTags()->squish()->limit(160));
+        view()->share('pageTitle', $pageTitle);
+        if ($pageDescription !== '') {
+            view()->share('pageDescription', $pageDescription);
+        }
+
         return view('livewire.profile-details', compact('user', 'images', 'rev', 'countries', 'reviews', 'questions', 'profile', 'profileClaimed'));
     }
 

@@ -20,7 +20,9 @@
 // PHP reads these line-by-line and updates `users_profiles.phone`.
 
 import { chromium } from 'playwright';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname } from 'node:path';
 
 // BASE host is driven by config.baseHost (from MASSAGE_REPUBLIC_HOST in
 // .env). Default is the open-traffic mirror .tk — the .com host front-
@@ -337,14 +339,37 @@ async function main() {
     launchOpts.args.push(`--host-resolver-rules=MAP ${rule}`);
   }
 
+  // Persist login session between runs so we don't POST /accounts/sign_in
+  // on every 30-min scheduler tick — that pattern is exactly what
+  // Cloudflare / MR treats as bot behavior. On the next run the cookies
+  // are already in place, the goto /sign-in redirects straight to
+  // /my-account, and login() short-circuits (see the landedUrl check in
+  // login()). If MR ever invalidates the cookie the login flow runs again
+  // and re-saves fresh state. Path is overrideable via config.sessionPath.
+  const sessionPath = config.sessionPath
+    || `${homedir()}/.cache/mr-phone-worker/session.json`;
+  const hasSession = existsSync(sessionPath);
+  if (hasSession) {
+    step(`session: reusing persisted state from ${sessionPath}`);
+  } else {
+    step(`session: no persisted state at ${sessionPath} — will login fresh`);
+  }
+
   step('boot: chromium.launch');
   const browser = await withTimeout(chromium.launch(launchOpts), 60000, 'chromium.launch');
   step('boot: browser.newContext');
-  const context = await withTimeout(browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  const contextOpts = {
+    // Chrome 130+ UA — MR/Cloudflare cross-checks reported version against
+    // TLS/HTTP2 fingerprint; the old Chrome 126 string was flagged as a
+    // bot signal. Bump when Chrome major bumps (roughly every 4 weeks).
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    locale: 'en-US',
+    timezoneId: 'Europe/London',
     ignoreHTTPSErrors: true,
-    viewport: { width: 1280, height: 800 },
-  }), 30000, 'browser.newContext');
+    viewport: { width: 1366, height: 768 },
+  };
+  if (hasSession) contextOpts.storageState = sessionPath;
+  const context = await withTimeout(browser.newContext(contextOpts), 30000, 'browser.newContext');
   step('boot: addInitScript');
   // Kill navigator.webdriver so Cloudflare doesn't insta-block. Wrapped
   // in try/catch inside the browser context because navigator.webdriver
@@ -365,7 +390,29 @@ async function main() {
   try {
     const loginPage = await context.newPage();
     try {
-      await login(loginPage, config.username, config.password);
+      try {
+        await login(loginPage, config.username, config.password);
+      } catch (loginErr) {
+        // If we had a persisted session that's now stale/rejected, wipe it
+        // so the next run starts from a clean slate instead of looping on
+        // the same dead cookies.
+        if (hasSession) {
+          try { unlinkSync(sessionPath); step(`session: removed stale state at ${sessionPath}`); }
+          catch (e) { step(`session: could not remove stale state — ${e.message}`); }
+        }
+        throw loginErr;
+      }
+      // Save the fresh cookies so the next run skips the login form entirely
+      // via the "already signed in" short-circuit in login(). Best-effort;
+      // failure here doesn't break the current run.
+      try {
+        const dir = dirname(sessionPath);
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+        await context.storageState({ path: sessionPath });
+        step(`session: saved to ${sessionPath}`);
+      } catch (e) {
+        step(`session: save failed — ${e.message}`);
+      }
     } finally {
       await loginPage.close().catch(() => {});
     }

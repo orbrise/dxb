@@ -86,8 +86,11 @@
     @if(!empty($setting->favicon))
     <link href="{{ smart_asset($setting->favicon) }}" rel="shortcut icon" type="image/x-icon" />
     @endif
-    <title>{{ $seoTitle ?? 'Evoory - Premium Escort Directory' }}</title>
-    <meta name="description" content="{{ $seoDescription ?? 'Connect with escorts from Dubai and around the world. Premium escort directory with verified listings.' }}">
+    {{-- Per-page title override wins over the SeoComposer's $seoTitle so
+         profile detail pages can show the profile name in the browser tab
+         while listing pages keep their SEO-driven title. --}}
+    <title>{{ $pageTitle ?? $seoTitle ?? 'Evoory - Premium Escort Directory' }}</title>
+    <meta name="description" content="{{ $pageDescription ?? $seoDescription ?? 'Connect with escorts from Dubai and around the world. Premium escort directory with verified listings.' }}">
     @if(!empty($seoKeywords))
     <meta name="keywords" content="{{ $seoKeywords }}">
     @endif

@@ -1855,7 +1855,7 @@
    data-profile-id="{{ $user->id }}"
    data-phone="{{ $phoneForLink }}"
    data-profile-url="{{ url()->current() }}"
-   href="https://wa.me/{{ $phoneForLink }}?text=Hi, I found your profile on MassageRepublic: {{ url()->current() }}"
+   href="https://wa.me/{{ $phoneForLink }}?text=Hi, I found your profile on evoory: {{ url()->current() }}"
    title="WhatsApp"
    target="_blank"
    onclick="handleWhatsAppClick(event, this)">
@@ -3091,7 +3091,7 @@ function handleWhatsAppClick(event, element) {
     var profileId = element.getAttribute('data-profile-id');
     var phone = element.getAttribute('data-phone');
     var profileUrl = element.getAttribute('data-profile-url');
-    var fallbackMessage = 'Hi, I found your profile on MassageRepublic: ' + profileUrl;
+    var fallbackMessage = 'Hi, I found your profile on evoory: ' + profileUrl;
     
     // Fetch the next rotation message from API
     fetch('/api/whatsapp-message/' + profileId + '?url=' + encodeURIComponent(profileUrl))

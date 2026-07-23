@@ -334,7 +334,7 @@ div.listings div.listing-li::after {
 
 /* "See more & contact" button */
 .listing-li a.btn.btn-dark {
-    background: #131616 !important;
+    background: #1f2121  !important;
     color: #C1F11D !important;
     border: none !important;
     box-shadow: none !important;
@@ -1410,7 +1410,7 @@ button.btn.btn-primary#submit[type="submit"]:hover {
 /* "See more & contact" button - outlined style on mobile */
 @media (max-width: 768px) {
     .listing-li a.btn.btn-dark {
-        background: #131616 !important;
+        background: #1f2121  !important;
         color: #C1F11D !important;
         
         border-radius: 5px !important;

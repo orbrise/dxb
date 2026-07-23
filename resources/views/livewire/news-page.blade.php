@@ -1557,7 +1557,22 @@ form.activity-nav-form input.search-bar--city:focus-visible {
             @endforeach
         @endif
         
-        @if($items->hasMorePages() || $items->count() >= 3)
+        {{-- Empty state: shown when the paginator has no items AND the
+             pre-rendered cached HTML is also empty. Without this, cities
+             like Bajram Curri that have zero escort activity render just
+             the header + a blank <ul>, which looks like a broken page. --}}
+        @if($items->count() === 0 && empty(trim($activityItemsHtml ?? '')))
+        <li class="ev-news-empty" style="text-align:center;padding:60px 20px;color:#8a8a8a;list-style:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5;margin-bottom:12px;">
+                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+                <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
+            </svg>
+            <p style="margin:0;font-size:15px;font-weight:500;color:#c9c9c9;">No news yet in {{ ucwords(str_replace('-', ' ', $selectedcity ?: 'this location')) }}</p>
+            <p style="margin:6px 0 0;font-size:13px;color:#8a8a8a;">Be the first to know when new escorts, reviews, or questions appear here.</p>
+        </li>
+        @endif
+
+        @if($items->count() > 0 && ($items->hasMorePages() || $items->count() >= 3))
         {{-- IntersectionObserver fires loadMore() when the trigger is within
              100px of the viewport. Reduced from 500px which made the trigger
              "visible" on initial render of short pages and fired loadMore

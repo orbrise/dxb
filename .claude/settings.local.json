@@ -15,7 +15,8 @@
       "Bash(php artisan *)",
       "Bash(awk 'NR>=449 && NR<=470' resources/views/livewire/news-page.blade.php)",
       "Bash(grep -n 'yield\\\\|@yield\\\\|{{$slot}}\\\\|main\\\\|<body' 'c:\\\\laragon\\\\www\\\\dxb\\\\resources\\\\views\\\\components\\\\layouts\\\\app.blade.php')",
-      "Bash(grep -oE \"@media[^{]*\\\\{[^@]{0,2000}\\\\.visible-xxs[^}]*\\\\}\" \"c:/laragon/www/dxb/public/assets/css/_legacy/legacy-listing-bundle.css\")"
+      "Bash(grep -oE \"@media[^{]*\\\\{[^@]{0,2000}\\\\.visible-xxs[^}]*\\\\}\" \"c:/laragon/www/dxb/public/assets/css/_legacy/legacy-listing-bundle.css\")",
+      "WebFetch(domain:wasender.online)"
     ]
   }
 }

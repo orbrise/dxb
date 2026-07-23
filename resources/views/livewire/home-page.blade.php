@@ -357,10 +357,52 @@
             font-weight: 700 !important;
             margin: 0 0 10px !important;
             line-height: 1.2 !important;
-            overflow-wrap: anywhere !important;
-            word-break: break-word !important;
+            /* Single-line truncation with ellipsis. Some imported profiles
+               from MR have $profile->name containing the entire "Name –
+               Nationality escort in City" string (see
+               MassageRepublicImporter.php:172), which wraps to two lines
+               and pushes the description down. Do NOT set display here —
+               .ev-fallback-name is shared by --mobile and --desktop
+               variants and each one relies on responsive display:none
+               rules to hide the wrong variant per breakpoint. Forcing
+               display:block here made BOTH titles render at once. */
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            overflow-wrap: normal !important;
+            word-break: normal !important;
+            max-width: 100% !important;
         }
-        .ev-empty-listings-wrap .ev-fallback-name a { color: #fff !important; text-decoration: none !important; }
+        .ev-empty-listings-wrap .ev-fallback-name a {
+            color: #fff !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            vertical-align: bottom !important;
+        }
+
+        /* Regular listing card titles — same problem as fallback cards:
+           imported MR profiles have the full "Name – Nationality escort
+           in City" string in $profile->name, so the H2 wraps to a
+           second line and pushes the description down. Clamp to one line
+           with ellipsis. The badge is inside the <a>, so it gets
+           truncated together with the name if the row overflows —
+           acceptable trade-off vs. a wrapped title. Applied to premium /
+           featured / basic / free listing variants (all share
+           .listing-info h2). */
+        .listings .listing-li .listing-info h2,
+        .listings .listing-li .listing-info h2 a.nostyle-link {
+            display: block !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            overflow-wrap: normal !important;
+            word-break: normal !important;
+            max-width: 100% !important;
+        }
         .ev-empty-listings-wrap .ev-fallback-desc,
         .ev-empty-listings-wrap .ev-fallback-info a p,
         .ev-empty-listings-wrap .ev-fallback-info p {
