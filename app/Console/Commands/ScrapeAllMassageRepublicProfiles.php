@@ -14,7 +14,17 @@ class ScrapeAllMassageRepublicProfiles extends Command
 
     protected $description = 'Run scrape:massagerepublic for a list of cities sequentially — the next city starts only when the previous one finishes.';
 
-    protected array $defaultCities = ['istanbul', 'london', 'antalya', 'batumi', 'beijing'];
+    protected array $defaultCities = [
+        // Existing rotation
+        'istanbul', 'london', 'antalya', 'batumi', 'beijing',
+        // Asia
+        'bangkok', 'new-delhi', 'mumbai', 'manila', 'singapore',
+        // Europe
+        'paris',
+        // Middle East (MR slugs are hyphenated lowercase; drop "Al " prefix
+        // on Manama since MR indexes it as just "manama")
+        'dubai', 'abu-dhabi', 'al-manama', 'doha', 'kuwait',
+    ];
 
     public function handle(): int
     {

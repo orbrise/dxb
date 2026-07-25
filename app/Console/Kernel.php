@@ -40,7 +40,7 @@ class Kernel extends ConsoleKernel
         // Cities live in ScrapeAllMassageRepublicProfiles::$defaultCities.
         // Override at run time with --cities=istanbul,london,batumi.
         $schedule->command('scrape:massagerepublic:all --limit=20 --require-phone')
-            ->everyThirtyMinutes()
+            ->everyTwoHours()
             ->withoutOverlapping(240)
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/scraper-all.log'));
