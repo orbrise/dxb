@@ -15,6 +15,18 @@
 <div>
 <style>
         /* ===== EVOORY DARK THEME FOR NEW PROFILE ===== */
+        /* Reserve scrollbar gutter so the page never shifts horizontally
+           when a Livewire commit changes the height of the document
+           (which briefly toggled the vertical scrollbar on the first
+           commit after page load and made everything — dropdowns and
+           text alike — "shake" left/right). */
+        html {
+            scrollbar-gutter: stable !important;
+            overflow-y: scroll !important;
+        }
+        body {
+            overflow-x: hidden !important;
+        }
         body, .content-wrapper, #content {
             background-color: #0a0b0d !important;
         }
@@ -345,8 +357,8 @@
             border: none !important;
             border-radius: 50px !important;
             font-weight: 500 !important;
-            padding: 8px 30px !important;
-            font-size: 20px !important;
+            padding: 5px 30px !important;
+            font-size: 16px !important;
         }
 
         /* Radio buttons & checkboxes */
@@ -370,11 +382,12 @@
         }
         .btn-primary.btn-lg#submit {
             background: #c8ff00 !important;
-            color: #000 !important;
-            border: none !important;
-            border-radius: 50px !important;
-            font-weight: 600 !important;
-            padding: 10px 106px !important;
+    color: #000 !important;
+    border: none !important;
+    border-radius: 50px !important;
+    font-weight: 500 !important;
+    padding: 7px 40px !important;
+    font-size: 16px !important;
         }
         .btn-primary.btn-lg#submit:hover {
             background: #b5e600 !important;
@@ -605,12 +618,22 @@
             padding: 0px 24px 0px 8px;
             cursor: pointer;
             min-height: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
             font-size: 12px;
             color: #fff;
             border-radius: 5px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .custom-select2-selection > * {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            min-width: 0;
         }
         
         .custom-select2-selection:hover {
@@ -1944,7 +1967,16 @@ div#basic {
                   <div id="contact-information">
                     <h2 class="h3 title-block">Contact information</h2>
                     <label>phone:</label>
-                    <div class="inline-group">
+                    {{-- wire:ignore is critical here: legacy app2.js inserts an
+                         "+ Add another phone" button between the two
+                         phone_number blocks after page load. That button isn't
+                         in the server HTML, so on the first Livewire commit
+                         morph removes it — the vertical collapse of ~40px
+                         causes every element below to jump, which visually
+                         reads as the whole page "shaking" left/right.
+                         wire:model inputs inside still submit via change
+                         events, so form functionality is unaffected. --}}
+                    <div class="inline-group" wire:ignore>
                       <div class="form-group phone_number">
                         <div style="margin-bottom:15px" class="d-flex align-items-center wrappper" >
                           <div class="insidewrapper" wire:ignore>
@@ -2028,9 +2060,10 @@ div#basic {
                         <div class="form-group">
                           <div class="form-group boolean optional listing_show_contact_form">
                             <input value="0" type="hidden" name="listing[show_contact_form]" />
-                            <label class="boolean optional control-label checkbox" for="show-contact-form">
-                              <input id="show-contact-form" class="boolean optional" type="checkbox" value="1" checked="checked" name="listing[show_contact_form]" />Show contact form and send messages to: </label>
+                            <!-- <label class="boolean optional control-label checkbox" for="show-contact-form"> -->
+                              <!-- <input id="show-contact-form" class="boolean optional" type="checkbox" value="1" checked="checked" name="listing[show_contact_form]" />Show contact form and send messages to: </label> -->
                           </div>
+                          <label class="string optional control-label" for="listing_contact_email_address">Email</label>
                           <input class="string optional form-control validate" readonly data-validations="presence emailFormat" type="text" value="{{$user->email}}" name="listing[contact_email_address]" id="listing_contact_email_address" />
                         </div>
                       </div>
@@ -2872,9 +2905,30 @@ window.CustomSelect2 = class CustomSelect2 {
     }
     
     init() {
+        // Wrap the select + custom wrapper inside a wire:ignore holder so
+        // Livewire's morph cannot descend into this subtree at all. Without
+        // this, morph would either strip our JS-added wire:ignore/display
+        // attributes or remove the sibling wrapper as an "extra child" —
+        // both cause the visible dropdown-shake on the first commit and,
+        // worse, leave the raw native <select> exposed.
+        //
+        // display:contents makes the holder invisible to CSS layout: its
+        // children (the select and our wrapper) render exactly as if they
+        // were direct children of the original parent, so no flex/grid
+        // layout is disturbed.
+        if (!this.selectElement.parentElement || !this.selectElement.parentElement.classList.contains('custom-select2-holder')) {
+            const holder = document.createElement('div');
+            holder.className = 'custom-select2-holder';
+            holder.setAttribute('wire:ignore', '');
+            holder.style.display = 'contents';
+            this.selectElement.parentNode.insertBefore(holder, this.selectElement);
+            holder.appendChild(this.selectElement);
+        }
+        this.holder = this.selectElement.parentElement;
+
         // Hide original select
         this.selectElement.style.display = 'none';
-        
+
         // Create custom select container
         this.container = document.createElement('div');
         this.container.className = 'custom-select2';
@@ -2911,10 +2965,11 @@ window.CustomSelect2 = class CustomSelect2 {
         this.resultsList.className = 'custom-select2-results';
         this.dropdown.appendChild(this.resultsList);
         
-        // Append elements
+        // Append elements. The wrapper goes inside the wire:ignore holder,
+        // right after the (hidden) original select.
         this.container.appendChild(this.selectionBox);
         this.container.appendChild(this.dropdown);
-        this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
+        this.holder.appendChild(this.container);
         
         // Populate options
         this.populateOptions();
@@ -3080,9 +3135,10 @@ window.CustomSelect2 = class CustomSelect2 {
         optionElement.classList.add('selected');
 
         // Closed-state display:
-        // - Flag-enabled dropdowns → show <flag> +dial (matches the
-        //   reference design with country flag + code).
-        // - Otherwise → extract the +code prefix from the option text.
+        // - Flag-enabled dropdowns → show <flag> +dial (compact for the
+        //   narrow phone-code column).
+        // - Otherwise → show the full option text so users can see what
+        //   they picked (country name, currency name, etc.).
         const iso = optionElement.dataset.iso;
         const dial = optionElement.dataset.dial;
         if (iso && dial) {
@@ -3091,10 +3147,7 @@ window.CustomSelect2 = class CustomSelect2 {
                 'alt="" width="22" height="16" loading="lazy">' +
                 '<span class="custom-select2-selection-code">+' + dial + '</span>';
         } else {
-            const fullText = optionElement.textContent.trim();
-            const codeMatch = fullText.match(/^(\+\d+)/);
-            const displayText = codeMatch ? codeMatch[1] : fullText.split('-')[0].trim();
-            this.selectionBox.innerHTML = displayText;
+            this.selectionBox.textContent = optionElement.textContent.trim();
         }
         
         // Update original select
@@ -3122,65 +3175,97 @@ window.CustomSelect2 = class CustomSelect2 {
 
 // Initialize custom select2 ONLY for selects with .apply-custom-select2 class
 function initializeCustomSelect2() {
-    console.log('Initializing Custom Select2...');
-    
     // Find all selects with the class .apply-custom-select2
     const customSelects = document.querySelectorAll('select.apply-custom-select2');
-    
+
     customSelects.forEach(select => {
-        if (!select.customSelect2Instance) {
-            const wireModel = select.getAttribute('wire:model');
-            const placeholder = select.querySelector('option[value=""]')?.textContent || 'Select...';
-            
-            select.customSelect2Instance = new CustomSelect2(select, {
-                placeholder: placeholder,
-                searchable: true,
-                onChange: (value) => {
-                    // Trigger native change event for wire:model to pick up
-                    select.value = value;
-                    select.dispatchEvent(new Event('change', { bubbles: true }));
-                    select.dispatchEvent(new Event('input', { bubbles: true }));
-                    
-                    // Also try direct Livewire sync
-                    if (wireModel && typeof Livewire !== 'undefined') {
-                        try {
-                            // Find the Livewire component
-                            const component = Livewire.find(select.closest('[wire\\:id]')?.getAttribute('wire:id'));
-                            if (component) {
-                                component.set(wireModel, value);
-                            }
-                        } catch (e) {
-                            console.log('Livewire sync fallback:', e);
-                        }
-                    }
-                }
-            });
-            console.log('Initialized custom select2 for:', select.id || wireModel);
-        }
+        // Re-init if the previous instance's DOM was ripped out by Livewire
+        // morph (the holder or wrapper is no longer connected to document).
+        const inst = select.customSelect2Instance;
+        const instanceIsLive = inst && inst.container && document.body.contains(inst.container);
+        if (instanceIsLive) return;
+
+        // Clear any stale instance reference before re-wrapping.
+        select.customSelect2Instance = null;
+
+        const wireModel = select.getAttribute('wire:model');
+        const placeholder = select.querySelector('option[value=""]')?.textContent || 'Select...';
+
+        select.customSelect2Instance = new CustomSelect2(select, {
+            placeholder: placeholder,
+            searchable: true,
+            onChange: (value) => {
+                // Sync the value into the native <select> and fire input/change
+                // so wire:model captures it — but DO NOT call component.set(),
+                // which would force an immediate Livewire commit → full DOM
+                // morph → visible page "shake"/"reload" feel. wire:model is
+                // deferred by default in Livewire 3: the value is sent with
+                // the next real server action (e.g. form submit). That's all
+                // we need for the form to submit correctly, without paying
+                // for a round-trip on every dropdown selection.
+                select.value = value;
+                select.dispatchEvent(new Event('input', { bubbles: true }));
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
     });
-    
-    console.log('Custom Select2 initialized for', customSelects.length, 'dropdowns');
 }
 
-// Destroy all custom select2 instances
+// Watchdog: Livewire's morph is stripping our custom-select2 wrappers and
+// resetting `display:none` on the underlying <select>, even inside wire:ignore.
+// A MutationObserver fires in a microtask (before the browser paints the
+// next frame), so restoring the wrapping here happens without any visible
+// flash — the user never sees the raw native <select>.
+let _select2WatchdogInstalled = false;
+function installSelect2Watchdog() {
+    if (_select2WatchdogInstalled) return;
+    _select2WatchdogInstalled = true;
+
+    const root = document.querySelector('[wire\\:id]') || document.body;
+    const observer = new MutationObserver(() => {
+        // Fast-path: bail if every instance is still healthy.
+        let needsRestore = false;
+        document.querySelectorAll('select.apply-custom-select2').forEach(select => {
+            const inst = select.customSelect2Instance;
+            if (!inst || !inst.container || !document.body.contains(inst.container)) {
+                needsRestore = true;
+            } else if (select.style.display !== 'none') {
+                // Morph reset our inline style — hide again.
+                select.style.display = 'none';
+            }
+        });
+        if (needsRestore) initializeCustomSelect2();
+    });
+    observer.observe(root, { childList: true, subtree: true });
+}
+
+// Destroy stale / orphaned custom select2 instances. Selects that are
+// still wrapped correctly are left alone — otherwise every Livewire
+// commit would tear down and rebuild every dropdown on the page, causing
+// them all to visibly shake and briefly expose the native <select>.
 function destroyCustomSelect2() {
-    const allSelects = document.querySelectorAll('select');
-    allSelects.forEach(select => {
+    document.querySelectorAll('select.apply-custom-select2').forEach(select => {
+        // Selects inside wire:ignore are never touched by Livewire morph,
+        // so their wrapper is guaranteed intact — skip them entirely.
+        if (select.closest('[wire\\:ignore]')) return;
+
+        const wrapper = select.nextElementSibling;
+        const wrapperOk = wrapper && wrapper.classList && wrapper.classList.contains('custom-select2');
+
+        // Already wrapped and the wrapper is still adjacent → morph didn't
+        // affect this one, leave the existing instance alive.
+        if (select.customSelect2Instance && wrapperOk) return;
+
+        // Otherwise the instance is stale (select was replaced by morph or
+        // its wrapper was detached). Tear it down and let init rebuild it.
         if (select.customSelect2Instance) {
             try { select.customSelect2Instance.destroy(); } catch (e) {}
             select.customSelect2Instance = null;
         }
-        // The CustomSelect2 wrapper may have been stripped by Livewire's
-        // morph but left the inline `display:none` on the original select.
-        // Clear it so the select doesn't stay invisible if we fail to wrap.
-        if (select.classList && select.classList.contains('apply-custom-select2')) {
-            select.style.display = '';
-        }
+        select.style.display = '';
     });
-    // Sweep any leftover .custom-select2 wrappers whose select reference
-    // is stale (the select was removed/replaced by morph). Without this,
-    // a morph that removed the select still leaves the empty wrapper in
-    // the DOM, blocking re-init of the new select sitting beside it.
+
+    // Sweep leftover wrappers whose <select> is gone.
     document.querySelectorAll('.custom-select2').forEach(wrap => {
         const prev = wrap.previousElementSibling;
         if (!prev || prev.tagName !== 'SELECT' || !prev.classList.contains('apply-custom-select2')) {
@@ -3192,7 +3277,7 @@ function destroyCustomSelect2() {
 // Refresh function
 function refreshCustomSelect2() {
     destroyCustomSelect2();
-    setTimeout(initializeCustomSelect2, 50);
+    initializeCustomSelect2();
 }
 
 // Initialize on different events
@@ -3202,13 +3287,55 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 window.addEventListener('load', function() {
-    console.log('Window loaded, checking Custom Select2...');
     const firstSelect = document.getElementById('first_phone_code');
     if (firstSelect && !firstSelect.customSelect2Instance) {
-        console.log('Custom Select2 not initialized, initializing now...');
         initializeCustomSelect2();
     }
 });
+
+// wire:navigate swaps the DOM without firing DOMContentLoaded/window.load
+// or livewire:initialized again — those all ran on the previous page. The
+// canonical Livewire 3 event that DOES fire after every wire:navigate
+// page swap is `livewire:navigated`. Defer to the next tick so the new
+// DOM is fully in place before we try to wrap the selects.
+document.addEventListener('livewire:navigated', function () {
+    setTimeout(function () {
+        if (typeof initializeCustomSelect2 === 'function') {
+            initializeCustomSelect2();
+        }
+        if (typeof installSelect2Watchdog === 'function') {
+            installSelect2Watchdog();
+        }
+        ensureAddPhoneButton();
+    }, 0);
+});
+
+// The legacy app2.js inserts the "+ Add another phone" button on initial
+// document.ready. That doesn't fire on wire:navigate, so the button is
+// missing after SPA navigation. Recreate it here (idempotent — bails if
+// already present) so the button appears regardless of how the user got
+// to this page.
+function ensureAddPhoneButton() {
+    if (document.getElementById('add-phone')) return; // already there
+    var sections = document.querySelectorAll('.form-group.phone_number');
+    if (sections.length < 2) return;
+    var secondSection = sections[sections.length - 1];
+    // Hide the second phone section by default (the user reveals it by
+    // clicking the button we're about to insert).
+    secondSection.style.display = 'none';
+
+    var btn = document.createElement('a');
+    btn.id = 'add-phone';
+    btn.href = '#add-alternate-phone';
+    btn.className = 'btn btn-dark';
+    btn.textContent = '+ Add another phone';
+    btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        btn.style.display = 'none';
+        secondSection.style.display = '';
+    });
+    secondSection.parentNode.insertBefore(btn, secondSection);
+}
 
 // Livewire integration. After Livewire morphs the DOM (file upload,
 // validation refresh, etc.) every select that wasn't inside `wire:ignore`
@@ -3226,37 +3353,33 @@ function scheduleSelect2Refresh(label) {
 
 if (typeof Livewire !== 'undefined') {
     document.addEventListener('livewire:initialized', () => {
-        console.log('Livewire initialized, refreshing Custom Select2...');
         refreshCustomSelect2();
 
-        // The Livewire.hook API is the canonical Livewire 3 way to react
-        // to DOM updates — runs after each component's morph completes,
-        // even when no document-level event fires. We do this lazily
-        // (inside livewire:initialized) because Livewire.hook isn't
-        // available before init.
+        // Install the DOM watchdog that immediately restores our wrappers if
+        // Livewire's morph strips them. It fires in a microtask before paint,
+        // so the raw <select> is never visible to the user.
+        installSelect2Watchdog();
+
         try {
             if (typeof Livewire.hook === 'function') {
-                Livewire.hook('morph.updated', () => scheduleSelect2Refresh('hook:morph.updated'));
-                Livewire.hook('commit', ({ succeed }) => {
-                    succeed(() => scheduleSelect2Refresh('hook:commit.succeed'));
+                // Best-effort: also try to prevent morph from removing the
+                // wrapper in the first place. The watchdog above catches the
+                // cases where this hook is bypassed.
+                Livewire.hook('morph.removing', ({ el, skip }) => {
+                    if (el && el.classList && el.classList.contains('custom-select2')) {
+                        skip();
+                    }
                 });
             }
         } catch (e) { console.warn('[select2] could not bind Livewire.hook:', e); }
 
         // The component dispatches `fileUploaded` after a photo upload —
-        // morph fires right after that and wipes Select2 wrappers. Catch
-        // it explicitly so we re-init even if the morph hook is missed.
+        // that re-renders large chunks of the DOM. Only refresh in that
+        // specific case, not on every commit.
         try {
             Livewire.on('fileUploaded', () => scheduleSelect2Refresh('event:fileUploaded'));
         } catch (e) { console.warn('[select2] could not bind Livewire.on:', e); }
     });
-
-    // Document-level fallback events. These bubble up from the component
-    // root when Livewire 3 morphs it — sometimes they fire when the hook
-    // doesn't (e.g. file-input change pipeline), so keep them as a safety net.
-    document.addEventListener('livewire:morphed', () => scheduleSelect2Refresh('doc:morphed'));
-    document.addEventListener('livewire:morph.updated', () => scheduleSelect2Refresh('doc:morph.updated'));
-    document.addEventListener('livewire:update', () => scheduleSelect2Refresh('doc:update'));
 }
 
 // ============================================
@@ -4300,21 +4423,16 @@ function updatePhoneMask(countryCode, phoneInputId) {
     }
 }
 
-// Listen for country code changes on first phone
+// Listen for country code changes on first phone. Clear the value
+// locally so the user sees an empty field for the new format, but do NOT
+// dispatch input/change events — those would trigger a second Livewire
+// commit right after the countrycode commit, causing double-morph and
+// a visible reflow ("shake" / apparent page reload). The .inline-group
+// wrapper has wire:ignore, so this local change persists across morphs.
 $(document).on('change', '#first_phone_code', function() {
     const countryCode = $(this).val();
     const phoneInput = document.getElementById('listing_phone_numbers_attributes_0_phone_digits');
-    
-    if (!phoneInput) return;
-    
-    // Clear the phone number field
-    phoneInput.value = '';
-    
-    // Dispatch change event to sync with Livewire
-    phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
-    phoneInput.dispatchEvent(new Event('change', { bubbles: true }));
-    
-    // Update mask and placeholder
+    if (phoneInput) phoneInput.value = '';
     updatePhoneMask(countryCode, 'listing_phone_numbers_attributes_0_phone_digits');
 });
 

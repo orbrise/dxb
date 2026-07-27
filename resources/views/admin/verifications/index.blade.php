@@ -188,15 +188,15 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
                                         <td>
                                             <div class="profile-photos">
                                          
-                                                @if($photo->profile && $photo->profile->singleimg->image)
-                                                <img src="{{smart_asset("userimages/".$photo->profile->user_id."/".$photo->profile->id."/".$photo->profile->singleimg->image)}}" 
+                                                @if($photo->profile && $photo->profile->singleimg && $photo->profile->singleimg->image)
+                                                <img src="{{smart_asset("userimages/".$photo->profile->user_id."/".$photo->profile->id."/".$photo->profile->singleimg->image)}}"
                                                 class="img-thumbnail">
                                                 @else
                                                     <span class="text-muted">No profile images</span>
                                                 @endif
                                             </div>
                                         </td>
-                                        <td> <div class="badge bg-warning " style="font-size:20px" >{{$photo->profile->photo_code}}</span></div>
+                                        <td> <div class="badge bg-warning " style="font-size:20px" >{{$photo->profile?->photo_code}}</span></div>
                                         <td>{{ $photo->created_at->diffForHumans() }}</td>
                                         <td>
                                             <button class="btn btn-info btn-sm view-btn" 

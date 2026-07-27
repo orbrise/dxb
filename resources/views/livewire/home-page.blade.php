@@ -158,10 +158,10 @@
             background-image: none !important;
             color: #000 !important;
             border: none !important;
-            padding: 5px 18px !important;
+            padding: 3px 12px !important;
             border-radius: 24px !important;
-            font-size: 16px !important;
-            font-weight: 600 !important;
+            font-size: 12px !important;
+            font-weight: 400 !important;
             text-decoration: none !important;
             transition: background 0.15s ease !important;
         }

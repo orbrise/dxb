@@ -121,7 +121,14 @@
     
     {{-- Use optimized CSS (62KB external file instead of inline) --}}
     @include('components.layouts.css-optimized')
-    
+
+    {{-- Load evoory-theme.css so pages on this legacy layout render the
+         ev-header / ev-nav / ev-footer partials identically to pages on
+         the app-evoory layout. Prevents the visible header drift users
+         see when navigating between an app-evoory page (e.g. my-profile)
+         and a default-layout page (e.g. upgrade). --}}
+    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v={{ @filemtime(public_path('assets/css/evoory-theme.css')) ?: 1 }}">
+
     <!-- Font Awesome font preload for faster icon rendering -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     

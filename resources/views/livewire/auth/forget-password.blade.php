@@ -107,7 +107,7 @@
 .ev-auth-input:focus{outline:none;border-color:#3d475d}
 
 .ev-login-actions{display:flex;gap:12px;align-items:center;margin-top:1.5rem}
-.ev-btn-signin{height:34px;min-width:126px;border-radius:5px;border:none;background:#c1f11d;color:#111;font-size:20px;font-weight:500;padding:0 20px;cursor:pointer}
+.ev-btn-signin{height:36px;border-radius:999px;border:none;background:#c1f11d;color:#111;font-size:18px;font-weight:500;padding:0 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .ev-btn-signin[disabled]{opacity:.7;cursor:not-allowed}
 
 .ev-spinner{animation:ev-spin 1s linear infinite;vertical-align:middle}
@@ -145,7 +145,7 @@
   .ev-login-logo span{
     color:#C1F11D;
     font-size:24px;
-    font-weight:600;
+    font-weight:500;
     font-style:italic;
   }
   .ev-login-welcome{
@@ -185,10 +185,10 @@
   .ev-login-actions{margin-top:20px}
   .ev-btn-signin{
     width:100%;
-    height:48px;
-    border-radius:5px;
-    font-size:16px;
-    font-weight:600;
+    height:36px;
+    border-radius:999px;
+    font-size:18px;
+    font-weight:500;
   }
 
   .ev-signup-link{margin-top:0;font-size:14px}

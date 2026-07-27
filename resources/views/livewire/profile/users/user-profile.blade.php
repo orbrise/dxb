@@ -222,8 +222,8 @@
             border: none !important;
             border-radius: 50px !important;
             font-weight: 500 !important;
-            padding: 8px 30px !important;
-            font-size: 20px !important;
+            padding: 5px 30px !important;
+            font-size: 16px !important;
         }
 
         /* Radio buttons & checkboxes */
@@ -252,6 +252,7 @@
             border-radius: 50px !important;
             font-weight: 600 !important;
             padding: 10px 40px !important;
+            margin-bottom:2rem;
         }
         .btn-primary.btn-lg#submit:hover {
             background: #b5e600 !important;

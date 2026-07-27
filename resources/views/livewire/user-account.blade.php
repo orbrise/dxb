@@ -122,24 +122,25 @@
         color: #fff;
     }
     .ev-edit-btn {
-        position: absolute;
-        bottom: 8px;
-        right: 8px;
-        color: var(--accent, #C1F11D);
-        background: var(--bg-card-hover, #222222);
-        border: 1px solid var(--border-color, #2a2a2a);
-        width: 36px;
+        margin-top: 16px;
+        color: #111;
+        background: var(--accent, #C1F11D);
+        border: none;
         height: 36px;
-        border-radius: 50%;
-        display: flex;
+        border-radius: 999px;
+        padding: 0 20px;
+        display: inline-flex;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
         align-items: center;
         justify-content: center;
-        text-decoration: none;
-        transition: all 0.2s ease;
+        transition: background 0.2s ease;
     }
     .ev-edit-btn:hover {
-        background: var(--accent, #C1F11D);
-        color: #000;
+        background: #d4ff2b;
+        color: #111;
     }
     .ev-credits-amount {
         color: #fff;
@@ -793,9 +794,9 @@
             margin-bottom: 2px;
         }
         .ev-edit-btn {
-            width: 30px;
-            height: 30px;
-            font-size: 12px;
+            height: 34px;
+            font-size: 13px;
+            padding: 0 18px;
         }
 
         /* Credits card - mobile layout */
@@ -1190,10 +1191,11 @@
                             </li>
                         </ul>
                     </div>
-                    <a class="ev-edit-btn" href="/my-account/edit">
-                        <i class="fa fa-pencil-alt"></i>
-                    </a>
                 </div>
+                <a class="ev-edit-btn" href="/my-account/edit">
+                    <i class="fa fa-pencil-alt"></i>
+                    <span>Edit</span>
+                </a>
             </div>
 
             {{-- Credits card --}}

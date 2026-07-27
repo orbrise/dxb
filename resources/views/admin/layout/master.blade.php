@@ -242,6 +242,10 @@ background-color: transparent !important;
     margin-left: 0px;
 }
 
+img.logo-expand {
+    width: 70%;
+}
+
 </style>
 </head>
 

@@ -1749,10 +1749,11 @@
                 </div>
               </div>
 
-              <div style="text-align:center;">
+              <div style="text-align:left;">
                 <button data-btn-submit="" type="submit"
                   style="background:#c8ff00;color:#000;font-weight:500;font-size:15px;border:none;border-radius:50px;padding:5px 30px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
-                  Send <i class="fa fa-chevron-right" style="font-size:12px;"></i>
+                  Send
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
               </div>
             </form>

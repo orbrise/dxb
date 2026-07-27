@@ -84,14 +84,16 @@
         }
 
         .btn {
-            padding: 12px 28px;
+            padding: 0 26px;
+            height: 40px;
             font-size: 15px;
             font-weight: 500;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 999px;
             transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             border: none;
             cursor: pointer;
@@ -131,7 +133,7 @@
             .error-code { font-size: 100px; letter-spacing: -2px; }
             .error-title { font-size: 24px; }
             .error-message { font-size: 15px; }
-            .btn { padding: 12px 24px; font-size: 14px; }
+            .btn { padding: 0 24px; height: 40px; font-size: 14px; }
             .error-actions { flex-direction: column; }
             .error-brand-logo { font-size: 26px; }
         }

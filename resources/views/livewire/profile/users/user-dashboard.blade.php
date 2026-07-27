@@ -166,7 +166,7 @@
         overflow: hidden;
     }
     .ev-profile-card .ev-location {
-        color: #777;
+        color: #b5b5b5;
         font-size: 13px;
         margin-bottom: 10px;
     }
@@ -183,6 +183,7 @@
     .ev-btn {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 6px;
         padding: 8px 16px;
         border-radius: 8px;
@@ -192,6 +193,13 @@
         cursor: pointer;
         border: none;
         transition: all 0.2s;
+        /* Normalize <button> vs <a> rendering: browsers give <button>
+           a different default line-height, font-family, and box model
+           than anchors, which made the Pause/Resume button render
+           shorter than the sibling Edit/View/Upgrade/Delete anchors. */
+        line-height: 1.4;
+        font-family: inherit;
+        box-sizing: border-box;
     }
     .ev-btn-accent {
         background: #C1F11D;
@@ -1168,7 +1176,14 @@
                                 <a class="ev-btn ev-btn-dark" href="{{ $profileUrl }}">
                                     <i class="fa fa-eye"></i> View
                                 </a>
-                                <a class="ev-btn ev-btn-dark" href="/my-profile/{{$profile->slug}}/{{$profile->id}}/upgrade" wire:navigate>
+                                {{-- No wire:navigate here: the upgrade page uses
+                                     a different layout than this dashboard, so
+                                     Livewire's head-swap between the two would
+                                     briefly drop FontAwesome and cause all
+                                     button icons on this page to visibly
+                                     disappear before the redirect. A full page
+                                     load avoids that transition. --}}
+                                <a class="ev-btn ev-btn-dark" href="/my-profile/{{$profile->slug}}/{{$profile->id}}/upgrade">
                                     <i class="fa fa-arrow-up"></i> Upgrade
                                 </a>
                                 @if($profile->is_active == 1)

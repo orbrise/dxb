@@ -567,7 +567,7 @@ a.text-warning:focus, a.text-warning {
                                 <i class="fa fa-spinner fa-spin fa-2x"></i>
                                 <p class="mt-2">Loading secure payment form...</p>
                               </div>
-                              <iframe id="primary-gateway-iframe" style="display: none; width: 100%; min-height: 450px; border: none; border-radius: 8px;" allowpaymentrequest></iframe>
+                              <iframe id="primary-gateway-iframe" style="display: none; width: 100%; height: 570px; min-height: 570px; border: none; border-radius: 8px;" allowpaymentrequest></iframe>
                             </div>
                             
                             <p class="small text-muted text-center mt-3">Secure payment processing. Your card details are protected.</p>

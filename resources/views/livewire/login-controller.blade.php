@@ -96,6 +96,7 @@
                     <button class="ev-btn-signin" type="submit" wire:loading.attr="disabled" wire:target="loginNow">
                         <span class="ev-btn-signin-label" wire:loading.remove wire:target="loginNow">
                             <span>Sign in</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </span>
                         <span class="ev-btn-signin-label" wire:loading wire:target="loginNow" style="gap:6px;white-space:nowrap;">
                             <svg class="ev-spinner" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -190,10 +191,10 @@
 .ev-forgot{color:#b5df19;text-decoration:none;font-size:14px}
 
 .ev-login-actions{display:flex;gap:12px;align-items:center;margin-top:2rem}
-.ev-btn-signin{height:34px;min-width:126px;border-radius:5px;border:none;background:#c1f11d;color:#111;font-size:20px;font-weight:500;padding:0 20px;cursor:pointer}
+.ev-btn-signin{height:36px;border-radius:999px;border:none;background:#c1f11d;color:#111;font-size:16px;font-weight:500;padding:0 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .ev-btn-signin-label{display:inline-flex;align-items:center;gap:2px}
 .ev-btn-signin[disabled]{opacity:.7;cursor:not-allowed}
-.ev-btn-register{height:34px;min-width:126px;border-radius:5px;border:1px solid #31384a;color:#b5df19;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:14px;padding:0 18px}
+.ev-btn-register{height:36px;border-radius:999px;border:1px solid #31384a;color:#b5df19;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:18px;padding:0 18px}
 
 .ev-confirm-link{display:inline-block;margin-top:3rem;color:#b5df19;text-decoration:none;font-size:14px}
 
@@ -234,7 +235,7 @@
   .ev-login-logo span{
     color:#C1F11D;
     font-size:24px;
-    font-weight:600;
+    font-weight:500;
     font-style:italic;
   }
   .ev-login-welcome{
@@ -287,11 +288,11 @@
     width:auto;
     min-width:0;
     max-width:100%;
-    height:40px;
-    padding:0 60px;
+    height:36px;
+    padding:0 40px;
     border-radius:999px;
-    font-size:15px;
-    font-weight:600;
+    font-size:18px;
+    font-weight:500;
     white-space:nowrap;
   }
   .ev-btn-register{display:none}

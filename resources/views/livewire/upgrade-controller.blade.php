@@ -280,6 +280,26 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
 .checkout-button:hover { background: #d4f84d !important; color: #000 !important; }
 
 /* btn-primary override */
+/* Force black text on the wallet-payment button. The form-scoped
+   .upgrade-listing-form .btn-primary rule below sets color:#000, but
+   something in the loaded stylesheets was overriding it with white on
+   this specific button, so target it by ID as well. */
+#wallet-payment-button,
+#wallet-payment-button *,
+#wallet-payment-button .button-text,
+#wallet-payment-button .button-spinner,
+#wallet-payment-button .payment-amount {
+    color: #000 !important;
+}
+/* Width 70% of the section, horizontally centered. .btn-block would
+   otherwise stretch this to the full container width. */
+#wallet-payment-button {
+    width: 50% !important;
+    max-width: 55% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: flex !important;
+}
 .upgrade-listing-form .btn-primary {
     background: #C1F11D !important;
     color: #000 !important;
@@ -652,7 +672,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
                                 <i class="fa fa-spinner fa-spin fa-2x"></i>
                                 <p class="mt-2">Loading secure payment form...</p>
                               </div>
-                              <iframe id="primary-gateway-iframe" style="display: none; width: 100%; min-height: 450px; border: none; border-radius: 8px;" allowpaymentrequest></iframe>
+                              <iframe id="primary-gateway-iframe" style="display: none; width: 100%; height: 570px; min-height: 570px; border: none; border-radius: 8px;" allowpaymentrequest></iframe>
                             </div>
                             
                             <p class="small text-muted text-center mt-3">Secure payment processing. Your card details are protected.</p>
@@ -662,7 +682,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
                         <!-- PayPal Payment Section -->
                         <div id="paypal-payment-section" class="block p-0 mb-3 payment-section" style="display: none; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;">
                           <div class="p-3">
-                            <p style="color:#fff !important;">You will be charged <strong style="color:#C1F11D !important;">$<span class="payment-amount"></span></strong> via PayPal.</p>
+                            <p style="color:#fff !important;">You will be charged <strong style="">$<span class="payment-amount"></span></strong> via PayPal.</p>
                             {{-- PayPal renders its own white card inside this container.
                                  The wrapper above is dark to match the rest of the page
                                  so the "You will be charged" line and the footer note

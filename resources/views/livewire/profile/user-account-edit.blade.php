@@ -214,7 +214,11 @@
         right: auto;
         width: 320px;
         max-width: calc(100vw - 32px);
-        max-height: 280px;
+        /* Dynamic max-height: never taller than the space between the
+           dropdown's top edge and the bottom of the viewport, capped at
+           280px. Prevents the dropdown from extending below the fold
+           (and past the footer) when the trigger sits low on the page. */
+        max-height: min(280px, calc(100vh - 220px));
         overflow-y: auto;
         background: var(--bg-card, #1a1a1a);
         border: 1px solid var(--border-color, #2a2a2a);
@@ -332,7 +336,7 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 28px;
+        padding: 5px 28px;
         background: var(--accent, #C1F11D);
         color: #000;
         border: none;
@@ -592,19 +596,36 @@
 
                     <div class="ev-form-group">
                         <label for="my_account_display_name">Display name</label>
-                        <input wire:model.live.debounce.500ms="display_name" class="ev-input" maxlength="191" type="text" id="my_account_display_name" />
+                        <input wire:model="display_name" class="ev-input" maxlength="191" type="text" id="my_account_display_name" />
                         @error('display_name') <span class="ev-text-danger">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="ev-form-group">
                         <label for="my_account_about_me">About me</label>
-                        <textarea wire:model.live.debounce.500ms="about_me" rows="4" class="ev-input" id="my_account_about_me"></textarea>
+                        {{-- Fully deferred (no modifier): the value syncs to
+                             the server only on the next real action (form
+                             submit). If we used .blur here, clicking away to
+                             the country code dropdown would trigger a commit
+                             → morph → the dropdown's inline display:block
+                             would get reset to display:none from server
+                             HTML, making it appear to open then instantly
+                             close on the first click. --}}
+                        <textarea wire:model="about_me" rows="4" class="ev-input" id="my_account_about_me"></textarea>
                     </div>
 
                     <div class="ev-form-group">
                         <label>Phone Number</label>
                         <div class="ev-phone-row">
-                            <div class="ev-country-select">
+                            {{-- wire:ignore is critical here: typing in the
+                                 About Me textarea triggers a debounced
+                                 wire:model.live commit every 500ms, which
+                                 morphs the DOM and replaces #countryCodeDisplay
+                                 with a fresh element that has no click handler
+                                 attached — making the dropdown appear disabled.
+                                 wire:ignore keeps this subtree untouched. The
+                                 hidden input syncs via change event so
+                                 wire:model still works for form submit. --}}
+                            <div class="ev-country-select" wire:ignore>
                                 <div class="ev-country-display" id="countryCodeDisplay">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <img id="selectedFlag" src="https://flagcdn.com/w40/{{ $countrycode ? strtolower(\App\Models\Country::where('phonecode', $countrycode)->first()?->iso ?? 'ae') : 'ae' }}.png" style="width: 24px; height: 16px; object-fit: cover; border-radius: 2px; {{ $countrycode ? '' : 'display: none;' }}">
@@ -626,7 +647,7 @@
                                 </div>
                                 <input type="hidden" wire:model.live="countrycode" id="my_account_countrycode">
                             </div>
-                            <input wire:model.live.debounce.500ms="phone" class="ev-input" placeholder="Phone number" type="text" id="my_account_phone" style="flex: 1;" />
+                            <input wire:model="phone" class="ev-input" placeholder="Phone number" type="text" id="my_account_phone" style="flex: 1;" />
                         </div>
                         @error('countrycode') <span class="ev-text-danger">{{ $message }}</span> @enderror
                         @error('phone') <span class="ev-text-danger">{{ $message }}</span> @enderror
@@ -640,9 +661,9 @@
                         <div class="ev-avatar-section">
                             <div class="ev-avatar-preview">
                                 @if(!empty(auth()->user()->avatar))
-                                    <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Profile photo">
+                                    <img id="my_account_avatar_preview" src="{{ Storage::url(auth()->user()->avatar) }}" alt="Profile photo">
                                 @else
-                                    <img src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim(auth()->user()->email))) }}?s=128&d=identicon" alt="Profile photo">
+                                    <img id="my_account_avatar_preview" src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim(auth()->user()->email))) }}?s=128&d=identicon" alt="Profile photo">
                                 @endif
                             </div>
                             <div class="ev-avatar-controls">
@@ -652,7 +673,7 @@
                                     </button>
                                 @endif
                                 <div>
-                                    <input wire:model="avatar" accept="image/jpeg,image/jpg,image/png,image/gif" class="ev-file-input" type="file" name="my_account[avatar]" id="my_account_avatar">
+                                    <input wire:model="avatar" accept="image/jpeg,image/jpg,image/png,image/gif" class="ev-file-input" type="file" name="my_account[avatar]" id="my_account_avatar" onchange="(function(el){var f=el.files&&el.files[0];if(!f)return;var img=document.getElementById('my_account_avatar_preview');if(!img)return;var r=new FileReader();r.onload=function(e){img.src=e.target.result;};r.readAsDataURL(f);})(this)">
                                     @error('avatar') <span class="ev-text-danger">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -851,78 +872,109 @@ function updatePhoneMask(countryCode, phoneInputId) {
     }
 }
 
+// All handlers use event delegation on `document` so they survive any
+// Livewire morph that may replace the inner dropdown elements. Bind once
+// with a global guard so we don't attach duplicate listeners on reload.
 function initAccountCountryDropdown() {
-    const display = document.getElementById('countryCodeDisplay');
-    const dropdown = document.getElementById('countryDropdown');
-    const searchInput = document.getElementById('countrySearch');
-    const countryList = document.getElementById('countryList');
-    const hiddenInput = document.getElementById('my_account_countrycode');
-    const selectedFlag = document.getElementById('selectedFlag');
-    const selectedCode = document.getElementById('selectedCode');
-    
-    if (!display || !dropdown || display.dataset.initialized) return;
-    display.dataset.initialized = 'true';
-    
-    // Apply mask for existing country code on page load
+    // Apply mask for existing country code on page load.
+    var hiddenInput = document.getElementById('my_account_countrycode');
     if (hiddenInput && hiddenInput.value) {
         updatePhoneMask(hiddenInput.value, 'my_account_phone');
     }
-    
-    // Toggle dropdown
-    display.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const isOpen = dropdown.style.display === 'block';
-        dropdown.style.display = isOpen ? 'none' : 'block';
-        if (!isOpen) {
-            searchInput.value = '';
-            countryList.querySelectorAll('.country-option').forEach(opt => opt.style.display = 'flex');
-            searchInput.focus();
-        }
-    });
-    
-    // Search functionality
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const options = countryList.querySelectorAll('.country-option');
-        options.forEach(function(option) {
-            const name = option.dataset.name.toLowerCase();
-            const code = option.dataset.code;
-            if (name.includes(searchTerm) || code.includes(searchTerm)) {
-                option.style.display = 'flex';
-            } else {
-                option.style.display = 'none';
+
+    if (window.__acctCountryDropdownBound) return;
+    window.__acctCountryDropdownBound = true;
+
+    function $(id) { return document.getElementById(id); }
+    function closeDropdown() {
+        var dd = $('countryDropdown');
+        if (dd) dd.style.display = 'none';
+    }
+
+    document.addEventListener('click', function (e) {
+        // 1) Toggle dropdown when the country display is clicked
+        if (e.target.closest && e.target.closest('#countryCodeDisplay')) {
+            e.stopPropagation();
+            var dd = $('countryDropdown');
+            var trig = $('countryCodeDisplay');
+            if (!dd) return;
+            var isOpen = dd.style.display === 'block';
+            dd.style.display = isOpen ? 'none' : 'block';
+            if (!isOpen) {
+                var search = $('countrySearch');
+                var list = $('countryList');
+                if (search) search.value = '';
+                if (list) list.querySelectorAll('.country-option').forEach(function (opt) { opt.style.display = 'flex'; });
+                // Flip the dropdown upward if there's not enough room
+                // below the trigger — prevents overflowing past the footer.
+                if (trig) {
+                    var rect = trig.getBoundingClientRect();
+                    var spaceBelow = window.innerHeight - rect.bottom;
+                    var spaceAbove = rect.top;
+                    var ddHeight = dd.offsetHeight || 280;
+                    if (spaceBelow < ddHeight && spaceAbove > spaceBelow) {
+                        dd.style.top = 'auto';
+                        dd.style.bottom = '100%';
+                        dd.style.marginBottom = '4px';
+                        dd.style.marginTop = '';
+                    } else {
+                        dd.style.top = '100%';
+                        dd.style.bottom = 'auto';
+                        dd.style.marginTop = '4px';
+                        dd.style.marginBottom = '';
+                    }
+                }
+                if (search) { try { search.focus(); } catch (_) {} }
             }
-        });
-    });
-    
-    // Select country
-    countryList.addEventListener('click', function(e) {
-        const option = e.target.closest('.country-option');
+            return;
+        }
+
+        // 2) Select a country when an option is clicked
+        var option = e.target.closest && e.target.closest('#countryList .country-option');
         if (option) {
-            const code = option.dataset.code;
-            const iso = option.dataset.iso;
-            
-            selectedFlag.src = 'https://flagcdn.com/w40/' + iso + '.png';
-            selectedFlag.style.display = 'block';
-            selectedCode.textContent = '+' + code;
-            
-            hiddenInput.value = code;
-            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-            
-            // Apply phone mask for selected country
-            updatePhoneMask(code, 'my_account_phone');
-            
-            dropdown.style.display = 'none';
-            searchInput.value = '';
-            countryList.querySelectorAll('.country-option').forEach(opt => opt.style.display = 'flex');
+            var code = option.dataset.code;
+            var iso = option.dataset.iso;
+            var flag = $('selectedFlag');
+            var label = $('selectedCode');
+            var hidden = $('my_account_countrycode');
+            if (flag) {
+                flag.src = 'https://flagcdn.com/w40/' + iso + '.png';
+                flag.style.display = 'block';
+            }
+            if (label) label.textContent = '+' + code;
+            if (hidden) {
+                hidden.value = code;
+                hidden.dispatchEvent(new Event('input',  { bubbles: true }));
+                hidden.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            if (typeof updatePhoneMask === 'function') {
+                updatePhoneMask(code, 'my_account_phone');
+            }
+            closeDropdown();
+            var search = $('countrySearch');
+            if (search) search.value = '';
+            var list = $('countryList');
+            if (list) list.querySelectorAll('.country-option').forEach(function (opt) { opt.style.display = 'flex'; });
+            return;
+        }
+
+        // 3) Click outside the dropdown/trigger → close it
+        var dd = $('countryDropdown');
+        var trig = $('countryCodeDisplay');
+        if (dd && trig && !dd.contains(e.target) && !trig.contains(e.target)) {
+            dd.style.display = 'none';
         }
     });
-    
-    // Close dropdown on outside click
-    document.addEventListener('click', function(e) {
-        if (!display.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
+
+    // Search filter (also delegated so it survives morph)
+    document.addEventListener('input', function (e) {
+        if (!e.target || e.target.id !== 'countrySearch') return;
+        var term = (e.target.value || '').toLowerCase();
+        document.querySelectorAll('#countryList .country-option').forEach(function (opt) {
+            var name = (opt.dataset.name || '').toLowerCase();
+            var code = (opt.dataset.code || '');
+            opt.style.display = (name.indexOf(term) !== -1 || code.indexOf(term) !== -1) ? 'flex' : 'none';
+        });
     });
 }
 
