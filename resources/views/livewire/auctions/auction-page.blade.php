@@ -179,24 +179,29 @@
     margin: 2px 0 14px;
 }
 
-/* Make Offer button */
-.auction-overlay .btn-offer {
+/* Make Offer button.
+   `!important` on color is required because evoory-homepage-base.css
+   sets `a { color: #C1F11D !important; }` globally, which would render
+   the button text lime-on-lime (invisible). */
+.auction-overlay .btn-offer,
+.auction-overlay a.btn-offer {
     background: #C1F11D;
-    color: #000;
+    color: #000 !important;
     border: none;
-    padding: 8px 24px;
+    padding: 5px 24px;
     border-radius: 22px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    text-decoration: none;
+    text-decoration: none !important;
     transition: all 0.3s ease;
     display: inline-block;
 }
-.auction-overlay .btn-offer:hover {
+.auction-overlay .btn-offer:hover,
+.auction-overlay a.btn-offer:hover {
     background: #d4f84d;
-    color: #000;
-    text-decoration: none;
+    color: #000 !important;
+    text-decoration: none !important;
 }
 
 /* Timer */
@@ -308,7 +313,7 @@
             @endforelse
         </div>
 
-        <hr style="border-color: #2a2a2a; margin: 40px 0;" />
+       
     </div>
 </div>
 </div>

@@ -44,9 +44,14 @@ class AuctionPage extends Component
     
     public function render()
     {
+    // Only show truly-biddable spots: active status AND no winner yet.
+    // Once a winner_profile_id is set, the spot is claimed (whether the
+    // auction was awarded manually or ended naturally) and should not
+    // appear in the "Make Offer" auction listing.
     $this->auctions = Auction::where('city_id', $this->cityId)
         ->where('gender', $this->gender)
         ->where('status', 'active')
+        ->whereNull('winner_profile_id')
         ->orderBy('spot_number')
         ->with(['bids.profile', 'winnerProfile', 'city'])
         ->get();
