@@ -127,9 +127,17 @@ public $reportDescription;
         $this->images = $images;
 
         // idx_reviews_user_profile (user_id, profile_id) makes this a 1-row indexed lookup.
-        $rev = auth()->check()
-            ? Review::where('user_id', auth()->id())->where('profile_id', $this->profileid)->exists()
-            : false;
+        // Fetch the row itself so we can distinguish pending (status=0) from
+        // approved (status=1). Without this the review modal keeps showing
+        // "Waiting for moderation" even after the admin approves.
+        $userReview = auth()->check()
+            ? Review::where('user_id', auth()->id())
+                ->where('profile_id', $this->profileid)
+                ->select('id', 'status')
+                ->first()
+            : null;
+        $rev = (bool) $userReview;
+        $revApproved = $userReview && (int) $userReview->status === 1;
 
         $countries = CacheService::getCountries();
         $reviews = CacheService::getProfileReviews($this->profileid);
@@ -161,7 +169,7 @@ public $reportDescription;
             view()->share('pageDescription', $pageDescription);
         }
 
-        return view('livewire.profile-details', compact('user', 'images', 'rev', 'countries', 'reviews', 'questions', 'profile', 'profileClaimed'));
+        return view('livewire.profile-details', compact('user', 'images', 'rev', 'revApproved', 'countries', 'reviews', 'questions', 'profile', 'profileClaimed'));
     }
 
     public function postreview()
@@ -187,7 +195,11 @@ public $reportDescription;
                 'profile_id' => $this->profileid,
                 'review' => $this->review,
                 'star' => $this->star,
-                'status' => 'pending'
+                // reviews.status is INT: 0 = pending, 1 = approved (see
+                // ReviewController::approve). Writing the string 'pending'
+                // here silently coerced to 0 — same net value but confusing;
+                // use the numeric convention consistently.
+                'status' => 0,
             ]);
         } catch (\Throwable $e) {
             \Log::error('Review submission failed: ' . $e->getMessage(), [

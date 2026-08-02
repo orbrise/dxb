@@ -99,14 +99,18 @@ class Conversation extends Model
     }
 
     /**
-     * Get unread count for a specific user
+     * Get unread count for a specific user. A message is unread until Chat::markAsRead
+     * stamps it 'read' on open — that method treats NULL, 'sent', 'delivered', and
+     * 'unread' all as unread, so we must too. Previously this only counted NULL /
+     * 'unread', so freshly sent messages (which land as 'sent' or 'delivered') were
+     * invisible to per-conversation badges and to /my-account's Messages badge.
      */
     public function getUnreadCountFor(int $userId): int
     {
         return $this->messages()
             ->where('sender_id', '!=', $userId)
             ->where(function($q) {
-                $q->whereNull('status')->orWhere('status', 'unread');
+                $q->whereNull('status')->orWhereIn('status', ['sent', 'delivered', 'unread']);
             })
             ->count();
     }

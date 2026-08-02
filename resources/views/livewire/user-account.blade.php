@@ -152,7 +152,7 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 10px 20px;
+        padding: 5px 20px;
         background: var(--accent, #C1F11D);
         color: #000;
         border: none;
@@ -168,7 +168,7 @@
         transform: translateY(-1px);
     }
     .ev-payments-label {
-        color: var(--text-muted, #666);
+        color: white;
         font-size: 12px;
         margin: 16px 0 8px 0;
     }
@@ -207,8 +207,8 @@
         background: #dc3545;
         color: #fff;
         font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 8px;
+        padding: 1px 6px;
+        border-radius: 50%;
         font-weight: 600;
     }
     .ev-newsletter-text {
@@ -794,7 +794,7 @@
             margin-bottom: 2px;
         }
         .ev-edit-btn {
-            height: 34px;
+            height: 30px;
             font-size: 13px;
             padding: 0 18px;
         }
@@ -1231,10 +1231,24 @@
 
             {{-- Communication card --}}
             @php
-                $userProfiles = \App\Models\UsersProfile::where('user_id', auth()->id())->pluck('id');
-                $unreadMsgCount = \App\Models\Message::whereIn('profile_id', $userProfiles)
+                // Mirror the chat page's unread logic exactly: count unread messages
+                // in conversations the user participates in, EXCLUDING messages the
+                // user themselves sent. Previously this counted messages by
+                // messages.profile_id (legacy pre-conversation schema), which
+                // surfaced a badge count that /my-chat couldn't show.
+                $uid = auth()->id();
+                $convoIds = \App\Models\Conversation::query()
+                    ->where(function($q) use ($uid) {
+                        $q->where('user_one_id', $uid)->orWhere('user_two_id', $uid);
+                    })
+                    ->pluck('id');
+                // Match Chat::markAsRead's definition of "unread": a message is
+                // unread until the recipient opens the conversation and it gets
+                // stamped 'read'. Statuses along the way: NULL → sent → delivered.
+                $unreadMsgCount = \App\Models\Message::whereIn('conversation_id', $convoIds)
+                    ->where('sender_id', '!=', $uid)
                     ->where(function($q) {
-                        $q->whereNull('status')->orWhere('status', 'unread');
+                        $q->whereNull('status')->orWhereIn('status', ['sent', 'delivered', 'unread']);
                     })
                     ->count();
             @endphp
@@ -1242,7 +1256,7 @@
                 <h2>
                     <i class="fa fa-comments ev-card-icon"></i> Communication
                     @if($unreadMsgCount > 0)
-                        <span class="ev-badge" style="background:#dc3545;color:#fff;font-size:11px;padding:3px 8px;border-radius:10px;">{{ $unreadMsgCount }}</span>
+                        <span class="ev-badge" style="background:#dc3545;color:#fff;font-size:11px;padding:1px 8px;border-radius:50%;">{{ $unreadMsgCount }}</span>
                     @endif
                 </h2>
                 <ul class="ev-comm-list">

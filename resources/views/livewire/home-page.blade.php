@@ -107,6 +107,106 @@
             animation: shimmer 1.5s ease-in-out infinite !important;
         }
 
+        /* === Auction winner cards — match Daisy design reference ===
+           Solid dark-olive/lime background that hugs the card content only.
+           Applied ONLY when the .spot contains a winner profile card (not
+           the empty auction-cover overlay for unclaimed spots). The inner
+           `.listing-li--spot.premium` already has `.p-3` (1rem) padding, so
+           .spot itself gets zero padding — otherwise the olive fill spills
+           below the card and covers the separator into the next spot (bug
+           the user reported showing the olive bleeding into "Available Spot"
+           beneath Jessica's card). `overflow: hidden` clips any floated
+           children (.thumbs .pull-left) that would otherwise extend the
+           .spot box beyond its visible content. */
+        .spot:not(:has(.auction-cover)) {
+            /* Semi-transparent olive fill (#2a350569 = 41% alpha), the exact
+               color the user picked in dev tools. No border. */
+            background: #2a350569 !important;
+            border: 0 !important;
+            border-radius: 8px !important;
+            padding: 10px 10px  4px !important ;
+            margin: 0 0 12px !important;
+            /* Height = content height. Any legacy .listings-spots > .spot
+               min-height / padding-bottom from the base bundle gets nuked
+               here so the olive fill never extends into the separator
+               between cards. */
+            min-height: 0 !important;
+            height: auto !important;
+            overflow: hidden !important;
+        }
+        /* Kill trailing whitespace / clearfix pseudos inside the inner card
+           that would otherwise sit BELOW the "See more & contact" button
+           and get painted olive. */
+        .spot:not(:has(.auction-cover)) .listing-info-wrapper,
+        .spot:not(:has(.auction-cover)) .listing-info,
+        .spot:not(:has(.auction-cover)) .listing-info .see-more {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+            border: 0 !important;
+            border-top: 0 !important;
+            border-bottom: 0 !important;
+        }
+        /* Kill the thin separator line inherited from the legacy listing
+           CSS that draws a top-border on .see-more (or a bottom-border on
+           the info body) inside auction cards — reads as a horizontal
+           line across the card just above the "See more & contact" button. */
+        .spot:not(:has(.auction-cover)) .listing-info p,
+        .spot:not(:has(.auction-cover)) .listing-info a,
+        .spot:not(:has(.auction-cover)) .thumbs,
+        .spot:not(:has(.auction-cover)) .main-thumbs,
+        .spot:not(:has(.auction-cover)) .other-thumbs {
+            border: 0 !important;
+        }
+        /* The .visible-xxs H2 wraps the profile name + badge chips as a
+           mobile-only title. On desktop Bootstrap 3's .visible-xxs is
+           `display:none`, but Bootstrap 4 dropped that class — so the
+           lime badges (review count, question count) leak in as two small
+           green squares at the bottom-left of the auction card. Force
+           hidden on desktop. */
+        @media (min-width: 480px) {
+            .spot:not(:has(.auction-cover)) h2.visible-xxs {
+                display: none !important;
+            }
+        }
+        .spot:not(:has(.auction-cover)) .listing-li--spot.premium {
+            background: transparent !important;
+            margin: 0 !important;
+            /* Kill the inner card's own .p-3 (1rem) padding — the .spot
+               wrapper now handles the inset — otherwise we'd get 16px + 16px
+               of double padding and the card would look bloated. */
+            padding: 0 !important;
+            /* evoory-homepage.css sets `.listing-li { border-bottom: 1px
+               solid rgba(255,255,255,.1); padding-bottom:20px; margin-bottom:20px }`.
+               Inside the olive auction card that bottom border reads as a
+               horizontal separator sitting just above "See more & contact"
+               — the exact line the user pointed to. Nuke it. */
+            border: 0 !important;
+            border-bottom: 0 !important;
+        }
+        /* The vertical `border-left: 1px solid rgba(255,255,255,.1)` that
+           evoory-homepage.css puts on `.listing-info` (the divider between
+           thumbnails and info column) also reads as a stray line in the
+           olive card, since the whole card is a single visual unit here. */
+        .spot:not(:has(.auction-cover)) .listing-info {
+            border-left: 0 !important;
+        }
+        /* Clear the floated .thumbs so the card's bottom edge equals the
+           taller of (thumbs, listing-info), instead of leaving float
+           whitespace below the info column that the olive paints into. */
+        .spot:not(:has(.auction-cover)) .listing-li--spot.premium::after {
+            content: '';
+            display: block;
+            clear: both;
+        }
+        /* Unclaimed spots (with auction-cover) keep the default look —
+           no lime background, since they still show the "Make offer" UI. */
+        .spot:has(.auction-cover) {
+            background: transparent !important;
+            border: 0 !important;
+            padding: 0 !important;
+            margin-bottom: 12px !important;
+        }
+
         /* === Themed city search dropdown (overrides .citys/.opt from listing-page-inline.css) === */
         #cityappend.citys {
             width: 100% !important;
@@ -1465,15 +1565,21 @@
           @endforeach
         @endif
       </p>
-      <div class="listings listings-spots listing-spots--minimal border-top padding-top mx-n2 mx-sm-0">
-        
+          <div class=" listings-spots listing-spots--minimal border-top @if($auctions->count() > 0)  listings padding-top mx-n2 mx-sm-0 @endif" style="padding-top:0px !important">
      
        @if($auctions->count() > 0)
+           
+
 <div class="listings listings-spots listing-spots--minimal border-bottom mx-n2 mx-sm-0">
   @foreach($auctions as $auction)
   <div class="spot">
-    {{-- Only show the auction bidding overlay for active auctions AND logged in users --}}
-    @if($auction->status == 'active' && Auth::check())
+    {{-- Only show the auction bidding overlay for active auctions AND logged
+         in users AND when the spot has NOT been won yet. Once a profile is
+         set as winner_profile_id the spot is claimed and cannot accept more
+         offers, so the "Make offer" CTA must not be shown — otherwise the
+         card looks bid-able while the underlying spot is already awarded
+         (the flow the user reported for Jessica on Spot #1). --}}
+    @if($auction->status == 'active' && Auth::check() && empty($auction->winner_profile_id))
     <div class="auction-cover d-flex align-items-center flex-wrap" style="z-index:1;">
       <div class="d-flex flex-column align-items-center align-self-start justify-content-between flex-sidebar">
         <div class="spot-id pt-3 px-3 pb-2 text-uppercase small">Spot&nbsp;#{{ $auction->spot_number }}</div>
@@ -1705,8 +1811,15 @@
                   @endif
                 </h2>
                 
-                @if($auction->status == 'ended' && $auction->winnerProfile)
-                  {{-- For ended auctions with winners, show the winner's profile content --}}
+                @if($auction->winnerProfile)
+                  {{-- Spot is claimed — either the auction has ended with a
+                       winner (status == 'ended') OR a winner has already been
+                       set while the auction is technically still active.
+                       Either way the card must read like a real profile
+                       listing (about excerpt + "See more & contact"), not a
+                       biddable auction slot. Was previously gated on
+                       `status == 'ended'` alone, which left active auctions
+                       with a winner still showing the "Make a bid" CTA. --}}
                   <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
                     <p>{{ str()->of($auction->winnerProfile->about)->stripTags()->squish()->limit(290) }}</p>
                   </a>
@@ -1716,7 +1829,8 @@
                     </a>
                   </p>
                 @else
-                  {{-- For active auctions, show auction information --}}
+                  {{-- Truly available spot (no winner yet) — show the auction
+                       placeholder + Make a bid CTA. --}}
                   <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                     <p>This spot is available for auction. Place your bid to feature your profile here and get maximum visibility!</p>
                   </a>
@@ -1732,6 +1846,7 @@
         </div>
         @endforeach
       </div>
+
       @endif
         
         {{-- <div class="spot">
@@ -2324,7 +2439,7 @@
         </div>
         <h3>
           <a href="/female-escort-news-in-dubai">What&#39;s new?</a>
-          <a href="/female-escort-news-in-dubai" style="font-size:12px;color:#C1F11D !important">See more</a>
+          <a href="/female-escort-news-in-dubai" style="display:block;font-size:12px;color:#C1F11D !important;margin-top:4px;">See more</a>
         </h3>
         @if($reviews->count() > 0)
         <ul class="activity-stream activity-records-mini">

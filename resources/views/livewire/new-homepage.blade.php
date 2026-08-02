@@ -80,15 +80,24 @@ a {
 .evry-mcta { display: none; }
 
 @media (max-width: 767px) {
+    /* Match the .block cards above/below (Find an escort + Popular locations)
+       so this CTA sits in the same visual rhythm — same width, same radius,
+       same border tone. Was originally styled with a decorative blue border
+       and 18px radius which made it read as a different component. */
     .evry-mcta {
         display: block;
-        margin: 10px 0 25px;
+        margin: 0 0 20px;
     }
+    /* Sibling `.block` cards define only `background:rgba(0,0,0,.2);
+       border-radius:10px; padding:20px` — no explicit border. The visible
+       hairline outline comes from the theme's global card/box treatment
+       (inherited via .block). Mirror those exact values here so the middle
+       CTA blends into the same visual system. */
     .evry-mcta__card {
-        background: #000;
-        border: 1px solid #2a3a4a;
-        border-radius: 18px;
-        padding: 22px 20px;
+        background: rgba(0,0,0,.2);
+        border: 0;
+        border-radius: 10px;
+        padding: 20px;
     }
     .evry-mcta__head {
         display: flex;

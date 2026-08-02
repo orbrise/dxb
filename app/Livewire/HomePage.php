@@ -93,6 +93,7 @@ class HomePage extends Component
 
     public function mount($city = '', $gender = '', $page = 1, $isMobile = false, $showMobileSearch = false)
 {
+    
     $this->gender = $gender;
     $this->isMobile = $isMobile;
     $this->showMobileSearch = $showMobileSearch;
@@ -258,7 +259,11 @@ public function submitMobileSearch()
                             'photoverify:id,profile_id,status',
                             // Note: multipleimgs is attached manually below — eager-load with limit() is broken (LIMIT applies globally, not per-profile).
                         ]),
-                    'winnerProfile.city:id,name',
+                    // Relation on UsersProfile is `getcity`, not `city`
+                    // (see App\Models\UsersProfile). Loading `city` here
+                    // threw RelationNotFoundException and 500'd the whole
+                    // listing page whenever a matching auction existed.
+                    'winnerProfile.getcity:id,name',
                 ])
                 ->take(6)
                 ->get();

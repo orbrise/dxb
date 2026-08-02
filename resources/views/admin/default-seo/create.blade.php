@@ -74,6 +74,7 @@
                         <li><strong>escorts:</strong> Default for all escort-related pages</li>
                         <li><strong>homepage:</strong> Specific fallback for the homepage</li>
                         <li><strong>city-pages:</strong> Default for city-based pages</li>
+                        <li><strong>my-chat, about, sign-in, …:</strong> Match a specific frontend route path (see <a href="{{ route('default-seo.pages') }}">Page-Specific SEO</a>)</li>
                     </ul>
                 </div>
 
@@ -84,21 +85,21 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name">Setting Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" id="name" class="form-control @error('name') is-invalid @enderror" 
-                                       value="{{ old('name') }}" placeholder="e.g., global, escorts, homepage"
-                                       pattern="[a-z0-9\-]+" title="Only lowercase letters, numbers, and hyphens allowed">
+                                <input type="text" name="name" id="name" class="form-control @error('name') is-invalid @enderror"
+                                       value="{{ old('name', request('name')) }}" placeholder="e.g., global, escorts, homepage, my-chat"
+                                       pattern="[a-z0-9\-/]+" title="Lowercase letters, numbers, hyphens, and forward slashes allowed">
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <small class="form-text text-muted">Use lowercase letters, numbers, and hyphens only</small>
+                                <small class="form-text text-muted">Context name (e.g. <code>global</code>, <code>escorts</code>, <code>city-pages</code>) OR a page path (e.g. <code>my-chat</code>, <code>about</code>)</small>
                             </div>
                         </div>
                         
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="priority">Priority <span class="text-danger">*</span></label>
-                                <input type="number" name="priority" id="priority" class="form-control @error('priority') is-invalid @enderror" 
-                                       value="{{ old('priority', 1) }}" min="0" max="100">
+                                <input type="number" name="priority" id="priority" class="form-control @error('priority') is-invalid @enderror"
+                                       value="{{ old('priority', request('priority', 1)) }}" min="0" max="100">
                                 @error('priority')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -203,12 +204,12 @@ $(document).ready(function() {
                                      .text(message);
     });
     
-    // Normalize name field
+    // Normalize name field — allow letters, digits, hyphens, and forward slashes
+    // (so page paths like "my-chat" or "page/about" survive intact).
     $('#name').on('input', function() {
         let value = $(this).val();
-        // Convert to lowercase and replace spaces/special chars with hyphens
         value = value.toLowerCase()
-                    .replace(/[^a-z0-9\-]/g, '-')
+                    .replace(/[^a-z0-9\-/]/g, '-')
                     .replace(/-+/g, '-')
                     .replace(/^-|-$/g, '');
         $(this).val(value);

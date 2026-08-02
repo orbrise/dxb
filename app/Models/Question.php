@@ -14,7 +14,8 @@ class Question extends Model
         'question',
         'status',
         'answer',
-        'answer_status'
+        'answer_status',
+        'answered_at',
     ];
 
     public function getuser(){

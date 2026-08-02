@@ -43,7 +43,20 @@ class AppServiceProvider extends ServiceProvider
         // adding a DB roundtrip and crashing the whole app when MySQL was down.
         // Settings change rarely; admins can run `php artisan cache:forget app:setting`
         // (or clear the cache) to refresh sooner.
-        View::share('setting', Cache::remember('app:setting', 86400, fn() => Setting::find(1)));
+        //
+        // Guard against caching null: if Setting::find(1) ever returns null (transient
+        // DB blip, race during migrate, etc.) the null would stick for 24h and break
+        // every admin page's `$setting->favicon` access. Re-query live and refuse to
+        // persist a null value.
+        $setting = Cache::remember('app:setting', 86400, fn() => Setting::find(1));
+        if (!$setting) {
+            Cache::forget('app:setting');
+            $setting = Setting::find(1);
+            if ($setting) {
+                Cache::put('app:setting', $setting, 86400);
+            }
+        }
+        View::share('setting', $setting);
         
         // Register SEO View Composer for all views
         View::composer('*', SeoComposer::class);

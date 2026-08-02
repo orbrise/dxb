@@ -9,7 +9,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ smart_asset($setting->favicon) }}">
+    @if($setting?->favicon)
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ smart_asset($setting->favicon) }}">
+    @endif
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Dashboard</title>
     
@@ -229,7 +231,7 @@ background-color: transparent !important;
 
 
 .side-menu > li.current-page > a {
-    border-color: #c49116;
+    border-color: #c8ff00;
 }
 
 .side-menu > li > a .badge, .side-menu > li > a .label {

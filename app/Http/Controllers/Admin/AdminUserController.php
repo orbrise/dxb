@@ -16,26 +16,39 @@ class AdminUserController extends Controller
     {
         $query = User::with('profiles');
 
-        // Filter by ID
         if ($request->filled('id')) {
             $query->where('id', $request->id);
         }
 
-        // Filter by Name
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->name . '%');
         }
 
-        // Filter by Email
         if ($request->filled('email')) {
             $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('verified')) {
+            $query->where('verified', (int) $request->verified);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         // Get all users (DataTables handles pagination client-side)
         $users = $query->orderBy('id', 'desc')->get();
         $packages = Package::all();
         $countries = Country::orderBy('nicename')->get();
-        
+
         return view('admin.users', compact('users', 'packages', 'countries'));
     }
 

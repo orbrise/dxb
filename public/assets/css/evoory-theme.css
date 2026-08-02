@@ -129,14 +129,22 @@ button.ev-nav-link{height:35px;padding:12px 12px;font-size:14px;font-family:inhe
 .ev-country-modal.show{display:block}
 .ev-country-modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(2px)}
 .ev-country-modal-dialog{position:relative;z-index:1;max-width:980px;width:92%;margin:56px auto 0;background:#14141A;border:1px solid #5E6365;border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
-.ev-country-modal-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;padding:16px 18px;border-bottom:1px solid #2a2f3d}
+/* Head layout: title on the left, search filling the remaining space, close
+   button pinned to the top-right corner of the dialog (out of the grid flow
+   so it never overlaps the search input). */
+.ev-country-modal-head{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:16px;padding:16px 48px 16px 18px;border-bottom:1px solid #2a2f3d;position:relative}
 .ev-country-modal-title{display:flex;align-items:center;gap:8px;font-size:18px;color:#fff}
 .ev-country-modal-iso{font-weight:700;color:#fff}
 .ev-country-modal-name{font-weight:500;color:var(--accent)}
 .ev-country-modal-count{font-size:11px;color:#b9bfcd;margin-top:2px}
 .ev-country-modal-search-wrap{min-width:0}
-.ev-country-modal-search{width:100%;height:32px;border-radius:999px;border:1px solid #cfd2da;background:#f2f3f5;color:#0f1115;padding:0 14px;font-size:14px;outline:none}
-.ev-country-modal-close{width:36px;height:36px;border-radius:50%;border:1px solid #3a4154;background:transparent;color:#dbe1ee;cursor:pointer;font-size:24px;line-height:1}
+/* Dark-theme search input matching the rest of the modal (no more white pill). */
+.ev-country-modal-search{width:100%;height:36px;border-radius:8px;border:1px solid #2e3033;background:#0a0b0d;color:#fff;padding:0 14px;font-size:14px;outline:none;transition:border-color .15s ease, box-shadow .15s ease}
+.ev-country-modal-search::placeholder{color:#666}
+.ev-country-modal-search:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(193,241,29,.15)}
+/* Close button in the top-right corner of the dialog. */
+.ev-country-modal-close{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;border:1px solid #3a4154;background:transparent;color:#dbe1ee;cursor:pointer;font-size:22px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0;z-index:2}
+.ev-country-modal-close:hover{background:#1b2032;color:#fff;border-color:#59617a}
 .ev-country-modal-body{max-height:62vh;overflow:auto;padding:12px 18px 16px}
 .ev-city-group{margin:8px 0 14px}
 .ev-city-group-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
@@ -214,8 +222,11 @@ button.ev-nav-link{height:35px;padding:12px 12px;font-size:14px;font-family:inhe
   .ev-mobile-menu{display:none;background:var(--bg-secondary);border-bottom:1px solid var(--border-color)}
   .ev-mobile-menu.show{display:block}
   .ev-country-modal-dialog{width:95%;margin-top:20px}
-  .ev-country-modal-head{grid-template-columns:1fr auto;gap:12px}
+  /* Mobile: title on its own line, search below (both full-width). Close
+     stays absolute in the top-right — kept out of the grid entirely. */
+  .ev-country-modal-head{grid-template-columns:1fr;gap:10px;padding:14px 44px 14px 14px}
   .ev-country-modal-search-wrap{grid-column:1 / -1}
+  .ev-country-modal-close{top:8px;right:8px;width:30px;height:30px;font-size:20px}
   .ev-country-modal-body{max-height:70vh}
   .ev-hero-tagline{font-size:16px;padding:0 12px}
   .ev-search-section{padding:20px 0 4px}

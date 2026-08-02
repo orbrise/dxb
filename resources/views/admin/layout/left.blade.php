@@ -29,6 +29,12 @@
                             <li class="{{ Route::currentRouteName() == 'admin.verifications' ? 'active' : '' }}">
                                 <a class="ripple" href="{{route('admin.verifications')}}">
                                     <span class="hide-menu">Photo Verifications</span>
+                                    @php
+                                        $pendingVerifications = \App\Models\VerificationPhoto::where('status', 'pending')->count();
+                                    @endphp
+                                    @if($pendingVerifications > 0)
+                                        <span class="badge badge-pill badge-danger ml-2">{{ $pendingVerifications }}</span>
+                                    @endif
                                 </a>
                             </li>
                             <li class="{{ Route::currentRouteName() == 'admin.genders' ? 'active' : '' }}">
@@ -228,9 +234,14 @@
                                     <span class="hide-menu">SEO Keywords</span>
                                 </a>
                             </li>
-                            <li class="{{ str_contains(Route::currentRouteName(), 'default-seo') ? 'active' : '' }}">
+                            <li class="{{ Route::currentRouteName() === 'default-seo.index' || (str_contains(Route::currentRouteName(), 'default-seo') && Route::currentRouteName() !== 'default-seo.pages') ? 'active' : '' }}">
                                 <a class="ripple" href="{{route('default-seo.index')}}">
                                     <span class="hide-menu">Default SEO Settings</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() === 'default-seo.pages' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('default-seo.pages')}}">
+                                    <span class="hide-menu">Page-Specific SEO</span>
                                 </a>
                             </li>
                         </ul>
@@ -267,6 +278,18 @@
                         <a class="ripple" href="{{route('questions.index')}}">
                             <i class="list-icon material-icons">question_answer</i>
                             <span class="hide-menu">Questions</span>
+                            @php
+                                // Pending = anything the admin hasn't approved yet.
+                                // The index view renders status=1 as "Approved" and
+                                // everything else (0 or NULL) as "Pending", so we
+                                // mirror that here.
+                                $pendingQuestions = \App\Models\Question::where(function ($q) {
+                                    $q->where('status', '!=', 1)->orWhereNull('status');
+                                })->count();
+                            @endphp
+                            @if($pendingQuestions > 0)
+                                <span class="badge badge-pill badge-danger ml-2">{{ $pendingQuestions }}</span>
+                            @endif
                         </a>
                     </li>
 
@@ -274,6 +297,14 @@
                         <a class="ripple" href="{{route('reviews.index')}}">
                            <i class="list-icon material-icons">recent_actors</i>
                             <span class="hide-menu">Reviews</span>
+                            @php
+                                $pendingReviews = \App\Models\Review::where(function ($q) {
+                                    $q->where('status', '!=', 1)->orWhereNull('status');
+                                })->count();
+                            @endphp
+                            @if($pendingReviews > 0)
+                                <span class="badge badge-pill badge-danger ml-2">{{ $pendingReviews }}</span>
+                            @endif
                         </a>
                     </li>
 

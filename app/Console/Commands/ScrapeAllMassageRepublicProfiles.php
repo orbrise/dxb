@@ -19,11 +19,22 @@ class ScrapeAllMassageRepublicProfiles extends Command
         'istanbul', 'london', 'antalya', 'batumi', 'beijing',
         // Asia
         'bangkok', 'new-delhi', 'mumbai', 'manila', 'singapore',
+        'pune', 'chennai', 'kolkata', 'gurgaon', 'noida',
+        'hyderabad', 'bangalore', 'pattaya', 'kuala-lumpur',
+        'jakarta', 'hong-kong',
         // Europe
         'paris',
         // Middle East (MR slugs are hyphenated lowercase; drop "Al " prefix
         // on Manama since MR indexes it as just "manama")
-        'dubai', 'abu-dhabi', 'al-manama', 'doha', 'kuwait',
+        'dubai', 'abu-dhabi', 'al-manama', 'doha', 'kuwait', 'muscat',
+        // Caucasus
+        'baku',
+        // Africa
+        'nairobi',
+        // Oceania
+        'sydney',
+        // North America
+        'toronto',
     ];
 
     public function handle(): int

@@ -179,7 +179,10 @@ class CacheService
                     'getuser:id,name,slug',
                     'getpic:id,user_id,profile_id,image'
                 ])
-                ->where('status', 'approved')
+                // status is INT (0 = pending, 1 = approved). Previously used
+                // the string 'approved' which MySQL coerced to 0, so this
+                // sidebar was actually listing PENDING reviews.
+                ->where('status', 1)
                 ->latest()
                 ->take($limit)
                 ->get();
@@ -227,7 +230,10 @@ class CacheService
         $scope = CacheVersion::profileScope($profileId);
         return CacheVersion::remember($scope, 'reviews', self::TTL_REVIEWS, function() use ($profileId) {
             return Review::where('profile_id', $profileId)
-                ->where('status', 'approved')
+                // status is INT (0 = pending, 1 = approved). Previously used
+                // the string 'approved' which MySQL coerced to 0, so this
+                // filter matched pending reviews and hid approved ones.
+                ->where('status', 1)
                 ->with('getuser:id,name')
                 ->latest()
                 ->get();

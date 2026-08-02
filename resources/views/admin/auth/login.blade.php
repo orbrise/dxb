@@ -5,7 +5,9 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ smart_asset($setting->favicon) }}">
+    @if($setting?->favicon)
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ smart_asset($setting->favicon) }}">
+    @endif
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Login</title>
     
@@ -98,8 +100,19 @@
             color: #000 !important;
             border-radius: 25px !important;
             font-weight: 600 !important;
-            padding: 12px !important;
+            font-size: 14px !important;
+            padding: 5px 22px !important;
+            width: auto !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
             transition: all 0.2s ease;
+        }
+        /* Wrapper turns into a flex row so the auto-width button centers */
+        .form-group:has(> .btn-color-scheme) {
+            display: block;
+            justify-content: center;
         }
         .btn-color-scheme:hover,
         .btn-color-scheme:focus,
@@ -126,7 +139,9 @@
         <div class="col-10 ml-sm-auto col-sm-6 col-md-4 ml-md-auto login-center mx-auto">
             <div class="navbar-header text-center">
                 <a href="index.html">
-                    <img alt="" src="{{smart_asset($setting->app_logo)}}">
+                    @if($setting?->app_logo)
+                        <img alt="" src="{{smart_asset($setting->app_logo)}}">
+                    @endif
                 </a>
             </div>
             <!-- /.navbar-header -->

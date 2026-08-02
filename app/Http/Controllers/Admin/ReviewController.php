@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\CacheService;
 use Illuminate\Http\Request;
 use App\Models\Review;
 
@@ -16,7 +17,50 @@ class ReviewController extends Controller
             $perPage = 10;
         }
 
-        $reviews = Review::orderByDesc('id')
+        $query = Review::query();
+
+        if ($request->filled('id')) {
+            $query->where('id', (int) $request->input('id'));
+        }
+        if ($request->filled('user_id')) {
+            $query->where('user_id', (int) $request->input('user_id'));
+        }
+        if ($request->filled('profile_id')) {
+            $query->where('profile_id', (int) $request->input('profile_id'));
+        }
+        if ($request->filled('star')) {
+            $query->where('star', (int) $request->input('star'));
+        }
+        // Status: '' = all, '0' = pending, '1' = approved. Guard the
+        // literal-'0' case separately since filled() treats "0" as filled
+        // but the loose falsy check does not — a subtle footgun.
+        if ($request->input('status') !== null && $request->input('status') !== '') {
+            $query->where('status', (int) $request->input('status'));
+        }
+        if ($request->filled('has_reply')) {
+            if ($request->input('has_reply') === 'yes') {
+                $query->whereNotNull('reply')->where('reply', '!=', '');
+            } elseif ($request->input('has_reply') === 'no') {
+                $query->where(function ($q) {
+                    $q->whereNull('reply')->orWhere('reply', '');
+                });
+            }
+        }
+        if ($request->filled('q')) {
+            $needle = '%' . $request->input('q') . '%';
+            $query->where(function ($q) use ($needle) {
+                $q->where('review', 'like', $needle)
+                    ->orWhere('reply', 'like', $needle);
+            });
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
+
+        $reviews = $query->orderByDesc('id')
             ->paginate($perPage)
             ->withQueryString();
 
@@ -29,6 +73,11 @@ class ReviewController extends Controller
         if ($review) {
             $review->status = 1;
             $review->save();
+            // CacheService::getProfileReviews caches per-profile with a long
+            // TTL — without bumping the version here the approved review
+            // wouldn't appear on the profile page until the cache expired.
+            CacheService::clearProfileCache($review->profile_id);
+            \Illuminate\Support\Facades\Cache::forget('cache:recent_reviews:10');
         }
         return redirect()->back()->with('success', 'Review approved.');
     }
@@ -39,6 +88,8 @@ class ReviewController extends Controller
         if ($review) {
             $review->status = 0;
             $review->save();
+            CacheService::clearProfileCache($review->profile_id);
+            \Illuminate\Support\Facades\Cache::forget('cache:recent_reviews:10');
         }
         return redirect()->back()->with('success', 'Review disapproved.');
     }
@@ -47,7 +98,10 @@ class ReviewController extends Controller
     {
         $review = Review::find($id);
         if ($review) {
+            $profileId = $review->profile_id;
             $review->delete();
+            CacheService::clearProfileCache($profileId);
+            \Illuminate\Support\Facades\Cache::forget('cache:recent_reviews:10');
         }
         return redirect()->back()->with('success', 'Review deleted.');
     }

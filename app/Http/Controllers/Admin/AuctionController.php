@@ -8,6 +8,8 @@ use App\Models\Auction;
 use App\Models\AuctionBid;
 use App\Models\City;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AuctionController extends Controller
 {
@@ -65,20 +67,20 @@ class AuctionController extends Controller
             'gender' => 'required|in:female,male,shemale',
             'starting_price' => 'required|numeric|min:0',
             'duration_days' => 'required|integer|min:1|max:30',
+            'background_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
-        
+
         // Check if an auction already exists for this spot in this city
         $existingAuction = Auction::where('spot_number', $request->spot_number)
             ->where('city_id', $request->city_id)
             ->where('gender', $request->gender)
             ->where('status', 'active')
             ->first();
-            
+
         if ($existingAuction) {
             return redirect()->back()->with('error', 'An active auction already exists for this spot in this city.');
         }
-        
-        // Create new auction
+
         Auction::create([
             'spot_number' => $request->spot_number,
             'city_id' => $request->city_id,
@@ -86,10 +88,37 @@ class AuctionController extends Controller
             'current_price' => $request->starting_price,
             'end_date' => Carbon::now()->addDays($request->duration_days),
             'status' => 'active',
+            'background_image' => $this->storeBackgroundImage($request),
         ]);
-        
+
         return redirect()->route('admin.auctions.index')
             ->with('success', 'Auction spot created successfully.');
+    }
+
+    private function storeBackgroundImage(Request $request, ?string $existing = null): ?string
+    {
+        if (! $request->hasFile('background_image')) {
+            return $existing;
+        }
+        $file = $request->file('background_image');
+        $filename = time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+        $disk = Storage::disk('assets_external');
+        if (! $disk->exists('auctions')) {
+            $disk->makeDirectory('auctions');
+        }
+        // The `assets_external` disk has `'throw' => false`, so a failed
+        // write returns false silently. Verify by checking the target
+        // path exists after put(); if not, bail with an error rather
+        // than saving a filename that points to nothing.
+        $written = $disk->put('auctions/' . $filename, file_get_contents($file->getRealPath()));
+        if (! $written || ! $disk->exists('auctions/' . $filename)) {
+            $root = config('filesystems.disks.assets_external.root');
+            throw new \RuntimeException("Failed to write auction background to {$root}/auctions/ — check directory exists and is writable by the web user.");
+        }
+        if ($existing && $disk->exists('auctions/' . basename($existing))) {
+            $disk->delete('auctions/' . basename($existing));
+        }
+        return $filename;
     }
     
     public function edit(Auction $auction)
@@ -107,34 +136,48 @@ class AuctionController extends Controller
             'current_price' => 'required|numeric|min:0',
             'end_date' => 'required|date|after:now',
             'status' => 'required|in:active,ended',
+            'background_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
-        
-        // Check if we're changing spot/city/gender and if a conflict exists
-        if ($auction->spot_number != $request->spot_number || 
-            $auction->city_id != $request->city_id || 
+
+        if ($auction->spot_number != $request->spot_number ||
+            $auction->city_id != $request->city_id ||
             $auction->gender != $request->gender) {
-            
+
             $existingAuction = Auction::where('spot_number', $request->spot_number)
                 ->where('city_id', $request->city_id)
                 ->where('gender', $request->gender)
                 ->where('status', 'active')
                 ->where('id', '!=', $auction->id)
                 ->first();
-                
+
             if ($existingAuction) {
                 return redirect()->back()->with('error', 'An active auction already exists for this spot in this city.');
             }
         }
-        
-        $auction->update([
+
+        $updateData = [
             'spot_number' => $request->spot_number,
             'city_id' => $request->city_id,
             'gender' => $request->gender,
             'current_price' => $request->current_price,
             'end_date' => $request->end_date,
             'status' => $request->status,
-        ]);
-        
+        ];
+
+        if ($request->boolean('remove_background_image')) {
+            if ($auction->background_image) {
+                $disk = Storage::disk('assets_external');
+                if ($disk->exists('auctions/' . basename($auction->background_image))) {
+                    $disk->delete('auctions/' . basename($auction->background_image));
+                }
+            }
+            $updateData['background_image'] = null;
+        } elseif ($request->hasFile('background_image')) {
+            $updateData['background_image'] = $this->storeBackgroundImage($request, $auction->background_image);
+        }
+
+        $auction->update($updateData);
+
         return redirect()->route('admin.auctions.index')
             ->with('success', 'Auction updated successfully.');
     }

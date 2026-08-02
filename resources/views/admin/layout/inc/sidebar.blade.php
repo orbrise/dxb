@@ -3,13 +3,15 @@
     <!--start brand-->
     <div class="brand">
         <a href="index.html" class="logo">
-            <span>
-                <img src="{{ smart_asset($setting->app_logo) }}" alt="logo-small" class="logo-sm">
-            </span>
-            <span class="">
-                <img src="{{ smart_asset($setting->app_logo) }}" alt="logo-large" class="logo-lg logo-light">
-                <img src="{{ smart_asset($setting->app_logo) }}" alt="logo-large" class="logo-lg logo-dark">
-            </span>
+            @if($setting?->app_logo)
+                <span>
+                    <img src="{{ smart_asset($setting->app_logo) }}" alt="logo-small" class="logo-sm">
+                </span>
+                <span class="">
+                    <img src="{{ smart_asset($setting->app_logo) }}" alt="logo-large" class="logo-lg logo-light">
+                    <img src="{{ smart_asset($setting->app_logo) }}" alt="logo-large" class="logo-lg logo-dark">
+                </span>
+            @endif
         </a>
     </div>
     <!--end brand-->

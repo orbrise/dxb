@@ -15,8 +15,11 @@ body > #header, .ev-header, .ev-footer, .ev-mobile-bottom-nav{display:none !impo
 /* Evoory-styled top bar */
 .ev-search-header{background:#0a0a0a;padding:14px 0;position:sticky;top:0;z-index:1000}
 .ev-search-header-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;position:relative;min-height:28px}
-.ev-search-header-back{display:inline-flex;align-items:center;gap:4px;color:#C1F11D !important;text-decoration:none !important;font-size:17px;font-weight:500;flex:1 1 0;min-width:0}
+.ev-search-header-back{display:inline-flex;align-items:center;gap:4px;color:#C1F11D !important;text-decoration:none !important;font-size:17px;font-weight:500;flex:1 1 0;min-width:0;outline:none !important;-webkit-tap-highlight-color:transparent}
 .ev-search-header-back:hover{color:#C1F11D !important;opacity:.85}
+.ev-search-header-back:focus,
+.ev-search-header-back:focus-visible,
+.ev-search-header-back:active{outline:none !important;box-shadow:none !important;border:0 !important}
 .ev-search-header-title{color:#fff;font-size:17px;font-weight:500;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap}
 .ev-search-header-spacer{flex:1 1 0}
 
@@ -160,9 +163,52 @@ body > #header, .ev-header, .ev-footer, .ev-mobile-bottom-nav{display:none !impo
 .mobile-service-option:hover{background:rgba(193,241,29,.08) !important}
 
 /* Price row: currency + amount side-by-side, same group */
-.search-form-container .form-group .d-flex{display:flex !important;gap:8px}
+.search-form-container .form-group .d-flex{display:flex !important;gap:8px;align-items:stretch}
 .search-form-container .form-group .d-flex > *{flex:1}
 .search-form-container .form-group .d-flex select{width:auto !important;min-width:110px;max-width:130px}
+
+/* Currency <select> is upgraded by the select2 jQuery lib to its own
+   .select2-selection--single element. The default select2 skin renders
+   44px tall with 4px radius and #2c2c2c bg — mismatched with the 46px /
+   10px radius / #0a0a0a `.form-control` used by Max price next to it.
+   Force the select2 wrapper to match the evoory input style so both
+   controls in the price row have identical height / radius / border. */
+.search-form-container .form-group .d-flex .select2-container{
+    flex:0 0 auto;
+    min-width:110px;
+    max-width:130px;
+    width:auto !important;
+    height:46px !important;
+}
+.search-form-container .form-group .d-flex .select2-container--default .select2-selection--single{
+    background-color:#0a0a0a !important;
+    border:1px solid #2a2a2a !important;
+    border-radius:10px !important;
+    height:46px !important;
+    box-shadow:none !important;
+}
+.search-form-container .form-group .d-flex .select2-container--default .select2-selection--single .select2-selection__rendered{
+    color:#fff !important;
+    line-height:44px !important;
+    padding:0 32px 0 14px !important;
+    font-size:14px !important;
+    font-weight:normal !important;
+}
+.search-form-container .form-group .d-flex .select2-container--default .select2-selection--single .select2-selection__arrow{
+    height:44px !important;
+    right:8px !important;
+}
+.search-form-container .form-group .d-flex .select2-container--default .select2-selection--single .select2-selection__arrow b{
+    border-color:#C1F11D transparent transparent transparent !important;
+}
+/* Max-price input already inherits .form-control (46px), but the sibling
+   flex:1 rule can shrink it below the currency's min-width; keep it filling
+   the remaining space and vertically aligned. */
+.search-form-container .form-group .d-flex input.form-control{
+    flex:1 1 auto;
+    height:46px !important;
+    box-sizing:border-box !important;
+}
 
 /* Checkboxes */
 .search-form-container .advanced-search-checkboxes{
@@ -3141,8 +3187,7 @@ textarea.form-control:disabled {
             <!-- Bust Size -->
             <div class="form-group mb-2 select ">
                 <label for="buts">Bust size</label>
-                <select wire:model="buts" id="buts" class="select required form-control select-box"
-                onfocus="if(jQuery && jQuery.fn.select2 && !jQuery(this).hasClass('select2-hidden-accessible')){jQuery(this).select2({theme:'default',width:'100%',dropdownParent:jQuery('body')});jQuery(this).select2('open');}">
+                <select wire:model="buts" id="buts" class="select required form-control select-box">
                     <option value="">Any</option>
                     @foreach ($busts as $bust)
                         <option value="{{ $bust->id }}">{{ $bust->name }}</option>
@@ -3153,7 +3198,7 @@ textarea.form-control:disabled {
             <!-- Ethnicity -->
             <div class="form-group mb-2">
                 <label for="ethnicity">Ethnicity</label>
-                <select wire:model="ethnicity" name="ethnicity" id="ethnicity" class="select required form-control select-box select2-single" >
+                <select wire:model="ethnicity" name="ethnicity" id="ethnicity" class="select required form-control select-box">
                     <option value="">Any</option>
                     @foreach ($ethnicities as $eth)
                         <option value="{{ $eth->id }}">{{ $eth->name }}</option>
@@ -3306,7 +3351,7 @@ textarea.form-control:disabled {
             <!-- Nationality -->
             <div class="form-group mb-2">
                 <label for="nationality">Nationality</label>
-                <select wire:model="nationality" name="nationality" id="nationality" class="select required form-control select-box select2-single">
+                <select wire:model="nationality" name="nationality" id="nationality" class="select required form-control select-box">
                     <option value="">Any</option>
                     @foreach ($countries as $country)
                         <option value="{{ $country->id }}">{{ $country->nicename }}</option>
@@ -3317,7 +3362,7 @@ textarea.form-control:disabled {
             <!-- Languages -->
             <div class="form-group mb-2">
                 <label for="language">Languages</label>
-                <select wire:model="language" name="language" id="language" class="select required form-control select-box select2-single">
+                <select wire:model="language" name="language" id="language" class="select required form-control select-box">
                     <option value="">Any</option>
                     @foreach ($languages as $lang)
                         <option value="{{ $lang->id }}">{{ $lang->name }}</option>

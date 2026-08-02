@@ -1101,7 +1101,7 @@ button.btn.btn-primary#submit[type="submit"]:hover {
     display:flex;flex-direction:column;gap:16px;
 }
 .ev-qf-group{display:flex;flex-direction:column;gap:6px}
-.ev-qf-group > label{color:#fff;font-size:14px;font-weight:500}
+.ev-qf-group > label{color:#fff;font-size:14px;font-weight:500; margin-top:10px;}
 .ev-qf-input{
     width:100%;box-sizing:border-box;
     background:transparent;

@@ -186,15 +186,30 @@
     @media (max-width: 767px) {
         .evry-mcta-hide-desktop-card { display: none !important; }
 
+        /* Match the sibling .ev-card blocks on this same page (Find an
+           escort + Popular locations use .ev-card, defined in
+           evoory-theme.css with background:var(--bg-card)=#1a1a1a,
+           border:1px solid var(--border-color)=#2a2a2a, radius:12px,
+           padding:16px on mobile). Use the same CSS variables so any
+           future theme change flows through here too.
+
+           The section is NOT wrapped in .ev-container like the other cards,
+           so mirror .ev-container's mobile `padding:0 12px` on the section
+           itself so left/right edges line up with the siblings. Vertical
+           gap:24px matches .ev-search-grid so the middle card sits in the
+           same rhythm as the top card. */
         .evry-mcta {
             display: block;
-            margin: 10px 16px 25px;
+            padding: 0 12px;
+            margin: 12px 0;
         }
         .evry-mcta__card {
-            background: #0d1011;
-            border: 1px solid #2a3a4a;
-            border-radius: 18px;
-            padding: 22px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .evry-mcta__head {
             display: flex;

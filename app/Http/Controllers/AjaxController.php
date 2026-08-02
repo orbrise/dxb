@@ -12,8 +12,12 @@ use App\Models\Country;
 use App\Models\ProfileVisit;
 use App\Models\Review;
 use App\Models\Question;
+use App\Models\Report;
+use App\Models\Message;
+use App\Models\Conversation;
 use App\Models\PhoneClick;
 use App\Models\UsersProfile;
+use App\Events\NewChatMessage;
 
 class AjaxController extends Controller
 {
@@ -143,7 +147,9 @@ class AjaxController extends Controller
             'profile_id' => (int) $profileId,
             'review' => $validated['review'],
             'star' => (int) $validated['star'],
-            'status' => 'pending',
+            // reviews.status is INT: 0 = pending, 1 = approved (see
+            // Admin\ReviewController::approve).
+            'status' => 0,
         ]);
 
         return response()->json([
@@ -191,6 +197,129 @@ class AjaxController extends Controller
         return response()->json([
             'ok' => true,
             'message' => 'We will send an email when/if it is answered.',
+        ]);
+    }
+
+    public function postMessage($profileId, Request $request)
+    {
+        $profile = UsersProfile::find((int) $profileId);
+        if (!$profile) {
+            return response()->json(['error' => 'Profile not found.'], 404);
+        }
+
+        // Auth flow: create conversation-based message + broadcast.
+        if (auth()->check()) {
+            $senderId = auth()->id();
+            $ownerId = $profile->user_id;
+
+            if ($senderId === $ownerId) {
+                return response()->json(['error' => 'You cannot message yourself.'], 422);
+            }
+
+            $validated = $request->validate([
+                'message' => 'required|string|min:1|max:500',
+                'code' => 'nullable|string|max:10',
+                'phone' => 'nullable|string|max:30',
+            ], [
+                'message.required' => 'Please write a message.',
+                'message.max' => 'Message cannot exceed 500 characters.',
+            ]);
+
+            $conversation = Conversation::getOrCreate($senderId, $ownerId);
+
+            $message = Message::create([
+                'conversation_id' => $conversation->id,
+                'sender_id' => $senderId,
+                'message' => $validated['message'],
+                'status' => 'sent',
+                // Keep legacy fields for backward compatibility.
+                'user_email' => auth()->user()->email,
+                'profile_id' => (int) $profileId,
+                // Legacy columns are NOT NULL — default to empty string, matching
+                // what the old Livewire form sent when the field was left blank.
+                'code' => $validated['code'] ?? '',
+                'phone' => $validated['phone'] ?? '',
+            ]);
+
+            $conversation->update(['last_message_at' => now()]);
+
+            try {
+                broadcast(new NewChatMessage($message, $ownerId))->toOthers();
+            } catch (\Throwable $e) {
+                \Log::warning('NewChatMessage broadcast failed', ['error' => $e->getMessage()]);
+            }
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'Your message has been sent to ' . $profile->name . '. You can continue the conversation in your Messages.',
+            ]);
+        }
+
+        // Guest flow: legacy one-way inquiry — email is required.
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'message' => 'required|string|min:1|max:500',
+            'code' => 'nullable|string|max:10',
+            'phone' => 'nullable|string|max:30',
+        ], [
+            'email.required' => 'Please provide your email so we can reply.',
+            'message.required' => 'Please write a message.',
+            'message.max' => 'Message cannot exceed 500 characters.',
+        ]);
+
+        $m = new Message;
+        $m->user_email = $validated['email'];
+        $m->profile_id = (int) $profileId;
+        $m->message = $validated['message'];
+        $m->code = $validated['code'] ?? '';
+        $m->phone = $validated['phone'] ?? '';
+        $m->save();
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Your message has been sent to ' . $profile->name . '. Please login to continue the conversation.',
+        ]);
+    }
+
+    public function postReport($profileId, Request $request)
+    {
+        if (!auth()->check()) {
+            return response()->json(['error' => 'You must be logged in to report a profile.'], 401);
+        }
+
+        $validated = $request->validate([
+            'report_type' => 'required|in:fake,spam,inappropriate,other',
+            'description' => 'required|string|min:10|max:1000',
+        ], [
+            'report_type.required' => 'Please select a reason for reporting.',
+            'report_type.in' => 'Invalid report type selected.',
+            'description.required' => 'Please provide a description.',
+            'description.min' => 'Description must be at least 10 characters.',
+            'description.max' => 'Description cannot exceed 1000 characters.',
+        ]);
+
+        $existing = Report::where('user_id', auth()->id())
+            ->where('profile_id', (int) $profileId)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'error' => 'You have already submitted a report for this profile. Please wait for it to be reviewed.',
+            ], 409);
+        }
+
+        Report::create([
+            'user_id' => auth()->id(),
+            'profile_id' => (int) $profileId,
+            'report_type' => $validated['report_type'],
+            'description' => $validated['description'],
+            'status' => 'pending',
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Thank you for your report. Our team will review it shortly.',
         ]);
     }
 }

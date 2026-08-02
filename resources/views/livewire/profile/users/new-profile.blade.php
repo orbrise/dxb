@@ -1,8 +1,8 @@
 @section('headerform')
-<div class="nav-bar navbar-top-nav" style="background:#111213;">
+<div class="nav-bar navbar-top-nav" style="background:#111213;padding: 5px 0px;">
     <div class="container-fluid" style="text-align:center;">
       <div class="title">
-        <h1 style="color:#fff;font-size:16px;font-weight:500;margin:10px 0;">Add your profile</h1>
+        <h1 style="color:#fff;font-size:16px;font-weight:500;margin-top:6px;">Add your profile</h1>
       </div>
     </div>
   </div>
@@ -1610,13 +1610,28 @@ div#basic {
         padding: 4px !important;
         background: rgba(0, 0, 0, 0.75) !important;
     }
+    /* Main Image badge + Set as Main button share the img-footer strip.
+       They must be the SAME height (uniform pill row across thumbnails) but
+       the STYLES must differ so users can tell at a glance which thumbnail
+       is currently the primary and which are candidates:
+       - Main Image (badge) → solid lime fill, black text  (selected state)
+       - Set as Main (button) → transparent fill, lime text + lime outline
+                                (unselected state, tap-to-promote)
+       Padding, font-size, line-height, and border-width all match so both
+       compute to the same box height. */
     .record.image .btn-set-main {
         display: block !important;
         width: 100% !important;
-        padding: 6px 4px !important;
+        padding: 3px 6px !important;
         font-size: 10px !important;
-        border-radius: 5px !important;
-        min-height: 28px;
+        line-height: 1.2 !important;
+        background: transparent !important;
+        color: #c8ff00 !important;
+        border: 1px solid #c8ff00 !important;
+        border-radius: 4px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        font-weight: 600;
         /* Ensure tap goes straight through — no double-tap zoom, no 300ms delay,
            no parent drag interference */
         touch-action: manipulation;
@@ -1625,10 +1640,21 @@ div#basic {
         position: relative;
         z-index: 5;
     }
+    .record.image .btn-set-main:hover,
+    .record.image .btn-set-main:focus {
+        background: rgba(200,255,0,0.12) !important;
+        color: #c8ff00 !important;
+    }
     .record.image .badge-success {
         display: block;
-        padding: 4px 6px !important;
+        padding: 3px 6px !important;
         font-size: 10px !important;
+        line-height: 1.2 !important;
+        background-color: #c8ff00 !important;
+        color: #000 !important;
+        border: 1px solid #c8ff00 !important;
+        border-radius: 4px !important;
+        font-weight: 700;
     }
     .record.image .delete {
         top: 3px !important;
@@ -1861,7 +1887,7 @@ div#basic {
 
                     <div class="ev-mc-group">
                         <label>Messaging Apps</label>
-                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <div class="ev-msg-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                             <label class="ev-msg-pill">
                                 <input wire:model='iswhatsapp' type="checkbox" value="1" style="display:none;">
                                 <svg class="ev-msg-pill__icon" width="16" height="16" viewBox="0 0 24 24" fill="#25D366" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1944,10 +1970,18 @@ div#basic {
                         #contact-information{display:none!important}
                         .ev-mc-group{margin-bottom:16px}
                         .ev-mc-group>label{display:block;color:#ccc;font-size:13px;font-weight:500;margin-bottom:6px}
+                        /* 4 pills in a 2x2 grid (grid-template-columns: 1fr 1fr
+                           on the wrapper) — each cell is the same size, so
+                           each pill inherits identical width. Fixed height
+                           locks the row height too. Content is centered
+                           inside via flex so the shorter label ("Signal")
+                           doesn't shift its icon vs. the wider label. */
                         .ev-msg-pill{
-                            display:inline-flex;align-items:center;gap:6px;
+                            display:flex;align-items:center;justify-content:center;gap:6px;
                             background:#111;border:1px solid #333;border-radius:5px;
-                            padding:8px 14px;cursor:pointer;color:#fff;font-size:13px;
+                            padding:0 12px;cursor:pointer;color:#fff;font-size:13px;
+                            height:40px;width:100%;box-sizing:border-box;
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
                         }
                         .ev-msg-pill__icon{
                             display:block;
@@ -1960,6 +1994,38 @@ div#basic {
                         }
                         .ev-msg-pill:has(input:checked){
                             border-color:#C1F11D;color:#C1F11D;
+                        }
+                    }
+
+                    /* Extra small: make the phone-code dropdown span the whole
+                       card and stop it running past the OnlyFans row. The
+                       trigger sits in a 110px flex column so the default
+                       width:max-content grows only rightward from that column
+                       and can either clip against the card edge or overlay the
+                       fields below. Wrap the phone row in a positioning
+                       parent (ev-mc-group is already relative here) and shift
+                       the dropdown back to the card's inner-left edge. */
+                    @media (max-width:480px){
+                        .ev-mobile-contact .ev-mc-group{
+                            position:relative;
+                        }
+                        .ev-mobile-contact .ev-mc-group .custom-select2{
+                            position:static;
+                        }
+                        /* Position the dropdown against the ev-mc-group so it
+                           spans the full inner card width (from left of +93 to
+                           right of phone input) and drops just below the whole
+                           phone row instead of the 110px column. */
+                        .ev-mobile-contact .ev-mc-group .custom-select2-dropdown{
+                            left:0!important;
+                            right:0!important;
+                            width:auto!important;
+                            min-width:0!important;
+                            max-width:none!important;
+                            top:calc(100% + 4px)!important;
+                        }
+                        .ev-mobile-contact .ev-mc-group .custom-select2-results{
+                            max-height:min(48vh,260px)!important;
                         }
                     }
                   </style>
@@ -2529,7 +2595,12 @@ div#basic {
                             @endforeach
                         </select>
                     </div>
-                    <button type="button" class="ev-add-lang-btn" onclick="this.previousElementSibling.insertAdjacentHTML('beforeend','<select class=\'form-control\' style=\'margin-bottom:10px;\'><option value=\'\'>Select language...</option>@foreach($languages as $lang)<option value=\'{{$lang->id}}\'>{{$lang->name}}</option>@endforeach</select>')">
+                    {{-- Add the `apply-custom-select2` class on inserted selects
+                         and re-run initializeCustomSelect2() so they get wrapped
+                         the same way as language1 / language2. Without the
+                         re-init, the newly-inserted <select> stays as a native
+                         element and visually mismatches the first two. --}}
+                    <button type="button" class="ev-add-lang-btn" onclick="this.previousElementSibling.insertAdjacentHTML('beforeend','<select data-radius=\'all\' class=\'apply-custom-select2 form-control\' style=\'margin-bottom:10px;\'><option value=\'\'>Select language...</option>@foreach($languages as $lang)<option value=\'{{$lang->id}}\'>{{$lang->name}}</option>@endforeach</select>');if(typeof initializeCustomSelect2===&quot;function&quot;)initializeCustomSelect2();">
                         + Add Language
                     </button>
                   </div>
@@ -2581,6 +2652,34 @@ div#basic {
                             margin:0 0 16px!important;
                             font-size:17px!important;
                         }
+                        /* Two-column rows (Gender|Orientation, Height|Age,
+                           Bust Size|Hair Color): the select trigger sits in a
+                           narrow flex:1 column and the default
+                           `.custom-select2-dropdown { width: max-content;
+                           max-width: 400px }` overflows to the right past the
+                           card and even the viewport. Anchor the dropdown to
+                           the row wrapper instead so it spans the full card
+                           width and drops below the whole row. */
+                        .ev-mobile-personal > div[style*="display:flex"]{
+                            position:relative!important;
+                        }
+                        .ev-mobile-personal > div[style*="display:flex"] > div{
+                            position:static!important;
+                        }
+                        .ev-mobile-personal > div[style*="display:flex"] .custom-select2{
+                            position:static!important;
+                        }
+                        .ev-mobile-personal > div[style*="display:flex"] .custom-select2-dropdown{
+                            left:0!important;
+                            right:0!important;
+                            width:auto!important;
+                            min-width:0!important;
+                            max-width:none!important;
+                            top:calc(100% + 4px)!important;
+                        }
+                        .ev-mobile-personal > div[style*="display:flex"] .custom-select2-results{
+                            max-height:min(48vh,260px)!important;
+                        }
                         /* Languages Spoken wrapped as a single card */
                         .ev-mobile-languages{
                             display:block!important;
@@ -2589,6 +2688,25 @@ div#basic {
                             border-radius:10px!important;
                             padding:18px!important;
                             margin:24px 0 16px!important;
+                        }
+                        /* The inline `margin-bottom:10px` on each <select> is
+                           hidden (display:none) after custom-select2 wraps it,
+                           so the visible `.custom-select2` div carries no gap.
+                           NOTE: the JS wraps each select+widget pair in a
+                           `.custom-select2-holder` div (display:contents), so
+                           every `.custom-select2` is the :last-child of its own
+                           holder — a `.custom-select2:last-child { margin:0 }`
+                           rule silently zeroes out spacing on every wrapper.
+                           Space the holder instead. */
+                        .ev-mobile-languages .ev-mc-group > .custom-select2-holder{
+                            display:block!important;
+                            margin-bottom:12px!important;
+                        }
+                        .ev-mobile-languages .ev-mc-group > .custom-select2-holder:last-of-type{
+                            margin-bottom:0!important;
+                        }
+                        .ev-mobile-languages .ev-add-lang-btn{
+                            margin-top:14px;
                         }
                         .ev-mobile-languages .h3.title-block,
                         .ev-mobile-languages h2.h3.title-block{
@@ -3941,10 +4059,16 @@ if (typeof Livewire !== 'undefined') {
    $("a#appendlang").click(function(){
     num++;
   
-        var template = '<div id="remove'+num+'"> <div id="remove" data="'+num+'" class="rm-lang-field fa fa-trash-alt fa-lg" data-language-index="new_record_tpl_id" rm-lang-field=""></div> <div class="form-group hidden listing_listing_languages__destroy"> <input class="hidden destroy" type="hidden" value="false" name="listing[listing_languages_attributes][new_record_tpl_id][_destroy]" id="listing_listing_languages_attributes_new_record_tpl_id__destroy" /> </div> <div class="form-group select optional listing_listing_languages_language_id"> <select wire:model="language'+num+'" data-blank-on-list="true" class="select optional form-control" name="listing[listing_languages_attributes][new_record_tpl_id][language_id]" id="listing_listing_languages_attributes_new_record_tpl_id_language_id"> <option value="">Select language...</option> <option value="1">Arabic</option> <option value="2">Azerbaijani</option> <option value="3">Bengali</option> <option value="4">Bulgarian</option> <option value="5">Catalan</option> <option value="6">Czech</option> <option value="7">Danish</option> <option value="8">German</option> <option value="9">Greek</option> <option value="10">English</option> <option value="11">Estonian</option> <option value="12">Persian</option> <option value="13">Finnish</option> <option value="14">French</option> <option value="15">Irish</option> <option value="16">Gujarati</option> <option value="17">Hebrew</option> <option value="18">Hindi</option> <option value="19">Hungarian</option> <option value="20">Icelandic</option> <option value="21">Italian</option> <option value="22">Javanese</option> <option value="23">Japanese</option> <option value="24">Kannada</option> <option value="25">Korean</option> <option value="62">Laotian</option> <option value="26">Latvian</option> <option value="27">Lithuanian</option> <option value="28">Malayalam</option> <option value="29">Marathi</option> <option value="30">Maltese</option> <option value="31">Malay</option> <option value="32">Dutch</option> <option value="33">Norwegian</option> <option value="34">Polish</option> <option value="35">Portuguese</option> <option value="36">Romanian</option> <option value="37">Russian</option> <option value="38">Slovak</option> <option value="39">Spanish</option> <option value="40">Swedish</option> <option value="41">Tamil</option> <option value="42">Telugu</option> <option value="43">Thai</option> <option value="44">Turkish</option> <option value="45">Ukrainian</option> <option value="46">Urdu</option> <option value="47">Vietnamese</option> <option value="48">Chinese</option> <option value="50">Macedonian</option> <option value="51">Punjabi</option> <option value="52">Croatian</option> <option value="53">Igbo</option> <option value="54">Swahili</option> <option value="55">Zulu</option> <option value="56">Yoruba</option> <option value="57">Indonesian</option> <option value="58">Hausa</option> <option value="59">Serbian</option> <option value="60">Afrikaans</option> </select> </div> <div class="form-group radio_buttons optional listing_listing_languages_language_level_id"> <input type="hidden" name="listing[listing_languages_attributes][1728906815958][language_level_id]" value=""> <span class="radio-inline"> <label for="listing_listing_languages_attributes_1728906815958_language_level_id_4"> <input class="radio_buttons optional radio" wire:model="expert'+num+'" type="radio" value="Fluent" name="listing[listing_languages_attributes][1728906815958][language_level_id'+num+']" id="listing_listing_languages_attributes_1728906815958_language_level_id_4">Fluent </label> </span> <span class="radio-inline"> <label for="listing_listing_languages_attributes_1728906815958_language_level_id_3"> <input class="radio_buttons optional radio" wire:model="expert'+num+'" type="radio" value="Good" name="listing[listing_languages_attributes][1728906815958][language_level_id'+num+']" id="listing_listing_languages_attributes_1728906815958_language_level_id_3">Good </label> </span> <span class="radio-inline"> <label for="listing_listing_languages_attributes_1728906815958_language_level_id_1"> <input class="radio_buttons optional radio" type="radio" wire:model="expert'+num+'" value="1" name="listing[listing_languages_attributes][1728906815958][language_level_id'+num+']" id="listing_listing_languages_attributes_1728906815958_language_level_id_1">Basic </label> </span> </div> </div> <div class="clearfix"></div>';
+        var template = '<div id="remove'+num+'"> <div id="remove" data="'+num+'" class="rm-lang-field fa fa-trash-alt fa-lg" data-language-index="new_record_tpl_id" rm-lang-field=""></div> <div class="form-group hidden listing_listing_languages__destroy"> <input class="hidden destroy" type="hidden" value="false" name="listing[listing_languages_attributes][new_record_tpl_id][_destroy]" id="listing_listing_languages_attributes_new_record_tpl_id__destroy" /> </div> <div class="form-group select optional listing_listing_languages_language_id" wire:ignore> <select wire:model="language'+num+'" data-blank-on-list="true" data-radius="all" class="apply-custom-select2 select optional form-control" name="listing[listing_languages_attributes][new_record_tpl_id][language_id]" id="listing_listing_languages_attributes_new_record_tpl_id_language_id"> <option value="">Select language...</option> <option value="1">Arabic</option> <option value="2">Azerbaijani</option> <option value="3">Bengali</option> <option value="4">Bulgarian</option> <option value="5">Catalan</option> <option value="6">Czech</option> <option value="7">Danish</option> <option value="8">German</option> <option value="9">Greek</option> <option value="10">English</option> <option value="11">Estonian</option> <option value="12">Persian</option> <option value="13">Finnish</option> <option value="14">French</option> <option value="15">Irish</option> <option value="16">Gujarati</option> <option value="17">Hebrew</option> <option value="18">Hindi</option> <option value="19">Hungarian</option> <option value="20">Icelandic</option> <option value="21">Italian</option> <option value="22">Javanese</option> <option value="23">Japanese</option> <option value="24">Kannada</option> <option value="25">Korean</option> <option value="62">Laotian</option> <option value="26">Latvian</option> <option value="27">Lithuanian</option> <option value="28">Malayalam</option> <option value="29">Marathi</option> <option value="30">Maltese</option> <option value="31">Malay</option> <option value="32">Dutch</option> <option value="33">Norwegian</option> <option value="34">Polish</option> <option value="35">Portuguese</option> <option value="36">Romanian</option> <option value="37">Russian</option> <option value="38">Slovak</option> <option value="39">Spanish</option> <option value="40">Swedish</option> <option value="41">Tamil</option> <option value="42">Telugu</option> <option value="43">Thai</option> <option value="44">Turkish</option> <option value="45">Ukrainian</option> <option value="46">Urdu</option> <option value="47">Vietnamese</option> <option value="48">Chinese</option> <option value="50">Macedonian</option> <option value="51">Punjabi</option> <option value="52">Croatian</option> <option value="53">Igbo</option> <option value="54">Swahili</option> <option value="55">Zulu</option> <option value="56">Yoruba</option> <option value="57">Indonesian</option> <option value="58">Hausa</option> <option value="59">Serbian</option> <option value="60">Afrikaans</option> </select> </div> <div class="form-group radio_buttons optional listing_listing_languages_language_level_id"> <input type="hidden" name="listing[listing_languages_attributes][1728906815958][language_level_id]" value=""> <span class="radio-inline"> <label for="listing_listing_languages_attributes_1728906815958_language_level_id_4"> <input class="radio_buttons optional radio" wire:model="expert'+num+'" type="radio" value="Fluent" name="listing[listing_languages_attributes][1728906815958][language_level_id'+num+']" id="listing_listing_languages_attributes_1728906815958_language_level_id_4">Fluent </label> </span> <span class="radio-inline"> <label for="listing_listing_languages_attributes_1728906815958_language_level_id_3"> <input class="radio_buttons optional radio" wire:model="expert'+num+'" type="radio" value="Good" name="listing[listing_languages_attributes][1728906815958][language_level_id'+num+']" id="listing_listing_languages_attributes_1728906815958_language_level_id_3">Good </label> </span> <span class="radio-inline"> <label for="listing_listing_languages_attributes_1728906815958_language_level_id_1"> <input class="radio_buttons optional radio" type="radio" wire:model="expert'+num+'" value="1" name="listing[listing_languages_attributes][1728906815958][language_level_id'+num+']" id="listing_listing_languages_attributes_1728906815958_language_level_id_1">Basic </label> </span> </div> </div> <div class="clearfix"></div>';
 
     $("div#languagesappend").append(template);
- 
+
+    // Newly-appended language <select> is not yet a Select2 — initialize.
+    // initializeCustomSelect2() is idempotent (skips selects that already
+    // have a live wrapper), so this only wraps the just-inserted row.
+    if (typeof initializeCustomSelect2 === 'function') {
+        initializeCustomSelect2();
+    }
 
     $("div#remove").click(function(){
     var id = $(this).attr('data');

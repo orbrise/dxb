@@ -21,8 +21,20 @@ class SitemapController extends Controller
                 'loc' => url('sitemaps/pages.xml'),
                 'lastmod' => $this->formatDate(Page::max('updated_at'))
             ],
+            // One sitemap file per gender keeps each XML small and cache-friendly
+            // (a single combined cities.xml was ~ n_cities × 3 URLs and started
+            // timing out / not loading). Google prefers < 50k URLs and < 50MB
+            // per file anyway; the split gives us clean per-vertical growth room.
             [
-                'loc' => url('sitemaps/cities.xml'),
+                'loc' => url('sitemaps/cities/female.xml'),
+                'lastmod' => $this->formatDate(City::max('updated_at'))
+            ],
+            [
+                'loc' => url('sitemaps/cities/male.xml'),
+                'lastmod' => $this->formatDate(City::max('updated_at'))
+            ],
+            [
+                'loc' => url('sitemaps/cities/shemale.xml'),
                 'lastmod' => $this->formatDate(City::max('updated_at'))
             ],
             [
@@ -112,38 +124,48 @@ class SitemapController extends Controller
     }
 
     /**
-     * Cities Sitemap - Gender + City combinations (e.g., female-escorts-in-dubai)
+     * Cities Sitemap - LEGACY combined endpoint.
+     *
+     * The single-file version emitted (n_cities × 3 genders) URLs and started
+     * failing to load once the city list grew. We now split into one file per
+     * gender (see citiesByGender()). Google may still request this URL from
+     * its cache, so keep a 301 to the female variant to preserve link equity
+     * and avoid a 404 in Search Console.
      */
     public function cities()
     {
-        // Only include cities that are marked for sitemap
-        $cities = City::where('include_in_sitemap', 1)->get();
-        $genders = Gender::all();
-        
+        return redirect(url('sitemaps/cities/female.xml'), 301);
+    }
+
+    /**
+     * Per-gender cities sitemap.
+     *
+     * URL format: /sitemaps/cities/{gender}.xml  where gender is
+     * female | male | shemale. Emits every city (see comment on the
+     * legacy cities() method for why we don't filter by include_in_sitemap).
+     */
+    public function citiesByGender($gender)
+    {
+        $genderSlug = strtolower($gender);
+        if (!in_array($genderSlug, ['female', 'male', 'shemale'], true)) {
+            abort(404);
+        }
+
+        $cities = City::all();
         $urls = [];
-        
-        // Generate URLs for each gender + city combination
-        // URL format: {gender}-escorts-in-{city}
-        foreach ($genders as $gender) {
-            foreach ($cities as $city) {
-                $genderSlug = strtolower($gender->name);
-                
-                // Clean and sanitize city slug - remove special characters
-                $citySlug = $city->slug ?? strtolower(str_replace(' ', '-', $city->name));
-                $citySlug = $this->sanitizeSlug($citySlug);
-                
-                // Skip if slug is invalid
-                if (empty($citySlug)) {
-                    continue;
-                }
-                
-                $urls[] = [
-                    'loc' => url("/{$genderSlug}-escorts-in-{$citySlug}"),
-                    'lastmod' => $this->formatDate($city->updated_at),
-                    'changefreq' => 'daily',
-                    'priority' => '0.9'
-                ];
+
+        foreach ($cities as $city) {
+            $citySlug = $city->slug ?? strtolower(str_replace(' ', '-', $city->name));
+            $citySlug = $this->sanitizeSlug($citySlug);
+            if (empty($citySlug)) {
+                continue;
             }
+            $urls[] = [
+                'loc' => url("/{$genderSlug}-escorts-in-{$citySlug}"),
+                'lastmod' => $this->formatDate($city->updated_at),
+                'changefreq' => 'daily',
+                'priority' => '0.9',
+            ];
         }
 
         return response()->view('sitemaps.urlset', compact('urls'))

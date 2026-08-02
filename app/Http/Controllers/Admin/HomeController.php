@@ -16,9 +16,13 @@ class HomeController extends Controller
 
         $stats = [
             'total_users' => User::count(),
-            'total_profiles' => UsersProfile::count(),
-            'active_profiles' => UsersProfile::where('is_active', 1)->count(),
-            'inactive_profiles' => UsersProfile::where('is_active', 0)->count(),
+            // Match the admin profiles listing, which applies UsersProfile::active()
+            // (whereNull archived_at) by default and when filtering by status. Without
+            // this scope, the dashboard counted archived profiles but the listing
+            // hides them, so the click-through numbers didn't reconcile.
+            'total_profiles' => UsersProfile::active()->count(),
+            'active_profiles' => UsersProfile::active()->where('is_active', 1)->count(),
+            'inactive_profiles' => UsersProfile::active()->where('is_active', 0)->count(),
             'active_users' => User::where('verified', 1)->whereNotNull('email_verified_at')->count(),
             'inactive_users' => User::where(function($query) {
                 $query->where('verified', 0)->orWhereNull('email_verified_at');

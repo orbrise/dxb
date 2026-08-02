@@ -18,7 +18,7 @@
                         <div class="alert alert-danger">{{ session('error') }}</div>
                     @endif
                     
-                    <form action="{{ route('admin.auctions.store') }}" method="POST">
+                    <form action="{{ route('admin.auctions.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         
                         <div class="form-group">
@@ -85,6 +85,15 @@
                             @enderror
                         </div>
                         
+                        <div class="form-group mt-2">
+                            <label for="background_image">Background Image (optional)</label>
+                            <input type="file" name="background_image" id="background_image" accept="image/jpeg,image/png,image/webp" class="form-control @error('background_image') is-invalid @enderror">
+                            <small class="form-text text-muted">Shown on the auction spot card when the spot has no bidder yet. JPG / PNG / WebP, max 4 MB.</small>
+                            @error('background_image')
+                                <span class="invalid-feedback d-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="form-group mt-3">
                             <button type="submit" class="btn btn-primary">Create Auction Spot</button>
                         </div>

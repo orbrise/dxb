@@ -672,10 +672,15 @@
             }
             .chat-header-actions { display: none !important; }
 
-            /* Messages area */
+            /* Messages area. Top padding clears the fixed .chat-header
+               (14px top + max(14, safe-area) padding + ~40px content +
+               1px border), bottom padding clears the pinned .chat-input
+               (~60px) so the first and last bubbles are always fully
+               visible. Padding shorthand set explicitly here so it doesn't
+               wipe out earlier padding-top/padding-bottom overrides. */
             .chat-messages {
                 background: #000 !important;
-                padding: 16px !important;
+                padding: calc(50px + env(safe-area-inset-top)) 16px 76px !important;
                 gap: 4px !important;
             }
 
@@ -707,11 +712,29 @@
             .message-wrapper.sent .message-time { color: #888 !important; }
             .message-wrapper.received .message-time { color: #666 !important; }
 
-            /* Chat input */
+            /* Chat input — pinned to the viewport bottom (above the fixed
+               .ev-mobile-bottom-nav which is ~66px tall incl. safe-area) so
+               it stays visible regardless of how many messages are in the
+               list. In the previous flex-flow layout the input sat at the
+               bottom of .chat-container, and any mismatch between the
+               container's `calc(100vh - 60px)` height and the real navbar
+               height meant the input rendered below the navbar (fully
+               hidden until you page-scrolled). */
             .chat-input {
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: calc(66px + env(safe-area-inset-bottom)) !important;
+                z-index: 99 !important;
                 padding: 10px 16px !important;
                 background: #0a0a0a !important;
                 border-top: 1px solid #1a1a1a !important;
+            }
+            /* Reserve room at the bottom of the scrollable messages so the
+               last bubble isn't hidden behind the pinned input. Input is
+               ~60px tall (10 padding + 40 button + 10 padding). */
+            .chat-messages {
+                padding-bottom: 76px !important;
             }
             .chat-input-form input {
                 padding: 10px 16px !important;
@@ -806,7 +829,7 @@
                                         placeholder="Search conversations..." 
                                         wire:model.live.debounce.300ms="searchTerm"
                                         style="flex: 1;">
-                                    <select style="padding: 10px 12px; background: #1a1a1a; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 14px; cursor: pointer;">
+                                    <select style="padding: 10px 28px 10px 12px; background: #1a1a1a; border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 14px; cursor: pointer;">
                                         <option>All</option>
                                     </select>
                                     @if($searchResults && $searchResults->count() > 0)

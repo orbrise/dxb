@@ -11,10 +11,10 @@
             <!-- Logo Area -->
             <div class="navbar-header">
                 <a href="/" class="navbar-brand">
-                    @if($setting->app_logo)
+                    @if($setting?->app_logo)
                     <img class="logo-expand" alt="" src="{{smart_asset($setting->app_logo)}}">
                     @endif
-                    @if($setting->collapse_icon)
+                    @if($setting?->collapse_icon)
                     <img class="logo-collapse" alt="" src="{{smart_asset($setting->collapse_icon)}}">
                     @endif
                     <!-- <p>OSCAR</p> -->

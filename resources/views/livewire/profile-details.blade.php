@@ -395,6 +395,72 @@
                 @endif
                 <div class="clearfix"></div>
               </div>
+              <style>
+                /* Mobile price pills — the icon <span> above has an INLINE
+                   style="width:50px;height:50px" that beats the mobile CSS in
+                   evoory-profile.css trying to shrink it to 28px, so the icon
+                   ate most of the ~90px card and the price string
+                   ("Incalls per hour from 399 AED (US$108)") wrapped one
+                   character at a time. Force the icon down, lay out the text
+                   vertically (LABEL on top / PRICE below / USD under), and
+                   let the number never break mid-digit. */
+                @media (max-width: 767px){
+                    #listing-price > div{
+                        gap:10px !important;
+                        padding:10px 6px !important;
+                    }
+                    #listing-price .text-muted span{
+                        width:32px !important;
+                        height:32px !important;
+                        padding:7px !important;
+                        margin-right:0 !important;
+                    }
+                    #listing-price .text-muted span svg{
+                        width:14px !important;
+                        height:14px !important;
+                    }
+                    #listing-price > div > .pull-left.margin-right{
+                        display:flex !important;
+                        flex-direction:column !important;
+                        align-items:flex-start !important;
+                        gap:2px;
+                        min-width:0;
+                        flex:1 1 auto;
+                        white-space:normal;
+                        word-break:normal;
+                        overflow-wrap:break-word;
+                    }
+                    #listing-price .listing-price-label{
+                        display:block !important;
+                        font-size:10px !important;
+                        color:#8a8a8a !important;
+                        text-transform:uppercase;
+                        letter-spacing:.3px;
+                        line-height:1.2 !important;
+                        white-space:nowrap;
+                        overflow:hidden;
+                        text-overflow:ellipsis;
+                        max-width:100%;
+                    }
+                    #listing-price .usd-price{
+                        font-size:10px !important;
+                        color:#888 !important;
+                        display:block !important;
+                        white-space:nowrap;
+                    }
+                    /* Price + currency (raw text after the label) should sit
+                       on one line and stay bold-ish so the card reads at a
+                       glance. Wrap the untagged text with word-break: keep-all
+                       so "399 AED" stays together. */
+                    #listing-price > div > .pull-left.margin-right{
+                        font-size:14px !important;
+                        font-weight:600;
+                        color:#fff !important;
+                        line-height:1.25 !important;
+                        word-break:keep-all;
+                    }
+                }
+              </style>
               @endif
               {{-- Details table styles moved to evoory-profile.css --}}
               <div class="ev-details-card">
@@ -1360,11 +1426,13 @@
                             <div class="review-description">
                               <p class="review-text" itemprop="reviewBody ">« {{$review->review}}</p>
                             </div>
+                            @if(!empty($review->reply))
                             <div class="answer-wrapper">
                               <div class="answer-block">
-                                <p class="review-comment-text">Thank you dear for your feedback</p>
+                                <p class="review-comment-text">{{ $review->reply }}</p>
                               </div>
                             </div>
+                            @endif
                             
                             
                             @endforeach
@@ -1473,7 +1541,11 @@
               <i class="fa fa-times" aria-hidden="true"></i>
             </button>
             @if(auth()->check())
-            @if($rev)
+            @if($revApproved ?? false)
+
+            Thanks for your review
+
+            @elseif($rev)
 
             Thank you for adding review
 
@@ -1515,12 +1587,24 @@
           </div>
           @endif
           @if(auth()->check())
-          @if ($rev)
-          <div class="alert alert-success">
-            It will be published when it has been reviewed by a moderator.
+          @if($revApproved ?? false)
+          {{-- Wrap in .modal-body so the alert + OK button pick up the modal's
+               horizontal padding instead of hugging the border. --}}
+          <div class="modal-body">
+            <div class="alert alert-success">
+              You&#39;ve already reviewed this profile. Thanks for your feedback!
+            </div>
+            <p><button class="btn btn-lg btn-primary" data-dismiss="modal"
+                data-modal-notice-response-btn="true">OK</button></p>
           </div>
-          <p><button class="btn btn-lg btn-primary" data-dismiss="modal"
-              data-modal-notice-response-btn="true">OK</button></p>
+          @elseif ($rev)
+          <div class="modal-body">
+            <div class="alert alert-success">
+              It will be published when it has been reviewed by a moderator.
+            </div>
+            <p><button class="btn btn-lg btn-primary" data-dismiss="modal"
+                data-modal-notice-response-btn="true">OK</button></p>
+          </div>
           @endif
           @if(!$rev)
           <div class="modal-body">
@@ -1681,9 +1765,6 @@
           @if(auth()->check())
           {{-- LOGGED IN: Send message form --}}
           <div class="modal-header" style="border-bottom:1px solid #2a2a2a;padding:20px 24px 16px;display:flex;align-items:center;gap:10px;">
-            <span style="display:inline-flex;align-items:center;justify-content:center;">
-               <img src="https://assets.massagerepublic.com.co/assets/newtheme/msg.svg" width="18" height="18" alt="Message">
-            </span>
             @if (session()->has('sendmsg'))
             <p style="margin:0;color:#fff;font-size:16px;">Your message has been sent</p>
             @else
@@ -1698,42 +1779,38 @@
           </div>
           <div class="modal-body" style="padding:24px;">
 
-            @if (session()->has('sendmsg'))
-            <div class="alert alert-success" style="background:#1a2e1a;border:1px solid #2d5a2d;color:#7ecb7e;border-radius:8px;">{{session('sendmsg')}}</div>
-            <br>
-            <button class="btn btn-lg" data-dismiss="modal" data-modal-notice-response-btn="true"
-              style="background:#c8ff00;color:#000;font-weight:700;border-radius:50px;border:none;padding:10px 32px;">OK</button>
-            @else
-            <form wire:submit.prevent='sendmsg' class="simple_form validate track-event" id="new_listing_message"
-              data-track="contact/message/UAE premium-listing-contact/message/UAE" novalidate="novalidate"
-              action="/action/listings/alisha-gorgeous-hottie-tecom/listing_messages" accept-charset="UTF-8"
-              method="post">
-              <input name="utf8" type="hidden" value="✓">
-              <input type="hidden" name="authenticity_token"
-                value="+LM7/8YR7Sn0qCawhfPlPNDAoom5Dtq32T3SvdRjJ+XUPyA8gl9HLrxn8XNmjkslyCYvio627JOJvCRYqOCj3w==">
+            {{-- Plain HTTP-POST form — same reason as review/report/question forms:
+                 this route is served from page.cache, so wire:submit hits the
+                 "Snapshot missing" morph bug. Endpoint: POST /profile/{id}/message
+                 returns JSON; JS handler shows the toast and closes the modal. --}}
+            <form id="messagePostForm" action="{{ route('profile.message', ['id' => $profileid]) }}"
+                  method="post" class="simple_form validate" novalidate="novalidate" wire:ignore>
+              @csrf
+              <div id="messageFormError" class="alert alert-danger" style="display:none;background:#3a1a1a;border:1px solid #5a2d2d;color:#f08080;border-radius:8px;padding:10px;margin-bottom:12px;"></div>
 
-              <div class="form-group" style="margin-bottom:18px;">
-                <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_sender_email_address">Email</label>
-                <input wire:model='email' type="email"
-                  data-validations="presence emailFormat"
-                  name="listing_message[sender_email_address]" id="listing_message_sender_email_address"
-                  style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;box-sizing:border-box;">
-                <small style="color:#888;font-size:10px;margin-top:4px;display:block;">Please enter a valid email address</small>
-              </div>
+              @if(auth()->check())
+                {{-- Auth user: email comes from the account, not the form. --}}
+              @else
+                <div class="form-group" style="margin-bottom:18px;">
+                  <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_sender_email_address">Email</label>
+                  <input name="email" type="email"
+                    id="listing_message_sender_email_address"
+                    style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;box-sizing:border-box;">
+                  <small style="color:#888;font-size:10px;margin-top:4px;display:block;">Please enter a valid email address</small>
+                </div>
+              @endif
 
               <div class="form-group" style="margin-bottom:18px;">
                 <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_content">Message</label>
-                <textarea wire:model='msg' rows="5"
-                  data-validations="presence minlength(10)" data-validations-presence-message="Add a message"
-                  maxlength="500" name="listing_message[content]" id="listing_message_content"
+                <textarea name="message" rows="5" maxlength="500"
+                  id="listing_message_content"
                   style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
               </div>
 
               <div class="form-group" style="margin-bottom:24px;">
                 <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_phone_number_attributes_phone_digits">Telephone</label>
                 <div style="display:flex;gap:8px;">
-                  <select wire:model='code'
-                    name="listing_message[phone_number_attributes][calling_code]"
+                  <select name="code"
                     id="message_phone_code"
                     style="background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 12px;font-size:14px;outline:none;width:110px;appearance:none;-webkit-appearance:none;cursor:pointer;">
                     <option value="">+971 ▾</option>
@@ -1741,23 +1818,22 @@
                     <option value="{{$country->phonecode}}">+{{$country->phonecode}} - {{$country->nicename}}</option>
                     @endforeach
                   </select>
-                  <input wire:model='phone' type="text"
+                  <input name="phone" type="text"
                     placeholder="Phone number"
-                    name="listing_message[phone_number_attributes][phone_digits]"
                     id="listing_message_phone_number_attributes_phone_digits"
                     style="flex:1;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;box-sizing:border-box;">
                 </div>
               </div>
 
               <div style="text-align:left;">
-                <button data-btn-submit="" type="submit"
+                <button data-btn-submit="" type="submit" id="messageSubmitBtn"
                   style="background:#c8ff00;color:#000;font-weight:500;font-size:15px;border:none;border-radius:50px;padding:5px 30px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
-                  Send
+                  <span id="messageSubmitLabel">Send
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </span>
                 </button>
               </div>
             </form>
-            @endif
           </div>
 
           @else
@@ -1901,7 +1977,102 @@
       </div>
     </div>
 
-    <div class="user-action-modal modal reportModal" wire:ignore.self>
+    <div class="user-action-modal modal reportModal" wire:ignore.self data-backdrop="static">
+      <style>
+        /* Match the site's evoory dark-theme form controls (Pricing/Personal
+           Details cards): solid dark background, subtle border, ~10px radius,
+           lime chevron accent. Global `.form-control{background:linear-gradient}`
+           and Bootstrap `.form-control` box-shadow reset via !important. */
+        .reportModal .form-control{
+            background:#111213 !important;
+            border:1px solid #2e3033 !important;
+            color:#fff !important;
+            border-radius:10px !important;
+            box-shadow:none !important;
+            text-shadow:none !important;
+            height:44px;
+            padding:10px 14px;
+            font-size:14px;
+        }
+        .reportModal textarea.form-control{
+            height:auto;
+            min-height:110px;
+            line-height:1.4;
+        }
+        .reportModal .form-control:focus{
+            border-color:#C1F11D !important;
+            box-shadow:0 0 0 2px rgba(193,241,29,0.15) !important;
+            outline:none;
+        }
+        .reportModal .form-control::placeholder{color:#666}
+
+        /* Native select chevron: replace with a lime SVG chevron sitting inside
+           the field with real right padding. Set both `background` shorthand
+           and appearance with !important so the global .form-control gradient
+           can't strip it. */
+        .reportModal select.form-control{
+            -webkit-appearance:none !important;
+            -moz-appearance:none !important;
+            appearance:none !important;
+            padding-right:40px !important;
+            background:
+                url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23C1F11D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+                no-repeat right 14px center / 12px 8px,
+                #111213 !important;
+        }
+        .reportModal select.form-control::-ms-expand{display:none !important}
+
+        /* Labels + helper text in evoory tone */
+        .reportModal .form-group > label{color:#e6e6e6;font-weight:500;font-size:13px;margin-bottom:6px}
+        .reportModal .text-muted{color:#888 !important}
+
+        /* Submit + Cancel: equal-size pill buttons like Log In / Sign up. */
+        .reportModal .form-group.text-center{
+            display:flex;
+            gap:12px;
+            justify-content:center;
+            align-items:stretch;
+        }
+        .reportModal .form-group.text-center > .btn{
+            flex:1 1 0;
+            min-width:0;
+            height:35px;
+            line-height:1;
+            padding:0 18px;
+            border-radius:999px !important;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            margin:0;
+            font-size:15px;
+            font-weight:500;
+            text-shadow:none !important;
+            box-shadow:none !important;
+        }
+        .reportModal .form-group.text-center > .btn-primary{
+            background:#C1F11D !important;
+            border:1px solid #C1F11D !important;
+            color:#000 !important;
+        }
+        .reportModal .form-group.text-center > .btn-primary:hover,
+        .reportModal .form-group.text-center > .btn-primary:focus{
+            background:#b5e600 !important;
+            border-color:#b5e600 !important;
+            color:#000 !important;
+        }
+        .reportModal .form-group.text-center > .btn-default{
+            background:#111213 !important;
+            border:1px solid #2e3033 !important;
+            color:#e6e6e6 !important;
+        }
+        .reportModal .form-group.text-center > .btn-default:hover,
+        .reportModal .form-group.text-center > .btn-default:focus{
+            background:#1a1b1e !important;
+            border-color:#3a3d42 !important;
+            color:#fff !important;
+        }
+      </style>
       <div class="modal-md modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -1921,62 +2092,40 @@
                 <button class="btn btn-default btn-lg" data-dismiss="modal">Cancel</button>
               </p>
             @else
-              @if(session()->has('report_message'))
-                <div class="alert alert-success">
-                  <i class="fa fa-check-circle"></i>
-                  {{ session('report_message') }}
+              {{-- Plain HTTP-POST form (same reason as reviewPostForm and question form
+                   above). This route is served from page.cache, so Livewire wire:submit
+                   hits the "Snapshot missing" morph bug — the cached HTML carries a
+                   snapshot signed with the first requesting user's session secret.
+                   Endpoint: POST /profile/{id}/report — returns JSON. --}}
+              <form id="reportPostForm" action="{{ route('profile.report', ['id' => $profileid]) }}"
+                    method="post" wire:ignore>
+                @csrf
+                <div id="reportFormError" class="alert alert-danger mb-3" style="display:none;"></div>
+
+                <div class="form-group">
+                  <label>Report Type <span class="text-danger">*</span></label>
+                  <select name="report_type" class="form-control" required>
+                    <option value="">Select reason</option>
+                    <option value="fake">Fake Profile</option>
+                    <option value="spam">Spam</option>
+                    <option value="inappropriate">Inappropriate Content</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
-                <p class="text-center">
-                  <button class="btn btn-lg btn-primary" data-dismiss="modal">OK</button>
-                </p>
-              @elseif(session()->has('report_error'))
-                <div class="alert alert-danger">
-                  <i class="fa fa-exclamation-circle"></i>
-                  {{ session('report_error') }}
+                <div class="form-group">
+                  <label>Description <span class="text-danger">*</span></label>
+                  <textarea name="description" id="reportDescription" class="form-control" rows="4"
+                    placeholder="Please provide details about why you are reporting this profile (minimum 10 characters)"
+                    required></textarea>
+                  <small class="text-muted"><span id="reportCharCount">0</span>/1000 characters</small>
                 </div>
-                <p class="text-center">
-                  <button class="btn btn-lg btn-primary" data-dismiss="modal">OK</button>
-                </p>
-              @else
-                <form wire:submit.prevent="submitReport">
-                  <div class="form-group">
-                    <label>Report Type <span class="text-danger">*</span></label>
-                    <select wire:model="reportType" class="form-control" required>
-                      <option value="">Select reason</option>
-                      <option value="fake">Fake Profile</option>
-                      <option value="spam">Spam</option>
-                      <option value="inappropriate">Inappropriate Content</option>
-                      <option value="other">Other</option>
-                    </select>
-                    @error('reportType')
-                      <span class="text-danger small">{{ $message }}</span>
-                    @enderror
-                  </div>
-                  <div class="form-group">
-                    <label>Description <span class="text-danger">*</span></label>
-                    <textarea wire:model="reportDescription" class="form-control" rows="4" 
-                      placeholder="Please provide details about why you are reporting this profile (minimum 10 characters)" 
-                      required></textarea>
-                    <small class="text-muted">
-                      {{ strlen($reportDescription ?? '') }}/1000 characters
-                    </small>
-                    @error('reportDescription')
-                      <span class="text-danger small d-block">{{ $message }}</span>
-                    @enderror
-                  </div>
-                  <div class="form-group text-center">
-                    <button type="submit" class="btn btn-primary btn-lg" wire:loading.attr="disabled">
-                      <span wire:loading.remove>
-                        <i class="fa fa-flag"></i> Submit Report
-                      </span>
-                      <span wire:loading>
-                        <i class="fa fa-spinner fa-spin"></i> Submitting...
-                      </span>
-                    </button>
-                    <button type="button" class="btn btn-default btn-lg" data-dismiss="modal">Cancel</button>
-                  </div>
-                </form>
-              @endif
+                <div class="form-group text-center">
+                  <button type="submit" id="reportSubmitBtn" class="btn btn-primary btn-lg">
+                    <span id="reportSubmitLabel"><i class="fa fa-flag"></i> Submit Report</span>
+                  </button>
+                  <button type="button" class="btn btn-default btn-lg" data-dismiss="modal">Cancel</button>
+                </div>
+              </form>
             @endif
           </div>
         </div>
@@ -2151,8 +2300,8 @@ document.querySelectorAll('.report-link').forEach(function(link) {
               $('.modal-backdrop').remove();
               $('body').removeClass('modal-open');
               const notification = $(
-                '<div class="alert alert-success" style="position:fixed;top:20px;right:20px;z-index:10000;min-width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">' +
-                '<strong><i class="fa fa-check-circle"></i> Thanks!</strong><br>' +
+                '<div style="position:fixed;top:20px;right:20px;z-index:10000;min-width:300px;max-width:400px;background:#28a745;color:#fff;padding:14px 18px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.35);font-size:14px;line-height:1.4;">' +
+                '<strong style="display:block;margin-bottom:4px;"><i class="fa fa-check-circle"></i> Thanks!</strong>' +
                 (resp && resp.message ? resp.message : 'Review submitted for moderation.') +
                 '</div>'
               );
@@ -2314,9 +2463,65 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             $(".reportModal").modal("show");
           });
 
-          // Listen for close report modal event
-          window.addEventListener('closeReportModal', event => {
-            $(".reportModal").modal("hide");
+          // Live character counter for the report textarea.
+          $(document).off('input.reportcount').on('input.reportcount', '#reportDescription', function() {
+            $('#reportCharCount').text($(this).val().length);
+          });
+
+          // Plain HTTP AJAX report submission — mirror of reviewPostForm.
+          // wire:submit was hitting the "Snapshot missing" bug because this
+          // route is served from page.cache and the cached HTML carries a
+          // snapshot signed with the first requester's session secret.
+          $(document).off('submit.reportpost').on('submit.reportpost', '#reportPostForm', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $btn = $('#reportSubmitBtn');
+            const $err = $('#reportFormError');
+            const $label = $('#reportSubmitLabel');
+            const originalLabel = $label.html();
+            $err.hide().text('');
+            $btn.prop('disabled', true);
+            $label.html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+
+            $.ajax({
+              url: $form.attr('action'),
+              method: 'POST',
+              data: $form.serialize(),
+              dataType: 'json',
+              headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+            }).done(function(resp) {
+              $(".reportModal").modal("hide");
+              $('.modal-backdrop').remove();
+              $('body').removeClass('modal-open').css('overflow', '').css('padding-right', '');
+              const notification = $(
+                '<div style="position:fixed;top:20px;right:20px;z-index:10000;min-width:300px;max-width:400px;background:#28a745;color:#fff;padding:14px 18px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.35);font-size:14px;line-height:1.4;">' +
+                '<strong style="display:block;margin-bottom:4px;"><i class="fa fa-check-circle"></i> Thanks!</strong>' +
+                (resp && resp.message ? resp.message : 'Your report has been submitted.') +
+                '</div>'
+              );
+              $('body').append(notification);
+              setTimeout(function() { notification.fadeOut(400, function(){ $(this).remove(); }); }, 5000);
+              $form.find('select[name="report_type"]').val('');
+              $form.find('textarea[name="description"]').val('');
+              $('#reportCharCount').text('0');
+            }).fail(function(xhr) {
+              let msg = 'Could not submit the report. Please try again.';
+              if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+              } else if (xhr.status === 401) {
+                msg = (xhr.responseJSON && xhr.responseJSON.error) || 'You must be logged in to report a profile.';
+              } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                msg = xhr.responseJSON.error;
+              }
+              $err.text(msg).show();
+            }).always(function() {
+              $btn.prop('disabled', false);
+              $label.html(originalLabel);
+            });
           });
 
           // Listen for close review modal event. Bootstrap's own hide()
@@ -2329,11 +2534,8 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             $('body').removeClass('modal-open');
 
             const notification = $(`
-              <div class="alert alert-success" style="position: fixed; top: 20px; right: 20px; z-index: 10000; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: slideInRight 0.3s ease-out;">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-                <strong><i class="fa fa-check-circle"></i> Thanks!</strong><br>
+              <div style="position:fixed;top:20px;right:20px;z-index:10000;min-width:300px;max-width:400px;background:#28a745;color:#fff;padding:14px 18px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.35);font-size:14px;line-height:1.4;">
+                <strong style="display:block;margin-bottom:4px;"><i class="fa fa-check-circle"></i> Thanks!</strong>
                 Your review has been submitted and is awaiting moderation.
               </div>
             `);
@@ -2343,31 +2545,56 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             }, 5000);
           });
           
-          // Listen for close message modal event
-          window.addEventListener('closeMessageModal', event => {
-            $(".msgmodal").modal("hide");
-            $('.modal-backdrop').remove();
-            $('body').removeClass('modal-open');
-            
-            // Show success notification
-            const notification = $(`
-              <div class="alert alert-success" style="position: fixed; top: 20px; right: 20px; z-index: 10000; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: slideInRight 0.3s ease-out;">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-                <strong><i class="fa fa-check-circle"></i> Success!</strong><br>
-                Your message has been sent successfully.
-              </div>
-            `);
-            
-            $('body').append(notification);
-            
-            // Auto-dismiss after 5 seconds
-            setTimeout(() => {
-              notification.fadeOut(400, function() {
-                $(this).remove();
-              });
-            }, 5000);
+          // Plain HTTP AJAX message submission — same reason as review/report/question
+          // forms: wire:submit was hitting the "Snapshot missing" bug because
+          // this route is served from page.cache.
+          $(document).off('submit.messagepost').on('submit.messagepost', '#messagePostForm', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $btn = $('#messageSubmitBtn');
+            const $err = $('#messageFormError');
+            const $label = $('#messageSubmitLabel');
+            const originalLabel = $label.html();
+            $err.hide().text('');
+            $btn.prop('disabled', true);
+            $label.html('<i class="fa fa-spinner fa-spin"></i> Sending...');
+
+            $.ajax({
+              url: $form.attr('action'),
+              method: 'POST',
+              data: $form.serialize(),
+              dataType: 'json',
+              headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+            }).done(function(resp) {
+              $(".msgmodal").modal("hide");
+              $('.modal-backdrop').remove();
+              $('body').removeClass('modal-open').css('overflow', '').css('padding-right', '');
+              const notification = $(
+                '<div style="position:fixed;top:20px;right:20px;z-index:10000;min-width:300px;max-width:400px;background:#28a745;color:#fff;padding:14px 18px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.35);font-size:14px;line-height:1.4;">' +
+                '<strong style="display:block;margin-bottom:4px;"><i class="fa fa-check-circle"></i> Success!</strong>' +
+                (resp && resp.message ? resp.message : 'Your message has been sent.') +
+                '</div>'
+              );
+              $('body').append(notification);
+              setTimeout(function() { notification.fadeOut(400, function(){ $(this).remove(); }); }, 5000);
+              $form.find('textarea[name="message"]').val('');
+              $form.find('input[name="phone"]').val('');
+            }).fail(function(xhr) {
+              let msg = 'Could not send the message. Please try again.';
+              if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+              } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                msg = xhr.responseJSON.error;
+              }
+              $err.text(msg).show();
+            }).always(function() {
+              $btn.prop('disabled', false);
+              $label.html(originalLabel);
+            });
           });
           
           // Initialize custom lightbox gallery since photobox isn't working properly
@@ -2482,9 +2709,22 @@ document.querySelectorAll('.report-link').forEach(function(link) {
                       width: 16px !important;
                       height: 16px !important;
                     }
+                    /* On mobile, play button drops to 36x36 (see rule above),
+                       but the close button's outer div AND its ::before pseudo
+                       (which paints the actual circle + X icon) still measured
+                       44x44 from profile-details-inline.css, so close visibly
+                       out-sized the play control. Match both sizes here. */
                     #lightboxClose {
                       top: 10px !important;
                       right: 10px !important;
+                      width: 36px !important;
+                      height: 36px !important;
+                    }
+                    #lightboxClose::before {
+                      width: 36px !important;
+                      height: 36px !important;
+                      border-width: 1.5px !important;
+                      background-size: 14px !important;
                     }
                     #lightboxImage {
                       transition: opacity 0.4s ease-in-out !important;

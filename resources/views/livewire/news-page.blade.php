@@ -655,7 +655,10 @@ form.activity-nav-form input.search-bar--city:focus-visible {
     header#header .nav-bar { background: #000 !important; padding: 8px 16px !important; }
     header#header .nav-bar .container-fluid { padding: 0 !important; }
 
-    /* Gender + City row */
+    /* Gender + City row. All three controls (gender button, city input,
+       activity-nav filter buttons below) share the same box: 40px height,
+       5px radius, 13px text, matching padding — so the "What's New"
+       filter bar reads as one grid of equal-sized chips. */
     form.activity-nav-form { display: flex !important; gap: 8px !important; margin-bottom: 10px !important; flex-wrap: nowrap !important; }
     form.activity-nav-form .form-group { flex: 1 !important; margin: 0 !important; float: none !important; }
     form.activity-nav-form .activity-search-gender { flex: none !important; width: auto !important; min-width: 0 !important; }
@@ -665,20 +668,26 @@ form.activity-nav-form input.search-bar--city:focus-visible {
         border-radius: 5px !important;
         color: #fff !important;
         font-size: 13px !important;
-        padding: 10px 12px !important;
+        height: 40px !important;
+        line-height: 1 !important;
+        padding: 0 12px !important;
         min-width: 0 !important;
         width: auto !important;
+        box-sizing: border-box !important;
     }
     form.activity-nav-form input.search-bar--city {
         background: #1a1a1a !important;
         border: 1px solid #333 !important;
         border-radius: 5px !important;
         font-size: 13px !important;
-        padding: 10px 12px 10px 36px !important;
+        height: 40px !important;
+        line-height: 1 !important;
+        padding: 0 12px 0 36px !important;
         width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    /* Activity stream nav - horizontal pills */
+    /* Activity stream nav - horizontal pills, same 40px height as row above. */
     div.activity-stream-nav.btn-group {
         display: flex !important;
         gap: 8px !important;
@@ -691,14 +700,21 @@ form.activity-nav-form input.search-bar--city:focus-visible {
     div.activity-stream-nav.btn-group::-webkit-scrollbar { display: none; }
     div.activity-stream-nav a.btn.btn-dark {
         white-space: nowrap !important;
-        padding: 7px 14px !important;
-        font-size: 12px !important;
+        height: 40px !important;
+        line-height: 1 !important;
+        padding: 0 14px !important;
+        font-size: 13px !important;
         border-radius: 5px !important;
         background: transparent !important;
         border: 1px solid #333 !important;
         color: #999 !important;
         flex-shrink: 0 !important;
         box-shadow: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        box-sizing: border-box !important;
     }
     div.activity-stream-nav a.btn.btn-dark.active {
         border-color: #C1F11D !important;

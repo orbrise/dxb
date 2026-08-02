@@ -59,9 +59,144 @@
 <div class="row mt-3 mb-3">
     <div class="col-lg-12">
         <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">All Users</h5>
+            @php
+                $statusLabels = ['active' => 'Active', 'pending' => 'Pending'];
+                $verifiedLabels = ['1' => 'Verified', '0' => 'Not verified'];
+                $activeCount = collect(['id','name','email','status','verified','date_from','date_to'])
+                    ->filter(fn($k) => request()->filled($k))
+                    ->count();
+            @endphp
+
+            <div class="card-header q-filter-bar py-2">
+                <form method="GET" action="{{ route('admin.users') }}" id="uFiltersForm" class="d-flex align-items-center flex-wrap" style="gap:6px;">
+                    <span class="text-muted mr-1"><i class="fa fa-filter"></i></span>
+
+                    {{-- ID --}}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm {{ request('id') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                            ID{{ request('id') ? ': '.request('id') : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                        </button>
+                        <div class="dropdown-menu p-2" style="min-width:220px;">
+                            <input type="number" name="id" value="{{ request('id') }}" class="form-control form-control-sm mb-2" placeholder="User ID" min="1">
+                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
+                        </div>
+                    </div>
+
+                    {{-- Name --}}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm {{ request('name') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                            Name{{ request('name') ? ': '.\Illuminate\Support\Str::limit(request('name'), 20) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                        </button>
+                        <div class="dropdown-menu p-2" style="min-width:240px;">
+                            <input type="text" name="name" value="{{ request('name') }}" class="form-control form-control-sm mb-2" placeholder="Search by name...">
+                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
+                        </div>
+                    </div>
+
+                    {{-- Email --}}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm {{ request('email') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                            Email{{ request('email') ? ': '.\Illuminate\Support\Str::limit(request('email'), 22) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                        </button>
+                        <div class="dropdown-menu p-2" style="min-width:260px;">
+                            <input type="text" name="email" value="{{ request('email') }}" class="form-control form-control-sm mb-2" placeholder="Search by email...">
+                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
+                        </div>
+                    </div>
+
+                    {{-- Status --}}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm {{ request()->filled('status') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                            Status{{ request()->filled('status') ? ': '.($statusLabels[request('status')] ?? request('status')) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                        </button>
+                        <div class="dropdown-menu p-2" style="min-width:180px;">
+                            <select name="status" class="form-control form-control-sm mb-2" onchange="this.form.submit()">
+                                <option value="">All statuses</option>
+                                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Verified --}}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm {{ request()->filled('verified') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                            Verified{{ request()->filled('verified') ? ': '.($verifiedLabels[request('verified')] ?? '') : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                        </button>
+                        <div class="dropdown-menu p-2" style="min-width:180px;">
+                            <select name="verified" class="form-control form-control-sm mb-2" onchange="this.form.submit()">
+                                <option value="">Any</option>
+                                <option value="1" {{ request('verified') === '1' ? 'selected' : '' }}>Verified</option>
+                                <option value="0" {{ request('verified') === '0' ? 'selected' : '' }}>Not verified</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Registered (date range) --}}
+                    <div class="btn-group">
+                        @php
+                            $dateLabel = '';
+                            if (request('date_from') && request('date_to')) $dateLabel = ': '.request('date_from').' → '.request('date_to');
+                            elseif (request('date_from')) $dateLabel = ': from '.request('date_from');
+                            elseif (request('date_to')) $dateLabel = ': to '.request('date_to');
+                        @endphp
+                        <button type="button" class="btn btn-sm {{ ($dateLabel !== '') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                            Registered{{ $dateLabel }} <i class="fa fa-chevron-down filter-caret"></i>
+                        </button>
+                        <div class="dropdown-menu p-2" style="min-width:260px;">
+                            <label class="small mb-1">From</label>
+                            <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm mb-2">
+                            <label class="small mb-1">To</label>
+                            <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm mb-2">
+                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
+                        </div>
+                    </div>
+
+                    @if($activeCount > 0)
+                        <a href="{{ route('admin.users') }}" class="btn btn-sm btn-outline-danger" title="Reset all filters">
+                            <i class="fa fa-times"></i> Reset ({{ $activeCount }})
+                        </a>
+                    @endif
+
+                    <div class="ml-auto text-muted small">
+                        {{ $users->count() }} user(s)
+                    </div>
+                </form>
             </div>
+
+            <style>
+                .q-filter-bar .dropdown-menu { padding: 10px; }
+                .q-filter-bar .dropdown-menu input,
+                .q-filter-bar .dropdown-menu select { cursor: auto; }
+                .q-filter-bar .dropdown-toggle::after { display: none !important; }
+                .q-filter-bar .filter-caret {
+                    display: inline-block;
+                    margin-left: 6px;
+                    font-size: 10px;
+                }
+                .q-filter-bar .btn-outline-dark {
+                    color: #000 !important;
+                    border-color: #6c757d !important;
+                    background: #fff !important;
+                    font-weight: 500;
+                }
+                .q-filter-bar .btn-outline-dark:hover,
+                .q-filter-bar .btn-outline-dark:focus {
+                    color: #000 !important;
+                    background: #f1f3f5 !important;
+                    border-color: #343a40 !important;
+                }
+                .q-filter-bar .btn-outline-dark .filter-caret { color: #000; opacity: 0.75; }
+                .q-filter-bar .btn-primary { color: #fff !important; font-weight: 500; }
+                .q-filter-bar .btn-primary .filter-caret { color: #fff; opacity: 0.9; }
+            </style>
+            <script>
+                (function() {
+                    document.querySelectorAll('.q-filter-bar .dropdown-menu').forEach(function(m) {
+                        m.addEventListener('click', function(e) { e.stopPropagation(); });
+                    });
+                })();
+            </script>
             <div class="card-body">
                 <table id="usersTable" class="table table-bordered table-striped table-hover">
                     <thead>

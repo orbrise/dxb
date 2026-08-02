@@ -273,6 +273,8 @@
                         <img loading="lazy" src="{{ asset('storage/userimages/'.$auction->highestBidderProfile->user_id.'/'.$auction->highestBidderProfile->id.'/'.$auction->highestBidderProfile->singleimg->image) }}" alt="" />
                     @elseif($auction->featuredProfile && !empty($auction->featuredProfile->singleimg))
                         <img loading="lazy" src="{{ smart_asset('storage/userimages/'.$auction->featuredProfile->user_id.'/'.$auction->featuredProfile->id.'/'.$auction->featuredProfile->singleimg->image) }}" alt="" />
+                    @elseif($auction->background_image)
+                        <img loading="lazy" src="{{ $auction->background_image_url }}" alt="Spot #{{ $auction->spot_number }}" />
                     @else
                         <div class="placeholder-img">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>

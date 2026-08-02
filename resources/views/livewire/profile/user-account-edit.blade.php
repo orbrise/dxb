@@ -660,7 +660,16 @@
                         <label>Profile photo</label>
                         <div class="ev-avatar-section">
                             <div class="ev-avatar-preview">
-                                @if(!empty(auth()->user()->avatar))
+                                {{-- When a new file has been picked, wire:model uploads it
+                                     to Livewire's temp storage and $avatar becomes a
+                                     TemporaryUploadedFile. Render from ->temporaryUrl() so
+                                     the post-upload morph produces the same src the inline
+                                     FileReader preview set — otherwise the morph reverts
+                                     the <img> back to auth()->user()->avatar (the OLD file)
+                                     and the preview appears to flash and disappear. --}}
+                                @if($avatar && is_object($avatar) && method_exists($avatar, 'temporaryUrl'))
+                                    <img id="my_account_avatar_preview" src="{{ $avatar->temporaryUrl() }}" alt="Profile photo">
+                                @elseif(!empty(auth()->user()->avatar))
                                     <img id="my_account_avatar_preview" src="{{ Storage::url(auth()->user()->avatar) }}" alt="Profile photo">
                                 @else
                                     <img id="my_account_avatar_preview" src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim(auth()->user()->email))) }}?s=128&d=identicon" alt="Profile photo">

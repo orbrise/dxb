@@ -41,7 +41,7 @@
                         <div class="alert alert-danger">{{ session('error') }}</div>
                     @endif
                     
-                    <form action="{{ route('admin.auctions.update', $auction) }}" method="POST">
+                    <form action="{{ route('admin.auctions.update', $auction) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         
@@ -111,6 +111,24 @@
                             @enderror
                         </div>
                         
+                        <div class="form-group mt-2">
+                            <label for="background_image">Background Image</label>
+                            @if($auction->background_image)
+                                <div class="mb-2">
+                                    <img src="{{ $auction->background_image_url }}" alt="Current background" style="max-width:220px; max-height:140px; border-radius:6px; border:1px solid #ddd;">
+                                    <div class="form-check mt-1">
+                                        <input type="checkbox" name="remove_background_image" id="remove_background_image" value="1" class="form-check-input">
+                                        <label for="remove_background_image" class="form-check-label text-danger">Remove current image</label>
+                                    </div>
+                                </div>
+                            @endif
+                            <input type="file" name="background_image" id="background_image" accept="image/jpeg,image/png,image/webp" class="form-control @error('background_image') is-invalid @enderror">
+                            <small class="form-text text-muted">Shown on the auction spot card when the spot has no bidder yet. JPG / PNG / WebP, max 4 MB. Upload a new file to replace the current one.</small>
+                            @error('background_image')
+                                <span class="invalid-feedback d-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="form-group mt-2">
                             <button type="submit" class="btn btn-primary">Update Auction</button>
                         </div>

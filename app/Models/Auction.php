@@ -17,8 +17,9 @@ class Auction extends Model
         'status', // 'active', 'ended'
         'winner_id',
         'winner_profile_id',
-        'city_id', 
-        'gender'
+        'city_id',
+        'gender',
+        'background_image',
     ];
  
     protected $casts = [
@@ -111,6 +112,18 @@ class Auction extends Model
      * Scope to get only auctions with valid spots (active OR ended but spot not yet expired)
      * end_date represents when the spot expires for the winner
      */
+    public function getBackgroundImageUrlAttribute()
+    {
+        if (! $this->background_image) {
+            return null;
+        }
+        if (filter_var($this->background_image, FILTER_VALIDATE_URL)) {
+            return $this->background_image;
+        }
+        return rtrim(config('filesystems.disks.assets_external.url', 'https://assets.evoory.com'), '/')
+            . '/auctions/' . basename($this->background_image);
+    }
+
     public function scopeWithValidSpot($query)
     {
         $now = Carbon::now();

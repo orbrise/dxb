@@ -156,6 +156,14 @@ Route::post('/profile/{id}/question', [\App\Http\Controllers\AjaxController::cla
     ->where('id', '[0-9]+')
     ->name('profile.question');
 
+Route::post('/profile/{id}/report', [\App\Http\Controllers\AjaxController::class, 'postReport'])
+    ->where('id', '[0-9]+')
+    ->name('profile.report');
+
+Route::post('/profile/{id}/message', [\App\Http\Controllers\AjaxController::class, 'postMessage'])
+    ->where('id', '[0-9]+')
+    ->name('profile.message');
+
 Route::post('/profile/{id}/phone-click', [\App\Http\Controllers\AjaxController::class, 'trackPhoneClick'])
     ->where('id', '[0-9]+')
     ->name('profile.phone-click');
@@ -445,6 +453,7 @@ Route::name('seo.')->group(function () {
 // Default SEO Settings Management
 Route::name('default-seo.')->group(function () {
     Route::get('/default-seo', [DefaultSeoController::class, 'index'])->name('index');
+    Route::get('/default-seo/pages', [DefaultSeoController::class, 'pages'])->name('pages');
     Route::get('/default-seo/create', [DefaultSeoController::class, 'create'])->name('create');
     Route::post('/default-seo', [DefaultSeoController::class, 'store'])->name('store');
     Route::get('/default-seo/{defaultSeoSetting}/edit', [DefaultSeoController::class, 'edit'])->name('edit');
@@ -895,6 +904,11 @@ Route::fallback(function(\Illuminate\Http\Request $request) {
 Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.index');
 Route::get('sitemaps/pages.xml', [SitemapController::class, 'pages'])->name('sitemap.pages');
 Route::get('sitemaps/cities.xml', [SitemapController::class, 'cities'])->name('sitemap.cities');
+// Per-gender cities sitemap — splits the (cities × 3) URL set into three
+// smaller files so each stays fast to render and easy for Google to fetch.
+Route::get('sitemaps/cities/{gender}.xml', [SitemapController::class, 'citiesByGender'])
+    ->where('gender', 'female|male|shemale')
+    ->name('sitemap.cities-by-gender');
 Route::get('sitemaps/profiles.xml', [SitemapController::class, 'profiles'])->name('sitemap.profiles');
 Route::get('sitemaps/categories.xml', [SitemapController::class, 'categories'])->name('sitemap.categories');
 
