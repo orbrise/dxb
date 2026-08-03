@@ -7,7 +7,11 @@ use Illuminate\Http\Request;
 use App\Models\Auction;
 use App\Models\AuctionBid;
 use App\Models\City;
+use App\Mail\AuctionSpotLost;
+use App\Mail\AuctionSpotWon;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -197,37 +201,117 @@ class AuctionController extends Controller
     
     public function endAuction(Auction $auction)
     {
-        // Find the highest bid
         $highestBid = $auction->bids()
             ->orderBy('amount', 'desc')
             ->first();
-            
+
         if ($highestBid) {
-            // Update auction with winner
             $auction->update([
                 'status' => 'ended',
                 'winner_id' => $highestBid->user_id,
                 'winner_profile_id' => $highestBid->profile_id,
             ]);
-            
-            // Update bid status
+
             $highestBid->update(['status' => 'won']);
-            
-            // Update other bids as lost
+
             $auction->bids()
                 ->where('id', '!=', $highestBid->id)
                 ->update(['status' => 'lost']);
-                
+
+            $this->notifyWinner($auction, $highestBid);
+            $this->notifyLosingBidders($auction, $highestBid);
+
             return redirect()->route('admin.auctions.index')
-                ->with('success', 'Auction ended successfully with a winner.');
+                ->with('success', 'Auction ended successfully with a winner. Winner and losing bidders have been notified.');
         } else {
-            // No bids, just end the auction
             $auction->update(['status' => 'ended']);
-            
+
             return redirect()->route('admin.auctions.index')
                 ->with('success', 'Auction ended without any bids.');
         }
-    } 
+    }
+
+    /**
+     * Email the winning bidder to congratulate them on securing the spot.
+     * Best-effort: failure is logged, never thrown, so a mail hiccup can't
+     * roll back the winner assignment.
+     */
+    private function notifyWinner(Auction $auction, AuctionBid $winningBid): void
+    {
+        $auction->loadMissing('city');
+        $winningBid->loadMissing(['user:id,name,email', 'profile:id,name,slug']);
+
+        $user = $winningBid->user;
+        if (! $user || ! $user->email) {
+            return;
+        }
+
+        $cityName = $auction->city->name ?? 'your city';
+        $citySlug = strtolower($cityName);
+        $durationDays = $auction->duration_days ?? 7;
+        $spotExpiryDate = $auction->end_date
+            ? Carbon::parse($auction->end_date)->format('M j, Y')
+            : null;
+
+        $profileName = $winningBid->profile->name ?? 'your profile';
+        $profileUrl = $winningBid->profile
+            ? url('/' . $auction->gender . '-escorts-in-' . $citySlug . '/' . $winningBid->profile->id . '/' . ($winningBid->profile->slug ?? ''))
+            : url('/');
+
+        try {
+            Mail::to($user->email)->send(new AuctionSpotWon([
+                'userName'       => $user->name ?: 'there',
+                'profileName'    => $profileName,
+                'spotNumber'     => $auction->spot_number,
+                'cityName'       => $cityName,
+                'gender'         => $auction->gender,
+                'winningBid'     => $winningBid->amount,
+                'durationDays'   => $durationDays,
+                'spotExpiryDate' => $spotExpiryDate,
+                'profileUrl'     => $profileUrl,
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('AuctionSpotWon mail failed for bid #' . $winningBid->id . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Email every losing bidder that another advertiser won the spot and
+     * their deposit has been refunded to the wallet. Failure to send a
+     * single email doesn't abort the batch — the winner assignment is the
+     * source of truth, mail is a best-effort notification.
+     */
+    private function notifyLosingBidders(Auction $auction, AuctionBid $winningBid): void
+    {
+        $auction->loadMissing('city');
+        $cityName = $auction->city->name ?? 'your city';
+        $auctionsUrl = url('/auctions/' . $auction->gender . '-escorts-in-' . strtolower($cityName));
+
+        $losingBids = $auction->bids()
+            ->with('user:id,name,email')
+            ->where('id', '!=', $winningBid->id)
+            ->get();
+
+        foreach ($losingBids as $bid) {
+            if (! $bid->user || ! $bid->user->email) {
+                continue;
+            }
+            try {
+                Mail::to($bid->user->email)->send(new AuctionSpotLost([
+                    'userName'     => $bid->user->name ?: 'there',
+                    'spotNumber'   => $auction->spot_number,
+                    'cityName'     => $cityName,
+                    'gender'       => $auction->gender,
+                    'yourBid'      => $bid->amount,
+                    'winningBid'   => $winningBid->amount,
+                    'refundAmount' => $bid->amount,
+                    'auctionsUrl'  => $auctionsUrl,
+                ]));
+            } catch (\Throwable $e) {
+                Log::warning('AuctionSpotLost mail failed for bid #' . $bid->id . ': ' . $e->getMessage());
+            }
+        }
+    }
     
     public function resetAuction(Auction $auction)
     {
@@ -273,8 +357,11 @@ class AuctionController extends Controller
         $auction->bids()->where('id', $bid->id)->update(['status' => 'won']);
         $auction->bids()->where('id', '!=', $bid->id)->update(['status' => 'lost']);
 
+        $this->notifyWinner($auction, $bid);
+        $this->notifyLosingBidders($auction, $bid);
+
         return redirect()->back()
-            ->with('success', 'Auction spot awarded successfully to ' . ($bid->profile->name ?? 'the bidder') . '!');
+            ->with('success', 'Auction spot awarded successfully to ' . ($bid->profile->name ?? 'the bidder') . '! Winner and losing bidders have been notified.');
     }
 
     public function updateCity(Request $request)

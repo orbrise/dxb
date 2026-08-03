@@ -206,6 +206,66 @@
             padding: 0 !important;
             margin-bottom: 12px !important;
         }
+        /* Auction-cover "Current price for N days:" title.
+           The span (label) and strong ($price) render inline inside the
+           same h3 and wrap to two lines on narrow cards, ending up
+           visually stacked with no breathing room. Force them to two
+           lines with a real margin between the label and the price. */
+        .auction-cover h3 span {
+            display: block;
+            margin-bottom: 8px;
+        }
+        .auction-cover h3 strong {
+            display: block;
+            margin-left: 0 !important;
+        }
+
+        /* "What's New" mobile cards: vertically center the avatar and
+           the text column. Base rule in evoory-homepage.css sets
+           `display: flex; gap: 10px` on `.ev-whatsnew-card` but omits
+           `align-items`, so the text (strong + small) sits pinned to
+           the top of the card while the round avatar is centered by
+           its own smaller height — reads as top-aligned/off-balance. */
+        .ev-whatsnew-card {
+            align-items: center !important;
+        }
+
+        /* Duplicate profile-name title fix. Every listing card
+           (premium/featured/basic/free) has TWO H2 titles:
+             - `<h2 class="visible-xxs">` at the top (mobile-only header
+               with the favorite/reviews badge chips), and
+             - `<h2>` inside `.listing-info` further down (desktop title).
+           Bootstrap 4 dropped the `.visible-xxs` helper so both render
+           on every viewport and the user sees "Anjo" twice per card.
+
+           listing-page-inline.css already tries to hide the .listing-info
+           one at `@media (max-width: 576px)`, but the visible-xxs H2
+           itself has no CSS anywhere → it shows on desktop too, so users
+           on wide viewports also see duplicates. Rules below cover both
+           directions with high specificity and !important to win over
+           any base-CSS rule that might resurrect the element. */
+
+        /* Mobile: hide the desktop title (.listing-info h2). Kept at
+           `max-width: 991px` (Bootstrap md breakpoint) so DevTools
+           emulation and small-tablet widths get the same treatment. */
+        @media (max-width: 991px) {
+            html body .listings .listing-li .listing-info-wrapper .listing-info > h2,
+            html body .listings .listing-li .listing-info > h2 {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+        }
+        /* Desktop: hide the mobile-only visible-xxs title. */
+        @media (min-width: 992px) {
+            html body .listings .listing-li > h2.visible-xxs,
+            html body .listing-li > h2.visible-xxs {
+                display: none !important;
+            }
+        }
 
         /* === Themed city search dropdown (overrides .citys/.opt from listing-page-inline.css) === */
         #cityappend.citys {
@@ -1609,8 +1669,11 @@
             
             <div class="listing-li listing-li--spot premium thumbs-3 thumbs-mini p-3">
               <h2 class="visible-xxs">
-                @if($auction->status == 'ended' && $auction->winnerProfile)
-                  {{-- For ended auctions with winners, show the winner profile --}}
+                @if($auction->winnerProfile)
+                  {{-- Spot is claimed. Route to the winner's profile regardless
+                       of `status` — a winner_profile_id set on an auction that
+                       is still technically 'active' should still link to the
+                       profile, not the auction bidding page. --}}
                   <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
                     {{ $auction->winnerProfile->name }}
                     @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews_count > 0)
@@ -1648,8 +1711,9 @@
               
               <div class="thumbs">
                 <div class="main-thumbs">
-                  @if($auction->status == 'ended' && $auction->winnerProfile)
-                    {{-- For ended auctions with winners, link to the winner profile --}}
+                  @if($auction->winnerProfile)
+                    {{-- Spot claimed → route to winner profile (see comment on
+                         the .visible-xxs H2 above for the status-agnostic rationale). --}}
                     <a class="img pb-photo-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
                       <span class="img-wrapper premium">
                         @if($auction->winnerProfile->photoverify && $auction->winnerProfile->photoverify->status == 'approved')
@@ -1725,8 +1789,8 @@
                 </div>
                 
                 <div class="other-thumbs pull-left">
-                  @if($auction->status == 'ended' && $auction->winnerProfile && $auction->winnerProfile->multipleimgs)
-                    {{-- For ended auctions with winners, show the winner's images --}}
+                  @if($auction->winnerProfile && $auction->winnerProfile->multipleimgs)
+                    {{-- Spot claimed → show winner's extra images (status-agnostic). --}}
                     @foreach($auction->winnerProfile->multipleimgs->take(3) as $key => $img)
                       <div class="thumb thumb-{{ $key }}">
                         <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
@@ -1774,8 +1838,9 @@
               <div class="listing-info-wrapper">
                 <div class="listing-info">
                   <h2>
-                    @if($auction->status == 'ended' && $auction->winnerProfile)
-                      {{-- For ended auctions with winners, link to the winner profile --}}
+                    @if($auction->winnerProfile)
+                      {{-- Spot claimed → route to winner profile (status-agnostic;
+                           winner_profile_id being set is authoritative). --}}
                       <a class="nostyle-link" href="/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/{{ $auction->winnerProfile->id }}/{{ $auction->winnerProfile->slug }}">
                         {{ $auction->winnerProfile->name }}
                         @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews_count > 0)
@@ -1942,7 +2007,13 @@
         @if($isVip)
         <div class="listing-li premium thumbs-3 thumbs-mini">
           <h2 class="visible-xxs">
-            <a class="nostyle-link" href="/female-escorts-in-dubai/lea-ukrainian" title="Lea, Ukrainian escort in Dubai (3)">{{$profile->name}} <span class="badge" data-placement="top" data-toggle="tooltip" title="One review. Rating: ❤❤❤❤❤">
+            {{-- Dynamic href — previous value was hardcoded to
+                 "/female-escorts-in-dubai/lea-ukrainian" (template
+                 placeholder), which routed every VIP card's mobile
+                 title to a 404 for other profiles. Route to the real
+                 profile using the same {gender}-escorts-in-{city}/{id}/{slug}
+                 pattern as the desktop H2 further below. --}}
+            <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}" title="{{ $profile->name }}, escort in {{ $cityname }}">{{$profile->name}} <span class="badge" data-placement="top" data-toggle="tooltip" title="One review. Rating: ❤❤❤❤❤">
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 <span>1</span>
               </span>

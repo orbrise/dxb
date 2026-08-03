@@ -41,10 +41,21 @@
             outline: none;
         }
 
+        /* Bookmarked = solid lime fill with a dark icon. Prior version
+           used a 12% tinted background + lime-on-transparent icon, which
+           read fine on the desktop button but was too subtle on the small
+           mobile-header icon — the user couldn't tell "favorited or not".
+           Solid fill is unambiguous at any size. */
         .favorite-bookmark-btn.bookmarked {
-            color: #C1F11D;
-            border-color: rgba(193, 241, 29, .5);
-            background: rgba(193, 241, 29, .12);
+            color: #000;
+            border-color: #C1F11D;
+            background: #C1F11D;
+        }
+
+        .favorite-bookmark-btn.bookmarked:hover {
+            color: #000;
+            border-color: #d4f84d;
+            background: #d4f84d;
         }
 
         .favorite-bookmark-btn.bookmarked i {

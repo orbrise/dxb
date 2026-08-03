@@ -10,6 +10,217 @@
      own long-lived edge cache entry. Loaded sync (not async) to match prior render
      behavior — these styles are not safe to defer without testing for FOUC. --}}
 <link rel="stylesheet" href="{{ asset('assets/css/profile-details-inline.css') }}?v={{ @filemtime(public_path('assets/css/profile-details-inline.css')) ?: time() }}">
+<style>
+/* Mobile photo overlay icons: camera (bottom-left) and search+ zoom
+   (bottom-right) must match — same size, same round black background,
+   same offset from the image edge. The camera icon is drawn by
+   .listing-photos-xs::after in evoory-profile.css as a 32x32 circle
+   at 10px/10px. The zoom+ icon comes from evoory-homepage.original.css's
+   .img-wrapper::before rule, which defaults to a 36x36 SQUARE at 4px/4px
+   with a yellow FontAwesome glyph. Override here to mirror the camera:
+   32x32 circle at 10px/10px, white icon inside a translucent black
+   circle. Selector matches evoory-homepage.original.css so the cascade
+   wins without a specificity boost. */
+.listing-photos-xs > a .img-wrapper::before,
+.listing-photos-xs > a .img-wrapper:before {
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    top: auto !important;
+    left: auto !important;
+    font-size: 14px !important;
+    color: #ffffff !important;
+    text-shadow: none !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+}
+
+/* Mobile modal overflow fix. The .msgmodal / .askq modals have an inline
+   `max-width:580px` on their .modal-dialog which beats Bootstrap's
+   responsive defaults, so on a 364px viewport the modal-content stays
+   580px wide and the inputs (width:100%) overflow past the viewport
+   edge. Constrain the modal to viewport width on mobile and belt-and-
+   braces the inputs with max-width:100% so nothing can leak out. */
+@media (max-width: 767px) {
+    .msgmodal .modal-dialog,
+    .askq .modal-dialog,
+    .reviewmodal .modal-dialog,
+    .callnow .modal-dialog,
+    .reportModal .modal-dialog {
+        max-width: none !important;
+        width: auto !important;
+        margin: 20px 12px !important;
+    }
+    .msgmodal .modal-content,
+    .askq .modal-content,
+    .reviewmodal .modal-content,
+    .callnow .modal-content,
+    .reportModal .modal-content {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .msgmodal .modal-body,
+    .askq .modal-body,
+    .reviewmodal .modal-body,
+    .callnow .modal-body,
+    .reportModal .modal-body {
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+    /* Every form control inside these modals must respect the modal
+       body's inner width — the Telephone row has a select + input flex
+       pair that can overflow if either child sizes to its content. */
+    .msgmodal input,
+    .msgmodal textarea,
+    .msgmodal select,
+    .askq input,
+    .askq textarea,
+    .askq select,
+    .reviewmodal input,
+    .reviewmodal textarea,
+    .reviewmodal select,
+    .reportModal input,
+    .reportModal textarea,
+    .reportModal select {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    /* The Telephone row is a `display:flex` container with a fixed-width
+       select (110px) + a flex:1 input. On narrow screens the flex parent
+       needs `min-width:0` on the input so it can shrink below its content
+       width instead of forcing the row wider than the modal. */
+    .msgmodal .form-group > div[style*="display:flex"] > input {
+        min-width: 0 !important;
+        flex: 1 1 0 !important;
+    }
+
+    /* CustomSelect2 dropdown for the country-code picker.
+       On mobile, `position: absolute` gets clipped/mis-sized because
+       the trigger sits inside a flex row inside a form-group inside
+       modal-body — each ancestor's height/overflow can hide the
+       dropdown's list below the first option. Switch to `position: fixed`
+       so the dropdown becomes a bottom-sheet anchored to the viewport,
+       independent of any ancestor. Search stays pinned at the top
+       inside the dropdown; results list scrolls. */
+    .msgmodal .custom-select2 .custom-select2-dropdown.open {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 16px !important;
+        left: 16px !important;
+        right: 16px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        height: 40vh !important;
+        max-height: 70vh !important;
+        z-index: 100000 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        background: #1a1a1a !important;
+        border: 1px solid #2a2a2a !important;
+        border-radius: 10px !important;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6) !important;
+        overflow: hidden !important;
+    }
+    /* Search bar is a flex child that doesn't grow, results list takes
+       the remaining height and scrolls internally. */
+    .msgmodal .custom-select2 .custom-select2-dropdown.open .custom-select2-search {
+        flex: 0 0 auto !important;
+    }
+    .msgmodal .custom-select2 .custom-select2-dropdown.open .custom-select2-results {
+        flex: 1 1 auto !important;
+        overflow-y: auto !important;
+        min-height: 0 !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .msgmodal .custom-select2-option {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        color: #fff !important;
+        background: #1a1a1a !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        border-bottom: 1px solid #222 !important;
+    }
+    .msgmodal .custom-select2-option:hover,
+    .msgmodal .custom-select2-option.selected {
+        background: #262c2f !important;
+        color: #C1F11D !important;
+    }
+    /* Search input inside the CustomSelect2 dropdown. The base CSS
+       (evoory-profile.css) sets `background:#111;color:#fff` but no
+       !important, so Bootstrap's `.form-control`/user-agent styles beat
+       it on mobile — the field renders with a white background and a
+       blue focus outline. Force the dark theme here with !important. */
+    .msgmodal .custom-select2-search {
+        background: #111 !important;
+    }
+    .msgmodal .custom-select2-search input {
+        background: #111 !important;
+        color: #fff !important;
+        border: none !important;
+        border-bottom: 1px solid #2a2a2a !important;
+        outline: none !important;
+        box-shadow: none !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        width: 100% !important;
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+    }
+    .msgmodal .custom-select2-search input::placeholder {
+        color: #888 !important;
+    }
+    .msgmodal .custom-select2-search input:focus {
+        background: #111 !important;
+        color: #fff !important;
+        border-color: #C1F11D !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Grow the message modal so the country-code dropdown can expand
+       inside it instead of being visually clipped below the modal.
+       Prior version had no explicit min-height, so the modal shrunk to
+       fit its inline content (~450px) and the 55vh dropdown escaped
+       out the bottom. */
+    .msgmodal .modal-content {
+        min-height: 40vh !important;
+    }
+    .msgmodal .modal-body {
+        max-height: none !important;
+    }
+
+    /* Profile title in the mobile sub-header. Imported MR profiles
+       store the whole "Name – Nationality escort in City – Country
+       escort in City" string in profile.name (see
+       MassageRepublicImporter.php:172), which wraps to 3+ lines and
+       breaks the header layout — a partial third line was leaking
+       below the existing 2-line clamp. Lock to exactly 2 lines with
+       a hard max-height fallback so it can't visually leak regardless
+       of line-height rounding, and shrink the font a touch so more
+       of the name fits per line. */
+    html body .listing-title.visible-xs > a > h1,
+    html body .listing-title.title.visible-xs > a > h1 {
+        font-size: 14px !important;
+        line-height: 1.3 !important;
+        max-height: calc(14px * 1.3 * 2) !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+}
+</style>
 @endpush
 
 <div class="profile-details-page">
@@ -1810,10 +2021,24 @@
               <div class="form-group" style="margin-bottom:24px;">
                 <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_phone_number_attributes_phone_digits">Telephone</label>
                 <div style="display:flex;gap:8px;">
+                  {{-- `apply-custom-select2` opts this select into the
+                       page's JS-rendered dark-theme dropdown (see
+                       CustomSelect2 class at the bottom of this file).
+                       Without it mobile browsers render the native OS
+                       picker with a white background — the trigger text
+                       also gets truncated because the fixed 110px width
+                       can't fit "+213 - Algeria" etc. The custom dropdown
+                       displays only the "+NNN" code in the trigger via
+                       the codeMatch regex in selectOption(), so 110px is
+                       fine, and the dropdown itself expands to the modal
+                       body width when open. --}}
                   <select name="code"
                     id="message_phone_code"
+                    class="apply-custom-select2"
+                    data-placeholder="+971"
+                    data-searchable="true"
                     style="background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 12px;font-size:14px;outline:none;width:110px;appearance:none;-webkit-appearance:none;cursor:pointer;">
-                    <option value="">+971 ▾</option>
+                    <option value="">+971</option>
                     @foreach($countries as $country)
                     <option value="{{$country->phonecode}}">+{{$country->phonecode}} - {{$country->nicename}}</option>
                     @endforeach

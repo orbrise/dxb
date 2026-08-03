@@ -1,4 +1,4 @@
-<div>
+<div style="display: flex; justify-content: center; width: 100%;">
     @if ($paginator->hasPages())
         @php
             $gender = request()->route('gender') ?: 'female';
@@ -25,7 +25,7 @@
                 $nextUrl = route('home.paginated', ['gender' => $gender, 'city' => $city, 'page' => $nextPage]);
             }
         @endphp
-        <nav aria-label="Listing pages navigation" style="width: fit-content">
+        <nav aria-label="Listing pages navigation" style="width: fit-content; margin: 0 auto;">
             <ul class="pagination pagination-lg mt-2">
                 {{-- Previous Page Link --}}
                 @if ($paginator->onFirstPage())

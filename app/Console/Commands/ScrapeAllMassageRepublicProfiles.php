@@ -44,7 +44,7 @@ class ScrapeAllMassageRepublicProfiles extends Command
             ? array_values(array_filter(array_map('trim', explode(',', $citiesOption))))
             : $this->defaultCities;
 
-        $limit = (int) $this->option('limit') ?: 20;
+        $limit = (int) $this->option('limit') ?: 10;
         $noPhone = (bool) $this->option('no-phone');
         $requirePhone = (bool) $this->option('require-phone');
 

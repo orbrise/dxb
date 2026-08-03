@@ -1,6 +1,25 @@
 @push('css')
 <style>
-/* Sub-header bar */
+/* Sub-header bar.
+   Uses a 3-column grid (back-link | title | spacer) so the title
+   sits at the true visual center of the container regardless of
+   how wide the back-link is. Prior version used
+   `position: absolute; left: 50%` which is mathematically centered
+   in the container but reads as off-center to the eye because only
+   the left side has content — the title looks pulled toward the
+   right of the whitespace, not the middle of the bar. */
+/* Sub-header. Flex container centered on both axes so the
+   title is horizontally + vertically centered inside the
+   container. Back link is absolutely positioned at left:0
+   with its OWN flex centering so its content baseline sits
+   at the same Y as the title. Keeps `.ev-container`'s
+   natural 1300px centering (same as top nav) so "Back"
+   aligns with the top-nav logo horizontally.
+
+   Prior version had the title on the inline-flow baseline
+   (below the flex-centered back-link) which read as a
+   vertical offset — both need the same vertical alignment
+   technique. */
 .auction-subheader {
     background: #1f2222;
     padding: 12px 0;
@@ -8,9 +27,15 @@
 .auction-subheader .ev-container {
     display: flex;
     align-items: center;
+    justify-content: center;
     position: relative;
+    min-height: 24px;
 }
 .auction-subheader .back-link {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
     color: #C1F11D;
     text-decoration: none;
     font-size: 14px;
@@ -22,13 +47,11 @@
     color: #d4f84d;
 }
 .auction-subheader .page-title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
     color: #fff;
     font-size: 16px;
     font-weight: 500;
     margin: 0;
+    line-height: 1;
     white-space: nowrap;
 }
 
@@ -240,6 +263,10 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
+}
+
+.page-title{
+        margin-top: 0px !important
 }
 </style>
 @endpush

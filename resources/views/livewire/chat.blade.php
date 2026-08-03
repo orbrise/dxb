@@ -651,16 +651,33 @@
                 margin-right: 0 !important;
                 position: absolute !important;
                 left: 0 !important;
+                /* Sit on top of the centered title layer so a long name
+                   can't render over the Back tap-target. */
+                z-index: 2 !important;
             }
             .chat-header-avatar { display: none !important; }
+            /* Reserve horizontal padding on the title wrapper equal to
+               the back button's width on the left (and a symmetric gap
+               on the right so the title stays visually centered) so the
+               name/subtitle can never overflow into the Back button. */
             .chat-header-info > div {
                 text-align: center !important;
                 width: 100% !important;
+                padding: 0 56px !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
             }
             .chat-header-name {
                 font-size: 15px !important;
                 font-weight: 600 !important;
                 color: #fff !important;
+                /* Single-line ellipsis so long names get truncated inside
+                   the reserved space instead of wrapping and pushing the
+                   subtitle off the header row. */
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                max-width: 100% !important;
             }
             .chat-header-email {
                 font-size: 0 !important;
