@@ -199,25 +199,45 @@
     /* Profile title in the mobile sub-header. Imported MR profiles
        store the whole "Name – Nationality escort in City – Country
        escort in City" string in profile.name (see
-       MassageRepublicImporter.php:172), which wraps to 3+ lines and
-       breaks the header layout — a partial third line was leaking
-       below the existing 2-line clamp. Lock to exactly 2 lines with
-       a hard max-height fallback so it can't visually leak regardless
-       of line-height rounding, and shrink the font a touch so more
-       of the name fits per line. */
-    html body .listing-title.visible-xs > a > h1,
-    html body .listing-title.title.visible-xs > a > h1 {
-        font-size: 14px !important;
-        line-height: 1.3 !important;
-        max-height: calc(14px * 1.3 * 2) !important;
+       MassageRepublicImporter.php:172).
+
+       Two-line clamp with ellipsis. We apply `-webkit-line-clamp` to
+       the parent `<a>` (not the inner `<h1>`) and force the `<h1>`
+       inline. Reason: `-webkit-line-clamp` on a block-level h1 inside
+       a flex parent was letting a 3rd line "leak" below the ellipsis
+       row (browser painted the … on line 2 but the h1's own block
+       height still reserved room for line 3, which showed as a
+       half-clipped strip below). Moving the clamp up one level and
+       flattening the h1 to inline makes the anchor a plain multi-line
+       ellipsis box that behaves. */
+    html body .listing-title.visible-xs > a,
+    html body .listing-title.title.visible-xs > a {
         display: -webkit-box !important;
         -webkit-line-clamp: 2 !important;
         line-clamp: 2 !important;
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        max-height: calc(1.4em * 2) !important;
+        line-height: 1.4 !important;
+        color: #fff !important;
+        text-decoration: none !important;
+    }
+    html body .listing-title.visible-xs > a > h1,
+    html body .listing-title.title.visible-xs > a > h1 {
+        display: inline !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        color: inherit !important;
         white-space: normal !important;
         word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }
 }
 </style>
@@ -1013,18 +1033,45 @@
                   .ev-claim-cc-list li.is-hidden { display: none; }
                   .ev-claim-cc-list-name { flex: 1; }
                   .ev-claim-cc-list-dial { color: #8b9298; font-variant-numeric: tabular-nums; }
+                  /* Mobile: the desktop panel is 320px wide anchored via
+                     `left: 0` to the narrow +CC trigger button, so it
+                     overflows the modal panel's right edge on phones.
+                     Reposition as a viewport bottom-sheet — same pattern
+                     used for the .msgmodal country picker above. */
+                  @media (max-width: 640px) {
+                      .ev-claim-cc-panel {
+                          position: fixed !important;
+                          top: auto !important;
+                          left: 16px !important;
+                          right: 16px !important;
+                          bottom: 16px !important;
+                          width: auto !important;
+                          max-width: none !important;
+                          max-height: 60vh !important;
+                          z-index: 100000 !important;
+                          display: flex;
+                          flex-direction: column;
+                      }
+                      .ev-claim-cc-panel[hidden] { display: none !important; }
+                      .ev-claim-cc-list {
+                          max-height: none !important;
+                          flex: 1 1 auto !important;
+                          min-height: 0 !important;
+                      }
+                  }
 
                   /* Channel chips: content-width pills, not full-row.
                      Each chip = icon + label + radio dot, snug padding so the
                      row hugs the controls rather than stretching across the
                      modal body. Match the target reference. */
                   .ev-claim-channels {
-                      display: flex; gap: 12px; flex-wrap: wrap;
+                      display: flex; gap: 12px;
                       margin: 6px 0 18px;
                   }
                   .ev-claim-channel {
-                      display: inline-flex; align-items: center; gap: 10px;
-                      padding: 10px 16px; background: #0a0d0f;
+                      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+                      flex: 1 1 0; min-width: 0;
+                      padding: 12px 16px; background: #0a0d0f;
                       border: 1px solid #23292B; border-radius: 10px;
                       cursor: pointer; font-size: 14px; line-height: 1;
                       transition: border-color 0.15s ease, background 0.15s ease;
@@ -2251,15 +2298,18 @@
         .reportModal .form-group > label{color:#e6e6e6;font-weight:500;font-size:13px;margin-bottom:6px}
         .reportModal .text-muted{color:#888 !important}
 
-        /* Submit + Cancel: equal-size pill buttons like Log In / Sign up. */
+        /* Submit + Cancel: Cancel on the left (narrow), Submit on the right
+           (wider, primary action). HTML order is Submit first then Cancel;
+           `row-reverse` flips them visually so Submit ends up on the right
+           without touching the markup. */
         .reportModal .form-group.text-center{
             display:flex;
+            flex-direction:row-reverse;
             gap:12px;
             justify-content:center;
             align-items:stretch;
         }
         .reportModal .form-group.text-center > .btn{
-            flex:1 1 0;
             min-width:0;
             height:35px;
             line-height:1;
@@ -2279,6 +2329,10 @@
             background:#C1F11D !important;
             border:1px solid #C1F11D !important;
             color:#000 !important;
+            flex:2 1 0;
+        }
+        .reportModal .form-group.text-center > .btn-default{
+            flex:1 1 0;
         }
         .reportModal .form-group.text-center > .btn-primary:hover,
         .reportModal .form-group.text-center > .btn-primary:focus{
