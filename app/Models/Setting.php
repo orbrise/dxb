@@ -29,6 +29,8 @@ class Setting extends Model
         'auto_delete_inactive_days',
         // Geo redirect setting
         'geo_redirect_enabled',
+        // Hide profile pics from US visitors
+        'hide_us_profile_pics',
     ];
 
     protected $casts = [
@@ -37,5 +39,6 @@ class Setting extends Model
         'auto_delete_archived_enabled' => 'boolean',
         'auto_delete_inactive_enabled' => 'boolean',
         'geo_redirect_enabled' => 'boolean',
+        'hide_us_profile_pics' => 'boolean',
     ];
 }

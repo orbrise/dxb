@@ -256,7 +256,8 @@
                             <input type="hidden" name="auto_delete_archived_days" value="{{ $settings->auto_delete_archived_days ?? 60 }}">
                             @if($settings->auto_delete_inactive_enabled ?? false)<input type="hidden" name="auto_delete_inactive_enabled" value="1">@endif
                             <input type="hidden" name="auto_delete_inactive_days" value="{{ $settings->auto_delete_inactive_days ?? 90 }}">
-                            
+                            @if($settings->hide_us_profile_pics ?? false)<input type="hidden" name="hide_us_profile_pics" value="1">@endif
+
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Save Redirection Setting
                             </button>
@@ -266,6 +267,47 @@
                             <i class="fas fa-info-circle"></i>
                             <strong>Note:</strong> When disabled, users will stay on whichever domain they accessed the site from, without automatic redirection. Search engine bots are never redirected regardless of this setting.
                         </div>
+                    </div>
+                </div>
+
+                <!-- US Photo Blocking Settings -->
+                <div class="card border-warning mt-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0"><i class="fas fa-user-slash"></i> Hide Profile Pictures from US Visitors</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">When enabled, visitors from the United States (detected via Cloudflare) will see a default placeholder image instead of profile pictures across the site.</p>
+
+                        <form method="POST" action="{{ route('admin.appsettings.update') }}">
+                            @csrf
+                            <div class="form-check form-switch mb-3">
+                                <input type="checkbox" name="hide_us_profile_pics" class="form-check-input" id="hide_us_profile_pics"
+                                       {{ $settings->hide_us_profile_pics ? 'checked' : '' }} style="width: 3em; height: 1.5em;">
+                                <label class="form-check-label ms-2" for="hide_us_profile_pics" style="margin-left: 10px;">
+                                    <strong>Hide Profile Pictures for US Visitors</strong>
+                                    <small class="d-block text-muted">Requires site to be behind Cloudflare (uses CF-IPCountry header)</small>
+                                </label>
+                            </div>
+
+                            {{-- Preserve all other fields so this partial save doesn't clobber them --}}
+                            <input type="hidden" name="app_name" value="{{ $settings->app_name }}">
+                            <input type="hidden" name="title" value="{{ $settings->title }}">
+                            <input type="hidden" name="keywords" value="{{ $settings->keywords }}">
+                            <input type="hidden" name="description" value="{{ $settings->description }}">
+                            @if($settings->auto_archive_enabled)<input type="hidden" name="auto_archive_enabled" value="1">@endif
+                            <input type="hidden" name="auto_archive_days" value="{{ $settings->auto_archive_days ?? 30 }}">
+                            @if($settings->send_archive_warning ?? true)<input type="hidden" name="send_archive_warning" value="1">@endif
+                            <input type="hidden" name="archive_warning_days" value="{{ $settings->archive_warning_days ?? 3 }}">
+                            @if($settings->auto_delete_archived_enabled ?? false)<input type="hidden" name="auto_delete_archived_enabled" value="1">@endif
+                            <input type="hidden" name="auto_delete_archived_days" value="{{ $settings->auto_delete_archived_days ?? 60 }}">
+                            @if($settings->auto_delete_inactive_enabled ?? false)<input type="hidden" name="auto_delete_inactive_enabled" value="1">@endif
+                            <input type="hidden" name="auto_delete_inactive_days" value="{{ $settings->auto_delete_inactive_days ?? 90 }}">
+                            @if($settings->geo_redirect_enabled ?? false)<input type="hidden" name="geo_redirect_enabled" value="1">@endif
+
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Save Setting
+                            </button>
+                        </form>
                     </div>
                 </div>
 

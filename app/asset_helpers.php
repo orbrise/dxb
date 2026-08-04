@@ -106,11 +106,55 @@ if (!function_exists('smart_asset')) {
     }
 }
 
+if (!function_exists('should_hide_us_profile_pics')) {
+    /**
+     * Resolve once per request: is the "hide profile pics from US visitors"
+     * toggle enabled AND does the incoming request originate from the US?
+     *
+     * Country comes from Cloudflare's CF-IPCountry header (site is behind CF).
+     * The admin toggle is cached for 5 minutes so we're not hitting the DB
+     * on every image URL — Setting::update() calls Cache::forget() so
+     * changes still propagate promptly.
+     */
+    function should_hide_us_profile_pics(): bool {
+        static $resolved = null;
+        if ($resolved !== null) {
+            return $resolved;
+        }
+
+        try {
+            $enabled = \Illuminate\Support\Facades\Cache::remember(
+                'hide_us_profile_pics',
+                300,
+                function () {
+                    $setting = \App\Models\Setting::first();
+                    return (bool) ($setting->hide_us_profile_pics ?? false);
+                }
+            );
+        } catch (\Throwable $e) {
+            // DB not reachable during e.g. artisan calls — fail open (don't hide).
+            return $resolved = false;
+        }
+
+        if (! $enabled) {
+            return $resolved = false;
+        }
+
+        $country = request()->header('CF-IPCountry');
+        return $resolved = ($country && strtoupper($country) === 'US');
+    }
+}
+
 if (!function_exists('webp_asset')) {
     /**
      * Get WebP version of image if available, otherwise return original
      * Usage: webp_asset('userimages/1/2/image.jpg')
      * Returns: URL to image.webp from assets CDN
+     *
+     * When the "hide US profile pics" admin toggle is on AND the request
+     * comes from the US (via Cloudflare's CF-IPCountry header), userimages
+     * paths are swapped for /assets/images/defaultprofile.png. Non-userimages
+     * paths (site chrome, icons, etc.) are unaffected.
      */
     function webp_asset($path, $secure = null) {
         static $assetsBase = null;
@@ -119,6 +163,10 @@ if (!function_exists('webp_asset')) {
         }
 
         if (strncmp($path, 'userimages/', 11) === 0) {
+            if (should_hide_us_profile_pics()) {
+                return app('url')->asset('assets/images/no-photo.webp');
+            }
+
             $dot = strrpos($path, '.');
             if ($dot !== false) {
                 $ext = strtolower(substr($path, $dot + 1));

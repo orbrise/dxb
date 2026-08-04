@@ -120,11 +120,15 @@ class AppSettingController extends Controller
     
     // Geo redirect setting
     $set->geo_redirect_enabled = $req->has('geo_redirect_enabled');
-        
+
+    // Hide profile pictures from US visitors
+    $set->hide_us_profile_pics = $req->has('hide_us_profile_pics');
+
         $set->save();
-        
-        // Clear geo redirect cache so changes take effect immediately
+
+        // Clear cached toggles so changes take effect immediately
         Cache::forget('geo_redirect_enabled');
+        Cache::forget('hide_us_profile_pics');
     
         return back()->with('success', 'Settings updated successfully.');
     }
