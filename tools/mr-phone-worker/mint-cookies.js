@@ -5,12 +5,13 @@
 //
 // Config JSON:
 //   {
-//     "username":    "hafog49849@aghism.com",
-//     "password":    "kingumer",
-//     "baseHost":    "massagerepublic.com",             // MUST match what the Guzzle scraper hits
-//     "hostResolve": "massagerepublic.com:172.66.43.117",// optional (mirrors CURLOPT_RESOLVE)
-//     "outputPath":  "/home/evoory/public_html/storage/app/mr-session.json",
-//     "headless":    true
+//     "username":         "hafog49849@aghism.com",
+//     "password":         "kingumer",
+//     "baseHost":         "massagerepublic.com",             // MUST match what the Guzzle scraper hits
+//     "hostResolve":      "massagerepublic.com:172.66.43.117",// optional (mirrors CURLOPT_RESOLVE)
+//     "outputPath":       "/home/evoory/public_html/storage/app/mr-session.json",
+//     "headless":         true,
+//     "capsolverApiKey":  "CAP-XXXX..."                       // optional — enables Turnstile fallback when patchright can't clear CF alone
 //   }
 //
 // What it does:
@@ -88,27 +89,171 @@ async function dismissAgeCheck(page) {
   }
 }
 
-async function passCloudflareChallenge(page, baseUrl) {
-  // Cloudflare's interstitial can take anywhere from 5s (cached challenge)
-  // to 30-60s (fresh challenge with proof-of-work + Turnstile). We poll for
-  // up to 60s. patchright's stealth patches let the challenge script's
-  // browser-fingerprint checks pass; the rest is just waiting.
+/**
+ * Ask CapSolver to solve the Turnstile widget on the current page. Uses
+ * their AntiTurnstileTaskProxyLess task type — cheapest and doesn't need
+ * us to expose a proxy. Returns the solved token string.
+ *
+ * Two-phase API:
+ *   1. POST /createTask → get taskId
+ *   2. Poll POST /getTaskResult until status === "ready" → get token
+ *
+ * Typical solve time: 10-25s. Cost: ~$0.001/solve.
+ */
+async function solveTurnstileWithCapsolver(sitekey, pageUrl, apiKey) {
+  step(`capsolver: creating task (sitekey=${sitekey.slice(0, 12)}…)`);
+
+  const createResp = await fetch('https://api.capsolver.com/createTask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      clientKey: apiKey,
+      task: {
+        type: 'AntiTurnstileTaskProxyLess',
+        websiteURL: pageUrl,
+        websiteKey: sitekey,
+      },
+    }),
+  });
+  if (!createResp.ok) {
+    throw new Error(`capsolver createTask HTTP ${createResp.status}`);
+  }
+  const createData = await createResp.json();
+  if (createData.errorId !== 0) {
+    throw new Error(`capsolver createTask: ${createData.errorDescription || createData.errorCode}`);
+  }
+  const taskId = createData.taskId;
+  step(`capsolver: task ${taskId} created, polling…`);
+
+  const deadline = Date.now() + 120000; // CapSolver docs say 15-30s typical, allow 2min
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const pollResp = await fetch('https://api.capsolver.com/getTaskResult', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientKey: apiKey, taskId }),
+    });
+    if (!pollResp.ok) continue; // transient, keep polling
+    const pollData = await pollResp.json();
+    if (pollData.errorId !== 0) {
+      throw new Error(`capsolver getTaskResult: ${pollData.errorDescription || pollData.errorCode}`);
+    }
+    if (pollData.status === 'ready') {
+      const token = pollData.solution && pollData.solution.token;
+      if (!token) throw new Error('capsolver returned ready status but no token');
+      step(`capsolver: got token (${token.length} chars)`);
+      return token;
+    }
+    // status === "processing", keep waiting
+  }
+  throw new Error('capsolver polling timed out after 120s');
+}
+
+/**
+ * Extract the Turnstile sitekey from the current CF challenge page. Tries
+ * several DOM locations because CF varies the markup between "invisible"
+ * Turnstile, managed challenge, and Under Attack Mode.
+ */
+async function extractTurnstileSitekey(page) {
+  return await page.evaluate(() => {
+    // 1. Explicit sitekey attribute on the widget div
+    const el = document.querySelector('[data-sitekey]');
+    if (el) return el.getAttribute('data-sitekey');
+
+    // 2. Challenge iframe src contains the sitekey: /turnstile/if/<version>/<sitekey>/…
+    const iframe = document.querySelector('iframe[src*="challenges.cloudflare.com"]');
+    if (iframe) {
+      const m = iframe.src.match(/\/turnstile\/[^/]+\/([^/?]+)/);
+      if (m) return m[1];
+    }
+
+    // 3. Inline scripts sometimes carry the sitekey as a config arg
+    for (const s of document.querySelectorAll('script')) {
+      const m = (s.textContent || '').match(/sitekey["'\s:]+["']([0-9A-Za-z_-]{15,})["']/);
+      if (m) return m[1];
+    }
+
+    return null;
+  });
+}
+
+async function passCloudflareChallenge(page, baseUrl, capsolverApiKey) {
   step(`cf: goto ${baseUrl}`);
   await withTimeout(page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 }), 75000, 'goto homepage');
 
-  const deadline = Date.now() + 60000;
-  while (Date.now() < deadline) {
+  // Fast path: give patchright ~15s to solve on its own. When CF is
+  // lenient (~30% of runs) it clears in under 5s. When it's aggressive,
+  // patchright never clears no matter how long we wait — so bail early
+  // rather than eating the full timeout, and hand off to CapSolver.
+  const fastPathDeadline = Date.now() + 15000;
+  while (Date.now() < fastPathDeadline) {
     const title = await page.title().catch(() => '');
     const body = await page.content().catch(() => '');
-    // Both signals — some CF versions swap the title, some don't.
-    if (!/just a moment/i.test(title) && !/challenge-platform/i.test(body) && !/Just a moment\.\.\./i.test(body)) {
-      step(`cf: cleared (title="${title.slice(0, 60)}")`);
+    if (!/just a moment/i.test(title) && !/challenge-platform/i.test(body)) {
+      step(`cf: cleared without capsolver (title="${title.slice(0, 60)}")`);
       return true;
     }
-    step(`cf: still challenging (title="${title.slice(0, 40)}"), waiting…`);
-    await new Promise((r) => setTimeout(r, 2500));
+    await new Promise((r) => setTimeout(r, 2000));
   }
-  throw new Error('Cloudflare challenge did not clear within 60s');
+
+  // Slow path: still on the challenge → try CapSolver if configured.
+  if (!capsolverApiKey) {
+    throw new Error('Cloudflare challenge did not clear within 15s and no CAPSOLVER_API_KEY is set');
+  }
+
+  step('cf: patchright could not solve — falling back to CapSolver');
+  const sitekey = await extractTurnstileSitekey(page);
+  if (!sitekey) {
+    throw new Error('CF challenge active but no Turnstile sitekey found on page (challenge type may not be Turnstile — check page dump)');
+  }
+
+  const token = await solveTurnstileWithCapsolver(sitekey, page.url(), capsolverApiKey);
+
+  // Inject the solved token into the page. Cloudflare's challenge widget
+  // exposes a global window.turnstile callback and/or a hidden input
+  // named cf-turnstile-response. Fire both — one of them will trigger CF
+  // to accept the token and set cf_clearance.
+  step('cf: injecting capsolver token…');
+  await page.evaluate((t) => {
+    // Method A: hidden input the challenge form will submit
+    const input = document.querySelector('input[name="cf-turnstile-response"]');
+    if (input) {
+      input.value = t;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    // Method B: some CF pages expose a global callback registered via
+    // data-callback="…" on the widget div — try to invoke it directly.
+    try {
+      const widget = document.querySelector('[data-callback]');
+      if (widget) {
+        const cbName = widget.getAttribute('data-callback');
+        if (cbName && typeof window[cbName] === 'function') {
+          window[cbName](t);
+        }
+      }
+    } catch (e) {}
+    // Method C: submit the outer form if there is one — some CF Under
+    // Attack Mode pages use a plain <form> that just needs to POST back.
+    try {
+      const form = document.querySelector('form');
+      if (form && (typeof form.requestSubmit === 'function')) form.requestSubmit();
+    } catch (e) {}
+  }, token);
+
+  // Give CF a moment to accept the token and issue cf_clearance, then
+  // navigate to the real page to verify.
+  step('cf: waiting for clearance after token injection…');
+  const acceptDeadline = Date.now() + 30000;
+  while (Date.now() < acceptDeadline) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const title = await page.title().catch(() => '');
+    if (!/just a moment/i.test(title)) {
+      step(`cf: cleared via capsolver (title="${title.slice(0, 60)}")`);
+      return true;
+    }
+  }
+  throw new Error('Cloudflare did not accept CapSolver token within 30s');
 }
 
 async function login(page, baseUrl, username, password) {
@@ -149,11 +294,38 @@ async function login(page, baseUrl, username, password) {
   const deadline = Date.now() + 60000;
   while (Date.now() < deadline) {
     const currentUrl = page.url();
+
+    // Signal 1: URL is a known post-login page.
     if (!/\/sign[-_]?in\b/i.test(currentUrl) &&
         /\/(my-profile|dashboard|account|listings\/mine|inbox)/i.test(currentUrl)) {
-      step(`login: OK (redirected to ${currentUrl})`);
+      step(`login: OK — post-login URL (${currentUrl})`);
       return;
     }
+
+    // Signal 2: URL is anything OTHER than /sign-in AND the page body
+    // contains a sign-out link. MR often redirects newly-authenticated
+    // users to `/` (homepage) instead of a dashboard URL — the URL
+    // pattern above misses that case. Body-content check catches it.
+    // Mirrors mr-phone-worker/worker.js's belt-and-braces logic.
+    if (!/\/sign[-_]?in\b/i.test(currentUrl)) {
+      const body = await withTimeout(page.content(), 5000, 'page.content').catch(() => '');
+      if (/sign[-_]?out|Sign Out|logout|Log Out|\/my-profile|\/my-account/i.test(body)) {
+        step(`login: OK — sign-out marker in body (${currentUrl})`);
+        return;
+      }
+    }
+
+    // Signal 3: still on /sign-in and MR showed an inline error → surface it.
+    if (/\/sign[-_]?in\b/i.test(currentUrl)) {
+      const errText = await withTimeout(
+        page.locator('.alert-danger, .flash-error').first().textContent({ timeout: 500 }),
+        2000, 'locator.textContent'
+      ).catch(() => null);
+      if (errText && errText.trim() !== '') {
+        throw new Error(`login rejected: ${errText.trim().slice(0, 120)}`);
+      }
+    }
+
     await new Promise((r) => setTimeout(r, 1500));
   }
   throw new Error(`login failed (no signed-in signal after 60s, url=${page.url()})`);
@@ -265,7 +437,7 @@ async function main() {
   try {
     const page = await context.newPage();
     try {
-      await passCloudflareChallenge(page, baseUrl);
+      await passCloudflareChallenge(page, baseUrl, config.capsolverApiKey || null);
       await login(page, baseUrl, config.username, config.password);
 
       // Small settle — MR sometimes injects an extra cookie or two on the

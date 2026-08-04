@@ -71,6 +71,18 @@ class RefreshMassageRepublicSession extends Command
             'headless' => ! $this->option('visible'),
         ];
 
+        // Optional CapSolver escape hatch — kicks in only if patchright can't
+        // clear the Cloudflare challenge on its own (~half the time on
+        // datacenter IPs). ~$0.001 per solve, so ~$0.36/mo if we mint every
+        // 2h. Left unset = fall back to pure patchright and hope for the best.
+        $capsolverKey = env('CAPSOLVER_API_KEY');
+        if ($capsolverKey) {
+            $config['capsolverApiKey'] = $capsolverKey;
+            $this->line('CapSolver: enabled (will be used only if patchright fails)');
+        } else {
+            $this->line('CapSolver: not configured — set CAPSOLVER_API_KEY in .env to enable Turnstile fallback');
+        }
+
         if ($hostResolve) {
             // MASSAGE_REPUBLIC_CURL_RESOLVE format is "host:port:ip" (curl's
             // native format). Chromium's --host-resolver-rules wants "host ip",
