@@ -29,7 +29,7 @@ class ProfileCreated extends Mailable
      */
     public function build()
     {
-        return $this->subject('Your Profile Has Been Created - Massage Republic')
+        return $this->subject('Your Profile Has Been Created - Evoory')
                     ->view('emails.profile-created');
     }
 }

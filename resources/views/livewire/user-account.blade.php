@@ -599,21 +599,22 @@
         .ev-am-help__call {
             display: block;
             background: #1a2010;
-          
             border-radius: 10px;
             padding: 10px 12px;
             margin-bottom: 12px;
             color: #fff !important;
             text-decoration: none !important;
-            margin-inline:45px;
+            margin-inline: 20px;
+            text-align: center;
         }
         .ev-am-help__call-row {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             margin-bottom: 4px;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 400;
+            white-space: nowrap;
         }
         .ev-am-help__call-row svg {
             width: 18px !important;
@@ -631,7 +632,7 @@
             display: flex;
             gap: 8px;
             margin-bottom: 12px;
-            margin-inline: 45px;
+            margin-inline: 20px;
         }
         .ev-am-help__chat {
             flex: 1;
@@ -660,7 +661,7 @@
             align-items: center;
             color: #6a7280;
             font-size: 12px;
-            margin: 8px 42px;
+            margin: 8px 20px;
         }
         .ev-am-help__divider::before,
         .ev-am-help__divider::after {
@@ -673,15 +674,14 @@
         .ev-am-help__email {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
             padding: 10px 12px;
             border-radius: 6px;
-         
-         
             color: #fff !important;
             text-decoration: none !important;
             text-align: left;
-            margin-inline: 45px;
+            margin-inline: 20px;
         }
         .ev-am-help__email-icon {
             flex-shrink: 0;
@@ -707,6 +707,15 @@
             margin: 14px 0 0;
             color: #8b9298;
             font-size: 12px;
+        }
+
+        @media (max-width: 420px) {
+            .ev-am-help { padding: 20px 12px; }
+            .ev-am-help__call,
+            .ev-am-help__chats,
+            .ev-am-help__email { margin-inline: 0; }
+            .ev-am-help__divider { margin: 8px 0; }
+            .ev-am-help__call-row { font-size: 16px; }
         }
 
         /* Sign-out */

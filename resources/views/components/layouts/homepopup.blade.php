@@ -1,7 +1,7 @@
 <div class="modal text-center" id="age-check">
     <div class="modal-dialog modal-md">
       <div class="modal-content p-0 pt-3">
-        <div class="logo">Massage Republic</div>
+        <div class="logo">Evoory</div>
         <div class="modal-body">
           <p class="age-check-warning mb-3">WARNING: This website contains explicit adult material.</p>
           <p class="text-left">You may only enter this website if you are at least 18 years old (or the age of majority in the country you live in). If you are accessing this website from a country which prohibits access to adult content or any associated activities, you do so at your own risk.</p>

@@ -843,7 +843,7 @@
                     <div class="photo pull-right text-center">
                       <a class=" pb-photo-link" href="/my-profile/umer-329cee24-363b-4b1c-bf8f-a846d3b78c2e/verification_request">
                         <span class="img-wrapper basic">
-                          <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                          <span class="verified-image text-left small" title="Photos Verified by Evoory">
                             <i class="fa fa-check"></i>
                             <span>Verified photos</span>
                           </span>
@@ -880,7 +880,7 @@
                       <div class="inbound-link-preview">
                         <div style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;text-shadow:0 1px 1px rgba(255,255,255,0.6);width:180px;height:150px;display:block;position:relative;color:black!important;background-color:black!important">
                           <a target="_blank" href="javascript:void(0)" title="{{Auth::user()->name}}" style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
-                            <img src="{{smart_asset('assets/images/mr-square.jpg') }}" alt="Dubai Escorts - Massage Republic" style="padding:0;margin:0;overflow:hidden;display:block;position:relative;width:180px;height:150px;background-color:black!important">
+                            <img src="{{smart_asset('assets/images/mr-square.jpg') }}" alt="Dubai Escorts - Evoory" style="padding:0;margin:0;overflow:hidden;display:block;position:relative;width:180px;height:150px;background-color:black!important">
                             <span style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;text-shadow:0 1px 1px rgba(255,255,255,0.6);display:block;position:absolute;top:0;left:0;width:180px;color:black!important">
                               <span style="padding:0;margin:0;overflow:hidden;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;text-shadow:0 1px 1px rgba(255,255,255,0.6);display:block;text-align:center;color:black!important;font-size:21px!important">Featured Escort</span>
                               <span style="padding:0;margin:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;text-shadow:0 1px 1px rgba(255,255,255,0.6);display:block;text-align:center;line-height:1;height:44px;overflow:hidden;color:black!important;font-size:21px!important">{{Auth::user()->name}}</span>

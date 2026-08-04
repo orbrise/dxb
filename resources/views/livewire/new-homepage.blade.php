@@ -3,7 +3,7 @@
     <div class="container-fluid"> 
 
         <div class="title">
-            <h1><a href="#">Massage Republic - where escorts from Dubai and the rest of the world await</a></h1></div>
+            <h1><a href="#">Evoory - where escorts from Dubai and the rest of the world await</a></h1></div>
     </div>
 </div>
 @endsection
@@ -247,7 +247,7 @@ a {
                   </span>
                 </div>
               </form>
-              <p>Our goal is to help you find the right escort for you, right now! Massage Republic provides listings of providers of massage and other services. Not looking for a female escort? Click here for <a href="male-escorts-in-dubai" title="Gay escorts">male escorts</a> or <a href="shemale-escorts-in-dubai" title="Escort shemales">shemale escorts</a>. </p>
+              <p>Our goal is to help you find the right escort for you, right now! Evoory provides listings of providers of massage and other services. Not looking for a female escort? Click here for <a href="male-escorts-in-dubai" title="Gay escorts">male escorts</a> or <a href="shemale-escorts-in-dubai" title="Escort shemales">shemale escorts</a>. </p>
             </div>
           </div>
           <div class="col-sm-5 mobile-hide-info-box">
@@ -290,7 +290,7 @@ a {
         <p>
           <span class="my-2 h4">Welcome to ae.MassageRepublic.com.co, your premier destination for connecting with escorts from all corners of the globe.</span>
           <br> Our platform showcases a diverse array of stunning companions, each offering unique experiences tailored to your desires. <br> Whether you're seeking a charming dinner date, an adventurous travel partner, or an intimate encounter, you'll find the perfect match here. <br> Among our extensive listings, we proudly feature a selection of <b>Dubai escorts</b>, renowned for their elegance and sophistication. <br> These captivating companions embody the luxurious lifestyle of this vibrant city, providing unforgettable experiences that blend allure and excitement. <br> Explore profiles, read reviews, and connect with escorts who can make your time in Dubai truly exceptional. <br> Use our search feature to find a companion in Dubai (or any other city) that has all of your favourite physical characteristics or offering the service you would like to enjoy. <br>
-          <span class="my-2 h5">Join us at Massage Republic and discover the world of companionship at your fingertips, with a special emphasis on the enchanting Dubai escorts ready to elevate your experience.</span>
+          <span class="my-2 h5">Join us at Evoory and discover the world of companionship at your fingertips, with a special emphasis on the enchanting Dubai escorts ready to elevate your experience.</span>
         </p>
         <dl class="dl-custom" id="locations">
           <dt>

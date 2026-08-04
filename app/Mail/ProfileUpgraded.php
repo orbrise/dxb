@@ -33,7 +33,7 @@ class ProfileUpgraded extends Mailable
      */
     public function build()
     {
-        return $this->subject('Your Profile Has Been Upgraded - Massage Republic')
+        return $this->subject('Your Profile Has Been Upgraded - Evoory')
                     ->view('emails.profile-upgraded');
     }
 }

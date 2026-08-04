@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <script async src="https://cdn.ampproject.org/v0.js"></script>
-    <title>@yield('title', 'Massage Republic - Escorts Directory')</title>
+    <title>@yield('title', 'Evoory - Escorts Directory')</title>
     <link rel="canonical" href="@yield('canonical', url('/'))">
     <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
     <meta name="description" content="@yield('description', 'Find escorts and adult services in your city')">
@@ -372,7 +372,7 @@
     <!-- Header -->
     <header class="amp-header">
         <div class="amp-header-inner">
-            <a href="/amp" class="amp-logo">Massage Republic</a>
+            <a href="/amp" class="amp-logo">Evoory</a>
             <nav class="amp-nav">
                 <a href="/amp/female-escorts-in-dubai">Dubai</a>
                 <a href="/sign-in">Sign In</a>
@@ -394,7 +394,7 @@
             <a href="/contact">Contact</a>
         </div>
         <div class="amp-footer-copy">
-            &copy; {{ date('Y') }} Massage Republic. All rights reserved.
+            &copy; {{ date('Y') }} Evoory. All rights reserved.
         </div>
         <div class="amp-mt-20 amp-text-muted" style="font-size: 11px;">
             Alternative domains: 

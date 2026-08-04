@@ -919,7 +919,7 @@ min-width: 222px;
       
       
       <p class="page-desc margin-bottom hidden-xs">
-        We have {{ $profiles->total() }} {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }} escorts offering <strong>{{ $serviceName }}</strong> on Massage Republic. 
+        We have {{ $profiles->total() }} {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }} escorts offering <strong>{{ $serviceName }}</strong> on Evoory. 
         <span class="services">
           @if($profiles->count() > 0)
             @php
@@ -1178,7 +1178,7 @@ min-width: 222px;
               <a class="img pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                 <span class="img-wrapper premium">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -1212,7 +1212,7 @@ min-width: 222px;
                   <span class="img-wrapper mini">
 
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>
@@ -1268,7 +1268,7 @@ min-width: 222px;
               <a class="img pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                 <span class="img-wrapper featured">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -1291,7 +1291,7 @@ min-width: 222px;
                 <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                   <span class="img-wrapper mini">
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>
@@ -1340,7 +1340,7 @@ min-width: 222px;
               <a class="img pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                 <span class="img-wrapper basic">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -1367,7 +1367,7 @@ min-width: 222px;
                 <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                   <span class="img-wrapper mini">
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>

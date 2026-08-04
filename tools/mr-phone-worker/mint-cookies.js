@@ -37,7 +37,7 @@
 // replacement for `playwright` — same API. Vanilla playwright's fingerprint
 // was being flagged (challenge never resolved after 30s of polling).
 import { chromium } from 'patchright';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -153,28 +153,69 @@ async function solveTurnstileWithCapsolver(sitekey, pageUrl, apiKey) {
  * Extract the Turnstile sitekey from the current CF challenge page. Tries
  * several DOM locations because CF varies the markup between "invisible"
  * Turnstile, managed challenge, and Under Attack Mode.
+ *
+ * Returns { sitekey, source } on success, null on failure.
  */
 async function extractTurnstileSitekey(page) {
   return await page.evaluate(() => {
     // 1. Explicit sitekey attribute on the widget div
     const el = document.querySelector('[data-sitekey]');
-    if (el) return el.getAttribute('data-sitekey');
+    if (el) return { sitekey: el.getAttribute('data-sitekey'), source: 'data-sitekey attr' };
 
     // 2. Challenge iframe src contains the sitekey: /turnstile/if/<version>/<sitekey>/…
     const iframe = document.querySelector('iframe[src*="challenges.cloudflare.com"]');
     if (iframe) {
       const m = iframe.src.match(/\/turnstile\/[^/]+\/([^/?]+)/);
-      if (m) return m[1];
+      if (m) return { sitekey: m[1], source: 'turnstile iframe src' };
     }
 
     // 3. Inline scripts sometimes carry the sitekey as a config arg
     for (const s of document.querySelectorAll('script')) {
       const m = (s.textContent || '').match(/sitekey["'\s:]+["']([0-9A-Za-z_-]{15,})["']/);
-      if (m) return m[1];
+      if (m) return { sitekey: m[1], source: 'inline script' };
     }
 
+    // 4. Some CF challenge pages carry the sitekey in a global object
+    //    called `window._cf_chl_opt` or similar. Grab whatever's on window
+    //    for logging even if we can't find a sitekey.
     return null;
   });
+}
+
+/**
+ * Best-effort dump of the current page's HTML, title, and URL to /tmp so
+ * we can inspect what CF actually served when the challenge-solver fails.
+ * Filenames include a timestamp so cpanel /tmp cleanup won't nuke them
+ * mid-investigation. Errors here are swallowed — this is diagnostics only.
+ */
+async function dumpChallengePage(page, tag) {
+  try {
+    const ts = Date.now();
+    const base = `/tmp/mr-cf-${tag}-${ts}`;
+    const html = await page.content().catch(() => '');
+    const title = await page.title().catch(() => '');
+    const url = page.url();
+    if (html) {
+      writeFileSync(`${base}.html`, `<!-- URL: ${url} -->\n<!-- Title: ${title} -->\n${html}`);
+    }
+    // A short signature the operator can grep for on their end to see
+    // which challenge type CF is serving — cf-turnstile, cf-mitigated,
+    // challenge-platform, etc. Written to a separate file for quick reading.
+    const signatures = {
+      hasTurnstileDiv: /cf-turnstile|data-sitekey/i.test(html),
+      hasChallengeIframe: /challenges\.cloudflare\.com/i.test(html),
+      hasCfChlOpt: /_cf_chl_opt|window\._cf_chl/i.test(html),
+      hasCfMitigated: /cf-mitigated|mitigated: challenge/i.test(html),
+      hasCfBrowserVerification: /Checking your browser|browser verification/i.test(html),
+      hasHcaptcha: /hcaptcha\.com/i.test(html),
+      hasCfChlScript: /\/cdn-cgi\/challenge-platform\/h\/[bg]\/scripts/i.test(html),
+      hasScriptSrcTurnstile: /challenges\.cloudflare\.com\/turnstile\//i.test(html),
+    };
+    writeFileSync(`${base}.signatures.json`, JSON.stringify({ url, title, signatures }, null, 2));
+    return base;
+  } catch (e) {
+    return null;
+  }
 }
 
 async function passCloudflareChallenge(page, baseUrl, capsolverApiKey) {
@@ -202,12 +243,16 @@ async function passCloudflareChallenge(page, baseUrl, capsolverApiKey) {
   }
 
   step('cf: patchright could not solve — falling back to CapSolver');
-  const sitekey = await extractTurnstileSitekey(page);
-  if (!sitekey) {
-    throw new Error('CF challenge active but no Turnstile sitekey found on page (challenge type may not be Turnstile — check page dump)');
+  const extracted = await extractTurnstileSitekey(page);
+  if (!extracted || !extracted.sitekey) {
+    const dumpBase = await dumpChallengePage(page, 'no-sitekey');
+    throw new Error(
+      `CF challenge active but no Turnstile sitekey found. Dump: ${dumpBase || 'n/a'}.html and ${dumpBase || 'n/a'}.signatures.json — paste the signatures file so we can pick the right CapSolver task type.`
+    );
   }
+  step(`cf: found Turnstile sitekey via ${extracted.source}: ${extracted.sitekey.slice(0, 12)}…`);
 
-  const token = await solveTurnstileWithCapsolver(sitekey, page.url(), capsolverApiKey);
+  const token = await solveTurnstileWithCapsolver(extracted.sitekey, page.url(), capsolverApiKey);
 
   // Inject the solved token into the page. Cloudflare's challenge widget
   // exposes a global window.turnstile callback and/or a hidden input

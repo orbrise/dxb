@@ -33,7 +33,7 @@
                         <a class="pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                             <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>
@@ -66,7 +66,7 @@
                            href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                             <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>
@@ -120,7 +120,7 @@
                         <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $question->profile->id }}/{{ $question->profile->slug }}">
                             <span class="img-wrapper {{ $question->profile->package_id == 21 || $question->profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($question->profile->photoverify) && $question->profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>
@@ -152,7 +152,7 @@
                         <a class="{{ $loop->index == 1 ? 'hidden-md' : '' }} pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $question->profile->id }}/{{ $question->profile->slug }}">
                             <span class="img-wrapper {{ $question->profile->package_id == 21 || $question->profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($question->profile->photoverify) && $question->profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>
@@ -225,7 +225,7 @@
                         <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                             <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>
@@ -306,7 +306,7 @@
                         <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $review->profile->id }}/{{ $review->profile->slug }}">
                             <span class="img-wrapper {{ $review->profile->package_id == 21 || $review->profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($review->profile->photoverify) && $review->profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>
@@ -338,7 +338,7 @@
                         <a class="{{ $loop->index == 1 ? 'hidden-md' : '' }} pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $review->profile->id }}/{{ $review->profile->slug }}">
                             <span class="img-wrapper {{ $review->profile->package_id == 21 || $review->profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($review->profile->photoverify) && $review->profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>
@@ -437,7 +437,7 @@
                         <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $question->profile->id }}/{{ $question->profile->slug }}">
                             <span class="img-wrapper {{ $question->profile->package_id == 21 || $question->profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($question->profile->photoverify) && $question->profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>
@@ -469,7 +469,7 @@
                         <a class="{{ $loop->index == 1 ? 'hidden-md' : '' }} pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $question->profile->id }}/{{ $question->profile->slug }}">
                             <span class="img-wrapper {{ $question->profile->package_id == 21 || $question->profile->package_id == 20 ? 'premium' : '' }}">
                                 @if(!empty($question->profile->photoverify) && $question->profile->photoverify->status == 'approved')
-                                <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                     <i class="fa fa-check"></i>
                                     <span>Verified photos</span>
                                 </span>

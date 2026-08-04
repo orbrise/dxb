@@ -207,17 +207,18 @@
     text-align: center;
     background: #1a2010;
     border-radius: 6px;
-    padding: 6px 16px;
+    padding: 10px 16px;
     margin-bottom: 14px;
     text-decoration: none !important;
     color: #fff !important;
-    margin-inline:45px
+    margin-inline: 20px;
 }
 .ev-help-call__row {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 0px;
+    margin-bottom: 2px;
+    white-space: nowrap;
 }
 .ev-help-call__row svg {
     width: 20px !important;
@@ -227,9 +228,10 @@
     margin: 0 !important;
 }
 .ev-help-call__number {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 400;
     color: #fff;
+    white-space: nowrap;
 }
 .ev-help-call__sub {
     display: block;
@@ -242,7 +244,7 @@
     display: flex;
     gap: 10px;
     margin-bottom: 14px;
-    margin-inline:45px;
+    margin-inline: 20px;
 }
 .ev-help-chat {
     flex: 1;
@@ -275,7 +277,7 @@
     align-items: center;
     color: #ffffff;
     font-size: 13px;
-    margin: 12px 50px;
+    margin: 12px 20px;
 }
 .ev-help-divider::before,
 .ev-help-divider::after {
@@ -291,15 +293,14 @@
 .ev-help-email {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
     padding: 12px 14px;
-   
-  
     border-radius: 10px;
     text-decoration: none !important;
     color: #fff !important;
     text-align: left;
-    margin-inline: 45px;
+    margin-inline: 20px;
 }
 .ev-help-email:hover { border-color: #3a4250; }
 .ev-help-email__icon {
@@ -344,6 +345,16 @@
 /* Hide global app header on this page (its own header lives inside the card) */
 body:has(.ev-help-page) #header,
 body:has(.ev-help-page) .ev-header { display: none !important; }
+
+/* Narrow screens: drop side margins so rows all line up against the card padding */
+@media (max-width: 420px) {
+    .ev-help-card { padding: 24px 14px; }
+    .ev-help-call,
+    .ev-help-chats,
+    .ev-help-email { margin-inline: 0; }
+    .ev-help-divider { margin: 12px 0; }
+    .ev-help-call__number { font-size: 17px; }
+}
 </style>
 @endpush
 </div>

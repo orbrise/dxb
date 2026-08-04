@@ -802,7 +802,7 @@ class MassageRepublicScraper
     /**
      * MR marks reviewed profiles with a "Verified" badge — typically a
      * <span class="verified-image"> wrapper holding text like "Verified photos"
-     * or "Photos Verified by Massage Republic". Detect via class first, then
+     * or "Photos Verified by Evoory". Detect via class first, then
      * fall back to title/alt text in case MR rotates the markup.
      */
     protected function extractIsVerified(\DOMXPath $xpath, string $html): bool

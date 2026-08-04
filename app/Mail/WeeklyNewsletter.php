@@ -41,7 +41,7 @@ class WeeklyNewsletter extends Mailable
         $cityList = implode(', ', $this->cityNames);
         
         return new Envelope(
-            subject: "Weekly Update - {$cityList} - Massage Republic",
+            subject: "Weekly Update - {$cityList} - Evoory",
         );
     }
 

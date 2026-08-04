@@ -176,8 +176,8 @@ body > header#header { display: none !important; }
       wrapper, so it also picks up the footer links that are rendered by the
       layout outside .ev-news-root. Cannot leak to the homepage because the
       selector only fires on pages whose DOM contains .ev-news-root. */
-.ev-news-root a { color: #C1F11D !important; }
-body:has(.ev-news-root) a { color: #C1F11D !important; }
+.ev-news-root a:not(.ev-mobile-bottom-nav__item) { color: #C1F11D !important; }
+body:has(.ev-news-root) a:not(.ev-mobile-bottom-nav__item) { color: #C1F11D !important; }
 
 /* Exclude the top header's auth nav (My Profile / My Account / Sign Out
    and the Sign In / Language buttons) from the lime-anchor rule above —
@@ -651,6 +651,15 @@ form.activity-nav-form input.search-bar--city:focus-visible {
     /* Hide ESCORTS/WHAT'S NEW mobile tabs - we have back bar */
     div.visible-xs { display: none !important; }
 
+    /* Center the evoory logo in the top header on mobile. The desktop layout
+       uses justify-between (logo left, auth nav right); on mobile the auth
+       nav and ev-header-tabs are hidden, leaving the logo stranded on the
+       left. Override to center-align so the logo sits in the middle. */
+    .ev-news-root .ev-header .ev-container > .ev-flex.ev-justify-between {
+        justify-content: center !important;
+    }
+    .ev-news-root .ev-header .ev-logo { margin: 0 auto; }
+
     /* Nav bar */
     header#header .nav-bar { background: #000 !important; padding: 8px 16px !important; }
     header#header .nav-bar .container-fluid { padding: 0 !important; }
@@ -764,6 +773,23 @@ form.activity-nav-form input.search-bar--city:focus-visible {
         border-radius: 5px !important;
         object-fit: cover !important;
     }
+
+    /* Lay the main photo and the two thumbs side-by-side on mobile instead of
+       stacking them vertically. The activity-content div below (block) will
+       naturally start on a new line beneath the image row. */
+    .activity-record .photo {
+        display: inline-block !important;
+        vertical-align: top;
+        margin: 0 6px 8px 0 !important;
+        padding: 0 !important;
+    }
+    .activity-record .right-thumbs {
+        display: inline-flex !important;
+        gap: 6px !important;
+        vertical-align: top;
+        margin: 0 0 8px 0 !important;
+    }
+    .activity-record .right-thumbs .hidden-md { display: inline-block !important; }
 
     /* Reply boxes */
     .listing-reply, .listing-reply > div {
@@ -1100,7 +1126,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class="pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                                     <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>
@@ -1133,7 +1159,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                    href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                                     <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>
@@ -1187,7 +1213,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $question->profile->id }}/{{ $question->profile->slug }}">
                                     <span class="img-wrapper {{ $question->profile->package_id == 21 || $question->profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($question->profile->photoverify) && $question->profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>
@@ -1217,7 +1243,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class="{{ $loop->index == 1 ? 'hidden-md' : '' }} pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $question->profile->id }}/{{ $question->profile->slug }}">
                                     <span class="img-wrapper {{ $question->profile->package_id == 21 || $question->profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($question->profile->photoverify) && $question->profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>
@@ -1289,7 +1315,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                                     <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>
@@ -1367,7 +1393,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $review->profile->id }}/{{ $review->profile->slug }}">
                                     <span class="img-wrapper {{ $review->profile->package_id == 21 || $review->profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($review->profile->photoverify) && $review->profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>
@@ -1397,7 +1423,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class="{{ $loop->index == 1 ? 'hidden-md' : '' }} pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $review->profile->id }}/{{ $review->profile->slug }}">
                                     <span class="img-wrapper {{ $review->profile->package_id == 21 || $review->profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($review->profile->photoverify) && $review->profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>
@@ -1496,7 +1522,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $question->profile->id }}/{{ $question->profile->slug }}">
                                     <span class="img-wrapper {{ $question->profile->package_id == 21 || $question->profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($question->profile->photoverify) && $question->profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>
@@ -1526,7 +1552,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class="{{ $loop->index == 1 ? 'hidden-md' : '' }} pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $question->profile->id }}/{{ $question->profile->slug }}">
                                     <span class="img-wrapper {{ $question->profile->package_id == 21 || $question->profile->package_id == 20 ? 'premium' : '' }}">
                                         @if(!empty($question->profile->photoverify) && $question->profile->photoverify->status == 'approved')
-                                        <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                                        <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
                                         </span>

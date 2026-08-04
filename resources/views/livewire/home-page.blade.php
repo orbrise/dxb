@@ -1593,7 +1593,7 @@
       </div> --}}
       
       <p class="page-desc margin-bottom hidden-xs">
-        We have {{ number_format($profiles->total()) }} {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }} escorts on Massage Republic, {{ number_format($profiles->where('is_verified', 1)->count()) }} profiles have verified photos. 
+        We have {{ number_format($profiles->total()) }} {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }} escorts on Evoory, {{ number_format($profiles->where('is_verified', 1)->count()) }} profiles have verified photos. 
         <span class="services">The most popular services offered are: 
           @php
             $popularServices = ['Massage', 'Oral sex - blowjob', 'COB - Come On Body', 'French kissing', 'OWO - Oral without condom', 'GFE', 'Deep throat', 'Foot fetish'];
@@ -1923,7 +1923,7 @@
               <div class="main-thumbs">
                 <a class="img pb-photo-link" href="">
                   <span class="img-wrapper premium">
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>
@@ -1937,7 +1937,7 @@
                 <div class="thumb thumb-0">
                   <a class="img img-responsive pb-photo-link" href="/female-escorts-in-dubai/anastasia-fc669868-ea59-4164-884f-a1e4e1a79198">
                     <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
                         <i class="fa fa-check"></i>
                         <span>Verified photos</span>
                       </span>
@@ -1950,7 +1950,7 @@
                 <div class="thumb thumb-1">
                   <a class="img img-responsive pb-photo-link" href="/female-escorts-in-dubai/anastasia-fc669868-ea59-4164-884f-a1e4e1a79198">
                     <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
                         <i class="fa fa-check"></i>
                         <span>Verified photos</span>
                       </span>
@@ -1963,7 +1963,7 @@
                 <div class="thumb thumb-2">
                   <a class="img img-responsive pb-photo-link" href="/female-escorts-in-dubai/anastasia-fc669868-ea59-4164-884f-a1e4e1a79198">
                     <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
                         <i class="fa fa-check"></i>
                         <span>Verified photos</span>
                       </span>
@@ -2024,7 +2024,7 @@
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper premium">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -2072,7 +2072,7 @@
                   <span class="img-wrapper mini">
                  
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>
@@ -2134,7 +2134,7 @@
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper featured">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -2157,7 +2157,7 @@
                 <a class="img img-responsive pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>
@@ -2207,7 +2207,7 @@
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -2255,7 +2255,7 @@
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>

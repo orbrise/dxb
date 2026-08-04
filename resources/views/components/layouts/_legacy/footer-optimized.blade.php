@@ -34,7 +34,7 @@
         </p>
         
         <div class="footer-bottom d-flex flex-wrap justify-content-between align-items-center">
-            <p class="footer-smallprint mb-0">&copy; 2025 Massage Republic</p>
+            <p class="footer-smallprint mb-0">&copy; 2025 Evoory</p>
             <span class="footer-pages">
                 @livewire('page-list')
             </span>

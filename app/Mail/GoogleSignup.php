@@ -28,7 +28,7 @@ class GoogleSignup extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to Massage Republic - Account Created',
+            subject: 'Welcome to Evoory - Account Created',
         );
     }
 

@@ -74,7 +74,7 @@ img[src*="loading"],
 
     <div class="col-md-9 col-xs-12" style="padding:0px">
       <h2>{{ ucfirst($gender) }} Escorts in {{ ucfirst($selectedcity) }}</h2>
-      <p class="page-desc margin-bottom hidden-xs">We have 6681 Dubai escorts on Massage Republic, 4711 profiles have verified photos. <span class="services">The most popular services offered are: <a href="/massage-female-escorts-in-dubai" title="Erotic Massage Escorts in Dubai">Massage</a>, <a href="/oral-sex-blowjob-female-escorts-in-dubai" title="Oral sex - blowjob Escorts in Dubai">Oral sex - blowjob</a>, <a href="/cob-come-on-body-female-escorts-in-dubai" title="COB - Come On Body Escorts in Dubai">COB - Come On Body</a>, <a href="/french-kissing-female-escorts-in-dubai" title="French kissing Escorts in Dubai">French kissing</a>, <a href="/owo-oral-w-o-condom-female-escorts-in-dubai" title="OWO - Oral without condom Escorts in Dubai">OWO - Oral without condom</a>, <a href="/gfe-female-escorts-in-dubai" title="Girlfriend Experience Escorts in Dubai">GFE</a>, <a href="/deep-throat-female-escorts-in-dubai" title="Deep throat Escorts in Dubai">Deep throat</a>, and <a href="/foot-fetish-female-escorts-in-dubai" title="Foot fetish Escorts in Dubai">Foot fetish</a>. </span> Prices range from 44 AED to 30,001 AED <span class="usd-price text-muted">(US$ 11 to US$ 8,167)</span>, the average cost advertised is 1,149 AED <span class="usd-price text-muted">(US$ 312)</span>. We also have listings nearby in <a title="Female Escorts in Abu Dhabi" href="/female-escorts-in-abu-dhabi">Abu Dhabi</a>, <a title="Female Escorts in Ajmān" href="/female-escorts-in-ajman">Ajmān</a>, <a title="Female Escorts in Al Ain" href="/female-escorts-in-al-ain">Al Ain</a>, <a title="Female Escorts in Fujairah" href="/female-escorts-in-fujairah">Fujairah</a>, <a title="Female Escorts in Kalba" href="/female-escorts-in-kalba">Kalba</a>, <a title="Female Escorts in Ras al-Khaimah" href="/female-escorts-in-ras-al-khaimah">Ras al-Khaimah</a>, <a title="Female Escorts in Sharjah" href="/female-escorts-in-sharjah">Sharjah</a>, and <a title="Female Escorts in Umm al-Qaiwain" href="/female-escorts-in-umm-al-qaiwain">Umm al-Qaiwain</a>. </p>      <div class="listings listings-spots listing-spots--minimal border-top padding-top mx-n2 mx-sm-0">
+      <p class="page-desc margin-bottom hidden-xs">We have 6681 Dubai escorts on Evoory, 4711 profiles have verified photos. <span class="services">The most popular services offered are: <a href="/massage-female-escorts-in-dubai" title="Erotic Massage Escorts in Dubai">Massage</a>, <a href="/oral-sex-blowjob-female-escorts-in-dubai" title="Oral sex - blowjob Escorts in Dubai">Oral sex - blowjob</a>, <a href="/cob-come-on-body-female-escorts-in-dubai" title="COB - Come On Body Escorts in Dubai">COB - Come On Body</a>, <a href="/french-kissing-female-escorts-in-dubai" title="French kissing Escorts in Dubai">French kissing</a>, <a href="/owo-oral-w-o-condom-female-escorts-in-dubai" title="OWO - Oral without condom Escorts in Dubai">OWO - Oral without condom</a>, <a href="/gfe-female-escorts-in-dubai" title="Girlfriend Experience Escorts in Dubai">GFE</a>, <a href="/deep-throat-female-escorts-in-dubai" title="Deep throat Escorts in Dubai">Deep throat</a>, and <a href="/foot-fetish-female-escorts-in-dubai" title="Foot fetish Escorts in Dubai">Foot fetish</a>. </span> Prices range from 44 AED to 30,001 AED <span class="usd-price text-muted">(US$ 11 to US$ 8,167)</span>, the average cost advertised is 1,149 AED <span class="usd-price text-muted">(US$ 312)</span>. We also have listings nearby in <a title="Female Escorts in Abu Dhabi" href="/female-escorts-in-abu-dhabi">Abu Dhabi</a>, <a title="Female Escorts in Ajmān" href="/female-escorts-in-ajman">Ajmān</a>, <a title="Female Escorts in Al Ain" href="/female-escorts-in-al-ain">Al Ain</a>, <a title="Female Escorts in Fujairah" href="/female-escorts-in-fujairah">Fujairah</a>, <a title="Female Escorts in Kalba" href="/female-escorts-in-kalba">Kalba</a>, <a title="Female Escorts in Ras al-Khaimah" href="/female-escorts-in-ras-al-khaimah">Ras al-Khaimah</a>, <a title="Female Escorts in Sharjah" href="/female-escorts-in-sharjah">Sharjah</a>, and <a title="Female Escorts in Umm al-Qaiwain" href="/female-escorts-in-umm-al-qaiwain">Umm al-Qaiwain</a>. </p>      <div class="listings listings-spots listing-spots--minimal border-top padding-top mx-n2 mx-sm-0">
         
      
        @if($auctions->count() > 0)
@@ -321,7 +321,7 @@ img[src*="loading"],
               <div class="main-thumbs">
                 <a class="img pb-photo-link" href="">
                   <span class="img-wrapper premium">
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>
@@ -335,7 +335,7 @@ img[src*="loading"],
                 <div class="thumb thumb-0">
                   <a class="img img-responsive pb-photo-link" href="/female-escorts-in-dubai/anastasia-fc669868-ea59-4164-884f-a1e4e1a79198">
                     <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
                         <i class="fa fa-check"></i>
                         <span>Verified photos</span>
                       </span>
@@ -348,7 +348,7 @@ img[src*="loading"],
                 <div class="thumb thumb-1">
                   <a class="img img-responsive pb-photo-link" href="/female-escorts-in-dubai/anastasia-fc669868-ea59-4164-884f-a1e4e1a79198">
                     <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
                         <i class="fa fa-check"></i>
                         <span>Verified photos</span>
                       </span>
@@ -361,7 +361,7 @@ img[src*="loading"],
                 <div class="thumb thumb-2">
                   <a class="img img-responsive pb-photo-link" href="/female-escorts-in-dubai/anastasia-fc669868-ea59-4164-884f-a1e4e1a79198">
                     <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
                         <i class="fa fa-check"></i>
                         <span>Verified photos</span>
                       </span>
@@ -405,7 +405,7 @@ img[src*="loading"],
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper premium">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -430,7 +430,7 @@ img[src*="loading"],
                   <span class="img-wrapper mini">
                  
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>
@@ -485,7 +485,7 @@ img[src*="loading"],
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper featured">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -516,7 +516,7 @@ img[src*="loading"],
                 <a class="img img-responsive pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">
                     @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                    <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                    <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
                     </span>
@@ -561,7 +561,7 @@ img[src*="loading"],
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
                   @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
-                  <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                  <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
                   </span>
@@ -663,7 +663,7 @@ img[src*="loading"],
                 <div class="photo">
                   <a class=" pb-photo-link" href="/female-escorts-in-dubai/sweet-tanned-gfe-big-boobs-new-in-town">
                     <span class="img-wrapper mini">
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
                         <i class="fa fa-check"></i>
                         <span>Verified photos</span>
                       </span>

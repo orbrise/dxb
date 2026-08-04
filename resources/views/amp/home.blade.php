@@ -1,13 +1,13 @@
 @extends('amp.layout')
 
-@section('title', 'Massage Republic - Escorts Directory')
+@section('title', 'Evoory - Escorts Directory')
 @section('canonical', url('/'))
 @section('description', 'Find escorts and adult services in your city. Browse our directory of verified escorts.')
 
 @section('content')
     <!-- Hero Section -->
     <div class="amp-card amp-text-center" style="padding: 40px 20px;">
-        <h1 class="amp-page-title" style="border: none;">Welcome to Massage Republic</h1>
+        <h1 class="amp-page-title" style="border: none;">Welcome to Evoory</h1>
         <p style="color: #ccc; font-size: 16px; margin-bottom: 20px;">
             Find verified escorts and adult services in your city
         </p>

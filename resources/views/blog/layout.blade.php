@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
-    <title>@yield('title', 'Blog') - Massage Republic</title>
-    <meta name="description" content="@yield('meta_description', 'The Massage Republic Blog - helping adult providers and users to have more fun and success.')">
+    <title>@yield('title', 'Blog') - Evoory</title>
+    <meta name="description" content="@yield('meta_description', 'The Evoory Blog - helping adult providers and users to have more fun and success.')">
     <meta name="keywords" content="@yield('meta_keywords', '')">
     
     <!-- Open Graph -->
-    <meta property="og:title" content="@yield('og_title', 'Massage Republic Blog')">
-    <meta property="og:description" content="@yield('og_description', 'The Massage Republic Blog')">
+    <meta property="og:title" content="@yield('og_title', 'Evoory Blog')">
+    <meta property="og:description" content="@yield('og_description', 'The Evoory Blog')">
     <meta property="og:type" content="@yield('og_type', 'website')">
     <meta property="og:image" content="@yield('og_image', asset('assets/images/logo.png'))">
     
@@ -580,7 +580,7 @@
             <div class="header-logo">
                 <a href="{{ route('blog.index') }}">
                     <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg-5Von9iV8OPwB_zFqJZsiqhiPeDk4wYGmHtP2OHnyn6GGb4FHZGBSTqMIa1COcoraRlakWkL5S1KyJNlFmgXGV4TqL5sK9zwQ5SksQdLC0f8p_RgKJtZxZcpz4L7eSJPbyw0zLGnlhdQ/s1600/mr-logo-blog_v1.png" 
-                         alt="Massage Republic Blog" 
+                         alt="Evoory Blog" 
                          height="50" 
                          width="400">
                 </a>
@@ -632,7 +632,7 @@
                             
                             <!-- About -->
                             <div class="sidebar-widget">
-                                <h3 class="title">About Massage Republic</h3>
+                                <h3 class="title">About Evoory</h3>
                                 <div class="widget-content">
                                     <p><strong><a href="https://massagerepublic.com.co/">MassageRepublic.com.co</a></strong> was created to help service providers connect with their audience and serve the needs visitors in a responsible way.</p>
                                     <p>This blog is about new features on the site and feedback from advertisers and users. Go to the <a href="{{ route('blog.index') }}"><strong>blog homepage</strong></a>.</p>
@@ -722,7 +722,7 @@
     <!-- Footer (Full Width) -->
     <footer class="footer-outer">
         <div class="footer-inner">
-            <p>&copy; {{ date('Y') }} Massage Republic</p>
+            <p>&copy; {{ date('Y') }} Evoory</p>
         </div>
     </footer>
     

@@ -1,6 +1,6 @@
 @extends('amp.layout')
 
-@section('title', ucfirst($gender) . ' Escorts in ' . ucfirst($cityData->name) . ' - Massage Republic')
+@section('title', ucfirst($gender) . ' Escorts in ' . ucfirst($cityData->name) . ' - Evoory')
 @section('canonical', $canonicalUrl)
 @section('description', 'Browse ' . $profiles->total() . ' ' . $gender . ' escorts in ' . $cityData->name . '. Find verified profiles with photos and reviews.')
 

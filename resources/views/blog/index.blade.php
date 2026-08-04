@@ -1,7 +1,7 @@
 @extends('blog.layout')
 
 @section('title', 'Blog')
-@section('meta_description', 'The Massage Republic Blog - helping adult providers and users to have more fun and success.')
+@section('meta_description', 'The Evoory Blog - helping adult providers and users to have more fun and success.')
 
 @section('content')
 <div class="blog-posts">

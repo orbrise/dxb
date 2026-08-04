@@ -354,7 +354,7 @@
                   <a class=" pb-photo-link" href="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}">
                     <span class="img-wrapper listing">
                       @if($user->photoverify && $user->photoverify->status == 'approved')
-                      <span class="verified-image text-left small" title="Photos Verified by Massage Republic">
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
                         <i class="fa fa-check"></i>
                         <span>Verified photos</span>
                       </span>

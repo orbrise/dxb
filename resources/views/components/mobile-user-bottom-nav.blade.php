@@ -19,26 +19,31 @@
 <style>
 .ev-mobile-bottom-nav {
     display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
     z-index: 100;
     background: #C1F11D26;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid rgba(193, 241, 29, 0.25);
-    padding: 8px 6px;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
-    align-items: stretch;
-    justify-content: space-around;
+    padding: 8px 6px !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-auto-flow: column !important;
+    gap: 0 !important;
 }
 .ev-mobile-bottom-nav__item {
-    display: inline-flex !important;
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    width: 100% !important;
     gap: 4px;
     padding: 6px 4px;
     color: #fff !important;
@@ -47,6 +52,7 @@
     border-radius: 8px;
     line-height: 1;
     transition: color 0.15s ease;
+    box-sizing: border-box !important;
 }
 .ev-mobile-bottom-nav__item svg {
     width: 22px !important;
@@ -70,7 +76,7 @@
 .ev-mobile-bottom-nav__item.is-active:focus { color: #C1F11D !important; }
 
 @media (max-width: 768px) {
-    .ev-mobile-bottom-nav { display: flex !important; }
+    .ev-mobile-bottom-nav { display: grid !important; }
     /* Reserve space so the fixed bar doesn't cover the last page row. */
     body { padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important; }
     /* Hide the global site footer on mobile — the bottom nav above

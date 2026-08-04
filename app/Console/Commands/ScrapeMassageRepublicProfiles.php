@@ -39,7 +39,7 @@ class ScrapeMassageRepublicProfiles extends Command
         $limit = (int) $this->option('limit');
         $importEnabled = ! $this->option('no-import');
 
-        $this->info("Starting massage republic scraper for {$citySlug}...");
+        $this->info("Starting Evoory scraper for {$citySlug}...");
         $this->line("Logging in as {$username}");
 
         $scraper = new MassageRepublicScraper($username, $password);

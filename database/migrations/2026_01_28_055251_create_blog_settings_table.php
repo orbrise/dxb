@@ -27,14 +27,14 @@ return new class extends Migration
         // Insert default SEO settings
         $settings = [
             // General SEO
-            ['key' => 'blog_title', 'value' => 'Massage Republic Blog', 'type' => 'text', 'group' => 'seo', 'label' => 'Blog Title', 'description' => 'Main title for the blog (used in title tag)', 'sort_order' => 1],
+            ['key' => 'blog_title', 'value' => 'Evoory Blog', 'type' => 'text', 'group' => 'seo', 'label' => 'Blog Title', 'description' => 'Main title for the blog (used in title tag)', 'sort_order' => 1],
             ['key' => 'blog_tagline', 'value' => 'Helping adult providers and users to have more fun and success', 'type' => 'text', 'group' => 'seo', 'label' => 'Blog Tagline', 'description' => 'Tagline or subtitle for the blog', 'sort_order' => 2],
-            ['key' => 'meta_description', 'value' => 'The Massage Republic Blog - helping adult providers and users to have more fun and success.', 'type' => 'textarea', 'group' => 'seo', 'label' => 'Default Meta Description', 'description' => 'Default meta description for blog pages (160 chars max)', 'sort_order' => 3],
+            ['key' => 'meta_description', 'value' => 'The Evoory Blog - helping adult providers and users to have more fun and success.', 'type' => 'textarea', 'group' => 'seo', 'label' => 'Default Meta Description', 'description' => 'Default meta description for blog pages (160 chars max)', 'sort_order' => 3],
             ['key' => 'meta_keywords', 'value' => 'massage, wellness, spa, therapy, relaxation', 'type' => 'text', 'group' => 'seo', 'label' => 'Default Meta Keywords', 'description' => 'Default meta keywords (comma separated)', 'sort_order' => 4],
             
             // Open Graph / Social
             ['key' => 'og_image', 'value' => '', 'type' => 'image', 'group' => 'social', 'label' => 'Default OG Image', 'description' => 'Default image for social sharing (1200x630 recommended)', 'sort_order' => 5],
-            ['key' => 'og_site_name', 'value' => 'Massage Republic Blog', 'type' => 'text', 'group' => 'social', 'label' => 'OG Site Name', 'description' => 'Site name for Open Graph', 'sort_order' => 6],
+            ['key' => 'og_site_name', 'value' => 'Evoory Blog', 'type' => 'text', 'group' => 'social', 'label' => 'OG Site Name', 'description' => 'Site name for Open Graph', 'sort_order' => 6],
             ['key' => 'twitter_handle', 'value' => '', 'type' => 'text', 'group' => 'social', 'label' => 'Twitter Handle', 'description' => 'Twitter handle without @ (e.g., massagerepublic)', 'sort_order' => 7],
             ['key' => 'facebook_app_id', 'value' => '', 'type' => 'text', 'group' => 'social', 'label' => 'Facebook App ID', 'description' => 'Facebook App ID for insights', 'sort_order' => 8],
             
@@ -47,7 +47,7 @@ return new class extends Migration
             ['key' => 'google_tag_manager_id', 'value' => '', 'type' => 'text', 'group' => 'analytics', 'label' => 'Google Tag Manager ID', 'description' => 'GTM Container ID (e.g., GTM-XXXXXXX)', 'sort_order' => 12],
             
             // Schema/Structured Data
-            ['key' => 'schema_organization_name', 'value' => 'Massage Republic', 'type' => 'text', 'group' => 'schema', 'label' => 'Organization Name', 'description' => 'Organization name for structured data', 'sort_order' => 13],
+            ['key' => 'schema_organization_name', 'value' => 'Evoory', 'type' => 'text', 'group' => 'schema', 'label' => 'Organization Name', 'description' => 'Organization name for structured data', 'sort_order' => 13],
             ['key' => 'schema_organization_logo', 'value' => '', 'type' => 'image', 'group' => 'schema', 'label' => 'Organization Logo', 'description' => 'Logo URL for structured data', 'sort_order' => 14],
         ];
 

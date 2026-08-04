@@ -12,7 +12,7 @@
         </p>
         
         <div class="footer-bottom">
-            <p class="footer-smallprint copyright">&copy; 2025 Massage Republic</p>
+            <p class="footer-smallprint copyright">&copy; 2025 Evoory</p>
             <div class="footer-pages">
                 @livewire('page-list')
             </div>
