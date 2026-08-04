@@ -4,7 +4,9 @@ namespace App\Services;
 
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Cookie\SetCookie;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class MassageRepublicScraper
@@ -22,6 +24,8 @@ class MassageRepublicScraper
     protected string $emailField;
     protected string $passwordField;
     protected string $listingPath;
+    /** @var bool  True when session cookies were successfully loaded from disk */
+    protected bool $sessionSeeded = false;
 
     public function __construct(string $username, string $password)
     {
@@ -76,9 +80,169 @@ class MassageRepublicScraper
             'curl' => $this->getCurlOptions(),
             'expect' => false,
         ])->withHeaders($headers);
+
+        // If MASSAGE_REPUBLIC_USE_SESSION_FILE=true, try to seed cookies from
+        // storage/app/mr-session.json before the first request. This lets us
+        // skip login() entirely — Cloudflare blocks the Guzzle login flow, so
+        // the only reliable path is to import cf_clearance + _session_id from
+        // a real logged-in browser. See mr:test-session artisan command for a
+        // quick health check.
+        if (filter_var(env('MASSAGE_REPUBLIC_USE_SESSION_FILE', false), FILTER_VALIDATE_BOOLEAN)) {
+            $this->sessionSeeded = $this->loadSessionFile();
+        }
     }
 
     protected ?string $lastLoginError = null;
+
+    public function getLastLoginError(): ?string
+    {
+        return $this->lastLoginError;
+    }
+
+    /**
+     * Attempt to authenticate — session-file short-circuit first, credential
+     * login second. Exposed so the mr:test-session command can trigger auth
+     * without running the full scrape().
+     */
+    public function attemptLogin(): bool
+    {
+        return $this->login();
+    }
+
+    /**
+     * Hit the listing path and return the raw HTML body. Used by the health
+     * check to prove the session cookies are actually working — if we get
+     * Cloudflare's challenge back, the body will contain "Just a moment".
+     */
+    public function probeListing(): array
+    {
+        $url = "{$this->baseUrl}{$this->listingPath}";
+        try {
+            $res = $this->guzzle->request('GET', $url);
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'status' => 0, 'body' => '', 'error' => $e->getMessage(), 'url' => $url];
+        }
+        $body = (string) $res->getBody();
+        return [
+            'ok' => $res->getStatusCode() < 400 && ! str_contains($body, 'Just a moment'),
+            'status' => $res->getStatusCode(),
+            'body' => $body,
+            'error' => null,
+            'url' => $url,
+        ];
+    }
+
+    public function isSessionSeeded(): bool
+    {
+        return $this->sessionSeeded;
+    }
+
+    /**
+     * Return a summary of the cookies currently in the jar — name, domain,
+     * expiry (or "session"), and a value-length rather than the raw value
+     * so we don't accidentally log secrets. Used by the health check to
+     * confirm whether the critical cookies (cf_clearance, _session_id) are
+     * actually loaded.
+     */
+    public function describeCookies(): array
+    {
+        $out = [];
+        foreach ($this->cookies->toArray() as $c) {
+            $out[] = [
+                'name' => $c['Name'] ?? '?',
+                'domain' => $c['Domain'] ?? '?',
+                'expires' => $c['Expires'] ?? 0,
+                'expires_iso' => (! empty($c['Expires']) && $c['Expires'] > 0)
+                    ? gmdate('Y-m-d H:i:s', $c['Expires']) . ' UTC'
+                    : 'session',
+                'value_len' => strlen((string) ($c['Value'] ?? '')),
+                'secure' => (bool) ($c['Secure'] ?? false),
+                'http_only' => (bool) ($c['HttpOnly'] ?? false),
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Return the User-Agent Guzzle is currently sending. cf_clearance is
+     * bound to (IP, User-Agent) — if the UA that solved the challenge in
+     * your browser doesn't match this, Cloudflare will always reject.
+     */
+    public function getUserAgent(): string
+    {
+        return $this->defaultHeaders['User-Agent'] ?? '';
+    }
+
+    /**
+     * Read storage/app/mr-session.json and inject each cookie into Guzzle's
+     * CookieJar. The file format matches Cookie-Editor's default export:
+     *
+     * [{"name": "cf_clearance", "value": "...", "domain": ".massagerepublic.com",
+     *   "path": "/", "expirationDate": 1234567890, "secure": true,
+     *   "httpOnly": true, "sameSite": "Lax"}, ...]
+     *
+     * Session cookies (no expirationDate) are accepted with expires=0.
+     * Returns true if at least one cookie loaded successfully.
+     */
+    protected function loadSessionFile(): bool
+    {
+        $path = storage_path('app/mr-session.json');
+
+        if (! is_file($path)) {
+            $this->lastLoginError = "Session file not found at {$path}";
+            return false;
+        }
+
+        $raw = @file_get_contents($path);
+        if ($raw === false || $raw === '') {
+            $this->lastLoginError = "Session file at {$path} is empty or unreadable";
+            return false;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (! is_array($decoded)) {
+            $this->lastLoginError = "Session file at {$path} is not valid JSON";
+            return false;
+        }
+
+        $loaded = 0;
+        $now = time();
+        foreach ($decoded as $cookie) {
+            if (! is_array($cookie) || empty($cookie['name']) || ! isset($cookie['value'])) {
+                continue;
+            }
+
+            $expires = 0;
+            if (isset($cookie['expirationDate'])) {
+                $expires = (int) $cookie['expirationDate'];
+                // Silently skip already-expired cookies rather than injecting
+                // them and having Guzzle send stale data.
+                if ($expires > 0 && $expires < $now) {
+                    continue;
+                }
+            }
+
+            $setCookie = new SetCookie();
+            $setCookie->setName((string) $cookie['name']);
+            $setCookie->setValue((string) $cookie['value']);
+            $setCookie->setDomain($cookie['domain'] ?? $this->baseHost);
+            $setCookie->setPath($cookie['path'] ?? '/');
+            $setCookie->setSecure((bool) ($cookie['secure'] ?? false));
+            $setCookie->setHttpOnly((bool) ($cookie['httpOnly'] ?? false));
+            if ($expires > 0) {
+                $setCookie->setExpires($expires);
+            }
+            $this->cookies->setCookie($setCookie);
+            $loaded++;
+        }
+
+        if ($loaded === 0) {
+            $this->lastLoginError = "Session file at {$path} contained no valid cookies";
+            return false;
+        }
+
+        return true;
+    }
 
     public function scrape(int $limit = 50, ?string $citySlug = null, ?callable $skipChecker = null): array
     {
@@ -253,6 +417,17 @@ class MassageRepublicScraper
 
     protected function login(): bool
     {
+        // Session-cookie path: skip the login round-trip entirely when
+        // storage/app/mr-session.json was loaded successfully. Cloudflare
+        // blocks the Guzzle GET /sign-in with a JS challenge, so this is
+        // currently the only working authentication path. If the cookies
+        // have expired since the file was written we'll find out on the
+        // next real request (403 or "sign-in" page in the HTML body) and
+        // the operator re-exports.
+        if ($this->sessionSeeded) {
+            return true;
+        }
+
         $loginUrl = "{$this->baseUrl}{$this->loginPath}";
 
         try {
