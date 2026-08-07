@@ -10,7 +10,10 @@ class ScrapeAllMassageRepublicProfiles extends Command
                             {--limit=20 : Profiles per city}
                             {--cities= : Comma-separated city slugs (default: istanbul,london,antalya,batumi,beijing)}
                             {--no-phone : Skip the Playwright phone-reveal step}
-                            {--require-phone : Only import profiles whose phone reveal succeeded}';
+                            {--require-phone : Only import profiles whose phone reveal succeeded}
+                            {--bd-api-key= : Bright Data Web Unlocker API key}
+                            {--bd-zone= : Bright Data zone (web_unlocker1)}
+                            {--bd-proxy-url= : Bright Data proxy URL (superproxy) }';
 
     protected $description = 'Run scrape:massagerepublic for a list of cities sequentially — the next city starts only when the previous one finishes.';
 
@@ -39,6 +42,29 @@ class ScrapeAllMassageRepublicProfiles extends Command
 
     public function handle(): int
     {
+        // Apply Bright Data options to environment so child command sees them
+        $bdApiKey = trim((string) $this->option('bd-api-key'));
+        $bdZone = trim((string) $this->option('bd-zone'));
+        $bdProxy = trim((string) $this->option('bd-proxy-url'));
+
+        if ($bdApiKey !== '') {
+            putenv('MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY=' . $bdApiKey);
+            $_ENV['MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY'] = $bdApiKey;
+            $_SERVER['MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY'] = $bdApiKey;
+            $this->info('Using Bright Data API key from CLI option.');
+        }
+        if ($bdZone !== '') {
+            putenv('MASSAGE_REPUBLIC_BRIGHTDATA_ZONE=' . $bdZone);
+            $_ENV['MASSAGE_REPUBLIC_BRIGHTDATA_ZONE'] = $bdZone;
+            $_SERVER['MASSAGE_REPUBLIC_BRIGHTDATA_ZONE'] = $bdZone;
+            $this->info('Using Bright Data zone: ' . $bdZone);
+        }
+        if ($bdProxy !== '') {
+            putenv('MASSAGE_REPUBLIC_PROXY_URL=' . $bdProxy);
+            $_ENV['MASSAGE_REPUBLIC_PROXY_URL'] = $bdProxy;
+            $_SERVER['MASSAGE_REPUBLIC_PROXY_URL'] = $bdProxy;
+            $this->info('Using Bright Data proxy URL from CLI option.');
+        }
         $citiesOption = trim((string) $this->option('cities'));
         $cities = $citiesOption !== ''
             ? array_values(array_filter(array_map('trim', explode(',', $citiesOption))))
@@ -60,6 +86,9 @@ class ScrapeAllMassageRepublicProfiles extends Command
             $args = ['--city' => $city, '--limit' => $limit];
             if ($noPhone) $args['--no-phone'] = true;
             if ($requirePhone) $args['--require-phone'] = true;
+            if ($bdApiKey !== '') $args['--bd-api-key'] = $bdApiKey;
+            if ($bdZone !== '') $args['--bd-zone'] = $bdZone;
+            if ($bdProxy !== '') $args['--bd-proxy-url'] = $bdProxy;
 
             try {
                 $exit = $this->call('scrape:massagerepublic', $args);

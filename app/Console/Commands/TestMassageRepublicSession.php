@@ -36,46 +36,67 @@ class TestMassageRepublicSession extends Command
             return self::FAILURE;
         }
 
-        $useSession = filter_var(env('MASSAGE_REPUBLIC_USE_SESSION_FILE', false), FILTER_VALIDATE_BOOLEAN);
-        if (! $useSession) {
-            $this->warn('MASSAGE_REPUBLIC_USE_SESSION_FILE is not enabled in .env — the scraper will fall back to Guzzle credential login (Cloudflare will block this).');
-        }
-
-        $sessionPath = storage_path('app/mr-session.json');
-        $this->line("Session file path: {$sessionPath}");
-        $this->line('Session file exists: ' . (is_file($sessionPath) ? 'yes' : 'NO'));
-
         $scraper = new MassageRepublicScraper($username, $password);
 
-        $this->line('Session seeded into cookie jar: ' . ($scraper->isSessionSeeded() ? 'yes' : 'NO'));
-
-        // Dump the cookie jar so we can see whether cf_clearance / _session_id
-        // actually landed. The 403+challenge is often "loaded cookies but not
-        // the right ones" rather than "loader broken".
-        $cookies = $scraper->describeCookies();
-        $this->line('Cookies loaded: ' . count($cookies));
-        $hasCfClearance = false;
-        $hasSessionId = false;
-        foreach ($cookies as $c) {
-            $this->line(sprintf(
-                '  • %-25s  domain=%-30s  expires=%-25s  len=%d',
-                $c['name'],
-                $c['domain'],
-                $c['expires_iso'],
-                $c['value_len']
-            ));
-            if ($c['name'] === 'cf_clearance') $hasCfClearance = true;
-            if ($c['name'] === '_session_id') $hasSessionId = true;
-        }
-        if (! $hasCfClearance) {
-            $this->warn('  ⚠  cf_clearance is MISSING from the session file. Cloudflare will always challenge without it.');
-        }
-        if (! $hasSessionId) {
-            $this->warn('  ⚠  _session_id is MISSING from the session file. Even if CF clears, MR will treat you as logged out.');
+        // Report transport mode FIRST — three possibilities in priority order:
+        // BD API mode > BD proxy mode > direct. In any Bright-Data mode the
+        // cookie-file diagnostics below are irrelevant (BD handles CF for us),
+        // so we skip them.
+        if ($scraper->isBrightDataApiEnabled()) {
+            $this->info('Transport: Bright Data API mode');
+            $this->line('  ↳ ' . $scraper->getBrightDataApiDescription());
+            $this->line('  ↳ Every request wraps as POST https://api.brightdata.com/request (port 443).');
+            $this->line('  ↳ Session file is intentionally NOT loaded.');
+        } elseif ($scraper->isProxyEnabled()) {
+            $this->info('Transport: Bright Data proxy mode (' . $scraper->getProxyDescription() . ')');
+            $this->line('  ↳ Bright Data will handle Cloudflare on every request.');
+            $this->line('  ↳ Session file is intentionally NOT loaded in proxy mode.');
+        } else {
+            $this->line('Transport: direct (no proxy, no API) — Cloudflare will block this.');
+            $this->line('  ↳ Set MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY (recommended) or MASSAGE_REPUBLIC_PROXY_URL.');
         }
 
-        $this->line('Guzzle User-Agent: ' . $scraper->getUserAgent());
-        $this->line('  ↳ cf_clearance is bound to the UA that solved the challenge. If your browser used a different UA than the string above, CF will reject.');
+        $useSession = filter_var(env('MASSAGE_REPUBLIC_USE_SESSION_FILE', false), FILTER_VALIDATE_BOOLEAN);
+        $bdOn = $scraper->isProxyEnabled() || $scraper->isBrightDataApiEnabled();
+        if (! $useSession && ! $bdOn) {
+            $this->warn('MASSAGE_REPUBLIC_USE_SESSION_FILE is not enabled AND no Bright Data transport is set — the scraper will fall back to Guzzle credential login (Cloudflare will block this).');
+        }
+
+        // Only show session-file cookie diagnostics in fully-direct mode. When
+        // either BD transport is on those warnings are noise — no cookies are
+        // loaded from disk intentionally, and cf_clearance is minted per-request
+        // by Bright Data (not stored anywhere on our side).
+        if (! $bdOn) {
+            $sessionPath = storage_path('app/mr-session.json');
+            $this->line("Session file path: {$sessionPath}");
+            $this->line('Session file exists: ' . (is_file($sessionPath) ? 'yes' : 'NO'));
+            $this->line('Session seeded into cookie jar: ' . ($scraper->isSessionSeeded() ? 'yes' : 'NO'));
+
+            $cookies = $scraper->describeCookies();
+            $this->line('Cookies loaded: ' . count($cookies));
+            $hasCfClearance = false;
+            $hasSessionId = false;
+            foreach ($cookies as $c) {
+                $this->line(sprintf(
+                    '  • %-25s  domain=%-30s  expires=%-25s  len=%d',
+                    $c['name'],
+                    $c['domain'],
+                    $c['expires_iso'],
+                    $c['value_len']
+                ));
+                if ($c['name'] === 'cf_clearance') $hasCfClearance = true;
+                if ($c['name'] === '_session_id') $hasSessionId = true;
+            }
+            if (! $hasCfClearance) {
+                $this->warn('  ⚠  cf_clearance is MISSING from the session file. Cloudflare will always challenge without it.');
+            }
+            if (! $hasSessionId) {
+                $this->warn('  ⚠  _session_id is MISSING from the session file. Even if CF clears, MR will treat you as logged out.');
+            }
+
+            $this->line('Guzzle User-Agent: ' . $scraper->getUserAgent());
+            $this->line('  ↳ cf_clearance is bound to the UA that solved the challenge. If your browser used a different UA than the string above, CF will reject.');
+        }
 
         $this->line('Attempting login…');
         $ok = $scraper->attemptLogin();

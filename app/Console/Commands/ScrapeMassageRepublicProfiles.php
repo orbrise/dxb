@@ -16,7 +16,10 @@ class ScrapeMassageRepublicProfiles extends Command
                             {--limit=50 : Maximum number of profiles to fetch}
                             {--no-import : Scrape only; skip writing to live tables}
                             {--no-phone : Skip the Playwright phone-reveal step}
-                            {--require-phone : Only import profiles whose phone reveal succeeded — skip the rest}';
+                            {--require-phone : Only import profiles whose phone reveal succeeded — skip the rest}
+                            {--bd-api-key= : Bright Data Web Unlocker API key}
+                            {--bd-zone= : Bright Data zone (web_unlocker1)}
+                            {--bd-proxy-url= : Bright Data proxy URL (superproxy)}';
 
     protected $description = 'Scrape massagerepublic.com profiles for a given city and import them into the live users_profiles tables.';
 
@@ -38,6 +41,29 @@ class ScrapeMassageRepublicProfiles extends Command
 
         $limit = (int) $this->option('limit');
         $importEnabled = ! $this->option('no-import');
+
+        $bdApiKey = trim((string) $this->option('bd-api-key'));
+        $bdZone = trim((string) $this->option('bd-zone'));
+        $bdProxy = trim((string) $this->option('bd-proxy-url'));
+
+        if ($bdApiKey !== '') {
+            putenv('MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY=' . $bdApiKey);
+            $_ENV['MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY'] = $bdApiKey;
+            $_SERVER['MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY'] = $bdApiKey;
+            $this->info('Using Bright Data API key from CLI option.');
+        }
+        if ($bdZone !== '') {
+            putenv('MASSAGE_REPUBLIC_BRIGHTDATA_ZONE=' . $bdZone);
+            $_ENV['MASSAGE_REPUBLIC_BRIGHTDATA_ZONE'] = $bdZone;
+            $_SERVER['MASSAGE_REPUBLIC_BRIGHTDATA_ZONE'] = $bdZone;
+            $this->info('Using Bright Data zone: ' . $bdZone);
+        }
+        if ($bdProxy !== '') {
+            putenv('MASSAGE_REPUBLIC_PROXY_URL=' . $bdProxy);
+            $_ENV['MASSAGE_REPUBLIC_PROXY_URL'] = $bdProxy;
+            $_SERVER['MASSAGE_REPUBLIC_PROXY_URL'] = $bdProxy;
+            $this->info('Using Bright Data proxy URL from CLI option.');
+        }
 
         $this->info("Starting Evoory scraper for {$citySlug}...");
         $this->line("Logging in as {$username}");

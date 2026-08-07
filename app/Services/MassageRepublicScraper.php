@@ -5,9 +5,15 @@ namespace App\Services;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request as Psr7Request;
+use GuzzleHttp\Psr7\Response as Psr7Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class MassageRepublicScraper
 {
@@ -26,6 +32,21 @@ class MassageRepublicScraper
     protected string $listingPath;
     /** @var bool  True when session cookies were successfully loaded from disk */
     protected bool $sessionSeeded = false;
+    /** @var bool  True when routing through Bright Data (or similar) HTTP proxy */
+    protected bool $proxyEnabled = false;
+    /** @var string|null  The full proxy URL currently in use (for diagnostics) */
+    protected ?string $proxyUrl = null;
+    /** @var string|null  Per-instance session ID used for Bright Data sticky-IP mode */
+    protected ?string $proxySessionId = null;
+    /** @var bool  True when routing through Bright Data's HTTPS API (port 443, works
+     *             on hosts that block Bright Data's proxy ports 22225/33335/44445). */
+    protected bool $brightDataApiEnabled = false;
+    protected ?string $brightDataApiKey = null;
+    protected string $brightDataZone = 'web_unlocker1';
+    /** @var string|null  Per-instance session ID used for Bright Data API sticky-session
+     *                    mode. Passed as `session_id` on every request so BD keeps the
+     *                    same residential IP + cookie jar across the whole scrape. */
+    protected ?string $brightDataSessionId = null;
 
     public function __construct(string $username, string $password)
     {
@@ -54,40 +75,118 @@ class MassageRepublicScraper
         $this->passwordField = env('MASSAGE_REPUBLIC_PASSWORD_FIELD', 'account[password]');
         $this->listingPath = env('MASSAGE_REPUBLIC_LISTING_PATH', '/female-escorts-in-dubai');
 
+        // cf_clearance is bound to (source IP, User-Agent). When loading cookies
+        // from a browser session (MASSAGE_REPUBLIC_USE_SESSION_FILE=true), the
+        // Guzzle UA MUST match the browser that solved the challenge — otherwise
+        // Cloudflare rejects every request. Allow override via env so the
+        // operator can paste in the exact UA string from their Chrome
+        // (navigator.userAgent in DevTools console, or chrome://version).
+        $userAgent = trim((string) env('MASSAGE_REPUBLIC_USER_AGENT', ''))
+            ?: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+
         $headers = [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            'User-Agent' => $userAgent,
             'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         ];
 
         $this->cookies = new CookieJar();
         $this->defaultHeaders = $headers;
 
-        $this->guzzle = new GuzzleClient([
+        // Base Guzzle config — shared by both proxy and direct modes.
+        $guzzleConfig = [
             'cookies' => $this->cookies,
-            'timeout' => 30,
+            'timeout' => 60, // longer timeout — proxy adds ~2-10s per request
             'verify' => false,
             'allow_redirects' => ['max' => 10, 'referer' => true, 'protocols' => ['http', 'https']],
             'headers' => $headers,
-            'curl' => $this->getCurlOptions(),
             'expect' => false,
             'http_errors' => false,
-        ]);
+        ];
 
-        $this->client = Http::withOptions([
+        // Three request-transport modes, in priority order:
+        //
+        //   1. Bright Data API mode (MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY set)
+        //      Every request is wrapped as POST https://api.brightdata.com/request
+        //      via a Guzzle middleware. Uses port 443 so it works on hosts
+        //      whose outbound firewall blocks Bright Data's proxy ports
+        //      (22225 / 33335 / 44445). This is what the cPanel deployment
+        //      uses — proxy mode is refused by the host.
+        //
+        //   2. Bright Data proxy mode (MASSAGE_REPUBLIC_PROXY_URL set, no API key)
+        //      Guzzle routes through the proxy directly. Cleaner but requires
+        //      outbound access to Bright Data's non-standard proxy ports.
+        //
+        //   3. Direct mode (neither set)
+        //      Straight Guzzle to MR. Cloudflare will 403 it — kept only
+        //      because the session-file cookie-priming code still exists,
+        //      and for the health-check flow.
+        //
+        // In both Bright Data modes we sticky-session so the whole scrape
+        // runs from ONE residential IP (BD-side cookie jar in API mode,
+        // -session-<id> username suffix in proxy mode). Without stickiness
+        // MR would issue _session_id on login from IP A and then reject
+        // subsequent GETs coming out of IP B.
+        $bdApiKey = trim((string) env('MASSAGE_REPUBLIC_BRIGHTDATA_API_KEY', ''));
+        $rawProxyUrl = trim((string) env('MASSAGE_REPUBLIC_PROXY_URL', ''));
+
+        if ($bdApiKey !== '') {
+            $this->brightDataApiKey = $bdApiKey;
+            $this->brightDataZone = trim((string) env('MASSAGE_REPUBLIC_BRIGHTDATA_ZONE', 'web_unlocker1'));
+            // Kept for diagnostic display in mr:test-session. Web Unlocker API
+            // mode is stateless — this id isn't sent to BD (session_id isn't a
+            // valid API param), it's just an instance-scoped identifier.
+            $this->brightDataSessionId = 'mr' . substr(md5(uniqid('', true)), 0, 8);
+            $this->brightDataApiEnabled = true;
+
+            $guzzleConfig['handler'] = $this->buildBrightDataApiHandler();
+        } elseif ($rawProxyUrl !== '') {
+            $this->proxySessionId = 'mr' . substr(md5(uniqid('', true)), 0, 8);
+            // Splice `-session-<id>` into the proxy username so Bright Data
+            // pins all requests to the same residential IP for this instance.
+            // Format: http://brd-customer-hl_XXX-zone-YYY:PASS@brd.superproxy.io:PORT
+            $stickyProxy = preg_replace(
+                '/^(https?:\/\/brd-customer-hl_[a-z0-9]+-zone-[a-z0-9_]+)(?=:)/i',
+                '$1-session-' . $this->proxySessionId,
+                $rawProxyUrl
+            );
+            $guzzleConfig['proxy'] = $stickyProxy ?: $rawProxyUrl;
+            $this->proxyUrl = $guzzleConfig['proxy'];
+            $this->proxyEnabled = true;
+        } else {
+            // Only apply CURL_RESOLVE and MASSAGE_REPUBLIC_HOST_IP tricks in
+            // direct-connection mode. When proxying, the proxy resolves the
+            // target host upstream and any local resolve override just breaks
+            // things (the CONNECT tunnel would target the wrong IP).
+            $guzzleConfig['curl'] = $this->getCurlOptions();
+        }
+
+        $this->guzzle = new GuzzleClient($guzzleConfig);
+
+        $httpFactoryOpts = [
             'cookies' => $this->cookies,
-            'timeout' => 30,
+            'timeout' => 60,
             'verify' => false,
-            'curl' => $this->getCurlOptions(),
             'expect' => false,
-        ])->withHeaders($headers);
+        ];
+        if ($this->brightDataApiEnabled) {
+            // Route Laravel HTTP facade calls through the same BD API middleware
+            // so fetchUrl() (which uses Http::) is transported identically to
+            // login() / probeListing() (which use Guzzle directly).
+            $httpFactoryOpts['handler'] = $this->buildBrightDataApiHandler();
+        } elseif ($this->proxyEnabled) {
+            $httpFactoryOpts['proxy'] = $this->proxyUrl;
+        } else {
+            $httpFactoryOpts['curl'] = $this->getCurlOptions();
+        }
+        $this->client = Http::withOptions($httpFactoryOpts)->withHeaders($headers);
 
-        // If MASSAGE_REPUBLIC_USE_SESSION_FILE=true, try to seed cookies from
-        // storage/app/mr-session.json before the first request. This lets us
-        // skip login() entirely — Cloudflare blocks the Guzzle login flow, so
-        // the only reliable path is to import cf_clearance + _session_id from
-        // a real logged-in browser. See mr:test-session artisan command for a
-        // quick health check.
-        if (filter_var(env('MASSAGE_REPUBLIC_USE_SESSION_FILE', false), FILTER_VALIDATE_BOOLEAN)) {
+        // If MASSAGE_REPUBLIC_USE_SESSION_FILE=true AND we're NOT proxying,
+        // seed cookies from storage/app/mr-session.json before the first
+        // request. With the proxy on, we let Bright Data handle CF on every
+        // request — no cookie priming needed, login runs fresh.
+        if (! $this->proxyEnabled
+            && filter_var(env('MASSAGE_REPUBLIC_USE_SESSION_FILE', false), FILTER_VALIDATE_BOOLEAN)
+        ) {
             $this->sessionSeeded = $this->loadSessionFile();
         }
     }
@@ -135,6 +234,167 @@ class MassageRepublicScraper
     public function isSessionSeeded(): bool
     {
         return $this->sessionSeeded;
+    }
+
+    public function isProxyEnabled(): bool
+    {
+        return $this->proxyEnabled;
+    }
+
+    public function isBrightDataApiEnabled(): bool
+    {
+        return $this->brightDataApiEnabled;
+    }
+
+    /**
+     * Return a short human description of the BD API config in use — the zone
+     * name, the sticky session id, and a masked key prefix. Used by the
+     * mr:test-session health-check output.
+     */
+    public function getBrightDataApiDescription(): ?string
+    {
+        if (! $this->brightDataApiEnabled) {
+            return null;
+        }
+        $keyPreview = $this->brightDataApiKey
+            ? substr($this->brightDataApiKey, 0, 8) . '…'
+            : '(no key)';
+        return "zone={$this->brightDataZone}  session_id={$this->brightDataSessionId}  key={$keyPreview}";
+    }
+
+    /**
+     * Return the proxy URL with password masked, for safe logging.
+     */
+    public function getProxyDescription(): ?string
+    {
+        if (! $this->proxyEnabled || ! $this->proxyUrl) {
+            return null;
+        }
+        // Strip password from userinfo so we don't log it. Keeps everything
+        // else intact for diagnostic clarity.
+        return preg_replace('/(:\/\/[^:]+:)[^@]+(@)/', '$1***$2', $this->proxyUrl);
+    }
+
+    /**
+     * Build a Guzzle handler stack that rewrites every outbound request as a
+     * POST to Bright Data's Web Unlocker API (https://api.brightdata.com/request)
+     * with `format=json`, then unpacks the JSON body into a proper PSR-7
+     * response carrying MR's actual status / headers / body.
+     *
+     * Why this shape rather than a proxy: on hosts that block Bright Data's
+     * non-standard proxy ports (22225 / 33335 / 44445 refused by the cPanel
+     * outbound firewall), API mode over 443 is the only path that works. The
+     * middleware lets us keep every callsite in the scraper unchanged — they
+     * still `$this->guzzle->request('GET', '/foo')` and get MR's response back.
+     *
+     * Session state: Web Unlocker API is stateless (unlike proxy mode, no
+     * `session_id` param — the API rejects it with a validation error).
+     * Instead we rely on Guzzle's built-in cookies middleware (installed by
+     * HandlerStack::create()): our wrap middleware sits ABOVE cookies in the
+     * stack, so cookies gets first crack at outgoing (attaches Cookie header
+     * from the jar to the original mr.com request) and last crack at incoming
+     * (extracts Set-Cookie from the unwrapped MR response we build below).
+     * This is why `format=json` matters — `format=raw` returns only body,
+     * so MR's Set-Cookie would never make it back to the jar and every request
+     * would be logged out.
+     */
+    protected function buildBrightDataApiHandler(): HandlerStack
+    {
+        // create() pre-loads cookies + prepare_body + allow_redirects + http_errors.
+        // We push our BD-wrap AFTER them so cookies runs FIRST on outgoing (sees
+        // the original MR URI, attaches Cookie header) and LAST on incoming (sees
+        // the unwrapped MR response we synthesize, extracts Set-Cookie).
+        $handler = HandlerStack::create();
+
+        $apiKey = $this->brightDataApiKey;
+        $zone = $this->brightDataZone;
+
+        $handler->push(function (callable $next) use ($apiKey, $zone) {
+            return function (RequestInterface $request, array $options) use ($next, $apiKey, $zone) {
+                $targetUrl = (string) $request->getUri();
+
+                // Recursion guard — if a request already targets BD (shouldn't
+                // happen, but belt-and-suspenders) pass through unwrapped.
+                if (str_starts_with($targetUrl, 'https://api.brightdata.com')) {
+                    return $next($request, $options);
+                }
+
+                // Rebuild the headers into a flat name=>string map. Skip Host
+                // and Content-Length: BD sets its own for the outer POST and
+                // the upstream target's Host is implicit from the `url` field.
+                // Cookie header (if any) IS forwarded — that's how MR's session
+                // survives across our stateless BD API calls.
+                $headers = [];
+                foreach ($request->getHeaders() as $name => $values) {
+                    $lower = strtolower($name);
+                    if ($lower === 'host' || $lower === 'content-length') continue;
+                    $headers[$name] = implode(', ', $values);
+                }
+
+                $body = (string) $request->getBody();
+
+                $payload = [
+                    'zone' => $zone,
+                    'url' => $targetUrl,
+                    'method' => $request->getMethod(),
+                    'format' => 'json',
+                ];
+                if (! empty($headers)) $payload['headers'] = $headers;
+                if ($body !== '') $payload['body'] = $body;
+
+                $bdRequest = new Psr7Request(
+                    'POST',
+                    'https://api.brightdata.com/request',
+                    [
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'Content-Type' => 'application/json',
+                    ],
+                    json_encode($payload)
+                );
+
+                return $next($bdRequest, $options)->then(function (ResponseInterface $bdResponse) use ($targetUrl) {
+                    $bdBody = (string) $bdResponse->getBody();
+                    $decoded = json_decode($bdBody, true);
+
+                    // BD-side error (bad auth, insufficient balance, validation,
+                    // 502 gateway) — the outer response won't have the
+                    // {status_code, headers, body} shape. Log full context so
+                    // operators can see what BD is complaining about (empty
+                    // body + 502 status alone is uninformative), then pass the
+                    // BD response through so the caller sees BD's status.
+                    if (! is_array($decoded) || (! isset($decoded['status_code']) && ! isset($decoded['status']) && ! isset($decoded['body']))) {
+                        $bdHeadersFlat = [];
+                        foreach ($bdResponse->getHeaders() as $name => $values) {
+                            $bdHeadersFlat[$name] = implode(', ', $values);
+                        }
+                        \Log::warning('BD Web Unlocker API returned non-target response', [
+                            'target_url' => $targetUrl,
+                            'bd_status' => $bdResponse->getStatusCode(),
+                            'bd_headers' => $bdHeadersFlat,
+                            'bd_body_snippet' => substr($bdBody, 0, 800),
+                        ]);
+                        return $bdResponse;
+                    }
+
+                    $status = (int) ($decoded['status_code'] ?? $decoded['status'] ?? 200);
+                    $rawHeaders = $decoded['headers'] ?? [];
+                    $rawBody = $decoded['body'] ?? '';
+
+                    // Normalize header values into PSR-7 shape (each header is
+                    // an array of strings). BD sometimes returns single-value
+                    // headers as bare strings and multi-value (like Set-Cookie)
+                    // as arrays — handle both.
+                    $psrHeaders = [];
+                    foreach ($rawHeaders as $name => $value) {
+                        $psrHeaders[$name] = is_array($value) ? array_map('strval', $value) : [(string) $value];
+                    }
+
+                    return new Psr7Response($status, $psrHeaders, is_string($rawBody) ? $rawBody : (string) $rawBody);
+                });
+            };
+        }, 'brightdata_api_wrap');
+
+        return $handler;
     }
 
     /**
@@ -442,7 +702,8 @@ class MassageRepublicScraper
 
         if ($getStatus >= 400) {
             $snippet = trim(substr(strip_tags($getBody), 0, 200));
-            $this->lastLoginError = "GET {$loginUrl} returned HTTP {$getStatus}: {$snippet}";
+            $transport = $this->proxyEnabled ? ' through Bright Data proxy' : ($this->brightDataApiEnabled ? ' through Bright Data API' : '');
+            $this->lastLoginError = "GET {$loginUrl} returned HTTP {$getStatus}{$transport}: {$snippet}";
             return false;
         }
 
@@ -480,7 +741,8 @@ class MassageRepublicScraper
 
         if ($status >= 400) {
             $snippet = trim(substr(strip_tags($body), 0, 200));
-            $this->lastLoginError = "POST {$postUrl} returned HTTP {$status}: {$snippet}";
+            $transport = $this->proxyEnabled ? ' through Bright Data proxy' : ($this->brightDataApiEnabled ? ' through Bright Data API' : '');
+            $this->lastLoginError = "POST {$postUrl} returned HTTP {$status}{$transport}: {$snippet}";
             return false;
         }
 

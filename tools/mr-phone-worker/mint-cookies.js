@@ -150,36 +150,188 @@ async function solveTurnstileWithCapsolver(sitekey, pageUrl, apiKey) {
 }
 
 /**
- * Extract the Turnstile sitekey from the current CF challenge page. Tries
- * several DOM locations because CF varies the markup between "invisible"
- * Turnstile, managed challenge, and Under Attack Mode.
+ * Full-page Cloudflare solve via CapSolver's AntiCloudflareTaskS2. Used when
+ * the sitekey extraction fails — typically because CF is serving a challenge
+ * type that never puts a Turnstile widget on the page, or is in "Under Attack
+ * Mode" where the JS obfuscates everything and never renders Turnstile.
+ *
+ * Returns { cookies: [{name,value,domain,path,expires,httpOnly,secure}], userAgent }
+ * that we then inject into the Playwright context to bypass CF on subsequent
+ * navigation. Cost: ~$0.002-0.005 per solve (2-5× a Turnstile solve).
+ *
+ * WARNING: The cf_clearance cookie returned by CapSolver was minted using
+ * CapSolver's IP, not ours. Some sites strictly IP-bind cf_clearance and
+ * will reject it — for those sites, only a residential proxy or a real
+ * browser on the target IP will work. We'll know inside 60s whether MR is
+ * strict or lenient.
+ */
+async function solveCloudflareWithCapsolver(pageUrl, apiKey) {
+  step(`capsolver: creating AntiCloudflareTaskS2 for ${pageUrl}`);
+
+  const createResp = await fetch('https://api.capsolver.com/createTask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      clientKey: apiKey,
+      task: {
+        type: 'AntiCloudflareTaskS2',
+        websiteURL: pageUrl,
+      },
+    }),
+  });
+  if (!createResp.ok) {
+    throw new Error(`capsolver createTask (S2) HTTP ${createResp.status}`);
+  }
+  const createData = await createResp.json();
+  if (createData.errorId !== 0) {
+    throw new Error(`capsolver createTask (S2): ${createData.errorDescription || createData.errorCode}`);
+  }
+  const taskId = createData.taskId;
+  step(`capsolver: S2 task ${taskId} created, polling…`);
+
+  const deadline = Date.now() + 180000; // Full-page solve can take 30-90s
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 4000));
+    const pollResp = await fetch('https://api.capsolver.com/getTaskResult', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientKey: apiKey, taskId }),
+    });
+    if (!pollResp.ok) continue;
+    const pollData = await pollResp.json();
+    if (pollData.errorId !== 0) {
+      throw new Error(`capsolver getTaskResult (S2): ${pollData.errorDescription || pollData.errorCode}`);
+    }
+    if (pollData.status === 'ready') {
+      const solution = pollData.solution || {};
+      const cookies = solution.cookies || [];
+      const userAgent = solution.userAgent || null;
+      if (!Array.isArray(cookies) || cookies.length === 0) {
+        throw new Error('capsolver S2 returned ready but no cookies');
+      }
+      step(`capsolver: S2 solved (${cookies.length} cookies, UA=${(userAgent || '').slice(0, 40)}…)`);
+      return { cookies, userAgent };
+    }
+  }
+  throw new Error('capsolver S2 polling timed out after 180s');
+}
+
+/**
+ * Extract the Turnstile sitekey from the current CF challenge page.
+ *
+ * CF's Under Attack Mode page lazily injects the Turnstile widget after
+ * the initial DOM is ready — so we FIRST wait for the widget markup to
+ * appear (up to 15s), THEN try DOM extraction. If DOM extraction still
+ * comes up empty (some CF variants render the widget inside a sandboxed
+ * iframe we can't reach via querySelector), we fall back to raw-HTML
+ * regex — the sitekey is always in the HTML string somewhere, even when
+ * it's not in an accessible DOM node.
  *
  * Returns { sitekey, source } on success, null on failure.
  */
 async function extractTurnstileSitekey(page) {
-  return await page.evaluate(() => {
-    // 1. Explicit sitekey attribute on the widget div
+  // Give the CF challenge script time to call turnstile.render(), which
+  // our addInitScript-installed hook captures on window.__mrTsKey. This
+  // is the ONLY reliable extraction path when CF is in "render=explicit"
+  // mode — the sitekey never lands in the HTML in that mode.
+  //
+  // We also wait on standard widget selectors as a secondary signal for
+  // older challenge variants that DO put the sitekey in a data-attr.
+  step('cf: waiting for turnstile.render() call or widget mount…');
+  const deadline = Date.now() + 20000;
+  while (Date.now() < deadline) {
+    // Primary: check the intercepted sitekey.
+    const intercepted = await page.evaluate(() => window.__mrTsKey || null).catch(() => null);
+    if (intercepted) {
+      step(`cf: sitekey intercepted from turnstile.render(): ${intercepted.slice(0, 12)}…`);
+      return { sitekey: intercepted, source: 'turnstile.render() interceptor' };
+    }
+    // Secondary: static DOM selectors.
+    const hasWidget = await page.evaluate(() => {
+      return !!(
+        document.querySelector('[data-sitekey]') ||
+        document.querySelector('.cf-turnstile') ||
+        document.querySelector('iframe[src*="challenges.cloudflare.com"]')
+      );
+    }).catch(() => false);
+    if (hasWidget) {
+      step('cf: Turnstile widget detected in DOM (no render() call yet)');
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+
+  // Try DOM extraction first (fastest, most precise).
+  const domResult = await page.evaluate(() => {
     const el = document.querySelector('[data-sitekey]');
     if (el) return { sitekey: el.getAttribute('data-sitekey'), source: 'data-sitekey attr' };
 
-    // 2. Challenge iframe src contains the sitekey: /turnstile/if/<version>/<sitekey>/…
     const iframe = document.querySelector('iframe[src*="challenges.cloudflare.com"]');
     if (iframe) {
       const m = iframe.src.match(/\/turnstile\/[^/]+\/([^/?]+)/);
       if (m) return { sitekey: m[1], source: 'turnstile iframe src' };
     }
 
-    // 3. Inline scripts sometimes carry the sitekey as a config arg
     for (const s of document.querySelectorAll('script')) {
       const m = (s.textContent || '').match(/sitekey["'\s:]+["']([0-9A-Za-z_-]{15,})["']/);
       if (m) return { sitekey: m[1], source: 'inline script' };
     }
 
-    // 4. Some CF challenge pages carry the sitekey in a global object
-    //    called `window._cf_chl_opt` or similar. Grab whatever's on window
-    //    for logging even if we can't find a sitekey.
+    // window._cf_chl_opt sometimes carries the sitekey as .cvId or in nested config
+    try {
+      const opt = window._cf_chl_opt;
+      if (opt && typeof opt === 'object') {
+        const flat = JSON.stringify(opt);
+        const m = flat.match(/"([0-9]x[0-9A-Za-z_-]{20,})"/);
+        if (m) return { sitekey: m[1], source: 'window._cf_chl_opt' };
+      }
+    } catch (e) {}
+
     return null;
   });
+
+  if (domResult && domResult.sitekey) {
+    return domResult;
+  }
+
+  // Fallback: raw HTML regex. CF's sitekey format is `0x` + exactly 22
+  // alphanumeric characters (24 chars total). This catches cases where the
+  // widget is inside a sandboxed iframe or the sitekey is embedded in a
+  // dynamic script (render=explicit mode) that querySelector misses.
+  step('cf: DOM extraction empty — regex-scanning raw HTML');
+  const html = await page.content().catch(() => '');
+
+  // Pattern 1: explicit data-sitekey attribute (most reliable when present)
+  let m = html.match(/data-sitekey\s*=\s*["']([0-9A-Za-z_-]{15,})["']/i);
+  if (m) return { sitekey: m[1], source: 'raw HTML data-sitekey' };
+
+  // Pattern 2: sitekey: "…" or sitekey='…' as a JS/JSON key.
+  // Length is 18-30 chars after `0x` because sitekeys are not fixed-length:
+  //   • standard CF Turnstile: 22 chars after 0x (24 total)
+  //   • MR's live sitekey:     23 chars after 0x (25 total, e.g. 0xxADhZDZMRdRMq3zYVnvjA2c)
+  //   • test keys:             22 chars after 0x
+  m = html.match(/sitekey["'\s:]+["']?(0x[a-zA-Z0-9]{18,30})["']?/i);
+  if (m) return { sitekey: m[1], source: 'raw HTML sitekey= key' };
+
+  // Pattern 3: find all canonical CF sitekeys (0x + 18-30 alphanumeric, no
+  // surrounding quote requirement, delimited by non-alphanumeric on both
+  // sides). Return the one that appears most often — real sitekeys are
+  // referenced 2-3 times in the challenge page (widget div, callback
+  // registration, render call), while noise like SVG path data or hash
+  // fragments appears once at most.
+  const candidates = [...html.matchAll(/(?<![a-zA-Z0-9])(0x[a-zA-Z0-9]{18,30})(?![a-zA-Z0-9])/g)]
+    .map((match) => match[1]);
+  if (candidates.length > 0) {
+    const counts = {};
+    for (const c of candidates) counts[c] = (counts[c] || 0) + 1;
+    // Sort by frequency descending, take the most repeated one.
+    const [best] = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    if (best) {
+      return { sitekey: best[0], source: `raw HTML 0x…-sitekey (found ${best[1]}x)` };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -244,12 +396,78 @@ async function passCloudflareChallenge(page, baseUrl, capsolverApiKey) {
 
   step('cf: patchright could not solve — falling back to CapSolver');
   const extracted = await extractTurnstileSitekey(page);
+
+  // Path A: sitekey found → cheap AntiTurnstileTaskProxyLess ($0.001/solve).
+  // Path B: no sitekey → full-page AntiCloudflareTaskS2 ($0.002-0.005/solve).
+  // Path B injects the returned cookies+UA into the Playwright context and
+  // reloads the page, then continues with login as normal.
   if (!extracted || !extracted.sitekey) {
-    const dumpBase = await dumpChallengePage(page, 'no-sitekey');
+    step('cf: no Turnstile widget on page → falling back to AntiCloudflareTaskS2 (full-page solve)');
+
+    let solution;
+    try {
+      solution = await solveCloudflareWithCapsolver(page.url(), capsolverApiKey);
+    } catch (e) {
+      // If S2 fails, dump the page + candidate diagnostics so we can see why
+      const dumpBase = await dumpChallengePage(page, 'no-sitekey-s2-failed');
+      throw new Error(`AntiCloudflareTaskS2 failed: ${e.message} — dump at ${dumpBase || 'n/a'}.html`);
+    }
+
+    // Inject CapSolver's cookies into the Playwright context. Convert their
+    // format (which mirrors DevTools Cookie object) to Playwright's addCookies
+    // shape. Domain normalization: default to the current host if missing.
+    const context = page.context();
+    const targetHost = new URL(baseUrl).hostname;
+    const playwrightCookies = solution.cookies.map((c) => {
+      const cookie = {
+        name: c.name,
+        value: c.value,
+        domain: c.domain || `.${targetHost}`,
+        path: c.path || '/',
+        httpOnly: c.httpOnly !== false,
+        secure: c.secure !== false,
+        sameSite: c.sameSite || 'None',
+      };
+      if (c.expires && c.expires > 0) cookie.expires = c.expires;
+      return cookie;
+    });
+    await context.addCookies(playwrightCookies);
+    step(`cf: injected ${playwrightCookies.length} cookies from CapSolver into browser context`);
+
+    // Match CapSolver's User-Agent so cf_clearance's UA-binding validation
+    // passes on subsequent requests. cf_clearance is bound to (IP, UA) — if
+    // we send a different UA than the one that solved the challenge, CF
+    // rejects the cookie regardless of what the value is.
+    if (solution.userAgent) {
+      await context.setExtraHTTPHeaders({ 'User-Agent': solution.userAgent });
+      step(`cf: switched browser UA to CapSolver's: ${solution.userAgent.slice(0, 60)}…`);
+    }
+
+    // Reload the page with the freshly-injected cookies. If MR doesn't strictly
+    // IP-bind cf_clearance, CF will honor CapSolver's cookie and pass us through.
+    step('cf: reloading page with injected CapSolver cookies…');
+    await withTimeout(page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 }), 75000, 'reload with cookies');
+
+    // Verify CF is now cleared
+    const verifyDeadline = Date.now() + 20000;
+    while (Date.now() < verifyDeadline) {
+      const title = await page.title().catch(() => '');
+      const body = await page.content().catch(() => '');
+      if (!/just a moment|performing security/i.test(title) && !/challenge-platform/i.test(body)) {
+        step(`cf: cleared via AntiCloudflareTaskS2 (title="${title.slice(0, 60)}")`);
+        return true;
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+
+    // Still challenging → MR strictly IP-binds and we've hit the wall
+    const dumpBase = await dumpChallengePage(page, 'after-s2-inject');
     throw new Error(
-      `CF challenge active but no Turnstile sitekey found. Dump: ${dumpBase || 'n/a'}.html and ${dumpBase || 'n/a'}.signatures.json — paste the signatures file so we can pick the right CapSolver task type.`
+      `CapSolver returned cookies but CF still challenging after cookie injection — MR is strictly IP-binding cf_clearance. Only a residential proxy will work from here. Dump at ${dumpBase || 'n/a'}.html`
     );
   }
+
+  // Path A: sitekey found → cheap Turnstile-only solve
   step(`cf: found Turnstile sitekey via ${extracted.source}: ${extracted.sitekey.slice(0, 12)}…`);
 
   const token = await solveTurnstileWithCapsolver(extracted.sitekey, page.url(), capsolverApiKey);
@@ -475,8 +693,44 @@ async function main() {
   // patchright ships with navigator.webdriver already patched, but stack
   // this on top belt-and-braces (older Chromium releases in Playwright
   // sometimes reintroduce the getter).
+  //
+  // ALSO install a hook that intercepts `turnstile.render(container, opts)`
+  // calls. In CF's newer "render=explicit" challenge mode, the sitekey is
+  // never present in the HTML — it lives inside obfuscated CF JavaScript
+  // and only becomes visible at the moment their code calls
+  // `turnstile.render()` with the sitekey as `opts.sitekey`. Trapping that
+  // call lets us capture the sitekey no matter how well CF obfuscates it.
   await withTimeout(context.addInitScript(() => {
     try { Object.defineProperty(navigator, 'webdriver', { get: () => undefined }); } catch (e) {}
+
+    // Turnstile intercept: poll for window.turnstile every 50ms, and as
+    // soon as it appears, wrap render() so any sitekey passed through it
+    // is captured on window.__mrTsKey. 30s cap so this doesn't run forever
+    // on non-Turnstile pages.
+    try {
+      window.__mrTsKey = null;
+      let patched = false;
+      const iv = setInterval(() => {
+        try {
+          if (patched) return;
+          const t = window.turnstile;
+          if (t && typeof t.render === 'function') {
+            const orig = t.render.bind(t);
+            t.render = function (container, options) {
+              try {
+                if (options && options.sitekey) {
+                  window.__mrTsKey = options.sitekey;
+                }
+              } catch (e) {}
+              return orig(container, options);
+            };
+            patched = true;
+            clearInterval(iv);
+          }
+        } catch (e) {}
+      }, 50);
+      setTimeout(() => { try { clearInterval(iv); } catch (e) {} }, 30000);
+    } catch (e) {}
   }), 10000, 'addInitScript').catch(() => {});
 
   try {

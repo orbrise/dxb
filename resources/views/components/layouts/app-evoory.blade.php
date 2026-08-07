@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="google-site-verification" content="NHKPt4-TOMI7fTCn2xKG6Mkeray0v9b-B7Bk9EEKHok" />
     {{-- Edge-cache CSRF workaround.
          Cloudflare caches listing HTML, so the inline meta csrf-token above may
          be a stale token from another visitor's session. Fetch a fresh token

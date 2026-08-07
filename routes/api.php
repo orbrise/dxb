@@ -1,7 +1,16 @@
 <?php
 
+use App\Http\Controllers\Admin\MrImportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Receives JSON scrapes from a locally-run `scrape:massagerepublic:local
+// --upload`. Auth is a bearer token inside the controller (MR_IMPORT_TOKEN
+// env) — no session/Sanctum because the caller is a headless artisan.
+// Larger bodies than default (up to 30 MB) because a full-city scrape with
+// raw_html per profile can be a few MB.
+Route::post('/admin/mr/import', [MrImportController::class, 'import'])
+    ->name('admin.mr.import');
 
 /*
 |--------------------------------------------------------------------------

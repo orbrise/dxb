@@ -19,7 +19,7 @@
     <link rel="preconnect" href="https://code.jquery.com" crossorigin>
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    
+    <meta name="google-site-verification" content="NHKPt4-TOMI7fTCn2xKG6Mkeray0v9b-B7Bk9EEKHok" />
     <meta name="google-site-verification" content="xYsnVyiR2Xg8SvEIB65bLjyxsIcBKWNSIPz2_jh-1Ww" />
     <meta charset="UTF-8" />
     <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible" />
