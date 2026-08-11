@@ -9,15 +9,15 @@ use Auth;
 class AuthController extends Controller
 {
     public function index() {
-        if(Auth::check()){
+        if(Auth::check() && Auth::user()->is_admin){
             return redirect()->route("admin.dashboard");
-        } 
+        }
         return view('admin.auth.login');
     }
 
     public function checkLogin()
-    {   
-        if(Auth::check()){
+    {
+        if(Auth::check() && Auth::user()->is_admin){
             return redirect()->route("admin.dashboard");
         } else {
             return redirect()->route('admin.login');

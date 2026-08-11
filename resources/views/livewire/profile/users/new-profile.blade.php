@@ -770,7 +770,10 @@
         }
         
         .custom-select2-option.hidden {
-            display: none;
+            /* !important is required because .custom-select2-option--with-flag
+               sets display:flex !important, which would otherwise win and
+               leave filtered-out options visible during search. */
+            display: none !important;
         }
         
         .custom-select2-placeholder {
@@ -1397,9 +1400,11 @@ div#basic {
     .typeahead-city-wrapper::before {
         display: none !important;
     }
-    /* Hide "in" label and city hint on mobile */
+    /* Show "City" label on mobile (desktop rule hides it) and restyle */
+    form.listing .big-one-line .form-group.listing_city_url label.city,
     form.listing .big-one-line .listing_city_url label.city,
     .ev-city-label {
+        display: block !important;
         font-size: 13px !important;
         color: #ccc !important;
         line-height: normal !important;
@@ -1751,7 +1756,7 @@ div#basic {
                         </select>
                       </div> 
                       <div class="form-group city optional listing_city_url">
-                        <label class="city optional control-label ev-city-label" for="listing_city_url">City <span class="ev-mobile-label" style="display:none;color:#f87171">*</span></label>
+                        <label class="city optional control-label ev-city-label" for="listing_city_url">City <span class="required-star" style="color:#f87171">*</span></label>
                         <div class='typeahead-city-wrapper'>
                           <input class="city optional form-control" placeholder="Enter city name"
     wire:model.lazy='selectedcity' type="text" id="citysearch"/>
@@ -3177,7 +3182,25 @@ window.CustomSelect2 = class CustomSelect2 {
         };
         
         this.resultsList.addEventListener('click', handleOptionSelect);
-        this.resultsList.addEventListener('touchend', handleOptionSelect);
+
+        // Track finger movement so a scroll gesture on mobile doesn't get
+        // treated as an option tap. Without this, the user's finger lifts
+        // on top of an option after scrolling → touchend fires → we select
+        // that option and close the dropdown mid-scroll.
+        let touchStartY = 0;
+        let touchMoved = false;
+        this.resultsList.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0]?.clientY || 0;
+            touchMoved = false;
+        }, { passive: true });
+        this.resultsList.addEventListener('touchmove', (e) => {
+            const y = e.touches[0]?.clientY || 0;
+            if (Math.abs(y - touchStartY) > 8) touchMoved = true;
+        }, { passive: true });
+        this.resultsList.addEventListener('touchend', (e) => {
+            if (touchMoved) return; // it was a scroll, not a tap
+            handleOptionSelect(e);
+        });
         
         // Close on outside click
         const outsideClickHandler = (e) => {
@@ -3523,7 +3546,7 @@ if (typeof Livewire !== 'undefined') {
         // Configuration
         config: {
             minChars: 2,
-            debounceMs: 250,
+            debounceMs: 150,
             endpoint: '/searchcity'
         },
         

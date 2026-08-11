@@ -267,6 +267,20 @@
             }
         }
 
+        /* Mobile: left-align the profile-name h2 above the thumbs. Something
+           in the legacy listing CSS bundle is centering it (couldn't pin
+           down which rule exactly — .listings ancestor or one of the
+           listing-li variants). Override at the highest specificity so it
+           reliably sits at the left edge of the card. */
+        @media (max-width: 991px) {
+            html body .listings .listing-li > h2.visible-xxs,
+            html body .listing-li > h2.visible-xxs,
+            html body .listings .listing-li > h2.visible-xxs a,
+            html body .listing-li > h2.visible-xxs a {
+                text-align: left !important;
+            }
+        }
+
         /* === Themed city search dropdown (overrides .citys/.opt from listing-page-inline.css) === */
         #cityappend.citys {
             width: 100% !important;

@@ -45,6 +45,17 @@ class Kernel extends ConsoleKernel
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/scraper-all.log'));
 
+        // ivysociete scraper — Sydney only for now. Add more cities by
+        // registering additional daily commands (e.g. --city=london) once
+        // the Sydney pipeline is proven stable in production. 60-minute
+        // withoutOverlapping lock is generous; a --limit=50 run typically
+        // finishes in under 15 minutes (no Playwright, no phone reveal).
+        $schedule->command('scrape:ivysociete --city=sydney --limit=50')
+            ->dailyAt('03:00')
+            ->withoutOverlapping(60)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/scrape-ivysociete.log'));
+
         // Send weekly newsletter every Monday at 10:00 AM
         $schedule->command('newsletter:send-weekly')->weekly()->mondays()->at('10:00');
     }

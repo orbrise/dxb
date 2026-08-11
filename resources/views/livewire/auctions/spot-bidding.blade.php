@@ -302,12 +302,11 @@ ul.list-inline > li > a {
     border: 1px solid #333 !important;
     color: #fff !important;
     border-radius: 6px;
-    padding: 8px 12px;
     cursor: pointer;
     position: relative;
-    min-height: 38px;
-    display: flex;
-    align-items: center;
+    /* height / padding / line-height set inline in JS
+       (CustomSelect2.createCustomSelect) so no CSS conflict can shrink
+       the box after page load. */
 }
 .custom-select2-selection::after {
     content: '\25BC';
@@ -399,6 +398,45 @@ ul.list-inline > li > a {
     display: none;
 }
 
+/* Native <select> used for the profile picker — replaces the flaky
+   CustomSelect2 widget that clipped descenders on mobile. Styled dark
+   to match the theme, with a custom chevron drawn as a background SVG
+   so we don't have to fight the browser's default arrow. */
+/* Use .bid-form select.native-select for high enough specificity to beat
+   the mobile .bid-form .form-control padding override at max-width:768px. */
+.bid-form select.native-select,
+select.native-select {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-color: #111 !important;
+    color: #fff !important;
+    border: 1px solid #333 !important;
+    border-radius: 6px !important;
+    padding: 12px 36px 12px 12px !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    cursor: pointer;
+    /* !important on each background sub-property because .bid-form .form-control
+       uses the `background:` shorthand with !important, which resets image/
+       repeat/position back to defaults and wipes our chevron out. */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23888888' d='M6 8L0 0h12z'/></svg>") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 14px center !important;
+}
+select.native-select:focus {
+    outline: none;
+    border-color: #C1F11D !important;
+    box-shadow: 0 0 0 2px rgba(193, 241, 29, 0.15) !important;
+}
+select.native-select option {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 8px;
+}
+
 /* ═══ MOBILE VIEW ═══ */
 @media (max-width: 768px) {
     /* Header */
@@ -440,7 +478,7 @@ ul.list-inline > li > a {
     .bid-form .btn-primary.btn-lg {
         width: 100% !important;
         border-radius: 25px !important;
-        padding: 14px !important;
+        padding: 8px !important;
         font-size: 15px !important;
     }
     .bid-form-footer {
@@ -458,10 +496,11 @@ ul.list-inline > li > a {
         font-size: 13px !important;
     }
 
-    /* Custom select2 */
+    /* Layout for .custom-select2-selection is now set inline in JS
+       (CustomSelect2.createCustomSelect) — CSS was fighting Bootstrap +
+       other stylesheets. Only visual overrides stay in CSS here. */
     .custom-select2-selection {
         border-radius: 5px !important;
-        padding: 10px 12px !important;
     }
     .custom-select2-dropdown {
         border-radius: 5px !important;
@@ -607,7 +646,13 @@ ul.list-inline > li > a {
                 <form wire:submit.prevent="placeBid">
                     <div class="form-group">
                         <label for="selectedProfile">Select Profile</label>
-                        <select wire:model="selectedProfile" id="selectedProfile" class="form-control apply-custom-select2 @error('selectedProfile') is-invalid @enderror">
+                        {{-- Native <select> intentionally — the CustomSelect2 wrapper
+                             kept clipping descenders on mobile no matter what we did
+                             with padding/line-height. Native renders reliably on all
+                             browsers and shows the OS-native picker on mobile, which
+                             is a better UX anyway. Class `native-select` (not
+                             `apply-custom-select2`) so the JS below skips this one. --}}
+                        <select wire:model="selectedProfile" id="selectedProfile" class="form-control native-select @error('selectedProfile') is-invalid @enderror">
                             <option value="">-- Select Profile --</option>
                             @foreach($userProfiles as $profile)
                             <option value="{{ $profile->id }}">{{ $profile->name }}</option>
@@ -815,6 +860,13 @@ class CustomSelect2 {
         this.selectionBox = document.createElement('div');
         this.selectionBox.className = 'custom-select2-selection custom-select2-placeholder';
         this.selectionBox.textContent = this.options.placeholder;
+        // Force layout inline so no external CSS (Bootstrap .form-control,
+        // evoory-*.css, mobile media queries with !important, morphdom re-
+        // render, whatever) can override. Padding-bottom 16px + line-height 26
+        // guarantees descenders (y/g/j/p) fit fully inside the box.
+        this.selectionBox.style.cssText +=
+            'min-height:52px;padding:12px 32px 16px 12px;line-height:26px;' +
+            'box-sizing:border-box;display:block;';
 
         this.dropdown = document.createElement('div');
         this.dropdown.className = 'custom-select2-dropdown';

@@ -3165,7 +3165,7 @@ form.listing textarea#listing_description:focus {
         // Configuration
         config: {
             minChars: 2,
-            debounceMs: 250,
+            debounceMs: 150,
             endpoint: '/searchcity'
         },
         
@@ -4130,7 +4130,25 @@ window.CustomSelect2 = class CustomSelect2 {
         };
 
         this.resultsList.addEventListener('click', handleOptionSelect);
-        this.resultsList.addEventListener('touchend', handleOptionSelect);
+
+        // Track finger movement so a scroll gesture on mobile doesn't get
+        // treated as an option tap. Without this, the user's finger lifts
+        // on top of an option after scrolling → touchend fires → we select
+        // that option and close the dropdown mid-scroll.
+        let touchStartY = 0;
+        let touchMoved = false;
+        this.resultsList.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0]?.clientY || 0;
+            touchMoved = false;
+        }, { passive: true });
+        this.resultsList.addEventListener('touchmove', (e) => {
+            const y = e.touches[0]?.clientY || 0;
+            if (Math.abs(y - touchStartY) > 8) touchMoved = true;
+        }, { passive: true });
+        this.resultsList.addEventListener('touchend', (e) => {
+            if (touchMoved) return; // it was a scroll, not a tap
+            handleOptionSelect(e);
+        });
 
         // Close on outside click
         const outsideClickHandler = (e) => {
