@@ -37,20 +37,23 @@ class Kernel extends ConsoleKernel
         // MassageRepublicScraper::scrape), so --limit=20 walks 20 fresh
         // profiles per city each day.
         //
-        // Cities live in ScrapeAllMassageRepublicProfiles::$defaultCities.
-        // Override at run time with --cities=istanbul,london,batumi.
+        // Cities are read from scraper_auto_cities (source=massagerepublic,
+        // is_active=1); managed at /admin/scrapers/auto. Falls back to
+        // ScrapeAllMassageRepublicProfiles::$defaultCities if the admin has
+        // not configured any. Override at run time with --cities=slug1,slug2.
         $schedule->command('scrape:massagerepublic:all --limit=20 --require-phone')
             ->everyTwoHours()
             ->withoutOverlapping(240)
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/scraper-all.log'));
 
-        // ivysociete scraper — Sydney only for now. Add more cities by
-        // registering additional daily commands (e.g. --city=london) once
-        // the Sydney pipeline is proven stable in production. 60-minute
+        // ivysociete scraper — iterates admin-configured cities from
+        // scraper_auto_cities (source=ivysociete). Manage the list at
+        // /admin/scrapers/auto. Fallback list is 'sydney' only if no cities
+        // are configured, so the cron never runs empty. 60-min
         // withoutOverlapping lock is generous; a --limit=50 run typically
         // finishes in under 15 minutes (no Playwright, no phone reveal).
-        $schedule->command('scrape:ivysociete --city=sydney --limit=50')
+        $schedule->command('scrape:ivysociete:all')
             ->dailyAt('03:00')
             ->withoutOverlapping(60)
             ->runInBackground()

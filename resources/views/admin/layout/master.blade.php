@@ -398,7 +398,7 @@ img.logo-expand {
     </div>
     <!-- /.content-wrapper -->
     <!-- FOOTER -->
-    <footer class="footer text-center clearfix">2017 © MassageRepublic.com.co</footer>
+    <footer class="footer text-center clearfix">2017 © Evoory.com</footer>
     </div>
     <!--/ #wrapper -->
     <!-- Scripts -->

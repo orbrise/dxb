@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\MassageRepublicProfile;
+use App\Models\ScraperRun;
 use App\Services\MassageRepublicImporter;
 use App\Services\MassageRepublicPhoneWorker;
 use App\Services\MassageRepublicScraper;
@@ -19,27 +20,34 @@ class ScrapeMassageRepublicProfiles extends Command
                             {--require-phone : Only import profiles whose phone reveal succeeded — skip the rest}
                             {--bd-api-key= : Bright Data Web Unlocker API key}
                             {--bd-zone= : Bright Data zone (web_unlocker1)}
-                            {--bd-proxy-url= : Bright Data proxy URL (superproxy)}';
+                            {--bd-proxy-url= : Bright Data proxy URL (superproxy)}
+                            {--run-id= : Internal scraper_runs.id to report progress to (set by the admin UI)}';
 
     protected $description = 'Scrape massagerepublic.com profiles for a given city and import them into the live users_profiles tables.';
 
     public function handle(MassageRepublicImporter $importer, MassageRepublicPhoneWorker $phoneWorker)
     {
+        $run = $this->loadRun();
+        $this->markRunRunning($run, 'initializing');
+
         $username = config('services.massagrerepublic.username') ?: env('MASSAGE_REPUBLIC_USERNAME');
         $password = config('services.massagrerepublic.password') ?: env('MASSAGE_REPUBLIC_PASSWORD');
 
         if (! $username || ! $password) {
             $this->error('Missing MASSAGE_REPUBLIC_USERNAME or MASSAGE_REPUBLIC_PASSWORD in .env');
+            $this->markRunFailed($run, 'Missing MASSAGE_REPUBLIC_USERNAME or MASSAGE_REPUBLIC_PASSWORD');
             return Command::FAILURE;
         }
 
         $citySlug = Str::lower(trim((string) $this->option('city')));
         if ($citySlug === '') {
             $this->error('Pass --city=<slug>, e.g. --city=dubai');
+            $this->markRunFailed($run, 'Missing --city');
             return Command::FAILURE;
         }
 
         $limit = (int) $this->option('limit');
+        $this->updateRunProgress($run, 0, $limit, 'scraping listing');
         $importEnabled = ! $this->option('no-import');
 
         $bdApiKey = trim((string) $this->option('bd-api-key'));
@@ -87,13 +95,18 @@ class ScrapeMassageRepublicProfiles extends Command
             $profiles = $scraper->scrape($limit, $citySlug, $skipChecker);
         } catch (\Throwable $exception) {
             $this->error('Scraper error: ' . $exception->getMessage());
+            $this->markRunFailed($run, 'Scraper error: ' . $exception->getMessage());
             return Command::FAILURE;
         }
 
         if (empty($profiles)) {
             $this->warn('No profiles were scraped. Check the city slug and login credentials.');
+            $this->markRunCompleted($run, 'no profiles scraped');
             return Command::SUCCESS;
         }
+
+        $totalProfiles = count($profiles);
+        $this->updateRunProgress($run, 0, $totalProfiles, 'importing profiles');
 
         $saved = 0;
         $cityId = null;
@@ -117,7 +130,10 @@ class ScrapeMassageRepublicProfiles extends Command
             }
         }
 
+        $processed = 0;
         foreach ($profiles as $profileData) {
+            $processed++;
+            $this->updateRunProgress($run, $processed, $totalProfiles, 'importing profiles');
             $row = MassageRepublicProfile::updateOrCreate(
                 ['external_id' => $profileData['external_id']],
                 array_merge($profileData, [
@@ -182,6 +198,69 @@ class ScrapeMassageRepublicProfiles extends Command
             $this->info("Scraped {$saved} profile(s) into massage_republic_profiles only (import skipped).");
         }
 
+        $this->markRunCompleted($run, "imported {$saved} profile(s)");
+
         return Command::SUCCESS;
+    }
+
+    private function loadRun(): ?ScraperRun
+    {
+        $id = $this->option('run-id');
+        if (! $id) return null;
+        return ScraperRun::find((int) $id);
+    }
+
+    private function markRunRunning(?ScraperRun $run, string $stage): void
+    {
+        if (! $run) return;
+        $run->update([
+            'status'         => ScraperRun::STATUS_RUNNING,
+            'started_at'     => now(),
+            'progress_stage' => $stage,
+        ]);
+    }
+
+    private function updateRunProgress(?ScraperRun $run, int $current, int $total, string $stage): void
+    {
+        if (! $run) return;
+        $run->update([
+            'progress_current' => $current,
+            'progress_total'   => $total,
+            'progress_stage'   => $stage,
+        ]);
+    }
+
+    private function markRunCompleted(?ScraperRun $run, string $stage): void
+    {
+        if (! $run) return;
+        $run->update([
+            'status'         => ScraperRun::STATUS_COMPLETED,
+            'progress_stage' => $stage,
+            'completed_at'   => now(),
+            'exit_code'      => 0,
+        ]);
+        $this->launchNextPending($run->source);
+    }
+
+    private function markRunFailed(?ScraperRun $run, string $error): void
+    {
+        if (! $run) return;
+        $run->update([
+            'status'        => ScraperRun::STATUS_FAILED,
+            'error_message' => $error,
+            'completed_at'  => now(),
+            'exit_code'     => 1,
+        ]);
+        $this->launchNextPending($run->source);
+    }
+
+    private function launchNextPending(string $source): void
+    {
+        try {
+            app(\App\Services\ScraperRunLauncher::class)->launchNextPendingIfIdle($source);
+        } catch (\Throwable $e) {
+            // Chain failures shouldn't break the completed run's exit path.
+            $this->warn('Failed to launch next queued run: ' . $e->getMessage());
+        }
     }
 }

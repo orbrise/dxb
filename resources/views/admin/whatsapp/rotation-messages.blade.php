@@ -223,7 +223,7 @@
                             <div class="form-group">
                                 <label for="message">Message Template</label>
                                 <textarea class="form-control" name="message" id="message" rows="4" 
-                                          placeholder="Hi! I saw your profile on MassageRepublic: {url}" required></textarea>
+                                          placeholder="Hi! I saw your profile on Evoory: {url}" required></textarea>
                                 <small class="form-text text-muted">Use {url} placeholder for the profile link</small>
                             </div>
                             <button type="submit" class="btn btn-primary btn-block" id="submit-btn">

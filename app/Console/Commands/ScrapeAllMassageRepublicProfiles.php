@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ScraperAutoCity;
 use Illuminate\Console\Command;
 
 class ScrapeAllMassageRepublicProfiles extends Command
@@ -66,24 +67,50 @@ class ScrapeAllMassageRepublicProfiles extends Command
             $this->info('Using Bright Data proxy URL from CLI option.');
         }
         $citiesOption = trim((string) $this->option('cities'));
-        $cities = $citiesOption !== ''
-            ? array_values(array_filter(array_map('trim', explode(',', $citiesOption))))
-            : $this->defaultCities;
-
         $limit = (int) $this->option('limit') ?: 10;
         $noPhone = (bool) $this->option('no-phone');
         $requirePhone = (bool) $this->option('require-phone');
 
-        $this->info(sprintf('Sequential MR scrape starting at %s for %d city(ies): %s', now()->toDateTimeString(), count($cities), implode(', ', $cities)));
+        // Build the (city, per-city limit) list.
+        //   1. --cities= override always wins (comma-separated slugs, uses --limit for all).
+        //   2. Otherwise pull from scraper_auto_cities (admin-managed via /admin/scrapers/auto).
+        //   3. Fallback to the hardcoded defaults so the cron never runs empty
+        //      even before an admin has set anything up.
+        if ($citiesOption !== '') {
+            $cityList = collect(array_filter(array_map('trim', explode(',', $citiesOption))))
+                ->map(fn($slug) => ['slug' => $slug, 'limit' => $limit])
+                ->all();
+        } else {
+            $rows = ScraperAutoCity::where('source', 'massagerepublic')
+                ->where('is_active', true)
+                ->orderBy('city_slug')
+                ->get(['city_slug', 'limit_per_run']);
+            if ($rows->isNotEmpty()) {
+                $cityList = $rows->map(fn($r) => ['slug' => $r->city_slug, 'limit' => (int) $r->limit_per_run])->all();
+            } else {
+                $cityList = collect($this->defaultCities)
+                    ->map(fn($slug) => ['slug' => $slug, 'limit' => $limit])
+                    ->all();
+            }
+        }
+
+        $this->info(sprintf('Sequential MR scrape starting at %s for %d city(ies): %s',
+            now()->toDateTimeString(),
+            count($cityList),
+            implode(', ', array_column($cityList, 'slug'))
+        ));
 
         $anyFailed = false;
-        foreach ($cities as $city) {
+        foreach ($cityList as $entry) {
+            $city = $entry['slug'];
+            $cityLimit = $entry['limit'];
+
             $this->newLine();
             $this->info(str_repeat('=', 60));
-            $this->info(sprintf('[%s] Scraping city: %s', now()->toDateTimeString(), $city));
+            $this->info(sprintf('[%s] Scraping city: %s (limit=%d)', now()->toDateTimeString(), $city, $cityLimit));
             $this->info(str_repeat('=', 60));
 
-            $args = ['--city' => $city, '--limit' => $limit];
+            $args = ['--city' => $city, '--limit' => $cityLimit];
             if ($noPhone) $args['--no-phone'] = true;
             if ($requirePhone) $args['--require-phone'] = true;
             if ($bdApiKey !== '') $args['--bd-api-key'] = $bdApiKey;

@@ -294,7 +294,7 @@
                 <div class="form-group mb-3">
                     <label class="form-label"><strong>Pre-filled Message (Optional)</strong></label>
                     <div class="template-buttons">
-                        <button type="button" class="btn-template" data-message="Hi, I found your profile on MassageRepublic">
+                        <button type="button" class="btn-template" data-message="Hi, I found your profile on Evoory">
                             🌐 From Website
                         </button>
                         <button type="button" class="btn-template" data-message="Hello! I'm contacting you from the admin panel.">

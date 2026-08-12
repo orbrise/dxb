@@ -152,6 +152,20 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link" href="{{route('admin.scrapers.index')}}">
+                            <i class="iconoir-download menu-icon"></i>
+                            <span>Scrapers &mdash; Manual</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('admin.scrapers.auto')}}">
+                            <i class="iconoir-timer menu-icon"></i>
+                            <span>Scrapers &mdash; Auto</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link" href="{{route('admin.mail-settings.index')}}">
                             <i class="iconoir-mail menu-icon"></i>
                             <span>Mail Settings</span>

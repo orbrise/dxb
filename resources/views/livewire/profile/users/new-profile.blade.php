@@ -958,13 +958,20 @@
 }
 
 .listinga {
-  background: #1a1b1e;
+    background: #1a1b1e;
     color: #fff;
     border: 1px solid #2e3033;
     border-radius: 4px;
     height: 42px;
     font-size: 16px;
     border-bottom: 2px dashed #555;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 32px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
 }
 
 .mi-new-image-input {display:none;}
@@ -1393,6 +1400,15 @@ div#basic {
         background-image: none !important;
         padding: 10px 12px !important;
     }
+    /* Restore dropdown arrow on the category select — the rule above wipes
+       background-image for all big-one-line inputs, but the <select> still
+       needs a visible chevron so users know it's a dropdown. */
+    form.listing .big-one-line .listinga {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23aaa' d='M6 8L0 0h12z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 12px center !important;
+        padding-right: 32px !important;
+    }
     /* Remove map pin icon from city input */
     form.listing .big-one-line .typeahead-city-wrapper input {
         padding-left: 12px !important;
@@ -1414,12 +1430,12 @@ div#basic {
     .hint.city-hint {
         display: none !important;
     }
-    /* Hide dropdown arrow on category select */
+    /* Category select on mobile — chevron restored via the earlier rule
+       ("Restore dropdown arrow on the category select"). Just kill the
+       native browser arrow so we don't get two indicators stacked. */
     form.listing .big-one-line .listinga {
         -webkit-appearance: none !important;
         appearance: none !important;
-        background-image: none !important;
-        padding-right: 12px !important;
     }
 
     form.listing .big-one-line,
@@ -3556,21 +3572,49 @@ if (typeof Livewire !== 'undefined') {
             if (this.initialized) {
                 return;
             }
-            
+
             // Get DOM elements
             this.input = document.getElementById('citysearch');
             this.dropdown = document.querySelector('.citys');
             this.results = document.getElementById('cityappend');
-            
+
             if (!this.input || !this.dropdown || !this.results) {
                 // Retry after a short delay if elements not found
                 var self = this;
                 setTimeout(function() { self.init(); }, 300);
                 return;
             }
-            
+
             this.initialized = true;
             this.bindEvents();
+            this.watchForDomReplacement();
+        },
+
+        // Watch the wrapper for Livewire morphs that swap our input element
+        // out from under us. Livewire 3 doesn't fire livewire:update, and the
+        // morph replaces #citysearch with a fresh DOM node — our old listeners
+        // stay bound to the detached element and every future keystroke is
+        // lost. When we detect the swap, tear down and re-init against the
+        // new element.
+        watchForDomReplacement: function() {
+            var self = this;
+            var parent = this.input && this.input.parentElement;
+            if (!parent || typeof MutationObserver === 'undefined') return;
+
+            if (this._domObserver) { this._domObserver.disconnect(); }
+
+            this._domObserver = new MutationObserver(function() {
+                var current = document.getElementById('citysearch');
+                if (current && current !== self.input) {
+                    self.initialized = false;
+                    self.input = null;
+                    self.dropdown = null;
+                    self.results = null;
+                    if (self._domObserver) { self._domObserver.disconnect(); self._domObserver = null; }
+                    self.init();
+                }
+            });
+            this._domObserver.observe(parent, { childList: true, subtree: true });
         },
         
         // Bind all event listeners
@@ -3640,31 +3684,48 @@ if (typeof Livewire !== 'undefined') {
         handleInput: function(e) {
             var self = this;
             var query = this.input.value.trim();
-            
+
             // Clear any pending request
             if (this.debounceTimer) {
                 clearTimeout(this.debounceTimer);
                 this.debounceTimer = null;
             }
-            
+
             // Abort any pending XHR request
             if (this.currentXHR) {
                 this.currentXHR.abort();
                 this.currentXHR = null;
             }
-            
+
+            // Skip the ONE synthetic input event that handleSelect fires so
+            // wire:model listeners see the new value. That echo used to
+            // trigger our own re-search and leave lastQuery pointing at the
+            // selected city, which blocked the dropdown on backspace+retype.
+            // Uses a dedicated one-shot flag (NOT isSelecting) so any stuck
+            // mousedown state can't lock the user out of typing.
+            if (this._suppressInputEvent) {
+                this._suppressInputEvent = false;
+                return;
+            }
+
             // Check minimum characters
             if (query.length < this.config.minChars) {
                 this.hideDropdown();
                 this.lastQuery = '';
                 return;
             }
-            
-            // Don't search for same query
-            if (query === this.lastQuery && this.dropdown.style.display === 'block') {
+
+            // Don't search for same query — but ONLY if there are actual
+            // results currently rendered. After a selection, results.innerHTML
+            // is cleared, so we must always re-run in that case even if the
+            // query somehow matches lastQuery.
+            if (query === this.lastQuery
+                && this.dropdown.style.display === 'block'
+                && this.results.children.length > 0
+                && !this.results.querySelector('[style*="Searching"]')) {
                 return;
             }
-            
+
             // Show loading state immediately
             this.showLoading();
             
@@ -3771,29 +3832,36 @@ if (typeof Livewire !== 'undefined') {
         // Handle city selection
         handleSelect: function(e) {
             var target = e.target;
-            
+
             // Find the optc-item element
             while (target && !target.classList.contains('optc-item')) {
                 target = target.parentElement;
             }
-            
-            if (!target) return;
-            
+
+            // Not on an actual result item (e.g. clicked scrollbar or padding).
+            // Reset isSelecting so a stray mousedown doesn't leave the blur
+            // handler permanently disabled.
+            if (!target) { this.isSelecting = false; return; }
+
             e.preventDefault();
             e.stopPropagation();
-            
+
             var cityId = target.getAttribute('data-city-id');
             var cityName = target.getAttribute('data-city-name');
             var currencyCode = target.getAttribute('data-currency');
-            
-            if (!cityId || !cityName) return;
+
+            if (!cityId || !cityName) { this.isSelecting = false; return; }
             
             // Update input field
             this.input.value = cityName;
-            
-            // Dispatch input event to trigger wire:model.lazy
+
+            // Dispatch input event to trigger wire:model.lazy. Wrap with a
+            // one-shot suppress flag so our own handleInput ignores this
+            // synthetic dispatch (see the guard in handleInput).
+            this._suppressInputEvent = true;
             var inputEvent = new Event('input', { bubbles: true });
             this.input.dispatchEvent(inputEvent);
+            this._suppressInputEvent = false;
             
             // Update hidden field for city ID
             var hiddenInput = document.getElementById('selectedcityid');
@@ -3812,10 +3880,20 @@ if (typeof Livewire !== 'undefined') {
             // Update Livewire directly as fallback
             this.updateLivewire(cityId, cityName, currencyCode);
             
+            // Cancel any queued search so the selection doesn't get overwritten
+            // by a stale XHR that finishes after the click.
+            if (this.debounceTimer) { clearTimeout(this.debounceTimer); this.debounceTimer = null; }
+            if (this.currentXHR)   { this.currentXHR.abort();          this.currentXHR = null; }
+
+            // Reset lastQuery so a later backspace+retype to the same value
+            // still triggers a fresh search (otherwise the guard in handleInput
+            // would short-circuit and the dropdown wouldn't reappear).
+            this.lastQuery = '';
+
             // Hide dropdown
             this.hideDropdown();
             this.isSelecting = false;
-            
+
             // Trigger change event for any other listeners
             var changeEvent = document.createEvent('HTMLEvents');
             changeEvent.initEvent('change', true, false);
@@ -4018,10 +4096,19 @@ if (typeof Livewire !== 'undefined') {
             }
         });
         
-        // Re-init after Livewire updates (in case DOM changes)
+        // Re-init after Livewire updates (in case DOM changes). Detect BOTH
+        // "input vanished" AND "input replaced with a fresh element" — the
+        // latter happens after handleSelect calls component.set(), which
+        // fires a server round-trip whose morph swaps our element. Our
+        // stored CitySearch.input then points to a detached node with no
+        // live listeners, and every subsequent keystroke goes into the void.
         document.addEventListener('livewire:update', function() {
-            if (!document.getElementById('citysearch')) {
+            var domInput = document.getElementById('citysearch');
+            if (!domInput || domInput !== CitySearch.input) {
                 CitySearch.initialized = false;
+                CitySearch.input = null;
+                CitySearch.dropdown = null;
+                CitySearch.results = null;
                 initCitySearch();
             }
         });
@@ -4029,7 +4116,59 @@ if (typeof Livewire !== 'undefined') {
     
     // Expose for debugging
     window.CitySearch = CitySearch;
-    
+
+    // ----------------------------------------------------------------------
+    // Bulletproof fallback: document-level event delegation. Any keystroke on
+    // whatever #citysearch element is currently in the DOM will be handled,
+    // even if Livewire has swapped the element and our direct listeners are
+    // bound to a stale (detached) node. On every event we refresh references
+    // to point at the CURRENT DOM elements.
+    // ----------------------------------------------------------------------
+    function refreshRefs(inputEl) {
+        CitySearch.input = inputEl;
+        CitySearch.dropdown = document.querySelector('.citys');
+        CitySearch.results = document.getElementById('cityappend');
+        CitySearch.initialized = true;
+    }
+
+    document.addEventListener('input', function(e) {
+        if (!e.target || e.target.id !== 'citysearch') return;
+        if (CitySearch.input !== e.target) refreshRefs(e.target);
+        CitySearch.handleInput(e);
+    }, true);
+
+    document.addEventListener('keyup', function(e) {
+        if (!e.target || e.target.id !== 'citysearch') return;
+        if (CitySearch.input !== e.target) refreshRefs(e.target);
+        CitySearch.handleInput(e);
+    }, true);
+
+    document.addEventListener('focus', function(e) {
+        if (!e.target || e.target.id !== 'citysearch') return;
+        if (CitySearch.input !== e.target) refreshRefs(e.target);
+        var query = e.target.value.trim();
+        if (query.length >= CitySearch.config.minChars) {
+            CitySearch.handleInput(e);
+        }
+    }, true);
+
+    document.addEventListener('mousedown', function(e) {
+        var results = document.getElementById('cityappend');
+        if (results && results.contains(e.target)) {
+            e.preventDefault();
+            CitySearch.isSelecting = true;
+        }
+    }, true);
+
+    document.addEventListener('click', function(e) {
+        var results = document.getElementById('cityappend');
+        if (results && results.contains(e.target)) {
+            var input = document.getElementById('citysearch');
+            if (input && CitySearch.input !== input) refreshRefs(input);
+            CitySearch.handleSelect(e);
+        }
+    }, true);
+
 })();
 
 // Character count function for About Me textarea

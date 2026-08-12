@@ -35,6 +35,7 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Admin\PackageController;
 use App\Http\Controllers\Admin\PageController as AdminPageController;
 use App\Http\Controllers\Admin\MailSettingsController;
+use App\Http\Controllers\Admin\ScraperController;
 use App\Http\Controllers\PageController;
 use App\Livewire\VerifyPhoto;
 use App\Http\Controllers\Admin\VerificationController;
@@ -731,6 +732,18 @@ Route::post('/auctions/{auction}/bids/{bid}/award', [\App\Http\Controllers\Admin
         Route::get('/settings', [\App\Http\Controllers\Admin\BlogSettingController::class, 'index'])->name('settings.index');
         Route::put('/settings', [\App\Http\Controllers\Admin\BlogSettingController::class, 'update'])->name('settings.update');
     });
+
+    // Scraper Management — manual runner
+    Route::get('scrapers', [ScraperController::class, 'index'])->name('admin.scrapers.index');
+    Route::post('scrapers', [ScraperController::class, 'store'])->name('admin.scrapers.store');
+    Route::get('scrapers/{run}/status', [ScraperController::class, 'status'])->name('admin.scrapers.status');
+    Route::get('scrapers/{run}/log', [ScraperController::class, 'log'])->name('admin.scrapers.log');
+
+    // Scraper Management — auto-scheduled cities (cron uses this list)
+    Route::get('scrapers/auto', [ScraperController::class, 'auto'])->name('admin.scrapers.auto');
+    Route::post('scrapers/auto', [ScraperController::class, 'autoStore'])->name('admin.scrapers.auto.store');
+    Route::post('scrapers/auto/{city}/toggle', [ScraperController::class, 'autoToggle'])->name('admin.scrapers.auto.toggle');
+    Route::delete('scrapers/auto/{city}', [ScraperController::class, 'autoDestroy'])->name('admin.scrapers.auto.destroy');
 
     });
 });
