@@ -547,8 +547,27 @@
         }
 
         /* Validation errors */
-        .validation-error {
+        .validation-error,
+        .field-error {
             color: #ff4444 !important;
+            font-size: 12px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        /* Highlight fields that failed validation */
+        .form-control.is-invalid,
+        input.is-invalid,
+        textarea.is-invalid,
+        select.is-invalid,
+        .is-invalid {
+            border: 1px solid #ff4444 !important;
+            box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.15) !important;
+        }
+        .is-invalid-wrap {
+            border: 1px solid #ff4444 !important;
+            border-radius: 6px;
+            padding: 2px;
         }
 
         /* Image Drag and Drop Styles */
@@ -1115,7 +1134,10 @@ form.listing .record.image {
 
 .citys
  {
-    width: 50%;
+    width: 100%;
+    min-width: 0;
+    left: 0;
+    right: 0;
  }
 
 }
@@ -1409,9 +1431,17 @@ div#basic {
         background-position: right 12px center !important;
         padding-right: 32px !important;
     }
-    /* Remove map pin icon from city input */
-    form.listing .big-one-line .typeahead-city-wrapper input {
+    /* Remove map pin icon from city input, add a chevron on the right
+       so it visually reads as a dropdown even though it's an <input>.
+       Extra right-padding leaves room for the chevron; the chevron itself
+       is a background SVG so it doesn't intercept taps that should reach
+       the input. */
+    form.listing .big-one-line .typeahead-city-wrapper input#citysearch {
         padding-left: 12px !important;
+        padding-right: 32px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23aaa' d='M6 8L0 0h12z'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 12px center !important;
     }
     .typeahead-city-wrapper::before {
         display: none !important;
@@ -1761,7 +1791,10 @@ div#basic {
                       <div class="form-group string required listing_name">
                         <label class="ev-mobile-label" style="display:none;">Profile Name <span style="color:#f87171">*</span></label>
                         <style>@media(max-width:768px){.ev-mobile-label{display:block!important;color:#ccc;font-size:13px;margin-bottom:6px}}</style>
-                        <input class="string required form-control medium validate" value="" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(3,40)" data-error-position-my="center bottom" data-error-position-offset="0 0" data-error-position-at="center top" data-tooltip-class="tooltip tooltip-s" maxlength="40" placeholder="Your professional name" size="40" type="text" wire:model='name' name="listing[name]" id="listing_name" />
+                        <input class="string required form-control medium validate @error('name') is-invalid @enderror" value="" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(3,40)" data-error-position-my="center bottom" data-error-position-offset="0 0" data-error-position-at="center top" data-tooltip-class="tooltip tooltip-s" maxlength="40" placeholder="Your professional name" size="40" type="text" wire:model='name' name="listing[name]" id="listing_name" />
+                        @error('name')
+                          <span class="field-error">{{ $message }}</span>
+                        @enderror
                       </div>
                       <div class="form-group  listing_listed_as_id">
                         <label class="ev-mobile-label" style="display:none;">Category</label>
@@ -1774,9 +1807,17 @@ div#basic {
                       <div class="form-group city optional listing_city_url">
                         <label class="city optional control-label ev-city-label" for="listing_city_url">City <span class="required-star" style="color:#f87171">*</span></label>
                         <div class='typeahead-city-wrapper'>
-                          <input class="city optional form-control" placeholder="Enter city name"
-    wire:model.lazy='selectedcity' type="text" id="citysearch"/>
+                          <input class="city optional form-control @error('selectedcity') is-invalid @enderror @error('city') is-invalid @enderror" placeholder="Enter city name"
+    wire:model.lazy='selectedcity' type="text" id="citysearch"
+    data-top-cities="{{ htmlspecialchars(json_encode($topCities ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') }}"
+    autocomplete="off"/>
 <input type="hidden" wire:model.lazy='city' id="selectedcityid">
+@error('selectedcity')
+  <span class="field-error">{{ $message }}</span>
+@enderror
+@error('city')
+  <span class="field-error">{{ $message }}</span>
+@enderror
                           
                         <div id="cityappend" class="citys"></div>
                         <span class="hint city-hint left">
@@ -1791,14 +1832,14 @@ div#basic {
                     <div class="form-group text required listing_description">
                       <label class="text required control-label" for="listing_description">
                         About <span class="required-star">*</span></label>
-                      <textarea class="text required form-control validate large" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(50,2000)" maxlength="2000" wire:model='aboutme' name="listing[description]" id="listing_description" oninput="updateCharCount(this)" placeholder="Write a brief description of yourself..."></textarea>
+                      <textarea class="text required form-control validate large @error('aboutme') is-invalid @enderror" data-validations="presence doesNotContainEmails doesNotContainPhones doesNotContainUrls length(50,2000)" maxlength="2000" wire:model='aboutme' name="listing[description]" id="listing_description" oninput="updateCharCount(this)" placeholder="Write a brief description of yourself..."></textarea>
                       <div class="char-count-container" style="margin-top: 5px; font-size: 12px;">
                         <span id="char-count" style="color: #666;">Minimum 50 characters</span>
                         <span id="char-count-warning" style="color: #dc3545; margin-left: 10px; display: none;">Minimum 50 characters required</span>
                         <span id="char-count-ok" style="color: #28a745; margin-left: 10px; display: none;">✓ Minimum reached</span>
                       </div>
                       @error('aboutme')
-                        <span class="validation-error" style="color: #dc3545; font-size: 12px;">{{ $message }}</span>
+                        <span class="field-error">{{ $message }}</span>
                       @enderror
                     </div>
                   </div>
@@ -1872,7 +1913,7 @@ div#basic {
                         </div>
 
                         @error('mphoto')
-                            <div class="alert alert-danger" style="margin-top:10px;">{{ $message }}</div>
+                            <div class="alert alert-danger field-error" style="margin-top:10px;">{{ $message }}</div>
                         @enderror
                         @error('mphoto.*')
                             <div class="alert alert-danger" style="margin-top:10px;">{{ $message }}</div>
@@ -1902,8 +1943,14 @@ div#basic {
                                     @endforeach
                                 </select>
                             </div>
-                            <input wire:model.lazy="phone" class="form-control" type="text" placeholder="Phone number" style="flex:1;height:44px;">
+                            <input wire:model.lazy="phone" class="form-control @error('phone') is-invalid @enderror" type="text" placeholder="Phone number" style="flex:1;height:44px;">
                         </div>
+                        @error('phone')
+                          <span class="field-error">{{ $message }}</span>
+                        @enderror
+                        @error('countrycode')
+                          <span class="field-error">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="ev-mc-group">
@@ -2142,6 +2189,12 @@ div#basic {
                       + Add another phone
                    </a> --}}
                     </div>
+                    @error('phone')
+                      <span class="field-error">{{ $message }}</span>
+                    @enderror
+                    @error('countrycode')
+                      <span class="field-error">{{ $message }}</span>
+                    @enderror
                     <div class="row">
                       <div class="col-sm-6">
                         <div class="form-group">
@@ -2429,6 +2482,16 @@ div#basic {
                         <span style="color:#C1F11D;font-weight:700;font-size:18px;">$</span>
                         Pricing
                     </h2>
+                    <div class="ev-pricing-pills">
+                        <label class="ev-pricing-pill">
+                            <input wire:model='incall' type="checkbox" value="1" style="display:none;">
+                            <span>Incalls</span>
+                        </label>
+                        <label class="ev-pricing-pill">
+                            <input wire:model='outcall' type="checkbox" value="1" style="display:none;">
+                            <span>Outcalls</span>
+                        </label>
+                    </div>
                     <div class="ev-mc-group">
                         <label>Currency</label>
                         <select data-radius="all" wire:model='incallcurr' class="apply-custom-select2 form-control">
@@ -2483,6 +2546,30 @@ div#basic {
                             box-sizing:border-box;
                             flex-shrink:0;
                             font-size:18px!important;
+                        }
+                        .ev-pricing-pills{
+                            display:grid;grid-template-columns:1fr 1fr;gap:10px;
+                            margin-bottom:16px;
+                        }
+                        .ev-pricing-pill{
+                            display:flex;align-items:center;justify-content:center;
+                            background:#111;border:1px solid #333;border-radius:8px;
+                            padding:9px 8px;cursor:pointer;color:#fff;font-size:13px;
+                            text-align:center;margin:0;
+                        }
+                        .ev-pricing-pill:has(input:checked){
+                            border-color:#C1F11D;color:#C1F11D;
+                        }
+                        .ev-pricing-pill:has(input:checked)::before{
+                            content:'';
+                            display:inline-block;
+                            width:16px;height:16px;
+                            margin-right:8px;
+                            flex-shrink:0;
+                            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C1F11D' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='8 12 11 15 16 9'/%3E%3C/svg%3E");
+                            background-repeat:no-repeat;
+                            background-position:center;
+                            background-size:contain;
                         }
                         #fees{display:none!important}
                     }
@@ -2571,11 +2658,17 @@ div#basic {
                     <div style="display:flex;gap:12px;margin-bottom:16px;">
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Height (cm)</label>
-                            <input wire:model='height' class="form-control" type="text" placeholder="175" maxlength="4">
+                            <input wire:model='height' class="form-control @error('height') is-invalid @enderror" type="text" placeholder="175" maxlength="4">
+                            @error('height')
+                              <span class="field-error">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div style="flex:1;">
                             <label style="display:block;color:#ccc;font-size:13px;margin-bottom:6px;">Age <span style="color:#f87171">*</span></label>
-                            <input wire:model='age' class="form-control" type="number" placeholder="25" min="18" max="60">
+                            <input wire:model='age' class="form-control @error('age') is-invalid @enderror" type="number" placeholder="25" min="18" max="60">
+                            @error('age')
+                              <span class="field-error">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
                     <div style="display:flex;gap:12px;margin-bottom:16px;">
@@ -2775,7 +2868,7 @@ div#basic {
 
                   <div id="about-me">
                     <h2 class="h3 title-block">About me</h2>
-                    <div class="form-group radio_buttons required listing_gender_id validate" data-validations="presenceAny">
+                    <div class="form-group radio_buttons required listing_gender_id validate @error('gender') is-invalid-wrap @enderror" data-validations="presenceAny">
                       <label class="radio_buttons required control-label">
                         Your gender (cannot be changed later) <span class="required-star">*</span></label>
                       <input type="hidden" name="listing[gender_id]" value="" />
@@ -2792,8 +2885,8 @@ div#basic {
                           <input class="radio_buttons required " wire:model='gender' type="radio" value="3" name="listing[gender_id]" id="listing_gender_id_4" />Transsexual </label>
                       </span>
                       @error('gender')
-                    <span class="validation-error">{{ $message }}</span>
-                @enderror
+                        <span class="field-error">{{ $message }}</span>
+                      @enderror
                     </div>
                     <div class="form-group radio_buttons optional listing_sexual_orientation_id">
                       <label class="radio_buttons optional control-label">Orientation</label>
@@ -2826,13 +2919,19 @@ div#basic {
                       <div class="col-md-2 col-sm-4">
                         <div class="form-group string optional listing_height_cm">
                           <label class="string optional control-label" for="listing_height_cm">Height (cm)</label>
-                          <input class="string optional form-control " wire:model='height' maxlength="4" size="4" type="text" name="listing[height_cm]" id="listing_height_cm" />
+                          <input class="string optional form-control @error('height') is-invalid @enderror" wire:model='height' maxlength="4" size="4" type="text" name="listing[height_cm]" id="listing_height_cm" />
+                          @error('height')
+                            <span class="field-error">{{ $message }}</span>
+                          @enderror
                         </div>
                       </div>
                       <div class="col-md-2 col-sm-4">
                         <div class="form-group integer optional listing_age">
                           <label class="integer optional control-label" for="listing_age">Age <span class="required-star">*</span></label>
-                          <input min="18" max="60" wire:model='age' class="numeric integer optional form-control  form-control" type="number" step="1" name="listing[age]" id="listing_age" />
+                          <input min="18" max="60" wire:model='age' class="numeric integer optional form-control  form-control @error('age') is-invalid @enderror" type="number" step="1" name="listing[age]" id="listing_age" />
+                          @error('age')
+                            <span class="field-error">{{ $message }}</span>
+                          @enderror
                         </div>
                       </div>
                       <div class="col-md-2 col-sm-4">
@@ -3007,16 +3106,6 @@ div#basic {
         @if(session('error'))
                 <div class="alert alert-danger">
                     {{ session('error') }}
-                </div>
-            @endif
-            
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
                 </div>
             @endif
               </form>
@@ -3558,7 +3647,20 @@ if (typeof Livewire !== 'undefined') {
         currentXHR: null,
         isSelecting: false,
         lastQuery: '',
-        
+        topCities: [],
+
+        // Client-side fallback shown when the server didn't provide a
+        // top-cities list (e.g. old build, empty DB result). Same shape as
+        // the /searchcity endpoint response so handleSelect works unchanged.
+        defaultCities: [
+            { id: 229, name: 'Dubai',          iso: 'AE', currency_code: 'AED' },
+            { id: 230, name: 'Abu Dhabi',      iso: 'AE', currency_code: 'AED' },
+            { id: 231, name: 'Sharjah',        iso: 'AE', currency_code: 'AED' },
+            { id: 232, name: 'Ajman',          iso: 'AE', currency_code: 'AED' },
+            { id: 233, name: 'Ras Al Khaimah', iso: 'AE', currency_code: 'AED' },
+            { id: 234, name: 'Fujairah',       iso: 'AE', currency_code: 'AED' }
+        ],
+
         // Configuration
         config: {
             minChars: 2,
@@ -3585,9 +3687,65 @@ if (typeof Livewire !== 'undefined') {
                 return;
             }
 
+            // Priority order for the initial city list:
+            //   1) Server-rendered data-top-cities attribute (fastest, no
+            //      network) — populated when the Livewire render() change
+            //      is deployed.
+            //   2) XHR to /searchcity with empty val — returns the current
+            //      country's top cities directly from the DB. Works even
+            //      when the render() change isn't deployed yet.
+            //   3) Hardcoded defaultCities (UAE-biased) as final safety
+            //      net if the network call fails.
+            var raw = this.input.getAttribute('data-top-cities');
+            var parsed = [];
+            if (raw) {
+                try { parsed = JSON.parse(raw) || []; } catch (e) { parsed = []; }
+            }
+            if (parsed.length > 0) {
+                this.topCities = parsed;
+            } else {
+                this.topCities = this.defaultCities;
+                this.fetchTopCitiesFromEndpoint();
+            }
+
             this.initialized = true;
             this.bindEvents();
             this.watchForDomReplacement();
+        },
+
+        // Fetch top cities from /searchcity with an empty val. Server
+        // returns the current country's featured cities (see AjaxController).
+        // Replaces the hardcoded defaultCities in-place so the dropdown
+        // will render the real DB list on the next open.
+        fetchTopCitiesFromEndpoint: function() {
+            var self = this;
+            var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+            var token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+            if (!token) return;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', this.config.endpoint, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.timeout = 6000;
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState !== 4 || xhr.status !== 200) return;
+                try {
+                    var cities = JSON.parse(xhr.responseText);
+                    if (Array.isArray(cities) && cities.length > 0) {
+                        self.topCities = cities;
+                        // If the dropdown is currently open showing the
+                        // hardcoded fallback, swap it live to the real list.
+                        if (self.dropdown && self.dropdown.style.display === 'block'
+                            && (self.input.value || '').trim().length < self.config.minChars) {
+                            self.renderResults(cities);
+                        }
+                    }
+                } catch (e) { /* keep fallback */ }
+            };
+            try { xhr.send(JSON.stringify({ val: '' })); } catch (e) {}
         },
 
         // Watch the wrapper for Livewire morphs that swap our input element
@@ -3639,6 +3797,20 @@ if (typeof Livewire !== 'undefined') {
                 var query = self.input.value.trim();
                 if (query.length >= self.config.minChars) {
                     self.handleInput(e);
+                } else if (self.topCities && self.topCities.length > 0) {
+                    // Empty input on focus — surface the country's top cities
+                    // so the user can pick one without typing.
+                    self.renderResults(self.topCities);
+                }
+            }, false);
+
+            // Click also opens the top-cities list even when the input is
+            // already focused (e.g. user tapped away and back)
+            this.input.addEventListener('click', function(e) {
+                var query = self.input.value.trim();
+                if (query.length < self.config.minChars
+                    && self.topCities && self.topCities.length > 0) {
+                    self.renderResults(self.topCities);
                 }
             }, false);
             
@@ -3710,8 +3882,12 @@ if (typeof Livewire !== 'undefined') {
 
             // Check minimum characters
             if (query.length < this.config.minChars) {
-                this.hideDropdown();
                 this.lastQuery = '';
+                if (this.topCities && this.topCities.length > 0) {
+                    this.renderResults(this.topCities);
+                } else {
+                    this.hideDropdown();
+                }
                 return;
             }
 
@@ -4128,7 +4304,30 @@ if (typeof Livewire !== 'undefined') {
         CitySearch.input = inputEl;
         CitySearch.dropdown = document.querySelector('.citys');
         CitySearch.results = document.getElementById('cityappend');
+        // Re-read data-top-cities from the current DOM node — after a
+        // Livewire morph the input is a brand-new element and the previous
+        // parsed topCities array may be stale. Fall back to defaultCities
+        // when the server list is empty (matches init logic).
+        var raw = inputEl.getAttribute('data-top-cities');
+        if (raw) {
+            try {
+                var parsed = JSON.parse(raw) || [];
+                CitySearch.topCities = parsed.length > 0 ? parsed : CitySearch.defaultCities;
+            } catch (e) { /* keep prior value */ }
+        }
         CitySearch.initialized = true;
+    }
+
+    // Show top cities on empty input — used by both the delegated focus
+    // and click fallback handlers so the dropdown appears even when the
+    // input has been swapped by a Livewire morph and the direct listeners
+    // bound in bindEvents are orphaned on a detached node.
+    function maybeShowTopCities(inputEl) {
+        var query = (inputEl.value || '').trim();
+        if (query.length >= CitySearch.config.minChars) return false;
+        if (!CitySearch.topCities || CitySearch.topCities.length === 0) return false;
+        CitySearch.renderResults(CitySearch.topCities);
+        return true;
     }
 
     document.addEventListener('input', function(e) {
@@ -4149,7 +4348,18 @@ if (typeof Livewire !== 'undefined') {
         var query = e.target.value.trim();
         if (query.length >= CitySearch.config.minChars) {
             CitySearch.handleInput(e);
+        } else {
+            maybeShowTopCities(e.target);
         }
+    }, true);
+
+    // Delegated click fallback: on mobile, tapping an already-focused input
+    // won't re-fire focus, so we also react to click. Same guard prevents
+    // stomping on active search results.
+    document.addEventListener('click', function(e) {
+        if (!e.target || e.target.id !== 'citysearch') return;
+        if (CitySearch.input !== e.target) refreshRefs(e.target);
+        maybeShowTopCities(e.target);
     }, true);
 
     document.addEventListener('mousedown', function(e) {
@@ -4786,6 +4996,22 @@ if (typeof Livewire !== 'undefined') {
         }, 50);
     });
 }
+
+// Scroll to the first field with a validation error and focus it.
+// Dispatched from NewProfile::updateProfile() when validation fails.
+Livewire.on('validation-failed', () => {
+    setTimeout(() => {
+        const target = document.querySelector('.is-invalid, .is-invalid-wrap, .field-error');
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const focusable = target.matches('input, textarea, select')
+            ? target
+            : target.closest('.form-group, div')?.querySelector('input, textarea, select');
+        if (focusable && typeof focusable.focus === 'function') {
+            try { focusable.focus({ preventScroll: true }); } catch (e) { focusable.focus(); }
+        }
+    }, 100);
+});
             </script>
           @endscript
 

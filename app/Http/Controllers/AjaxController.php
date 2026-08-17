@@ -38,9 +38,22 @@ class AjaxController extends Controller
     }
 
     public function citySearch(Request $req){
-        $val = $req->val;
-        $cities = City::where('name', 'like', "%$val%")->take(5)->get();
-        
+        $val = trim((string) $req->val);
+
+        // Empty search → return the top cities for the user's country
+        // (simple alphabetical). Used by the profile-creation form to
+        // pre-populate the city dropdown before the user types.
+        if ($val === '') {
+            $countryName = $this->resolveUserCountryName($req);
+            $cities = City::query()
+                ->when($countryName, fn($q) => $q->where('country', $countryName))
+                ->orderBy('name', 'asc')
+                ->limit(6)
+                ->get();
+        } else {
+            $cities = City::where('name', 'like', "%$val%")->take(5)->get();
+        }
+
         // Add currency code for each city based on country
         $result = $cities->map(function($city) {
             $currency = Currency::where('country', $city->country)->first();
@@ -52,8 +65,59 @@ class AjaxController extends Controller
                 'currency_code' => $currency ? $currency->code : 'USD'
             ];
         });
-        
+
         return $result->toArray();
+    }
+
+    /**
+     * Best-effort resolution of the "user's country" for city-list scoping.
+     * Priority:
+     *   1. Cloudflare's CF-IPCountry header — instant, free, always present
+     *      when the site is behind Cloudflare (which this one is). 2-letter
+     *      ISO code we map to Country.nicename via the DB.
+     *   2. Country subdomain on the current request (pk./my./ae./etc.).
+     *   3. Authenticated user's stored registration_country.
+     *   4. getCurrentCountry() fallback (defaults to UAE for main domain).
+     * Returns the country's `nicename` (e.g. "Malaysia") or null.
+     */
+    private function resolveUserCountryName(Request $req): ?string
+    {
+        // 1. Cloudflare edge already resolved geo — trust it. Values like
+        //    "XX" (unknown) or "T1" (Tor) mean CF couldn't/wouldn't resolve;
+        //    skip those and fall through. We ignore the header when it's
+        //    absent (dev / non-CF proxy) or clearly a sentinel value.
+        $cfIso = strtoupper((string) $req->header('CF-IPCountry'));
+        if ($cfIso && strlen($cfIso) === 2 && !in_array($cfIso, ['XX', 'T1'], true)) {
+            $cfCountry = Country::where('iso', $cfIso)->first();
+            if ($cfCountry) {
+                return $cfCountry->nicename;
+            }
+        }
+
+        // 2. Explicit country subdomain (e.g. pk.evoory.com, my.evoory.com).
+        $host = $req->getHost();
+        $parts = explode('.', $host);
+        if (count($parts) > 2) {
+            $prefix = strtolower($parts[0]);
+            $subdomainCountry = Country::where('domain_prefix', $prefix)->first();
+            if ($subdomainCountry) {
+                return $subdomainCountry->nicename;
+            }
+        }
+
+        // 3. Auth'd user's stored country from signup.
+        $user = auth()->user();
+        if ($user && !empty($user->registration_country)
+            && !in_array($user->registration_country, ['Local', 'Unknown'], true)) {
+            return $user->registration_country;
+        }
+
+        // 4. Final fallback: whatever the domain thinks (usually UAE default).
+        if (function_exists('getCurrentCountry')) {
+            $domainCountry = getCurrentCountry();
+            return $domainCountry?->nicename;
+        }
+        return null;
     }
     
     /**

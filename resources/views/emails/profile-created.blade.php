@@ -39,11 +39,11 @@
             </p>
             
             <!-- View Profile Button -->
-            <table cellpadding="0" cellspacing="0" style="display: inline-block; margin: 20px 0;">
+            <table cellpadding="0" cellspacing="0" style="display: inline-block; margin: 40px 0 15px 0;">
                 <tbody>
                     <tr>
                         <td style="border-radius: 3px; background-color: #C1F11D; text-align: center;">
-                            <a href="{{ $profileUrl }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 20px; font-family: Arial, Helvetica, sans-serif; font-weight: bold; line-height: 20px; padding: 12px 30px; display: block; text-shadow: #FDE877 0px 1px 0px;">
+                            <a href="{{ $profileUrl }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 13px; font-family: Arial, Helvetica, sans-serif; font-weight: bold; line-height: 16px; padding: 8px 20px; display: block;">
                                 View Your Profile
                             </a>
                         </td>

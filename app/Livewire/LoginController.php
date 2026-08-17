@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Auth;
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Validation\ValidationException;
 
 #[Layout('components.layouts.app-evoory')]
@@ -66,9 +67,14 @@ class LoginController extends Component
             'password' => $this->password,
             'verified' => 1
         ], $this->remember)) {
-            
+
             session()->regenerate();
-            
+
+            Wallet::firstOrCreate(
+                ['user_id' => Auth::id()],
+                ['balance' => 0]
+            );
+
             if (Auth::user()->type == 1) {
                 if (Auth::user()->getprofile->count() > 0) {
                     session()->flash('success', 'Welcome back!');

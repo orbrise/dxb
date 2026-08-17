@@ -154,7 +154,20 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
 .evoory-upgrade-controller .upgrade-listing-form-init { visibility: visible; }
 .evoory-upgrade-controller #allpackages { display: block; }
 .evoory-upgrade-controller .checkout-fields { display: none; margin-top: 0px; padding-top: 7px; }
-.evoory-upgrade-controller #paypal-button-container { margin-top: 20px; width: 100%; }
+.evoory-upgrade-controller #paypal-button-container {
+    margin-top: 20px;
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #C1F11D !important;
+    border-radius: 12px;
+    background: #0f0f10 !important;
+    box-shadow: 0 0 12px rgba(193, 241, 29, 0.15);
+}
+.evoory-upgrade-controller #paypal-button-container .paypal-buttons,
+.evoory-upgrade-controller #paypal-button-container .paypal-button-row,
+.evoory-upgrade-controller #paypal-button-container > div {
+    background: transparent !important;
+}
 .evoory-upgrade-controller .payment-options li label.selected { border-left: 3px solid #C1F11D; }
 .evoory-upgrade-controller .form-group { margin-bottom: 10px; }
 
@@ -683,11 +696,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
                         <div id="paypal-payment-section" class="block p-0 mb-3 payment-section" style="display: none; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;">
                           <div class="p-3">
                             <p style="color:#fff !important;">You will be charged <strong style="">$<span class="payment-amount"></span></strong> via PayPal.</p>
-                            {{-- PayPal renders its own white card inside this container.
-                                 The wrapper above is dark to match the rest of the page
-                                 so the "You will be charged" line and the footer note
-                                 stay legible in the site's dark theme. --}}
-                            <div id="paypal-button-container" class="mt-3" style="background:#fff; border-radius:6px; padding:12px;"></div>
+                            <div id="paypal-button-container" class="mt-3"></div>
                             <p class="small text-center mt-3" style="color:#9aa3b2 !important;">Secure payment processing by PayPal. You can use your PayPal account or credit/debit card.</p>
                           </div>
                         </div>
@@ -1199,6 +1208,14 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
         
         try {
             paypal.Buttons({
+                style: {
+                    color: 'black',
+                    shape: 'pill',
+                    label: 'pay',
+                    layout: 'vertical',
+                    height: 45,
+                    tagline: false
+                },
                 createOrder: function(data, actions) {
                     return actions.order.create({
                         purchase_units: [{ amount: { value: selectedPrice, currency_code: 'USD' } }]

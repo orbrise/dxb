@@ -19,7 +19,21 @@
 .evoory-upgrade-page .upgrade-listing-form-init { visibility: visible; }
 .evoory-upgrade-page #allpackages { display: block; }
 .evoory-upgrade-page .checkout-fields { display: none; }
-.evoory-upgrade-page #paypal-button-container { margin-top: 20px; width: 100%; }
+.evoory-upgrade-page #paypal-button-container {
+    margin-top: 20px;
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #C1F11D !important;
+    border-radius: 12px;
+    background: #0f0f10 !important;
+    box-shadow: 0 0 12px rgba(193, 241, 29, 0.15);
+}
+/* PayPal injects its own wrapper with a white bg — flatten it. */
+.evoory-upgrade-page #paypal-button-container .paypal-buttons,
+.evoory-upgrade-page #paypal-button-container .paypal-button-row,
+.evoory-upgrade-page #paypal-button-container > div {
+    background: transparent !important;
+}
 .evoory-upgrade-page .payment-options li label.selected { border-left: 3px solid #C1F11D; }
 
 /* Evoory Theme Upgrade Page */
@@ -775,6 +789,9 @@ a.text-warning:focus, a.text-warning {
         
         // Payment method click
         $(document).off('click.newupgrade', '.payment-method-option').on('click.newupgrade', '.payment-method-option', function(e) {
+            // Allow inner links (e.g. "Purchase account balance") to navigate
+            // even when the option itself is disabled.
+            if ($(e.target).closest('a').length) return;
             if ($(this).hasClass('disabled')) return false;
             var method = $(this).data('payment-method');
             $('.payment-method-option').removeClass('selected');
@@ -977,6 +994,14 @@ a.text-warning:focus, a.text-warning {
         
         try {
             paypal.Buttons({
+                style: {
+                    color: 'black',
+                    shape: 'pill',
+                    label: 'pay',
+                    layout: 'vertical',
+                    height: 45,
+                    tagline: false
+                },
                 createOrder: function(data, actions) {
                     return actions.order.create({
                         purchase_units: [{ amount: { value: selectedPrice, currency_code: 'USD' } }]

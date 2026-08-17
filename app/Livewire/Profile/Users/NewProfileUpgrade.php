@@ -241,14 +241,14 @@ class NewProfileUpgrade extends Component
                 if (MailSettings::shouldSendEmail('account_create')) {
                     try {
                     $package = Package::find($selectedPackage);
-                    $profileUrl = url("/my-profile/{$profile->slug}/{$profile->id}");
-                    
+                    $profileUrl = $this->buildPublicProfileUrl($profile);
+
                     Mail::to(auth()->user()->email)->send(new ProfileCreated([
                         'profileName' => $profile->name,
                         'packageName' => $package ? $package->name : null,
                         'profileUrl' => $profileUrl,
                     ]));
-                    
+
                     \Log::info('Profile created email sent', ['profile_id' => $profile->id, 'user_id' => auth()->id()]);
                 } catch (\Exception $e) {
                     \Log::error('[NEW PROFILE] Profile created email failed: ' . $e->getMessage(), ['user_email' => $userEmail]);
@@ -418,14 +418,14 @@ class NewProfileUpgrade extends Component
                 if (MailSettings::shouldSendEmail('account_create')) {
                     try {
                         $package = Package::find($selectedPackage);
-                        $profileUrl = url("/my-profile/{$profile->slug}/{$profile->id}");
-                        
+                        $profileUrl = $this->buildPublicProfileUrl($profile);
+
                         Mail::to(auth()->user()->email)->send(new ProfileCreated([
                             'profileName' => $profile->name,
                             'packageName' => $package ? $package->name : null,
                             'profileUrl' => $profileUrl,
                         ]));
-                        
+
                         \Log::info('[NEW PROFILE] Profile created email sent (Primary Gateway)', ['profile_id' => $profile->id, 'user_email' => $userEmail]);
                     } catch (\Exception $e) {
                         \Log::error('[NEW PROFILE] Profile created email failed: ' . $e->getMessage(), ['user_email' => $userEmail]);
@@ -605,14 +605,14 @@ class NewProfileUpgrade extends Component
             if (MailSettings::shouldSendEmail('account_create')) {
                 try {
                     $package = Package::find($orderData['package_id']);
-                    $profileUrl = url("/my-profile/{$profile->slug}/{$profile->id}");
-                    
+                    $profileUrl = $this->buildPublicProfileUrl($profile);
+
                     Mail::to(auth()->user()->email)->send(new ProfileCreated([
                         'profileName' => $profile->name,
                         'packageName' => $package ? $package->name : null,
                         'profileUrl' => $profileUrl,
                     ]));
-                    
+
                     \Log::info('[NEW PROFILE] PayPal - Profile created email sent', ['profile_id' => $profile->id, 'user_email' => $userEmail]);
                 } catch (\Exception $e) {
                     \Log::error('[NEW PROFILE] PayPal - Profile created email failed: ' . $e->getMessage(), ['user_email' => $userEmail]);
@@ -665,14 +665,14 @@ class NewProfileUpgrade extends Component
         // Send email if enabled in settings
         if (MailSettings::shouldSendEmail('account_create')) {
             try {
-                $profileUrl = url("/my-profile/{$profile->slug}/{$profile->id}");
-                
+                $profileUrl = $this->buildPublicProfileUrl($profile);
+
                 Mail::to(auth()->user()->email)->send(new ProfileCreated([
                     'profileName' => $profile->name,
                     'packageName' => null,
                     'profileUrl' => $profileUrl,
                 ]));
-                
+
                 \Log::info('Profile created email sent', ['profile_id' => $profile->id, 'user_id' => auth()->id()]);
             } catch (\Exception $e) {
                 \Log::error('Profile created email failed: ' . $e->getMessage());
@@ -839,5 +839,25 @@ class NewProfileUpgrade extends Component
         session()->forget('new_profile_data_' . auth()->id());
 
         return $profile;
+    }
+
+    /**
+     * Build the PUBLIC profile URL used in the "profile created" email.
+     * The owner dashboard URL (`/my-profile/...`) is behind the auth
+     * middleware, so clicking it from an email in a logged-out browser
+     * ends up in a redirect chain that surfaces as 404. The public URL
+     * has no such gate and is what the profile owner actually wants to
+     * see when they hit "View Your Profile" — the same listing their
+     * clients see.
+     */
+    private function buildPublicProfileUrl($profile): string
+    {
+        $profile->loadMissing(['ggender', 'getcity']);
+        $genderName = strtolower($profile->ggender?->name ?? 'female');
+        $cityName = $profile->getcity?->slug
+            ?: strtolower(str_replace(' ', '-', $profile->getcity?->name ?? ''));
+        $slug = $profile->slug ?: Str::slug($profile->name ?? '');
+
+        return url("/{$genderName}-escorts-in-{$cityName}/{$profile->id}/{$slug}");
     }
 }

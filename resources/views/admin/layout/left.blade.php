@@ -349,7 +349,30 @@
                          <i class="list-icon material-icons">account_balance_wallet</i>
                             <span class="hide-menu">Wallet</span>
                         </a>
-                    </li> 
+                    </li>
+
+                    @php
+                        $scraperRoutes = ['admin.scrapers.index', 'admin.scrapers.auto'];
+                        $isScraperSectionOpen = in_array(Route::currentRouteName(), $scraperRoutes);
+                    @endphp
+                    <li class="menu-item-has-children {{ $isScraperSectionOpen ? 'current-page' : '' }}">
+                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isScraperSectionOpen ? 'true' : 'false' }}">
+                            <i class="list-icon material-icons">cloud_download</i>
+                            <span class="hide-menu">Scrapers</span>
+                        </a>
+                        <ul class="list-unstyled sub-menu collapse {{ $isScraperSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isScraperSectionOpen ? 'true' : 'false' }}" style="{{ $isScraperSectionOpen ? '' : 'height: 0px;' }}">
+                            <li class="{{ Route::currentRouteName() == 'admin.scrapers.index' ? 'active' : '' }}">
+                                <a class="ripple" href="{{ route('admin.scrapers.index') }}">
+                                    <span class="hide-menu">Manual Run</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.scrapers.auto' ? 'active' : '' }}">
+                                <a class="ripple" href="{{ route('admin.scrapers.auto') }}">
+                                    <span class="hide-menu">Auto Setup</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
 
                     <li>
                         <a class="ripple" href="javascript:void(0);" onclick="event.preventDefault(); if(confirm('Are you sure you want to clear all caches?')) { document.getElementById('clear-cache-form').submit(); }">

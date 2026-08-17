@@ -5,7 +5,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\On;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use App\Models\{Listing, Service, Country, User, ProfileImage, UserService,
+use App\Models\{Listing, Service, Country, City, User, ProfileImage, UserService,
     Gender, Currency, Ethnicity, Bust, HairColor, Language, UserLanguage, UsersProfile};
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -249,17 +249,24 @@ public function updatedTempImages()
 }
 public function updateProfile()
 {
-    $validated = $this->validate();
-    
+    try {
+        $validated = $this->validate();
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        $this->dispatch('validation-failed');
+        throw $e;
+    }
+
     // Custom validation for minimum 50 characters
     $charCount = strlen(trim(strip_tags($this->aboutme)));
     if ($charCount < 50) {
         $this->addError('aboutme', 'Description must contain at least 50 characters. Currently: ' . $charCount . ' characters.');
+        $this->dispatch('validation-failed');
         return;
     }
-    
+
     if (empty($this->tempImages)) {
-        session()->flash('error', 'At least one image is required');
+        $this->addError('mphoto', 'At least one image is required');
+        $this->dispatch('validation-failed');
         return;
     }
 
@@ -644,6 +651,26 @@ private function linkProfileImages($profileId)
 
     public function render()
     {
+        $currentCountry = function_exists('getCurrentCountry') ? getCurrentCountry() : null;
+
+        $topCities = City::query()
+            ->when($currentCountry, fn($q) => $q->where('country', $currentCountry->nicename))
+            ->orderByDesc('is_featured')
+            ->orderBy('feature_priority', 'asc')
+            ->orderBy('name', 'asc')
+            ->limit(6)
+            ->get(['id', 'name', 'iso', 'country'])
+            ->map(function ($city) {
+                $currency = Currency::where('country', $city->country)->first();
+                return [
+                    'id' => $city->id,
+                    'name' => $city->name,
+                    'iso' => $city->iso,
+                    'currency_code' => $currency ? $currency->code : 'USD',
+                ];
+            })
+            ->values();
+
         return view('livewire.profile.users.new-profile', [
             'listings' => Listing::all(),
             'services' => Service::all(),
@@ -651,7 +678,7 @@ private function linkProfileImages($profileId)
             'user' => Auth::user(),
             'pimgs' => ProfileImage::where('user_id', Auth::id())
                         ->where('random', Session::get('random'))
-                        ->get(), 
+                        ->get(),
             'genders' => Gender::all(),
             'currencies' => Currency::select('id', 'code', 'symbol')
                 ->get()
@@ -662,6 +689,7 @@ private function linkProfileImages($profileId)
             'busts' => Bust::all(),
             'hairs' => HairColor::all(),
             'languages' => Language::all(),
+            'topCities' => $topCities,
         ]);
     }
 
