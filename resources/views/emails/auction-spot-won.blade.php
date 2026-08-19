@@ -32,7 +32,7 @@
                     Spot #{{ $spotNumber }} — {{ ucfirst($gender) }} escorts in {{ $cityName }}
                 </p>
                 <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Featured profile: <strong>{{ $profileName }}</strong></p>
-                <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Winning bid: <strong style="color: #C1F11D;">€{{ number_format($winningBid, 2) }}</strong></p>
+                <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Winning bid: <strong style="color: #C1F11D;">${{ number_format($winningBid, 2) }}</strong></p>
                 <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Duration: <strong style="color: #C1F11D;">{{ $durationDays }} days</strong></p>
                 @if($spotExpiryDate)
                 <p style="font-size: 14px; color: #ffffff; margin: 0;">Featured until: <strong>{{ $spotExpiryDate }}</strong></p>

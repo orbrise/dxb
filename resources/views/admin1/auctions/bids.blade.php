@@ -18,7 +18,7 @@
                         <h5>Auction Details</h5>
                         <p><strong>City:</strong> {{ $auction->city->name }}</p>
                         <p><strong>Gender:</strong> {{ ucfirst($auction->gender) }}</p>
-                        <p><strong>Current Price:</strong> €{{ number_format($auction->current_price, 2) }}</p>
+                        <p><strong>Current Price:</strong> ${{ number_format($auction->current_price, 2) }}</p>
                         <p><strong>End Date:</strong> {{ $auction->end_date->format('Y-m-d H:i') }}</p>
                         <p><strong>Status:</strong> {{ ucfirst($auction->status) }}</p>
                     </div>
@@ -38,7 +38,7 @@
                             <tr>
                                 <td>{{ $bid->id }}</td>
                                 <td>{{ $bid->profile->name ?? 'Unknown' }}</td>
-                                <td>€{{ number_format($bid->amount, 2) }}</td>
+                                <td>${{ number_format($bid->amount, 2) }}</td>
                                 <td>{{ $bid->created_at->format('Y-m-d H:i:s') }}</td>
                                 <td>
                                     <span class="">

@@ -809,7 +809,7 @@ public function checkIfFavorited($profileId)
             'Indonesia' => ['code' => 'IDR', 'symbol' => 'Rp', 'to_usd_rate' => 0.000063],
             'Australia' => ['code' => 'AUD', 'symbol' => 'A$', 'to_usd_rate' => 0.66],
             'Canada' => ['code' => 'CAD', 'symbol' => 'C$', 'to_usd_rate' => 0.74],
-            'Euro' => ['code' => 'EUR', 'symbol' => '€', 'to_usd_rate' => 1.09],
+            'Euro' => ['code' => 'EUR', 'symbol' => '$', 'to_usd_rate' => 1.09],
             'Switzerland' => ['code' => 'CHF', 'symbol' => 'CHF', 'to_usd_rate' => 1.13],
             'Japan' => ['code' => 'JPY', 'symbol' => '¥', 'to_usd_rate' => 0.0069],
             'China' => ['code' => 'CNY', 'symbol' => '¥', 'to_usd_rate' => 0.14],

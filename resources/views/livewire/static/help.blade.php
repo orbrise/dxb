@@ -179,9 +179,9 @@
         <h2>What are the different options for my profile?</h2>
         <p>A few cities have higher pricing than the base prices below because of higher demand and better results for advertisers. You will see the price for your city from your listing page. Our main goal is to deliver value-for-money to everyone, based on results, while maintaining a free option for everyone.</p>
         <ul>
-            <li><b>VIP:</b> You get top priority in the search results and city main pages. Unlimited enquiries. <b>From €29/month</b></li>
-            <li><b>Featured:</b> You appear ahead of Basic and Free profiles. Unlimited enquiries. <b>From €18/month</b></li>
-            <li><b>Basic:</b> You get unlimited monthly enquires and priority over free members in the search results. <b>From €7/month</b></li>
+            <li><b>VIP:</b> You get top priority in the search results and city main pages. Unlimited enquiries. <b>From $29/month</b></li>
+            <li><b>Featured:</b> You appear ahead of Basic and Free profiles. Unlimited enquiries. <b>From $18/month</b></li>
+            <li><b>Basic:</b> You get unlimited monthly enquires and priority over free members in the search results. <b>From $7/month</b></li>
             <li><b>Free:</b> You will appear after paid listings in the search results and if you receive over a certain amount of enquiries during a 30 day period your profile will be limited until the end of the period. We do this to provide for the fairest distribution of leads between our free members.</li>
         </ul>
 

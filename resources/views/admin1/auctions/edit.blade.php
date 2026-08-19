@@ -85,7 +85,7 @@
                         </div>
                         
                         <div class="form-group mt-2">
-                            <label for="current_price">Current Price (€)</label>
+                            <label for="current_price">Current Price ($)</label>
                             <input type="number" name="current_price" id="current_price" class="form-control @error('current_price') is-invalid @enderror" value="{{ old('current_price', $auction->current_price) }}" min="0" step="10" required>
                             @error('current_price')
                                 <span class="invalid-feedback">{{ $message }}</span>

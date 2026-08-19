@@ -152,7 +152,7 @@
                                 <td>{{ $auction->spot_number }}</td>
                                 <td>{{ $auction->city->name }}</td>
                                 <td>{{ ucfirst($auction->gender) }}</td>
-                                <td>€{{ number_format($auction->current_price, 2) }}</td>
+                                <td>${{ number_format($auction->current_price, 2) }}</td>
                                 <td>{{ $auction->end_date->format('Y-m-d H:i') }}</td>
                                 <td>{{ $auction->time_left }}</td>
                                 <td>

@@ -64,7 +64,7 @@
                         </div>
                         
                         <div class="form-group mt-2">
-                            <label for="starting_price">Starting Price (€)</label>
+                            <label for="starting_price">Starting Price ($)</label>
                             <input type="number" name="starting_price" id="starting_price" class="form-control @error('starting_price') is-invalid @enderror" value="{{ old('starting_price', 300) }}" min="0" step="10" required>
                             @error('starting_price')
                                 <span class="invalid-feedback">{{ $message }}</span>

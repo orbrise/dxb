@@ -54,27 +54,34 @@ class ScraperRunLauncher
         $phpBinary = PHP_BINARY;
         $artisan = base_path('artisan');
 
+        // Manual admin runs always require a phone. Only append the flag on
+        // commands whose signature accepts it — Ivy Societe hardcodes the
+        // phone requirement in its importer and would reject an unknown opt.
+        $extraArgs = $signature === 'scrape:massagerepublic' ? ' --require-phone' : '';
+
         if (Str::startsWith(strtoupper(PHP_OS), 'WIN')) {
             $cmd = sprintf(
-                'start /B "" %s %s %s --city=%s --limit=%d --run-id=%d > %s 2>&1',
+                'start /B "" %s %s %s --city=%s --limit=%d --run-id=%d%s > %s 2>&1',
                 escapeshellarg($phpBinary),
                 escapeshellarg($artisan),
                 escapeshellarg($signature),
                 escapeshellarg($city),
                 $limit,
                 $runId,
+                $extraArgs,
                 escapeshellarg($logPath)
             );
             pclose(popen($cmd, 'r'));
         } else {
             $cmd = sprintf(
-                'nohup %s %s %s --city=%s --limit=%d --run-id=%d > %s 2>&1 &',
+                'nohup %s %s %s --city=%s --limit=%d --run-id=%d%s > %s 2>&1 &',
                 escapeshellarg($phpBinary),
                 escapeshellarg($artisan),
                 escapeshellarg($signature),
                 escapeshellarg($city),
                 $limit,
                 $runId,
+                $extraArgs,
                 escapeshellarg($logPath)
             );
             exec($cmd);

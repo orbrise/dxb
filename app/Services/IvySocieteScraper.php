@@ -127,7 +127,7 @@ class IvySocieteScraper
             'gender' => 'female',
             'is_verified' => (bool) preg_match('/"isVerified":true|"verified":true(?![^}]*"mediaType")/', $window),
             'is_premium' => (bool) preg_match('/"isPremium":true|"premium":true/', $window),
-            'description' => $this->extractMetaDescription($html),
+            'description' => $this->extractBio($html, $window) ?? $this->extractMetaDescription($html),
             // Images live in a large JSON array that often extends past our
             // 8KB window, and the page also embeds nearby profiles' images
             // in a sidebar. Filter by the profile's own user_id (which
@@ -259,10 +259,94 @@ class IvySocieteScraper
     }
 
     /**
-     * Fallback description: ivysociete stores the long bio as an RSC
-     * reference (e.g. "bio":"$2d") so we can't read it out of the
-     * primary object. The `<meta name="description">` tag holds a
-     * summary that's good enough for our About block.
+     * Resolve the full bio, which lives outside the primary object.
+     *
+     * In the primary window the bio appears either inline as
+     * `"bio":"literal text"` (short bios) or as an RSC reference like
+     * `"bio":"$2d"` (long bios — the vast majority). The pointer `$2d`
+     * maps to a separate RSC chunk pushed later in the HTML via
+     * `self.__next_f.push([1,"2d:\"...full text...\"\n"])`. We resolve
+     * the reference by locating that push call and JSON-decoding the
+     * payload twice: once to reverse the outer __next_f JS-string
+     * escaping, once more to unwrap the inner RSC-string quoting.
+     */
+    protected function extractBio(string $html, string $window): ?string
+    {
+        // Inline bio? Take it directly (rare but possible for short bios).
+        if (preg_match('/"bio":"((?:[^"\\\\]|\\\\.)*)"/', $window, $inline)) {
+            $val = $inline[1];
+            if (! str_starts_with($val, '$')) {
+                $decoded = json_decode('"' . $val . '"');
+                return is_string($decoded) && $decoded !== '' ? $decoded : null;
+            }
+            $refId = ltrim($val, '$');
+            return $this->resolveRscChunk($html, $refId);
+        }
+        return null;
+    }
+
+    /**
+     * Fetch the RSC chunk identified by $refId from the raw HTML.
+     * Returns the decoded text content, or null if the chunk can't be
+     * found or parsed. Handles both plain-string chunks ("...") and
+     * length-prefixed text chunks (T<hex>,...).
+     */
+    protected function resolveRscChunk(string $html, string $refId): ?string
+    {
+        // Each RSC chunk is pushed by a call like:
+        //   self.__next_f.push([1,"<id>:<payload>\n"])
+        // The whole payload (between the outer " ") is JS-string-escaped,
+        // so quotes appear as \" and newlines as \n in the raw HTML.
+        $anchor = '__next_f.push([1,"' . $refId . ':';
+        $pos = strpos($html, $anchor);
+        if ($pos === false) {
+            return null;
+        }
+        $scanStart = $pos + strlen($anchor);
+
+        // Walk forward until we hit an unescaped " immediately followed
+        // by ]). Skipping over any \X escape sequences keeps us honest
+        // when the payload legitimately contains \" quotes.
+        $i = $scanStart;
+        $len = strlen($html);
+        while ($i < $len) {
+            if ($html[$i] === '\\' && $i + 1 < $len) {
+                $i += 2;
+                continue;
+            }
+            if ($html[$i] === '"' && substr($html, $i, 3) === '"])') {
+                break;
+            }
+            $i++;
+        }
+        if ($i >= $len) {
+            return null;
+        }
+
+        $encoded = substr($html, $scanStart, $i - $scanStart);
+        // Undo the outer __next_f JS-string escaping.
+        $rscLine = json_decode('"' . $encoded . '"');
+        if (! is_string($rscLine)) {
+            return null;
+        }
+        $rscLine = rtrim($rscLine, "\n");
+
+        // Case 1: plain string chunk — "literal text with \n inside"
+        if ($rscLine !== '' && $rscLine[0] === '"') {
+            $decoded = json_decode($rscLine);
+            return is_string($decoded) && $decoded !== '' ? $decoded : null;
+        }
+        // Case 2: length-prefixed text chunk — T<hex>,actual text
+        if (preg_match('/^T[0-9a-f]+,(.*)$/s', $rscLine, $m)) {
+            return $m[1] !== '' ? $m[1] : null;
+        }
+        return null;
+    }
+
+    /**
+     * Fallback description: `<meta name="description">` tag holds a
+     * short summary of the profile. Used only when the RSC bio chunk
+     * can't be resolved (e.g. Next.js changed its streaming format).
      */
     protected function extractMetaDescription(string $html): ?string
     {

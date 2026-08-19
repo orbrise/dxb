@@ -18,7 +18,7 @@
                     <a class="btn btn-navbar-header" href="/my-account" wire:navigate>
                         <i class="fa fa-user"></i>
                         <span class="sr-only-xs">Account</span>
-                        <strong class="sr-only-xs">€ {{ auth()->user()->wallet->balance ?? 0 }}</strong>
+                        <strong class="sr-only-xs">$ {{ auth()->user()->wallet->balance ?? 0 }}</strong>
                     </a>
                     
                     <form class="button_to" method="post" action="{{ url('sign_out') }}">

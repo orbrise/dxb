@@ -61,13 +61,13 @@
                     <div class="border-top padding-top">
                       <div class="upgrade-duration__radios mb-3" data-listing-upgrade-duration-selector=""></div>
                       <div class="text-right w-100 pb-3">
-                        <strong class="lead">Total: € <b data-listing-upgrade-form-total-price-display></b>
+                        <strong class="lead">Total: $ <b data-listing-upgrade-form-total-price-display></b>
                         </strong>
                       </div>
                     </div>
                   </div>
                   <div class="block px-0 mb-3 hidden skip block--payment" id="balance-block">
-                    <div class="right warn-text" data-card-payment-max-amount-warning="" data-message="We can only accept payments up to € {{maxAmount}} at a time.
+                    <div class="right warn-text" data-card-payment-max-amount-warning="" data-message="We can only accept payments up to $ {{maxAmount}} at a time.
 												<br>
 Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
 ">
@@ -80,7 +80,7 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                         <label class="p-3 d-flex flex-wrap align-items-center mb-0" for="upgrade_process_payment_method_account_balance">
                           <input type="radio" value="account_balance" name="upgrade_process[payment_method]" id="upgrade_process_payment_method_account_balance" />
                           <span>Available balance</span>
-                          <span class="account-balance" data-listing-upgrade-form-account-balance-display="">€ 0</span>
+                          <span class="account-balance" data-listing-upgrade-form-account-balance-display="">$ 0</span>
                           <span data-listing-upgrade-form-purchase-account-balance-link="" style="margin-left:10px">
                             <a href="/my-profile/credits/purchase">Purchase account balance</a>
                           </span>
@@ -116,7 +116,7 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                     <div class="px-4 data-payprocc-redirect-form" data-payprocc-redirect-form="" data-server-pub-key="MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAtuebhxbQpaZGaaEKq38DgjJUFH4Xowi1yK2mtmSmPAQXa9Y5+0kZhWBocCCgG/YaHPNd91UAk9nC/wtrzsimFNkfZ9CG7AHxKPgrUegmbDfZuMjtQXE9Lejfm4NVqXfZsnY66obecu84zjb6MlUC/X5zluU7P2MOB+FwJCufOAbHlDMFEqpNsA6YqhGsziHClgWcF/JsoC/0i3zqWibC4qWhjDbZolXn3q4xA6gz915P2ceFalKE27gdsHr6Q3swKwDudlKSCtu0zgeq9eEPRrfe/lU5vJoRpXV1vKc5BT/aX23XaJW2TKk/wcC5EjawZE6GIcG8HnwJ1WYrDAu2iLDlqHWJPZoOgy4eVjBCkfKTnn2M6A4MeNwgwh0aJuQ2O7bkGleqZyFPxAfxP6lfjAm1N93E2xibrLXf+pPi7NuRbdbLxDRxHJAu7XQx9ncO5eRcDStOu9i0MGwfeX68dxyd0/chLezhUZZkO2Xn/WWDWFlAiyCSi+hsIMcENPJdo98UTnLWdshBNy9DNKHCsOyLI4xvopGMnWYOUFZAqUdRmOlYrWVzAIub8CsIZEPNUbgAXP3eZtnvjsk3jTE7LvNDGXfARbSPbuB704CT8WRLcYq/2qKqWiQhcas1ylvU6paLZ9DDC7v7c8kWhKSfD/76DoN9/wAEl6ZgUULhu7kCAwEAAQ==" data-submit-url="/action/process_credit_card_payment">
                       <div class="payprocc-credit-card-form__first_line pt-1"></div>
                       <div class="payprocc-credit-card-form__submit-error alert alert-danger hidden" data-payprocc-redirect-form-submit-error=""></div>
-                      <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-primary btn-lg btn-xs-block payprocc-credit-card-form__submit-button" type="submit">Pay € <span data-payprocc-credit-card-form-price-display></span>
+                      <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-primary btn-lg btn-xs-block payprocc-credit-card-form__submit-button" type="submit">Pay $ <span data-payprocc-credit-card-form-price-display></span>
                       </button>
                       <p class="hidden" data-payprocc-redirect-form-submitting-indicator="">Processing...</p>
                     </div>
@@ -170,10 +170,10 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                             <span>Bitcoin</span>
                             <img alt="Bitcoin icon" class="ml-2" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/btc-b522654df0046f6af0e8ac9f67078a87d26069445a01866c1c337bde91bbcd5f.svg" width="24" />
                             <div class="alert-crypto-notice alert mb-0 ml-3 p-2 position-relative" data-btc-notice="bitcoin" style="display:none">
-                              <strong>Not available for payments below € <span class="ml-0"></span>
+                              <strong>Not available for payments below $ <span class="ml-0"></span>
                               </strong> due to high transaction fees. We recommend <strong>Lightning Network</strong> for smaller amounts.
                             </div>
-                            <p class="bonus-info mb-0 ml-auto small lh-initial" data-bonus-info="bitcoin">Get <strong class="text-primary">extra € <span class="ml-0" data-listing-btc-bonus-display>AMOUNT</span>
+                            <p class="bonus-info mb-0 ml-auto small lh-initial" data-bonus-info="bitcoin">Get <strong class="text-primary">extra $ <span class="ml-0" data-listing-btc-bonus-display>AMOUNT</span>
                               </strong> added to your balance! </p>
                           </label>
                           <div class="px-4 bitcoin-form bitcoin-form" data-bitcoin-form="" data-submit-url="/accounts/dubai_escorts_12/bitcoin_addresses/assign">
@@ -189,9 +189,9 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                                   <input class="radio_buttons required bitcoin-form__address-format-input__field" required="required" aria-required="true" type="radio" value="p2sh" name="bitcoin[address_type]" id="bitcoin_address_type_p2sh" />legacy (3 <small class="text-muted">xxxx...</small>) </label>
                               </span>
                             </div>
-                            <button class="d-flex align-items-center justify-content-center btn btn-block btn-primary btn-lg btn-xs-block mb-4 bitcoin-form__submit-button" data-bitcoin-submit="" type="submit">Generate address for € <span data-bitcoin-form-price-display></span>
+                            <button class="d-flex align-items-center justify-content-center btn btn-block btn-primary btn-lg btn-xs-block mb-4 bitcoin-form__submit-button" data-bitcoin-submit="" type="submit">Generate address for $ <span data-bitcoin-form-price-display></span>
                             </button>
-                            <p class="text-center">Current rate is <strong>€98816 <i class="fa fa-exchange-alt"></i> 1 BTC </strong>
+                            <p class="text-center">Current rate is <strong>$98816 <i class="fa fa-exchange-alt"></i> 1 BTC </strong>
                             </p>
                             <div class="bitcoin-form__submit-error alert alert-danger hidden" data-bitcoin-form-submit-error=""></div>
                             <p class="hidden" data-bitcoin-form-submitting-indicator="">Processing...</p>
@@ -244,7 +244,7 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                                     </table>
                                     <p>Please transfer BTC to this address only.</p>
                                     <p>Once your transaction appears on blockchain you will receive <span class="upgrade"></span>
-                                      <span data-bonus-info="bitcoin">10% of the amount in € will be added to your balance. </span>
+                                      <span data-bonus-info="bitcoin">10% of the amount in $ will be added to your balance. </span>
                                     </p>
                                     <p>The bitcoin conversion rate is guaranteed for 3 hours and only for the BTC amount shown.</p>
                                     <p>You will receive an e-mail once your purchase is complete.</p>
@@ -268,7 +268,7 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                             <input type="radio" value="lightning" name="upgrade_process[payment_method]" id="upgrade_process_payment_method_lightning" />
                             <span>Lightning Network</span>
                             <img alt="Lightning network icon" class="ml-2" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/btc_lightning-fa0277781a99cded862007ac4d2e5f5fa8fbafec4d9c2b59dbd3b2fc354e91a0.svg" width="42" />
-                            <p class="bonus-info mb-0 ml-auto small lh-initial" data-bonus-info="lightning">Get <strong class="text-primary">extra € <span class="ml-0" data-listing-lightning-bonus-display>AMOUNT</span>
+                            <p class="bonus-info mb-0 ml-auto small lh-initial" data-bonus-info="lightning">Get <strong class="text-primary">extra $ <span class="ml-0" data-listing-lightning-bonus-display>AMOUNT</span>
                               </strong> added to your balance! </p>
                           </label>
                           <p class="pl-4 py-2 pr-3">The Lightning Network is a cheaper and faster method for Bitcoin payments. <a class="fw-bold" data-target="#lightningTutorialModal" data-toggle="modal" href="#" style="color:#ffc64d; white-space: nowrap">
@@ -276,9 +276,9 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                             </a>
                           </p>
                           <div class="px-4 lightning-form" data-lightning-form="" data-submit-url="/accounts/dubai_escorts_12/lightnings/assign">
-                            <button class="d-flex align-items-center justify-content-center btn btn-block btn-primary btn-lg btn-xs-block mb-4 bitcoin-form__submit-button" type="submit">Generate invoice for € <span data-lightning-form-price-display></span>
+                            <button class="d-flex align-items-center justify-content-center btn btn-block btn-primary btn-lg btn-xs-block mb-4 bitcoin-form__submit-button" type="submit">Generate invoice for $ <span data-lightning-form-price-display></span>
                             </button>
-                            <p class="text-center">Current rate is <strong>€98816 <i class="fa fa-exchange-alt"></i> 1 BTC </strong>
+                            <p class="text-center">Current rate is <strong>$98816 <i class="fa fa-exchange-alt"></i> 1 BTC </strong>
                             </p>
                             <div class="lightning-form__submit-error alert alert-danger hidden" data-lightning-form-submit-error=""></div>
                             <p class="hidden" data-lightning-form-submitting-indicator="">Processing...</p>
@@ -309,7 +309,7 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                                     <div id="lightningAddress" class="lightning-address text-center text-primary pb-4" style="word-wrap: anywhere"></div>
                                     <p>By paying this invoice you will transfer <span class="lightning-amount text-primary"></span> satoshis. </p>
                                     <p>Once the invoice is paid you will receive <span class="lightning-upgrade"></span>
-                                      <span data-bonus-info="lightning">10% of the amount in € will be added to your balance. </span>
+                                      <span data-bonus-info="lightning">10% of the amount in $ will be added to your balance. </span>
                                     </p>
                                     <p>Lightning invoices have expiry dates. Making payment with expired invoices is not possible.</p>
                                     <p>You will receive an e-mail once your purchase is complete.</p>
@@ -357,7 +357,7 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                         <div class="px-4 cc-inputs-wrap data-emp-wpf-redirect-form hidden" data-emp-wpf-redirect-form="" data-server-pub-key="MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAtuebhxbQpaZGaaEKq38DgjJUFH4Xowi1yK2mtmSmPAQXa9Y5+0kZhWBocCCgG/YaHPNd91UAk9nC/wtrzsimFNkfZ9CG7AHxKPgrUegmbDfZuMjtQXE9Lejfm4NVqXfZsnY66obecu84zjb6MlUC/X5zluU7P2MOB+FwJCufOAbHlDMFEqpNsA6YqhGsziHClgWcF/JsoC/0i3zqWibC4qWhjDbZolXn3q4xA6gz915P2ceFalKE27gdsHr6Q3swKwDudlKSCtu0zgeq9eEPRrfe/lU5vJoRpXV1vKc5BT/aX23XaJW2TKk/wcC5EjawZE6GIcG8HnwJ1WYrDAu2iLDlqHWJPZoOgy4eVjBCkfKTnn2M6A4MeNwgwh0aJuQ2O7bkGleqZyFPxAfxP6lfjAm1N93E2xibrLXf+pPi7NuRbdbLxDRxHJAu7XQx9ncO5eRcDStOu9i0MGwfeX68dxyd0/chLezhUZZkO2Xn/WWDWFlAiyCSi+hsIMcENPJdo98UTnLWdshBNy9DNKHCsOyLI4xvopGMnWYOUFZAqUdRmOlYrWVzAIub8CsIZEPNUbgAXP3eZtnvjsk3jTE7LvNDGXfARbSPbuB704CT8WRLcYq/2qKqWiQhcas1ylvU6paLZ9DDC7v7c8kWhKSfD/76DoN9/wAEl6ZgUULhu7kCAwEAAQ==" data-submit-url="/action/process_credit_card_payment">
                           <div class="emp-credit-card-form__first_line pt-1"></div>
                           <div class="emp-credit-card-form__submit-error alert alert-danger hidden" data-emp-wpf-redirect-form-submit-error=""></div>
-                          <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-primary btn-lg btn-xs-block emp-wpf-credit-card-form__submit-button" type="submit">Pay € <span data-emp-credit-card-form-price-display></span>
+                          <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-primary btn-lg btn-xs-block emp-wpf-credit-card-form__submit-button" type="submit">Pay $ <span data-emp-credit-card-form-price-display></span>
                           </button>
                           <p class="small text-muted pb-2 pt-3 text-center payment-info">Payments operated by B.V. is, Netherlands. "mrl_cc" will appear on your card statement. By proceeding you agree to our <a href="/toc">Terms of Service</a>
                           </p>
@@ -389,7 +389,7 @@ Period has been reduced from {{periodValueWas}} to {{periodValue}} days.
                         <div class="px-4 cc-inputs-wrap data-emp-wpf-redirect-form hidden" data-emp-wpf-redirect-form="" data-server-pub-key="MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAtuebhxbQpaZGaaEKq38DgjJUFH4Xowi1yK2mtmSmPAQXa9Y5+0kZhWBocCCgG/YaHPNd91UAk9nC/wtrzsimFNkfZ9CG7AHxKPgrUegmbDfZuMjtQXE9Lejfm4NVqXfZsnY66obecu84zjb6MlUC/X5zluU7P2MOB+FwJCufOAbHlDMFEqpNsA6YqhGsziHClgWcF/JsoC/0i3zqWibC4qWhjDbZolXn3q4xA6gz915P2ceFalKE27gdsHr6Q3swKwDudlKSCtu0zgeq9eEPRrfe/lU5vJoRpXV1vKc5BT/aX23XaJW2TKk/wcC5EjawZE6GIcG8HnwJ1WYrDAu2iLDlqHWJPZoOgy4eVjBCkfKTnn2M6A4MeNwgwh0aJuQ2O7bkGleqZyFPxAfxP6lfjAm1N93E2xibrLXf+pPi7NuRbdbLxDRxHJAu7XQx9ncO5eRcDStOu9i0MGwfeX68dxyd0/chLezhUZZkO2Xn/WWDWFlAiyCSi+hsIMcENPJdo98UTnLWdshBNy9DNKHCsOyLI4xvopGMnWYOUFZAqUdRmOlYrWVzAIub8CsIZEPNUbgAXP3eZtnvjsk3jTE7LvNDGXfARbSPbuB704CT8WRLcYq/2qKqWiQhcas1ylvU6paLZ9DDC7v7c8kWhKSfD/76DoN9/wAEl6ZgUULhu7kCAwEAAQ==" data-submit-url="/action/process_credit_card_payment">
                           <div class="emp-credit-card-form__first_line pt-1"></div>
                           <div class="emp-credit-card-form__submit-error alert alert-danger hidden" data-emp-wpf-redirect-form-submit-error=""></div>
-                          <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-primary btn-lg btn-xs-block emp-wpf-credit-card-form__submit-button" type="submit">Pay € <span data-emp-credit-card-form-price-display></span>
+                          <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-primary btn-lg btn-xs-block emp-wpf-credit-card-form__submit-button" type="submit">Pay $ <span data-emp-credit-card-form-price-display></span>
                           </button>
                           <p class="small text-muted pb-2 pt-3 text-center payment-info">Payments operated by B.V. is, Netherlands. "mrl_cc" will appear on your card statement. By proceeding you agree to our <a href="/toc">Terms of Service</a>
                           </p>

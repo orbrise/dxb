@@ -31,13 +31,13 @@
                 <p style="font-size: 18px; font-weight: bold; color: #C1F11D; margin: 0 0 10px 0;">
                     Spot #{{ $spotNumber }} — {{ ucfirst($gender) }} escorts in {{ $cityName }}
                 </p>
-                <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Your bid: <strong>€{{ number_format($yourBid, 2) }}</strong></p>
-                <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Winning bid: <strong style="color: #C1F11D;">€{{ number_format($winningBid, 2) }}</strong></p>
-                <p style="font-size: 14px; color: #ffffff; margin: 0;">Deposit refunded to wallet: <strong style="color: #C1F11D;">€{{ number_format($refundAmount, 2) }}</strong></p>
+                <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Your bid: <strong>${{ number_format($yourBid, 2) }}</strong></p>
+                <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Winning bid: <strong style="color: #C1F11D;">${{ number_format($winningBid, 2) }}</strong></p>
+                <p style="font-size: 14px; color: #ffffff; margin: 0;">Deposit refunded to wallet: <strong style="color: #C1F11D;">${{ number_format($refundAmount, 2) }}</strong></p>
             </div>
 
             <p style="font-size: 14px; line-height: 1.5; color: #ffffff; margin-bottom: 15px;">
-                Your deposit of <strong>€{{ number_format($refundAmount, 2) }}</strong> has been credited back to your
+                Your deposit of <strong>${{ number_format($refundAmount, 2) }}</strong> has been credited back to your
                 evoory wallet. You can use it right away to bid on another spot or apply it to any
                 paid feature on the platform — no action needed from you.
             </p>

@@ -971,7 +971,7 @@ min-width: 222px;
         <div class="d-flex flex-column align-items-center">
           <h3 class="mb-4">
             <span>Current price for {{ $auction->duration_days ?? 7 }} days:</span>
-            <strong class="ml-2">€{{ $auction->current_price }}</strong>
+            <strong class="ml-2">${{ $auction->current_price }}</strong>
           </h3>
           <a class="btn btn-primary px-5 mb-3 font-weight-bold" href="/auctions/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}/spot/{{ $auction->spot_number }}" style="font-size:1rem">Make offer</a>
         </div>
