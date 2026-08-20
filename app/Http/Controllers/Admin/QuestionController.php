@@ -17,7 +17,7 @@ class QuestionController extends Controller
             $perPage = 10;
         }
 
-        $query = Question::query();
+        $query = Question::with('askedBy:id,email');
 
         if ($request->filled('id')) {
             $query->where('id', (int) $request->input('id'));
@@ -27,6 +27,12 @@ class QuestionController extends Controller
         }
         if ($request->filled('profile_id')) {
             $query->where('profile_id', (int) $request->input('profile_id'));
+        }
+        if ($request->filled('email')) {
+            $email = $request->input('email');
+            $query->whereHas('askedBy', function ($q) use ($email) {
+                $q->where('email', 'like', '%' . $email . '%');
+            });
         }
         // Status: '' = all, '0' = pending, '1' = approved. See ReviewController
         // for why filled() alone isn't enough for the literal-'0' case.

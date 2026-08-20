@@ -31,7 +31,7 @@
                 $pp = request('perPage', $reviews->perPage());
                 $statusLabels = ['1' => 'Approved', '0' => 'Pending'];
                 $replyLabels = ['yes' => 'With reply', 'no' => 'No reply'];
-                $activeCount = collect(['id','user_id','profile_id','q','star','status','has_reply','date_from','date_to'])
+                $activeCount = collect(['id','user_id','profile_id','email','q','star','status','has_reply','date_from','date_to'])
                     ->filter(fn($k) => request()->filled($k))
                     ->count();
             @endphp
@@ -71,6 +71,17 @@
                         </button>
                         <div class="dropdown-menu p-2" style="min-width:220px;">
                             <input type="number" name="profile_id" value="{{ request('profile_id') }}" class="form-control form-control-sm mb-2" placeholder="Profile ID" min="1">
+                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
+                        </div>
+                    </div>
+
+                    {{-- Email --}}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm {{ request('email') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                            Email{{ request('email') ? ': '.\Illuminate\Support\Str::limit(request('email'), 20) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                        </button>
+                        <div class="dropdown-menu p-2" style="min-width:260px;">
+                            <input type="text" name="email" value="{{ request('email') }}" class="form-control form-control-sm mb-2" placeholder="user@example.com">
                             <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
                         </div>
                     </div>
@@ -210,10 +221,12 @@
                 <th>#</th>
                 <th>User ID</th>
                 <th>Profile ID</th>
+                <th>Email</th>
                 <th>Review</th>
                 <th>Reply</th>
                 <th>Star</th>
                 <th>Status</th>
+                <th>Created At</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -223,6 +236,7 @@
                     <td>{{ $review->id }}</td>
                     <td>{{ $review->user_id }}</td>
                     <td>{{ $review->profile_id }}</td>
+                    <td>{{ $review->user->email ?? '-' }}</td>
                     <td>
                         <div class="review-preview" style="max-width: 300px;">
                             {{ Str::limit($review->review, 100) }}
@@ -255,6 +269,7 @@
                             <span class="badge badge-warning">Pending</span>
                         @endif
                     </td>
+                    <td>{{ optional($review->created_at)->format('Y-m-d H:i') ?? '-' }}</td>
                     <td>
                         <a href="javascript:void(0)" class="btn btn-info btn-sm" onclick="showReviewModal({{ $review->id }}, `{{ addslashes($review->review) }}`, `{{ addslashes($review->reply ?? '') }}`)">
                             <i class="fa fa-eye"></i> View

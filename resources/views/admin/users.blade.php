@@ -67,6 +67,7 @@
                     ->count();
             @endphp
 
+            @php $pp = (int) request('per_page', 25); @endphp
             <div class="card-header q-filter-bar py-2">
                 <form method="GET" action="{{ route('admin.users') }}" id="uFiltersForm" class="d-flex align-items-center flex-wrap" style="gap:6px;">
                     <span class="text-muted mr-1"><i class="fa fa-filter"></i></span>
@@ -158,8 +159,14 @@
                         </a>
                     @endif
 
-                    <div class="ml-auto text-muted small">
-                        {{ $users->count() }} user(s)
+                    <div class="ml-auto d-flex align-items-center" style="gap:10px;">
+                        <span class="text-muted small">{{ number_format($users->total()) }} user(s)</span>
+                        <label class="mb-0 small text-muted">Per page</label>
+                        <select name="per_page" class="form-control form-control-sm" style="width:auto;" onchange="this.form.submit()">
+                            @foreach([10, 25, 50, 100] as $opt)
+                                <option value="{{ $opt }}" {{ $pp === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </form>
             </div>
@@ -278,6 +285,19 @@
                         @endforeach
                     </tbody>
                 </table>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted small">
+                        @if($users->total() > 0)
+                            Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ number_format($users->total()) }} entries
+                        @else
+                            No users match the selected filters
+                        @endif
+                    </div>
+                    <div>
+                        {{ $users->links() }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1120,29 +1140,19 @@ $(document).on('click', '.toggle-status', function() {
     }
 });
 
-// Initialize DataTable
+// Server-side pagination is handled by Laravel; DataTables here is only
+// used for click-to-sort on the current page. Paging/search/length UI is
+// disabled to avoid two competing paginations.
 $(document).ready(function() {
     $('#usersTable').DataTable({
-        "pageLength": 25,
-        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-        "order": [[0, "desc"]], // Sort by date descending
+        "paging": false,
+        "info": false,
+        "searching": false,
+        "lengthChange": false,
+        "order": [],
         "columnDefs": [
-            { "orderable": false, "targets": [6, 7] }, // Disable sorting for Profiles and Actions columns
-            { "searchable": false, "targets": [6, 7] }
+            { "orderable": false, "targets": [6, 7] }
         ],
-        "language": {
-            "search": "Search:",
-            "lengthMenu": "_MENU_ records per page",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-            "infoEmpty": "Showing 0 to 0 of 0 entries",
-            "infoFiltered": "(filtered from _MAX_ total entries)",
-            "paginate": {
-                "first": "First",
-                "last": "Last",
-                "next": "Next",
-                "previous": "Previous"
-            }
-        },
         "responsive": true,
         "autoWidth": false
     });

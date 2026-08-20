@@ -70,7 +70,12 @@
                         </ul>
                     </li> 
                     
-                    
+                        <li class="{{ str_contains(Route::currentRouteName(), 'admin.auctions') ? 'current-page' : '' }}">
+                        <a class="ripple" href="{{route('admin.auctions.index')}}">
+                            <i class="list-icon material-icons">account_balance</i>
+                            <span class="hide-menu">Auctions</span>
+                        </a>
+                    </li><!--end -->
                       <li class="{{ Route::currentRouteName() == 'admin.users' ? 'current-page' : '' }}">
                         <a class="ripple" href="{{route('admin.users')}}">
                            <i class="list-icon material-icons">account_circle</i>
@@ -78,41 +83,61 @@
                         </a>
                     </li> 
                     
-                    @php
-                        $supportRoutes = ['admin.whatsapp.index', 'admin.whatsapp.quick-chat', 'admin.whatsapp.settings', 'admin.whatsapp.rotation.index', 'admin.telegram.quick-chat'];
-                        $isSupportSectionOpen = in_array(Route::currentRouteName(), $supportRoutes) || str_contains(Route::currentRouteName(), 'admin.whatsapp') || str_contains(Route::currentRouteName(), 'admin.telegram');
+                   
+
+                          @php
+                        $scraperRoutes = ['admin.scrapers.index', 'admin.scrapers.auto'];
+                        $isScraperSectionOpen = in_array(Route::currentRouteName(), $scraperRoutes);
                     @endphp
-                    <li class="menu-item-has-children {{ $isSupportSectionOpen ? 'current-page' : '' }}">
-                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isSupportSectionOpen ? 'true' : 'false' }}">
-                            <span class="color-color-scheme">
-                                <i class="list-icon material-icons">headset_mic</i>
-                                <span class="hide-menu">Support</span>
-                            </span>
+                    <li class="menu-item-has-children {{ $isScraperSectionOpen ? 'current-page' : '' }}">
+                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isScraperSectionOpen ? 'true' : 'false' }}">
+                            <i class="list-icon material-icons">cloud_download</i>
+                            <span class="hide-menu">Scrapers</span>
                         </a>
-                        <ul class="list-unstyled sub-menu collapse {{ $isSupportSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isSupportSectionOpen ? 'true' : 'false' }}" style="{{ $isSupportSectionOpen ? '' : 'height: 0px;' }}">
-                            <li class="{{ Route::currentRouteName() == 'admin.whatsapp.quick-chat' ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.whatsapp.quick-chat')}}">
-                                    <span class="hide-menu">WhatsApp</span>
+                        <ul class="list-unstyled sub-menu collapse {{ $isScraperSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isScraperSectionOpen ? 'true' : 'false' }}" style="{{ $isScraperSectionOpen ? '' : 'height: 0px;' }}">
+                            <li class="{{ Route::currentRouteName() == 'admin.scrapers.index' ? 'active' : '' }}">
+                                <a class="ripple" href="{{ route('admin.scrapers.index') }}">
+                                    <span class="hide-menu">Manual Run</span>
                                 </a>
                             </li>
-                            <li class="{{ Route::currentRouteName() == 'admin.telegram.quick-chat' ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.telegram.quick-chat')}}">
-                                    <span class="hide-menu">Telegram</span>
-                                </a>
-                            </li>
-                            <li class="{{ Route::currentRouteName() == 'admin.whatsapp.index' ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.whatsapp.index')}}">
-                                    <span class="hide-menu">WhatsApp API</span>
-                                </a>
-                            </li>
-                            <li class="{{ Route::currentRouteName() == 'admin.whatsapp.rotation.index' ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.whatsapp.rotation.index')}}">
-                                    <span class="hide-menu">Rotation Messages</span>
+                            <li class="{{ Route::currentRouteName() == 'admin.scrapers.auto' ? 'active' : '' }}">
+                                <a class="ripple" href="{{ route('admin.scrapers.auto') }}">
+                                    <span class="hide-menu">Auto Setup</span>
                                 </a>
                             </li>
                         </ul>
                     </li>
-                    
+
+                     @php
+                        $packageRoutes = ['admin.packages', 'admin.global.packages'];
+                        $isPackageSectionOpen = in_array(Route::currentRouteName(), $packageRoutes);
+                    @endphp
+                    <li class="menu-item-has-children {{ $isPackageSectionOpen ? 'current-page' : '' }}">
+                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isPackageSectionOpen ? 'true' : 'false' }}">
+                            <i class="list-icon material-icons">card_giftcard</i>
+                            <span class="hide-menu">Packages</span>
+                        </a>
+                        <ul class="list-unstyled sub-menu collapse {{ $isPackageSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isPackageSectionOpen ? 'true' : 'false' }}" style="{{ $isPackageSectionOpen ? '' : 'height: 0px;' }}">
+                            <li class="{{ Route::currentRouteName() == 'admin.packages' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.packages')}}">
+                                    <span class="hide-menu">Country Specific</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.global.packages' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.global.packages')}}">
+                                    <span class="hide-menu">Global Packages</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="{{ Route::currentRouteName() == 'admin.wallet' ? 'current-page' : '' }}">
+                        <a class="ripple" href="{{route('admin.wallet')}}">
+                         <i class="list-icon material-icons">account_balance_wallet</i>
+                            <span class="hide-menu">Wallet</span>
+                        </a>
+                    </li>
+
                     @php
                         $blogRoutes = ['admin.blog.posts.index', 'admin.blog.posts.create', 'admin.blog.posts.edit', 'admin.blog.posts.show', 'admin.blog.categories.index', 'admin.blog.categories.create', 'admin.blog.categories.edit', 'admin.blog.tags.index', 'admin.blog.tags.create', 'admin.blog.tags.edit', 'admin.blog.settings.index'];
                         $isBlogSectionOpen = in_array(Route::currentRouteName(), $blogRoutes) || str_contains(Route::currentRouteName(), 'admin.blog');
@@ -148,14 +173,54 @@
                         </ul>
                     </li>
                              
-                    <li class="{{ str_contains(Route::currentRouteName(), 'admin.auctions') ? 'current-page' : '' }}">
-                        <a class="ripple" href="{{route('admin.auctions.index')}}">
-                            <i class="list-icon material-icons">account_balance</i>
-                            <span class="hide-menu">Auctions</span>
+                
+                    <li class="{{ str_contains(Route::currentRouteName(), 'admin.listings') ? 'current-page' : '' }}">
+                        <a class="ripple" href="{{route('admin.listings.index')}}">
+                           <i class="list-icon material-icons">dashboard</i>
+                            <span class="hide-menu">Categories</span>
                         </a>
-                    </li><!--end -->
+                    </li>
 
-                    @php
+
+                
+                    
+ @php
+                        $supportRoutes = ['admin.whatsapp.index', 'admin.whatsapp.quick-chat', 'admin.whatsapp.settings', 'admin.whatsapp.rotation.index', 'admin.telegram.quick-chat'];
+                        $isSupportSectionOpen = in_array(Route::currentRouteName(), $supportRoutes) || str_contains(Route::currentRouteName(), 'admin.whatsapp') || str_contains(Route::currentRouteName(), 'admin.telegram');
+                    @endphp
+                    <li class="menu-item-has-children {{ $isSupportSectionOpen ? 'current-page' : '' }}">
+                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isSupportSectionOpen ? 'true' : 'false' }}">
+                            <span class="color-color-scheme">
+                                <i class="list-icon material-icons">headset_mic</i>
+                                <span class="hide-menu">Support</span>
+                            </span>
+                        </a>
+                        <ul class="list-unstyled sub-menu collapse {{ $isSupportSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isSupportSectionOpen ? 'true' : 'false' }}" style="{{ $isSupportSectionOpen ? '' : 'height: 0px;' }}">
+                            <li class="{{ Route::currentRouteName() == 'admin.whatsapp.quick-chat' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.whatsapp.quick-chat')}}">
+                                    <span class="hide-menu">WhatsApp</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.telegram.quick-chat' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.telegram.quick-chat')}}">
+                                    <span class="hide-menu">Telegram</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.whatsapp.index' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.whatsapp.index')}}">
+                                    <span class="hide-menu">WhatsApp API</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.whatsapp.rotation.index' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.whatsapp.rotation.index')}}">
+                                    <span class="hide-menu">Rotation Messages</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                  
+@php
                         $internationalRoutes = ['admin.cities', 'admin.countries', 'admin.currencies'];
                         $isInternationalSectionOpen = in_array(Route::currentRouteName(), $internationalRoutes);
                     @endphp
@@ -187,81 +252,6 @@
                             </li>
                         </ul>
                     </li>
-
-                    
-
-
-                     @php
-                        $settingsRoutes = ['admin.appsetting', 'admin.url-redirects.index', 'admin.url-aliases.index', 'admin.mail-settings.index', 'seo.index', 'default-seo.index'];
-                        $isSettingsSectionOpen = in_array(Route::currentRouteName(), $settingsRoutes) || 
-                                                 str_contains(Route::currentRouteName(), 'admin.appsetting') ||
-                                                 str_contains(Route::currentRouteName(), 'admin.url-redirects') ||
-                                                 str_contains(Route::currentRouteName(), 'admin.url-aliases') ||
-                                                 str_contains(Route::currentRouteName(), 'admin.mail-settings') ||
-                                                 str_contains(Route::currentRouteName(), 'seo') ||
-                                                 str_contains(Route::currentRouteName(), 'default-seo');
-                    @endphp
-                    <li class="menu-item-has-children {{ $isSettingsSectionOpen ? 'current-page' : '' }}">
-                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isSettingsSectionOpen ? 'true' : 'false' }}">
-                            <span class="color-color-scheme">
-                                <i class="list-icon material-icons">settings</i>
-                                <span class="hide-menu">Settings</span>
-                            </span>
-                        </a>
-                        <ul class="list-unstyled sub-menu collapse {{ $isSettingsSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isSettingsSectionOpen ? 'true' : 'false' }}" style="{{ $isSettingsSectionOpen ? '' : 'height: 0px;' }}">
-                            <li class="{{ Route::currentRouteName() == 'admin.appsetting' ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.appsetting')}}">
-                                    <span class="hide-menu">App Setup</span>
-                                </a>
-                            </li>
-                            <li class="{{ str_contains(Route::currentRouteName(), 'admin.url-redirects') ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.url-redirects.index')}}">
-                                    <span class="hide-menu">URL Redirects</span>
-                                </a>
-                            </li>
-                            <li class="{{ str_contains(Route::currentRouteName(), 'admin.url-aliases') ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.url-aliases.index')}}">
-                                    <span class="hide-menu">URL Aliases</span>
-                                </a>
-                            </li>
-                            <li class="{{ str_contains(Route::currentRouteName(), 'admin.mail-settings') ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.mail-settings.index')}}">
-                                    <span class="hide-menu">Mail Settings</span>
-                                </a>
-                            </li>
-                            <li class="{{ str_contains(Route::currentRouteName(), 'seo') && !str_contains(Route::currentRouteName(), 'default-seo') ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('seo.index')}}">
-                                    <span class="hide-menu">SEO Keywords</span>
-                                </a>
-                            </li>
-                            <li class="{{ Route::currentRouteName() === 'default-seo.index' || (str_contains(Route::currentRouteName(), 'default-seo') && Route::currentRouteName() !== 'default-seo.pages') ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('default-seo.index')}}">
-                                    <span class="hide-menu">Default SEO Settings</span>
-                                </a>
-                            </li>
-                            <li class="{{ Route::currentRouteName() === 'default-seo.pages' ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('default-seo.pages')}}">
-                                    <span class="hide-menu">Page-Specific SEO</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-
-
-                    <li class="{{ str_contains(Route::currentRouteName(), 'admin.listings') ? 'current-page' : '' }}">
-                        <a class="ripple" href="{{route('admin.listings.index')}}">
-                           <i class="list-icon material-icons">dashboard</i>
-                            <span class="hide-menu">Categories</span>
-                        </a>
-                    </li>
-
-
-                   
-
-                    
-
-
-                  
 
 
 
@@ -321,58 +311,64 @@
                         </a>
                     </li>
 
-                    @php
-                        $packageRoutes = ['admin.packages', 'admin.global.packages'];
-                        $isPackageSectionOpen = in_array(Route::currentRouteName(), $packageRoutes);
+                   
+  @php
+                        $settingsRoutes = ['admin.appsetting', 'admin.url-redirects.index', 'admin.url-aliases.index', 'admin.mail-settings.index', 'seo.index', 'default-seo.index'];
+                        $isSettingsSectionOpen = in_array(Route::currentRouteName(), $settingsRoutes) || 
+                                                 str_contains(Route::currentRouteName(), 'admin.appsetting') ||
+                                                 str_contains(Route::currentRouteName(), 'admin.url-redirects') ||
+                                                 str_contains(Route::currentRouteName(), 'admin.url-aliases') ||
+                                                 str_contains(Route::currentRouteName(), 'admin.mail-settings') ||
+                                                 str_contains(Route::currentRouteName(), 'seo') ||
+                                                 str_contains(Route::currentRouteName(), 'default-seo');
                     @endphp
-                    <li class="menu-item-has-children {{ $isPackageSectionOpen ? 'current-page' : '' }}">
-                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isPackageSectionOpen ? 'true' : 'false' }}">
-                            <i class="list-icon material-icons">card_giftcard</i>
-                            <span class="hide-menu">Packages</span>
+                    <li class="menu-item-has-children {{ $isSettingsSectionOpen ? 'current-page' : '' }}">
+                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isSettingsSectionOpen ? 'true' : 'false' }}">
+                            <span class="color-color-scheme">
+                                <i class="list-icon material-icons">settings</i>
+                                <span class="hide-menu">Settings</span>
+                            </span>
                         </a>
-                        <ul class="list-unstyled sub-menu collapse {{ $isPackageSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isPackageSectionOpen ? 'true' : 'false' }}" style="{{ $isPackageSectionOpen ? '' : 'height: 0px;' }}">
-                            <li class="{{ Route::currentRouteName() == 'admin.packages' ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.packages')}}">
-                                    <span class="hide-menu">Country Specific</span>
+                        <ul class="list-unstyled sub-menu collapse {{ $isSettingsSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isSettingsSectionOpen ? 'true' : 'false' }}" style="{{ $isSettingsSectionOpen ? '' : 'height: 0px;' }}">
+                            <li class="{{ Route::currentRouteName() == 'admin.appsetting' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.appsetting')}}">
+                                    <span class="hide-menu">App Setup</span>
                                 </a>
                             </li>
-                            <li class="{{ Route::currentRouteName() == 'admin.global.packages' ? 'active' : '' }}">
-                                <a class="ripple" href="{{route('admin.global.packages')}}">
-                                    <span class="hide-menu">Global Packages</span>
+                            <li class="{{ str_contains(Route::currentRouteName(), 'admin.url-redirects') ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.url-redirects.index')}}">
+                                    <span class="hide-menu">URL Redirects</span>
+                                </a>
+                            </li>
+                            <li class="{{ str_contains(Route::currentRouteName(), 'admin.url-aliases') ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.url-aliases.index')}}">
+                                    <span class="hide-menu">URL Aliases</span>
+                                </a>
+                            </li>
+                            <li class="{{ str_contains(Route::currentRouteName(), 'admin.mail-settings') ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.mail-settings.index')}}">
+                                    <span class="hide-menu">Mail Settings</span>
+                                </a>
+                            </li>
+                            <li class="{{ str_contains(Route::currentRouteName(), 'seo') && !str_contains(Route::currentRouteName(), 'default-seo') ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('seo.index')}}">
+                                    <span class="hide-menu">SEO Keywords</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() === 'default-seo.index' || (str_contains(Route::currentRouteName(), 'default-seo') && Route::currentRouteName() !== 'default-seo.pages') ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('default-seo.index')}}">
+                                    <span class="hide-menu">Default SEO Settings</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() === 'default-seo.pages' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('default-seo.pages')}}">
+                                    <span class="hide-menu">Page-Specific SEO</span>
                                 </a>
                             </li>
                         </ul>
                     </li>
 
-                    <li class="{{ Route::currentRouteName() == 'admin.wallet' ? 'current-page' : '' }}">
-                        <a class="ripple" href="{{route('admin.wallet')}}">
-                         <i class="list-icon material-icons">account_balance_wallet</i>
-                            <span class="hide-menu">Wallet</span>
-                        </a>
-                    </li>
-
-                    @php
-                        $scraperRoutes = ['admin.scrapers.index', 'admin.scrapers.auto'];
-                        $isScraperSectionOpen = in_array(Route::currentRouteName(), $scraperRoutes);
-                    @endphp
-                    <li class="menu-item-has-children {{ $isScraperSectionOpen ? 'current-page' : '' }}">
-                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isScraperSectionOpen ? 'true' : 'false' }}">
-                            <i class="list-icon material-icons">cloud_download</i>
-                            <span class="hide-menu">Scrapers</span>
-                        </a>
-                        <ul class="list-unstyled sub-menu collapse {{ $isScraperSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isScraperSectionOpen ? 'true' : 'false' }}" style="{{ $isScraperSectionOpen ? '' : 'height: 0px;' }}">
-                            <li class="{{ Route::currentRouteName() == 'admin.scrapers.index' ? 'active' : '' }}">
-                                <a class="ripple" href="{{ route('admin.scrapers.index') }}">
-                                    <span class="hide-menu">Manual Run</span>
-                                </a>
-                            </li>
-                            <li class="{{ Route::currentRouteName() == 'admin.scrapers.auto' ? 'active' : '' }}">
-                                <a class="ripple" href="{{ route('admin.scrapers.auto') }}">
-                                    <span class="hide-menu">Auto Setup</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+              
 
                     <li>
                         <a class="ripple" href="javascript:void(0);" onclick="event.preventDefault(); if(confirm('Are you sure you want to clear all caches?')) { document.getElementById('clear-cache-form').submit(); }">

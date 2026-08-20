@@ -11,23 +11,49 @@ use Illuminate\Support\Facades\Mail;
  
 class VerificationController extends Controller
 {
-    public function index(Request $request) 
+    public function index(Request $request)
     {
         $perPage = $request->get('per_page', 15);
         $search = $request->get('search');
-        
+        $profileId = $request->get('profile_id');
+        $userId = $request->get('user_id');
+        $email = $request->get('email');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
         $query = VerificationPhoto::with(['user', 'profile.ggender', 'profile.getcity'])
             ->where('status', 'pending');
-            
-        // Apply search filter
+
         if ($search) {
-            $query->whereHas('profile', function($q) use ($search) {
+            $query->whereHas('profile', function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%");
             });
         }
-        
-        $photos = $query->latest()->paginate($perPage);
-            
+
+        if ($profileId !== null && $profileId !== '') {
+            $query->where('profile_id', $profileId);
+        }
+
+        if ($userId !== null && $userId !== '') {
+            $query->where('user_id', $userId);
+        }
+
+        if ($email) {
+            $query->whereHas('user', function ($q) use ($email) {
+                $q->where('email', 'LIKE', "%{$email}%");
+            });
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $photos = $query->latest()->paginate($perPage)->withQueryString();
+
         return view('admin.verifications.index', compact('photos'));
     }
 

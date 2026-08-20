@@ -44,8 +44,15 @@ class AdminUserController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Get all users (DataTables handles pagination client-side)
-        $users = $query->orderBy('id', 'desc')->get();
+        $perPage = (int) $request->get('per_page', 25);
+        if (!in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
+
+        $users = $query->orderBy('id', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+
         $packages = Package::all();
         $countries = Country::orderBy('nicename')->get();
 

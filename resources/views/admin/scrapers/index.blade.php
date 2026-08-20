@@ -101,7 +101,7 @@
     </div>
 </div>
 
-<ul class="nav nav-pills mb-3">
+<ul class="nav nav-pills mb-3 mt-2">
     <li class="nav-item"><a class="nav-link active" href="{{ route('admin.scrapers.index') }}">Manual Run</a></li>
     <li class="nav-item"><a class="nav-link" href="{{ route('admin.scrapers.auto') }}">Auto Setup (cron)</a></li>
 </ul>

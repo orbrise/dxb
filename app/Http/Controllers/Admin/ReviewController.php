@@ -17,7 +17,7 @@ class ReviewController extends Controller
             $perPage = 10;
         }
 
-        $query = Review::query();
+        $query = Review::with('user:id,email');
 
         if ($request->filled('id')) {
             $query->where('id', (int) $request->input('id'));
@@ -27,6 +27,12 @@ class ReviewController extends Controller
         }
         if ($request->filled('profile_id')) {
             $query->where('profile_id', (int) $request->input('profile_id'));
+        }
+        if ($request->filled('email')) {
+            $email = $request->input('email');
+            $query->whereHas('user', function ($q) use ($email) {
+                $q->where('email', 'like', '%' . $email . '%');
+            });
         }
         if ($request->filled('star')) {
             $query->where('star', (int) $request->input('star'));

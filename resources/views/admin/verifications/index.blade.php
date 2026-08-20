@@ -124,48 +124,72 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- Search Bar -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <form method="GET" action="{{ route('admin.verifications') }}" id="searchForm">
-                                <div class="input-group">
-                                    <input type="text" 
-                                           name="search" 
-                                           class="form-control" 
-                                           placeholder="Search by profile name..." 
-                                           value="{{ request('search') }}">
-                                    <input type="hidden" name="per_page" id="searchPerPage" value="{{ request('per_page', 15) }}">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-primary" type="submit">
-                                            <i class="fas fa-search"></i> Search
-                                        </button>
-                                        @if(request('search'))
-                                        <a href="{{ route('admin.verifications') }}" class="btn btn-secondary">
-                                            <i class="fas fa-times"></i> Clear
-                                        </a>
-                                        @endif
-                                    </div>
-                                </div>
-                            </form>
+                    <!-- Filters -->
+                    @php
+                        $hasAnyFilter = request()->hasAny(['search', 'profile_id', 'user_id', 'email', 'date_from', 'date_to']);
+                    @endphp
+                    <form method="GET" action="{{ route('admin.verifications') }}" id="searchForm" class="mb-3">
+                        <input type="hidden" name="per_page" id="searchPerPage" value="{{ request('per_page', 15) }}">
+                        <div class="row g-2 align-items-end flex-nowrap">
+                            <div class="col mb-2">
+                                <label class="small mb-1">Profile Name</label>
+                                <input type="text" name="search" class="form-control form-control-sm"
+                                       placeholder="Profile name..."
+                                       value="{{ request('search') }}">
+                            </div>
+                            <div class="col mb-2">
+                                <label class="small mb-1">Profile ID</label>
+                                <input type="number" name="profile_id" class="form-control form-control-sm"
+                                       placeholder="1234"
+                                       value="{{ request('profile_id') }}">
+                            </div>
+                            <div class="col mb-2">
+                                <label class="small mb-1">User ID</label>
+                                <input type="number" name="user_id" class="form-control form-control-sm"
+                                       placeholder="987"
+                                       value="{{ request('user_id') }}">
+                            </div>
+                            <div class="col mb-2">
+                                <label class="small mb-1">Email</label>
+                                <input type="text" name="email" class="form-control form-control-sm"
+                                       placeholder="user@example.com"
+                                       value="{{ request('email') }}">
+                            </div>
+                            <div class="col mb-2">
+                                <label class="small mb-1">From</label>
+                                <input type="date" name="date_from" class="form-control form-control-sm"
+                                       value="{{ request('date_from') }}">
+                            </div>
+                            <div class="col mb-2">
+                                <label class="small mb-1">To</label>
+                                <input type="date" name="date_to" class="form-control form-control-sm"
+                                       value="{{ request('date_to') }}">
+                            </div>
+                            <div class="col-auto mb-2 d-flex">
+                                <button class="btn btn-primary btn-sm mr-2" type="submit">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                                @if($hasAnyFilter)
+                                    <a href="{{ route('admin.verifications') }}" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-times"></i> Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
-                        <div class="col-md-6 text-right">
-                            @if(request('search'))
-                            <p class="text-muted mb-0">
-                                <i class="fas fa-info-circle"></i> 
-                                Showing results for: <strong>"{{ request('search') }}"</strong>
-                            </p>
-                            @endif
-                        </div>
-                    </div>
+                    </form>
 
                     <div class="table-responsive">
                         <table class="table table-bordered" id="verificationTable">
                             <thead>
                                 <tr>
                                     <th>Profile</th>
+                                    <th>Profile ID</th>
+                                    <th>User ID</th>
+                                    <th>Email</th>
                                     <th>Verification Photo</th>
                                     <th>Profile Photos</th>
                                     <th>Photo Code</th>
+                                    <th>Created At</th>
                                     <th>Submitted</th>
                                     <th>Actions</th>
                                 </tr>
@@ -179,15 +203,18 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
                                                 {{ $photo->profile->name }}
                                             </a>
                                         </td>
+                                        <td>{{ $photo->profile->id }}</td>
+                                        <td>{{ $photo->user_id }}</td>
+                                        <td>{{ $photo->user->email ?? '-' }}</td>
                                         <td>
-                                            <img src="{{ smart_asset('userimages/'.$photo->user_id.'/verification/'.$photo->photo) }}" 
-                                                 class="img-preview" 
-                                                 data-bs-toggle="modal" 
+                                            <img src="{{ smart_asset('userimages/'.$photo->user_id.'/verification/'.$photo->photo) }}"
+                                                 class="img-preview"
+                                                 data-bs-toggle="modal"
                                                  data-bs-target="#photoModal{{ $photo->id }}">
                                         </td>
                                         <td>
                                             <div class="profile-photos">
-                                         
+
                                                 @if($photo->profile && $photo->profile->singleimg && $photo->profile->singleimg->image)
                                                 <img src="{{smart_asset("userimages/".$photo->profile->user_id."/".$photo->profile->id."/".$photo->profile->singleimg->image)}}"
                                                 class="img-thumbnail">
@@ -197,6 +224,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
                                             </div>
                                         </td>
                                         <td> <div class="badge bg-warning " style="font-size:20px" >{{$photo->profile?->photo_code}}</span></div>
+                                        <td>{{ $photo->created_at->format('Y-m-d H:i') }}</td>
                                         <td>{{ $photo->created_at->diffForHumans() }}</td>
                                         <td>
                                             <button class="btn btn-info btn-sm view-btn" 
@@ -226,25 +254,25 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
                         <div class="text-center py-5">
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                             <p class="text-muted">
-                                @if(request('search'))
-                                    No verifications found matching "{{ request('search') }}"
+                                @if($hasAnyFilter)
+                                    No verifications found matching the selected filters
                                 @else
                                     No pending verifications at the moment
                                 @endif
                             </p>
                         </div>
                         @endif
-                        
+
                         <!-- Pagination -->
                         <div class="d-flex justify-content-between align-items-center mt-3">
                             <div>
                                 Showing {{ $photos->firstItem() ?? 0 }} to {{ $photos->lastItem() ?? 0 }} of {{ $photos->total() }} entries
-                                @if(request('search'))
-                                    (filtered from total entries)
+                                @if($hasAnyFilter)
+                                    (filtered results)
                                 @endif
                             </div>
                             <div>
-                                {{ $photos->appends(['search' => request('search'), 'per_page' => request('per_page', 15)])->links() }}
+                                {{ $photos->links() }}
                             </div>
                         </div>
                     </div>
@@ -416,15 +444,13 @@ $(document).ready(function() {
         }
     });
 
-    // Handle per page change
+    // Handle per page change - preserve all current filter params
     $('#perPageSelect').on('change', function() {
         const perPage = $(this).val();
-        const currentSearch = "{{ request('search') }}";
-        let url = "{{ route('admin.verifications') }}?per_page=" + perPage;
-        if (currentSearch) {
-            url += "&search=" + encodeURIComponent(currentSearch);
-        }
-        window.location.href = url;
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', perPage);
+        url.searchParams.delete('page');
+        window.location.href = url.toString();
     });
 
     // Update hidden per_page input when searching

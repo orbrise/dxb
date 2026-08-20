@@ -81,7 +81,22 @@
                 @endif
             </td>
             <td class="clickable-cell">{{$profile->ggender->name}}</td>
-            <td class="clickable-cell">{{$profile->countrycode}} {{$profile->phone}}</td>
+            <td class="clickable-cell">
+                {{$profile->countrycode}} {{$profile->phone}}
+                @php
+                    $waDigits = preg_replace('/\D/', '', ($profile->countrycode ?? '') . ($profile->phone ?? ''));
+                @endphp
+                @if($waDigits !== '')
+                    <a href="https://wa.me/{{ $waDigits }}"
+                       target="_blank"
+                       rel="noopener"
+                       title="Open in WhatsApp"
+                       onclick="event.stopPropagation();"
+                       style="color:#25D366; margin-left:6px;">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                @endif
+            </td>
             <td class="clickable-cell">
                 @if($profile->isArchived())
                     <span class="badge bg-secondary">
