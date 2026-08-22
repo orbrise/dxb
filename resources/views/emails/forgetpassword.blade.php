@@ -7,18 +7,17 @@
       </div>
       <h1 style="font-size: 1.5em; margin-bottom: 1em; font-weight: 700; color: rgb(255, 255, 255);">Hi {{ $mailData['name'] }},</h1>
       <p style="font: 14px / 1.5 &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; color: rgb(255, 255, 255);"> Click here to set a new password: </p>
-      <table cellpadding="0" cellspacing="0" style="display: inline-block; border-collapse: collapse; border-radius: 3px; font-family: Arial, Helvetica, sans-serif; font-size: 20px; text-align: center; text-decoration: none; cursor: pointer; line-height: 20px; text-shadow: rgb(253, 232, 119) 0px 1px 0px; background-color: #C1F11D; border: 1px solid rgb(0, 0, 0); color: rgb(0, 0, 0);">
+      <table cellpadding="0" cellspacing="0" style="display: inline-block; border-collapse: collapse; border-radius: 21.5px; font-family: Arial, Helvetica, sans-serif; font-size: 14px; text-align: center; text-decoration: none; cursor: pointer; line-height: 20px; background-color: #C1F11D; color: rgb(0, 0, 0);">
         <tbody>
           <tr>
             <td>
-              <a href="{{url('change-password/'.$mailData['email'].'/'.$mailData['random'])}}" style="outline: 0px; color: rgb(0, 0, 0); text-decoration: none; line-height: 20px; padding: 10px 20px; display: block; width: auto;">Change my password</a>
+              <a href="{{url('change-password/'.$mailData['email'].'/'.$mailData['random'])}}" style="outline: 0px; color: rgb(0, 0, 0); text-decoration: none; font-weight: 600; line-height: 20px; padding: 8px 22px; display: block; width: auto;">Change my password</a>
             </td>
           </tr>
         </tbody>
       </table>
-      <p style="font: 14px / 1.5 &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; color: rgb(255, 255, 255);">Button not working? Copy &amp; paste the link below in your browser: <br>
-        <span style="color: rgb(17, 85, 204); background: rgb(128, 128, 156); padding: 2px;">{{url('change-password/'.$mailData['email'].'/'.$mailData['random'])}}</span>
-      </p>
+      <p style="font: 14px / 1.5 &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; color: rgb(255, 255, 255);">Button not working? Copy &amp; paste the link below in your browser:</p>
+      <p style="font-size: 13px; color: #C1F11D; background: #131616; border: 1px solid #2a2a2a; padding: 10px 12px; border-radius: 5px; word-break: break-all; margin: 10px 0;">{{url('change-password/'.$mailData['email'].'/'.$mailData['random'])}}</p>
       <p style="font: 14px / 1.5 &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; color: rgb(255, 255, 255);">Thank You</p>
       <p style="font: 10pt / 1.5 &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; color: rgb(190, 190, 190); border-top: 2px solid #2a2a2a; margin-top: 20px; text-align: justify; padding-top: 5px;"> You have received this email because password reset was requested for <strong>
           <a href="mailto:{{$mailData['email']}}" style="color: #C1F11D; text-decoration: none; outline: 0px;">{{$mailData['email']}}</a>

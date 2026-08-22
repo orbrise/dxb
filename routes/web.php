@@ -289,6 +289,7 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get("my-account/edit", \App\Livewire\Profile\UserAccountEdit::class)->name("user.account.edit");
     Route::get("my-password/edit", \App\Livewire\Profile\UserAccountPassword::class)->name("user.account.password");
     Route::get("my-account/newsletter/edit", \App\Livewire\NewsletterSettings::class)->name("user.account.newsletter");
+    Route::get("my-account/credits/history", \App\Livewire\CreditsHistory::class)->name("user.credits.history");
     Route::post("my-account/delete", [App\Http\Controllers\UserAccountController::class, 'deleteAccount'])->name("user.account.delete");
     Route::get("my-messages", \App\Livewire\Messages::class)->name("user.messages");
     Route::get("my-chat", \App\Livewire\Chat::class)->name("user.chat");

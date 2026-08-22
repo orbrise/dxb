@@ -194,6 +194,10 @@ class MassageRepublicImporter
             'outcallprice' => $row->outcall_price,
             'incallcurr' => $row->incall_currency,
             'outcallcurr' => $row->outcall_currency,
+            // If a price is present the service is being offered — flip the boolean
+            // so the front-end incall/outcall filters actually match this profile.
+            'incall' => ($row->incall_price !== null && $row->incall_price > 0) ? 1 : 0,
+            'outcall' => ($row->outcall_price !== null && $row->outcall_price > 0) ? 1 : 0,
             'listing' => 1,
             'is_active' => 1,
             'is_featured' => 1,

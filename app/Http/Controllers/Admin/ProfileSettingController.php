@@ -303,6 +303,10 @@ public function orientations()
     if ($request->status || $request->status === '0') {
         if ($request->status === 'archived') {
             $query->archived();
+        } elseif ($request->status === 'verified') {
+            // Verified profiles = is_verified flag set; scope to non-archived so
+            // archived-but-once-verified rows don't leak into the active list.
+            $query->where('is_verified', 1)->active();
         } else {
             $query->where('is_active', $request->status == 1 ? 1 : 0);
             // When filtering by active/inactive status, only show non-archived profiles

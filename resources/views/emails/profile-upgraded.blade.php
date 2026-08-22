@@ -28,11 +28,12 @@
                 <p style="font-size: 14px; color: #bebebe; margin: 0 0 10px 0;">Upgrade Details:</p>
                 <p style="font-size: 18px; font-weight: bold; color: #C1F11D; margin: 0 0 10px 0;">{{ $packageName }} Package</p>
                 <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Profile: <strong>{{ $profileName }}</strong></p>
-                <p style="font-size: 14px; color: #ffffff; margin: 0;">Duration: <strong style="color: #C1F11D;">{{ $duration }} days</strong></p>
+                <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Duration: <strong style="color: #C1F11D;">{{ $duration }} days</strong></p>
+                <p style="font-size: 14px; color: #ffffff; margin: 0;">Expires on: <strong style="color: #C1F11D;">{{ $expiryDate }}</strong></p>
             </div>
             
             <p style="font-size: 14px; line-height: 1.5; color: #ffffff; margin-bottom: 15px;">
-                Your profile is now featured and will enjoy enhanced visibility for the next {{ $duration }} days. This means more views, more connections, and better opportunities!
+                Your profile is now featured and will enjoy enhanced visibility for the next {{ $duration }} days (until <strong style="color: #C1F11D;">{{ $expiryDate }}</strong>). This means more views, more connections, and better opportunities!
             </p>
             
             <p style="font-size: 14px; line-height: 1.5; color: #ffffff; margin-bottom: 15px;">
@@ -49,8 +50,8 @@
             <table cellpadding="0" cellspacing="0" style="display: inline-block; margin: 20px 0;">
                 <tbody>
                     <tr>
-                        <td style="border-radius: 3px; background-color: #C1F11D; text-align: center;">
-                            <a href="{{ $profileUrl }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 20px; font-family: Arial, Helvetica, sans-serif; font-weight: bold; line-height: 20px; padding: 12px 30px; display: block; text-shadow: #FDE877 0px 1px 0px;">
+                        <td style="border-radius: 21.5px; background-color: #C1F11D; text-align: center;">
+                            <a href="{{ $profileUrl }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 14px; font-family: Arial, Helvetica, sans-serif; font-weight: 600; line-height: 20px; padding: 8px 22px; display: block;">
                                 View Your Profile
                             </a>
                         </td>
@@ -61,7 +62,7 @@
             <p style="font-size: 14px; line-height: 1.5; color: #ffffff; margin-top: 25px;">
                 If you're having trouble clicking the "View Your Profile" button, copy and paste the URL below into your web browser:
             </p>
-            <p style="font-size: 12px; color: #1155cc; background: #808098; padding: 8px; word-break: break-all; margin: 10px 0;">
+            <p style="font-size: 13px; color: #C1F11D; background: #131616; border: 1px solid #2a2a2a; padding: 10px 12px; border-radius: 5px; word-break: break-all; margin: 10px 0;">
                 {{ $profileUrl }}
             </p>
             

@@ -48,8 +48,8 @@
             <table cellpadding="0" cellspacing="0" style="display: inline-block; margin: 20px 0;">
                 <tbody>
                     <tr>
-                        <td style="border-radius: 3px; background-color: #C1F11D; text-align: center;">
-                            <a href="{{ url('/') }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 20px; font-family: Arial, Helvetica, sans-serif; font-weight: bold; line-height: 20px; padding: 12px 30px; display: block;">
+                        <td style="border-radius: 21.5px; background-color: #C1F11D; text-align: center;">
+                            <a href="{{ url('/') }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 14px; font-family: Arial, Helvetica, sans-serif; font-weight: 600; line-height: 20px; padding: 8px 22px; display: block;">
                                 Visit evoory
                             </a>
                         </td>

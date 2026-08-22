@@ -21,7 +21,7 @@
 
 <div class="row justify-content-center mt-3">
 
-<div class="col-md-3 col-sm-6 widget-holder widget-full-height">
+<div class="col-md col-sm-6 widget-holder widget-full-height">
                         <div class="widget-bg bg-primary text-inverse" style="background-color: #fb8c00 !important">
                             <div class="widget-body">
                             <a style="color:black; text-decoration:none" href="{{ route('admin.users') }}">
@@ -38,7 +38,7 @@
                     </div>
 
     <!--end col-->
-    <div class="col-md-3 col-sm-6 widget-holder widget-full-height">
+    <div class="col-md col-sm-6 widget-holder widget-full-height">
                         <div class="widget-bg bg-color-scheme text-inverse" style="background-color: #0acc95 !important">
                             <div class="widget-body clearfix">
                             <a style="color:black; text-decoration:none" href="{{ route('admin.profiles.index') }}">
@@ -55,7 +55,7 @@
                     </div>
 
 
-    <div class="col-md-3 col-sm-6 widget-holder widget-full-height">
+    <div class="col-md col-sm-6 widget-holder widget-full-height">
                         <div class="widget-bg" style="background-color: #186dde !important; color:white">
                             <div class="widget-body clearfix">
                              <a style="color:white" href="{{ url('admin/profiles?id=&start_date=&end_date=&title=&city=&status=1&premium=') }}">
@@ -73,7 +73,7 @@
                     </div>
 
 
-<div class="col-md-3 col-sm-6 widget-holder widget-full-height">
+<div class="col-md col-sm-6 widget-holder widget-full-height">
                         <div class="widget-bg" style="background-color: #2f3d4a !important; color:white">
                             <div class="widget-body clearfix">
                              <a style="color:white" href="{{ url('admin/profiles?id=&start_date=&end_date=&title=&city=&status=0&premium=') }}">
@@ -88,7 +88,23 @@
                         </div>
                         <!-- /.widget-bg -->
                     </div>
-                  
+
+<div class="col-md col-sm-6 widget-holder widget-full-height">
+                        <div class="widget-bg" style="background-color: #6f42c1 !important; color:white">
+                            <div class="widget-body clearfix">
+                             <a style="color:white" href="{{ url('admin/profiles?id=&start_date=&end_date=&title=&city=&status=verified&premium=') }}">
+                                <div class="widget-counter">
+                                    <h6 style="color:white">Verified Profiles <small></small></h6>
+                                    <h3 class="h1" style="color:white"><span class="counter">{{ $stats['verified_profiles'] }}</span></h3><i class="material-icons list-icon">verified_user</i>
+                                </div>
+                                </a>
+                                <!-- /.widget-counter -->
+                            </div>
+                            <!-- /.widget-body -->
+                        </div>
+                        <!-- /.widget-bg -->
+                    </div>
+
 </div>
 
 

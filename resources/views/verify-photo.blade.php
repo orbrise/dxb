@@ -27,7 +27,7 @@ body { background: #0a0a0a !important; }
 .ev-page-header {
     background: #131616;
     padding: 14px 0;
-    border-bottom: 1px solid #2a2a2a;
+
 }
 .ev-page-header .ev-container {
     display: flex;
@@ -646,10 +646,11 @@ body { background: #0a0a0a !important; }
                 <div class="search-group">
                     <input type="text"
                            id="profileSearch"
-                           placeholder="Type profile name or ID to search..."
-                           autocomplete="off">
-                    <button type="button" id="searchBtn">
-                        <i class="fas fa-search"></i>
+                           placeholder="Search or select your profile..."
+                           autocomplete="off"
+                           readonly-hint>
+                    <button type="button" id="searchBtn" aria-label="Toggle profiles list">
+                        <i class="fas fa-chevron-down" id="searchBtnIcon"></i>
                     </button>
                 </div>
                 <div id="profileResults"></div>
@@ -1058,10 +1059,15 @@ body { background: #0a0a0a !important; }
         var profileSearch = $id('profileSearch');
         var profileResults = $id('profileResults');
         var searchBtn = $id('searchBtn');
+        var searchBtnIcon = $id('searchBtnIcon');
         if (!profileSearch || profileSearch.__bound) return;
         profileSearch.__bound = true;
         var selectedProfileId = userId;
         var assetBaseUrl = 'https://assets.massagerepublic.com.co/';
+        // Fetched once, filtered client-side. A user's own profile list is small
+        // (typically <20) so the initial round-trip is cheap and typing is instant.
+        var allProfiles = null;
+        var loading = false;
 
         function escapeHtml(s) {
             return String(s).replace(/[&<>"']/g, function (c) {
@@ -1069,8 +1075,29 @@ body { background: #0a0a0a !important; }
             });
         }
 
-        function searchProfiles(query) {
-            fetch('/api/search-my-profiles?q=' + encodeURIComponent(query), {
+        function setChevron(open) {
+            if (!searchBtnIcon) return;
+            searchBtnIcon.classList.remove('fa-chevron-down', 'fa-chevron-up');
+            searchBtnIcon.classList.add(open ? 'fa-chevron-up' : 'fa-chevron-down');
+        }
+
+        function openDropdown() {
+            profileResults.classList.add('show');
+            setChevron(true);
+        }
+
+        function closeDropdown() {
+            profileResults.classList.remove('show');
+            setChevron(false);
+        }
+
+        function loadAllProfiles(onDone) {
+            if (allProfiles !== null) { onDone && onDone(); return; }
+            if (loading) return;
+            loading = true;
+            profileResults.innerHTML = '<div style="padding:12px;color:#666">Loading profiles...</div>';
+            openDropdown();
+            fetch('/api/search-my-profiles', {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: {
@@ -1079,14 +1106,28 @@ body { background: #0a0a0a !important; }
                     'X-CSRF-TOKEN': csrfToken
                 }
             }).then(function (r) {
-                if (!r.ok) throw new Error('Search failed');
+                if (!r.ok) throw new Error('Load failed');
                 return r.json();
             }).then(function (data) {
-                displayProfiles(data.profiles);
+                allProfiles = data.profiles || [];
+                loading = false;
+                onDone && onDone();
             }).catch(function (err) {
-                console.error('Search error:', err);
+                console.error('Load error:', err);
+                loading = false;
                 profileResults.innerHTML = '<div style="padding:12px;color:#666">Error loading profiles</div>';
-                profileResults.classList.add('show');
+                openDropdown();
+            });
+        }
+
+        function filterProfiles(query) {
+            if (!allProfiles) return [];
+            var q = query.trim().toLowerCase();
+            if (!q) return allProfiles;
+            return allProfiles.filter(function (p) {
+                return String(p.name || '').toLowerCase().indexOf(q) !== -1
+                    || String(p.id) === q
+                    || String(p.id).indexOf(q) !== -1;
             });
         }
 
@@ -1094,7 +1135,7 @@ body { background: #0a0a0a !important; }
             profileResults.innerHTML = '';
             if (!profiles || profiles.length === 0) {
                 profileResults.innerHTML = '<div style="padding:12px;color:#666">No profiles found</div>';
-                profileResults.classList.add('show');
+                openDropdown();
                 return;
             }
             profiles.forEach(function (profile) {
@@ -1119,36 +1160,40 @@ body { background: #0a0a0a !important; }
                 });
                 profileResults.appendChild(div);
             });
-            profileResults.classList.add('show');
+            openDropdown();
         }
 
-        var searchTimeout;
+        function showAll() {
+            loadAllProfiles(function () { displayProfiles(allProfiles); });
+        }
+
+        profileSearch.addEventListener('focus', showAll);
+        profileSearch.addEventListener('click', showAll);
+
         profileSearch.addEventListener('input', function () {
-            var query = this.value.trim();
-            clearTimeout(searchTimeout);
-            if (query.length === 0) {
-                profileResults.classList.remove('show');
-                profileResults.innerHTML = '';
-                return;
-            }
-            searchTimeout = setTimeout(function () { searchProfiles(query); }, 300);
+            var query = this.value;
+            loadAllProfiles(function () { displayProfiles(filterProfiles(query)); });
         });
+
         if (searchBtn) {
-            searchBtn.addEventListener('click', function () {
-                var q = profileSearch.value.trim();
-                if (q.length > 0) searchProfiles(q);
+            searchBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (profileResults.classList.contains('show')) {
+                    closeDropdown();
+                } else {
+                    showAll();
+                    profileSearch.focus();
+                }
             });
         }
-        profileSearch.addEventListener('keypress', function (e) {
-            if (e.which === 13 || e.keyCode === 13) {
-                e.preventDefault();
-                var q = this.value.trim();
-                if (q.length > 0) searchProfiles(q);
-            }
+
+        profileSearch.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeDropdown();
         });
+
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.profile-search-wrapper')) {
-                profileResults.classList.remove('show');
+                closeDropdown();
             }
         });
     }

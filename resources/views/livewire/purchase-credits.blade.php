@@ -2,6 +2,12 @@
 #header .nav-bar { background: #1f2222 !important; }
 #header { margin-bottom: 0px !important; }
 .backclass { background: #0a0a0a !important; }
+/* Header + body all match the black content area so there's no visible band.
+   Body-scoped selectors beat the hardcoded #0D1011 in evoory-theme.css. */
+body { background: #000 !important; }
+body header.ev-header,
+body .ev-header,
+header.ev-header-account { background: #000 !important; border-bottom: none !important; box-shadow: none !important; }
 
 /* Amount input */
 .purchase-credits-page .amount-input-group {

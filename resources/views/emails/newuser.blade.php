@@ -31,8 +31,8 @@
             <table cellpadding="0" cellspacing="0" style="display: inline-block; margin: 20px 0;">
                 <tbody>
                     <tr>
-                        <td style="border-radius: 3px; background-color: #C1F11D; text-align: center;">
-                            <a href="{{ url('activate-account/'.$mailData['email'].'/'.$mailData['random']) }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 20px; font-family: Arial, Helvetica, sans-serif; font-weight: bold; line-height: 20px; padding: 12px 30px; display: block; text-shadow: #FDE877 0px 1px 0px;">
+                        <td style="border-radius: 21.5px; background-color: #C1F11D; text-align: center;">
+                            <a href="{{ url('activate-account/'.$mailData['email'].'/'.$mailData['random']) }}" style="outline: 0; color: #000000; text-decoration: none; font-size: 14px; font-family: Arial, Helvetica, sans-serif; font-weight: 600; line-height: 20px; padding: 8px 22px; display: block;">
                                 Activate account
                             </a>
                         </td>
@@ -43,7 +43,7 @@
             <p style="font-size: 14px; line-height: 1.5; color: #ffffff; margin-top: 25px;">
                 Button not working? Copy &amp; paste the link below in your browser:
             </p>
-            <p style="font-size: 12px; color: #1155cc; background: #808098; padding: 8px; word-break: break-all; margin: 10px 0;">
+            <p style="font-size: 13px; color: #C1F11D; background: #131616; border: 1px solid #2a2a2a; padding: 10px 12px; border-radius: 5px; word-break: break-all; margin: 10px 0;">
                 {{ url('activate-account/'.$mailData['email'].'/'.$mailData['random']) }}
             </p>
             

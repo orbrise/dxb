@@ -23,6 +23,9 @@ class HomeController extends Controller
             'total_profiles' => UsersProfile::active()->count(),
             'active_profiles' => UsersProfile::active()->where('is_active', 1)->count(),
             'inactive_profiles' => UsersProfile::active()->where('is_active', 0)->count(),
+            // Photo-verified profiles; scoped to non-archived so the count reconciles
+            // with the /admin/profiles?status=verified click-through.
+            'verified_profiles' => UsersProfile::active()->where('is_verified', 1)->count(),
             'active_users' => User::where('verified', 1)->whereNotNull('email_verified_at')->count(),
             'inactive_users' => User::where(function($query) {
                 $query->where('verified', 0)->orWhereNull('email_verified_at');

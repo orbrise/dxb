@@ -15,6 +15,7 @@ class ProfileUpgraded extends Mailable
     public $packageName;
     public $duration;
     public $profileUrl;
+    public $expiryDate;
 
     /**
      * Create a new message instance.
@@ -26,6 +27,10 @@ class ProfileUpgraded extends Mailable
         $this->packageName = $data['packageName'];
         $this->duration = $data['duration'];
         $this->profileUrl = $data['profileUrl'];
+        // Derived from $duration so callers don't need to pass expiry separately.
+        // If a caller ever supplies an explicit expiryDate, honour it.
+        $this->expiryDate = $data['expiryDate']
+            ?? \Carbon\Carbon::now()->addDays((int) $this->duration)->format('M d, Y');
     }
 
     /**

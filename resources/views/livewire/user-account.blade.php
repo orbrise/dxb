@@ -148,6 +148,28 @@
         font-weight: 700;
         margin: 0 0 16px 0;
     }
+    .ev-credits-card { position: relative; }
+    .ev-credits-history-link {
+        position: absolute;
+        top: 26px;
+        right: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--accent, #C1F11D);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 4px 10px;
+        border: 1px solid var(--accent, #C1F11D);
+        border-radius: 14px;
+        transition: all 0.2s ease;
+        z-index: 2;
+    }
+    .ev-credits-history-link:hover {
+        background: var(--accent, #C1F11D);
+        color: #000;
+    }
     .ev-buy-btn {
         display: inline-flex;
         align-items: center;
@@ -1208,7 +1230,11 @@
             </div>
 
             {{-- Credits card --}}
-            <div class="ev-account-card">
+            <div class="ev-account-card ev-credits-card">
+                <a href="{{ route('user.credits.history') }}" class="ev-credits-history-link" title="View transaction history">
+                    <i class="fa fa-history"></i>
+                    <span>History</span>
+                </a>
                 <div class="ev-credits-mobile-row" style="display:none;">
                     <div class="ev-credits-icon" style="display:none;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>

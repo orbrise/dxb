@@ -725,7 +725,8 @@ public function checkIfFavorited($profileId)
                     'reviews:id,profile_id',
                 ])
                 ->orderByRaw($packageOrderSql)
-                ->orderBy('created_at', $sortDirection)
+                ->orderByRaw('DATE(created_at) DESC')
+                ->orderBy('id', $sortDirection)
                 ->paginate(36, ['*'], 'page', $page);
 
             $this->attachThumbnailImages($paginator->getCollection());

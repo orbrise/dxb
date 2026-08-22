@@ -466,6 +466,7 @@
                             <option value="">All Status</option>
                             <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Active</option>
                             <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
+                            <option value="verified" {{ request('status') == 'verified' ? 'selected' : '' }}>Verified</option>
                             <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Archived</option>
                         </select>
                     </div>
