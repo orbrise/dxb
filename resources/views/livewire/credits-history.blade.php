@@ -33,16 +33,17 @@
     .ev-back-link:hover { text-decoration: underline; }
 
     .ev-summary-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
+        display: flex;
+        justify-content: center;
         margin-bottom: 24px;
     }
     .ev-summary-card {
         background: #1a1a1a;
         border: 1px solid #2a2a2a;
         border-radius: 6px;
-        padding: 18px 20px;
+        padding: 18px 32px;
+        min-width: 280px;
+        text-align: center;
     }
     .ev-summary-label {
         color: #999;
@@ -53,7 +54,7 @@
     }
     .ev-summary-value {
         color: #fff;
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 700;
         margin: 0;
     }
@@ -142,12 +143,106 @@
     .ev-empty i { font-size: 40px; margin-bottom: 12px; color: #444; }
 
     .ev-pagination-wrap {
-        padding: 16px;
+        padding: 20px 16px;
         border-top: 1px solid #2a2a2a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
     }
+    .ev-pagination-wrap nav { width: 100%; }
+    .ev-pagination-wrap nav > div { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .ev-pagination-wrap p { color: #999; font-size: 13px; margin: 0; }
+    .ev-pagination-wrap nav > div > div:first-child { display: flex; justify-content: center; gap: 8px; }
+    .ev-pagination-wrap span[aria-disabled],
+    .ev-pagination-wrap a[rel] {
+        display: inline-block;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .ev-pagination-wrap a[rel]:hover {
+        background: #2a2a2a;
+        color: #C1F11D;
+        border-color: #C1F11D;
+    }
+    .ev-pagination-wrap span[aria-disabled] {
+        color: #444;
+        background: #111;
+        border-color: #222;
+        cursor: not-allowed;
+    }
+    .ev-pagination-wrap .pagination { display: flex; gap: 5px; list-style: none; padding: 0; margin: 0; flex-wrap: wrap; justify-content: center; }
+    .ev-pagination-wrap .pagination li a,
+    .ev-pagination-wrap .pagination li span {
+        display: block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .ev-pagination-wrap .pagination li a:hover {
+        background: #2a2a2a;
+        color: #C1F11D;
+        border-color: #C1F11D;
+    }
+    .ev-pagination-wrap .pagination li.active span {
+        background: #C1F11D;
+        color: #000;
+        border-color: #C1F11D;
+    }
+    .ev-pagination-wrap .pagination li.disabled span {
+        color: #444;
+        background: #111;
+        border-color: #222;
+        cursor: not-allowed;
+    }
+    .ev-pagination-wrap span[aria-current="page"] span {
+        display: block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        background: #C1F11D !important;
+        color: #000 !important;
+        border: 1px solid #C1F11D !important;
+        border-radius: 4px;
+    }
+    .ev-pagination-wrap button {
+        display: inline-block;
+        padding: 8px 14px;
+        min-width: 42px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .ev-pagination-wrap button:hover { background: #2a2a2a; color: #C1F11D; border-color: #C1F11D; }
+    .ev-pagination-wrap button:disabled { color: #444; background: #111; border-color: #222; cursor: not-allowed; }
+    .ev-pagination-wrap button:disabled:hover { color: #444; background: #111; border-color: #222; }
 
     @media (max-width: 768px) {
-        .ev-summary-row { grid-template-columns: 1fr; }
+        .ev-summary-card { min-width: 0; width: 100%; }
         .ev-table th, .ev-table td { padding: 10px 8px; font-size: 12px; }
         .ev-hide-mobile { display: none; }
     }
@@ -168,14 +263,6 @@
         <div class="ev-summary-card">
             <p class="ev-summary-label">Current Balance</p>
             <p class="ev-summary-value">${{ number_format($walletBalance, 2) }}</p>
-        </div>
-        <div class="ev-summary-card">
-            <p class="ev-summary-label">Total Loaded</p>
-            <p class="ev-summary-value credit">+${{ number_format($totalLoaded, 2) }}</p>
-        </div>
-        <div class="ev-summary-card">
-            <p class="ev-summary-label">Total Spent</p>
-            <p class="ev-summary-value debit">-${{ number_format($totalSpent, 2) }}</p>
         </div>
     </div>
 

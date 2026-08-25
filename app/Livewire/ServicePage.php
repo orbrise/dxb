@@ -294,7 +294,7 @@ class ServicePage extends Component
         // profiles that the listing would never render, producing the
         // "sidebar 9, listing 2" mismatch.
         $query = UsersProfile::query()
-            ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'created_at')
+            ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'is_verified', 'created_at')
             ->where('is_active', 1)
             ->whereNull('archived_at')
             ->when($this->city, fn($q) => $q->where('city', $this->city))
@@ -490,8 +490,31 @@ class ServicePage extends Component
                 });
         }
         
+        $isSearching = filled($this->name)
+            || filled($this->rate)
+            || filled($this->ethnicity)
+            || filled($this->nationality)
+            || filled($this->verified)
+            || filled($this->profiletype)
+            || filled($this->agefrom)
+            || filled($this->ageto)
+            || filled($this->heightfrom)
+            || filled($this->heightto)
+            || filled($this->haircolor)
+            || filled($this->language)
+            || filled($this->isshaved)
+            || filled($this->ori)
+            || filled($this->buts)
+            || filled($this->incallprice)
+            || filled($this->outcallprice)
+            || $this->nonsmoker
+            || $this->incall
+            || $this->outcall
+            || $this->withreviews;
+
         return view('livewire.service-page', [
             'profiles' => $this->getProfiles(),
+            'isSearching' => $isSearching,
             'services' => cache()->remember('services_lookup', 3600, function() {
                 return Service::select('id', 'name')->get();
             }),

@@ -430,6 +430,20 @@
                 </div>
             </li>
 
+            <!-- Phone Filter -->
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-phone"></i> Phone
+                </a>
+                <div class="dropdown-menu">
+                    <div class="backpack-filter">
+                        <div class="input-group">
+                            <input type="text" name="phone" class="form-control" value="{{ request('phone') }}" placeholder="Enter phone number">
+                        </div>
+                    </div>
+                </div>
+            </li>
+
             <!-- City Filter -->
             <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -467,6 +481,7 @@
                             <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Active</option>
                             <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
                             <option value="verified" {{ request('status') == 'verified' ? 'selected' : '' }}>Verified</option>
+                            <option value="unverified" {{ request('status') == 'unverified' ? 'selected' : '' }}>Unverified</option>
                             <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Archived</option>
                         </select>
                     </div>

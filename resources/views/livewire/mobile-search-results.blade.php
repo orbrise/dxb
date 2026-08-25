@@ -404,7 +404,7 @@ img[src*="loading"],
             <div class="main-thumbs">
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper premium">
-                  @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                  @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
@@ -429,7 +429,7 @@ img[src*="loading"],
                 <a class="img img-responsive pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">
                  
-                    @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                    @if($profile->is_verified)
                     <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
@@ -484,7 +484,7 @@ img[src*="loading"],
             <div class="main-thumbs">
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper featured">
-                  @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                  @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
@@ -515,7 +515,7 @@ img[src*="loading"],
               <div class="thumb thumb-0">
                 <a class="img img-responsive pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">
-                    @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                    @if($profile->is_verified)
                     <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
@@ -560,7 +560,7 @@ img[src*="loading"],
             <div class="main-thumbs">
               <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
-                  @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                  @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>

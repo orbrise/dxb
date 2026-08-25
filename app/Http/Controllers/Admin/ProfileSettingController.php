@@ -294,6 +294,13 @@ public function orientations()
     if ($request->title) {
         $query->where('name', 'like', '%' . $request->title . '%');
     }
+    if ($request->phone) {
+        $phone = trim($request->phone);
+        $query->where(function ($q) use ($phone) {
+            $q->where('phone', 'like', '%' . $phone . '%')
+              ->orWhere('phone2', 'like', '%' . $phone . '%');
+        });
+    }
     if ($request->start_date && $request->end_date) {
         $query->whereBetween('created_at', [
             $request->start_date . ' 00:00:00',
@@ -307,6 +314,10 @@ public function orientations()
             // Verified profiles = is_verified flag set; scope to non-archived so
             // archived-but-once-verified rows don't leak into the active list.
             $query->where('is_verified', 1)->active();
+        } elseif ($request->status === 'unverified') {
+            $query->where(function ($q) {
+                $q->where('is_verified', 0)->orWhereNull('is_verified');
+            })->active();
         } else {
             $query->where('is_active', $request->status == 1 ? 1 : 0);
             // When filtering by active/inactive status, only show non-archived profiles

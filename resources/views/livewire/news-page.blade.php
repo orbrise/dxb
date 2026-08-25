@@ -1125,7 +1125,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                             <div class="photo">
                                 <a class="pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                                     <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
-                                        @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
+                                        @if($profile->is_verified)
                                         <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
@@ -1158,7 +1158,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                                 <a class="pb-photo-link1" 
                                    href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                                     <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
-                                        @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
+                                        @if($profile->is_verified)
                                         <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>
@@ -1314,7 +1314,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                             <div class="photo">
                                 <a class=" pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $selectedcity }}/{{ $profile->id }}/{{ $profile->slug }}">
                                     <span class="img-wrapper {{ $profile->package_id == 21 || $profile->package_id == 20 ? 'premium' : '' }}">
-                                        @if(!empty($profile->photoverify) && $profile->photoverify->status == 'approved')
+                                        @if($profile->is_verified)
                                         <span class="verified-image text-left small" title="Photos Verified by Evoory">
                                             <i class="fa fa-check"></i>
                                             <span>Verified photos</span>

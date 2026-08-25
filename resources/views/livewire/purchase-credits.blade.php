@@ -290,6 +290,10 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
         width: 26px;
         height: 26px;
     }
+    .ev-balance-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
     .ev-balance-label {
         color: #b8b8b8;
         font-size: 13px;
@@ -301,6 +305,28 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
         font-weight: 700;
         line-height: 1.1;
     }
+    .ev-balance-history-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(193, 241, 29, 0.12);
+        border: 1px solid rgba(193, 241, 29, 0.45);
+        color: #C1F11D;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 14px;
+        border-radius: 999px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .ev-balance-history-btn:hover {
+        background: #C1F11D;
+        color: #000;
+        text-decoration: none;
+    }
+    .ev-balance-history-btn i { font-size: 12px; }
 
     /* Info text */
     .purchase-credits-page .mb-2 p {
@@ -426,10 +452,14 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
                 <div class="ev-balance-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                 </div>
-                <div>
+                <div class="ev-balance-info">
                     <div class="ev-balance-label">Current Balance</div>
                     <div class="ev-balance-amount">${{ number_format((float) (optional(auth()->user()->wallet)->balance ?? 0), 0) }}</div>
                 </div>
+                <a href="{{ route('user.credits.history') }}" class="ev-balance-history-btn" wire:navigate>
+                    <i class="fa fa-history"></i>
+                    <span class="ev-history-label">History</span>
+                </a>
             </div>
 
             <!-- Page Header -->

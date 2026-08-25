@@ -950,7 +950,7 @@ min-width: 222px;
       <div class="listings listings-spots listing-spots--minimal border-top padding-top mx-n2 mx-sm-0">
         
      
-       @if($auctions->count() > 0)
+       @if(!$isSearching && $auctions->count() > 0)
 <div class="listings listings-spots listing-spots--minimal border-bottom mx-n2 mx-sm-0">
   @foreach($auctions as $auction)
   <div class="spot">
@@ -1177,7 +1177,7 @@ min-width: 222px;
             <div class="main-thumbs">
               <a class="img pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                 <span class="img-wrapper premium">
-                  @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                  @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
@@ -1211,7 +1211,7 @@ min-width: 222px;
                 <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                   <span class="img-wrapper mini">
 
-                    @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                    @if($profile->is_verified)
                     <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
@@ -1267,7 +1267,7 @@ min-width: 222px;
             <div class="main-thumbs">
               <a class="img pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                 <span class="img-wrapper featured">
-                  @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                  @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
@@ -1290,7 +1290,7 @@ min-width: 222px;
               <div class="thumb thumb-{{ $k }}">
                 <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                   <span class="img-wrapper mini">
-                    @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                    @if($profile->is_verified)
                     <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>
@@ -1339,7 +1339,7 @@ min-width: 222px;
             <div class="main-thumbs">
               <a class="img pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                 <span class="img-wrapper basic">
-                  @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                  @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
                     <span>Verified photos</span>
@@ -1366,7 +1366,7 @@ min-width: 222px;
               <div class="thumb thumb-{{ $loop->index }}">
                 <a class="img img-responsive pb-photo-link" href="/{{ $gender }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $profile->id }}/{{ $profile->slug }}">
                   <span class="img-wrapper mini">
-                    @if(!empty($profile->photoverify) and $profile->photoverify->status == 'approved')
+                    @if($profile->is_verified)
                     <span class="verified-image text-left small" title="Photos Verified by Evoory">
                       <i class="fa fa-check"></i>
                       <span>Verified photos</span>

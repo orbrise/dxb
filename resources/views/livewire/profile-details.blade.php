@@ -755,12 +755,13 @@
               </div>{{-- /ev-details-card --}}
 
               {{-- "Is This Your Profile?" claim card.
-                   Hidden when: (1) the profile has already been claimed
-                   (any verified_at row in profile_claim_attempts), or
-                   (2) the viewer is signed in and is the profile owner
-                   or an admin. The three-step modal (phone → code →
+                   Only shown on imported profiles (imported_from is set) — regular
+                   user-created listings already have an owner on the platform, so
+                   there's nothing to claim. Also hidden when: (1) already claimed
+                   (verified_at row in profile_claim_attempts), or (2) the viewer is
+                   the owner or an admin. The three-step modal (phone → code →
                    success) lives further down inside #profile-claim-modal. --}}
-              @if(!($profileClaimed ?? false) && (!Auth::check() || (Auth::id() !== ($user->id ?? null) && Auth::user()?->type != 1)))
+              @if(filled($user->imported_from ?? null) && !($profileClaimed ?? false) && (!Auth::check() || (Auth::id() !== ($user->id ?? null) && Auth::user()?->type != 1)))
               <div class="ev-claim-card" id="ev-claim-card">
                   <div class="ev-claim-card-inner">
                       <div class="ev-claim-icon">

@@ -1086,9 +1086,33 @@ public function checkIfFavorited($profileId)
         $profiles = $this->getProfiles();
         $fallback = $profiles->total() === 0 ? $this->getFallbackProfiles($currentCity) : null;
 
+        $isSearching = filled($this->name)
+            || filled($this->rate)
+            || filled($this->ethnicity)
+            || filled($this->nationality)
+            || filled($this->verified)
+            || filled($this->profiletype)
+            || filled($this->agefrom)
+            || filled($this->ageto)
+            || filled($this->heightfrom)
+            || filled($this->heightto)
+            || filled($this->haircolor)
+            || filled($this->language)
+            || filled($this->isshaved)
+            || filled($this->ori)
+            || filled($this->buts)
+            || filled($this->incallprice)
+            || filled($this->outcallprice)
+            || !empty($this->sservices)
+            || $this->nonsmoker
+            || $this->incall
+            || $this->outcall
+            || $this->withreviews;
+
         return view('livewire.home-page', [
             'profiles' => $profiles,
             'fallback' => $fallback,
+            'isSearching' => $isSearching,
             // Use CacheService for all lookup data
             'listings' => Cache::remember('cache:listings', CacheService::TTL_LOOKUP, function() {
                 return Listing::select('id', 'name')->get();

@@ -127,8 +127,8 @@
     color: #000 !important;
     border: none !important;
     border-radius: 22px !important;
-    padding: 10px 30px !important;
-    font-weight: 600 !important;
+    padding: 4px 30px !important;
+    font-weight: 400 !important;
     font-size: 15px !important;
     transition: all 0.3s ease !important;
 }
@@ -477,7 +477,7 @@ a.text-warning:focus, a.text-warning {
                     
                     <!-- Upgrade Button - Shows after paid package selection -->
                     <div class='upgrade-button-wrapper text-center' style='display: none; margin: 30px 0;'>
-                        <button class='btn btn-primary btn-lg checkout-button' type='button' style='padding: 15px 40px; font-size: 18px;'>
+                        <button class='btn btn-primary btn-lg checkout-button' type='button' style='padding: 8px 35px; font-size: 18px;'>
                             Proceed Upgrade <i class='fa fa-arrow-right'></i>
                         </button>
                     </div>
@@ -504,7 +504,7 @@ a.text-warning:focus, a.text-warning {
                           <div class="border-top padding-top" style="border-color: #2a2a2a !important;">
                             <div class="upgrade-duration__radios mb-3"></div>
                             <div class="text-right w-100 pb-3">
-                              <strong class="lead" style="color: #fff;">Total: &euro; <span id="famount"></span></strong>
+                              <strong class="lead" style="color: #fff;">Total: $ <span id="famount"></span></strong>
                             </div>
                           </div>
                         </div>

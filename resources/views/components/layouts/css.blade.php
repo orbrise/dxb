@@ -964,32 +964,30 @@
         left: 0;
         z-index: 1;
         background: #C1F11D;
-        background: -webkit-gradient(linear, left bottom, right top, color-stop(1%, #C1F11D), color-stop(50%, #c3931f), color-stop(51%, transparent));
-        background: linear-gradient(to top right, #C1F11D 1%, #c3931f 50%, transparent 51%);
         width: 30px;
         height: 30px;
         line-height: 30px;
         overflow: hidden;
         text-transform: uppercase;
-        color: #333;
+        color: #000;
         font-weight: 700;
+        border-top-right-radius: 6px;
         -webkit-transition: all .25s ease-in-out;
         transition: all .25s ease-in-out
       }
 
       span.verified-image i {
         line-height: 30px;
-        font-size: 2.5em;
+        font-size: 2em;
         float: left;
-        margin: 0 2px;
-        color: #333;
-        text-shadow: 0 0 2px #C1F11D
+        margin: 0 6px;
+        color: #000;
+        text-shadow: none
       }
 
       span.verified-image:hover {
         width: 140px;
-        background: -webkit-gradient(linear, left bottom, right top, from(#C1F11D), to(#c3931f));
-        background: linear-gradient(to top right, #C1F11D, #c3931f);
+        background: #C1F11D;
         padding-right: 2px
       }
 

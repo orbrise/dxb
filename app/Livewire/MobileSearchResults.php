@@ -241,7 +241,7 @@ class MobileSearchResults extends Component
         ]);
 
          $query = UsersProfile::query()
-            ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke')
+            ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'is_verified')
             ->where('is_active', 1)
             ->whereNull('archived_at')
             ->when($this->city, fn($q) => $q->where('city', (int)$this->city))

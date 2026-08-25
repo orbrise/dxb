@@ -108,6 +108,29 @@ class UserDashboard extends Component
         ));
     }
 
+    public function deleteProfile($profileId)
+    {
+        try {
+            $profile = UsersProfile::where('id', $profileId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            $profile->archive();
+
+            session()->flash('success', 'Profile deleted successfully.');
+
+            if ((int) $profileId === (int) $this->id) {
+                return redirect()->route('user.account');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error deleting profile', [
+                'error' => $e->getMessage(),
+                'profile_id' => $profileId,
+            ]);
+            session()->flash('error', 'Failed to delete profile');
+        }
+    }
+
     public function activestatus($id, $action)
     {
         try {

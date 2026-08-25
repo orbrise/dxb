@@ -981,8 +981,8 @@
 <!-- Back Bar -->
 <div class="ev-back-bar">
     <div class="ev-container" style="display:flex; align-items:center; justify-content:center; position:relative;">
-        <a href="/female-escorts-in-dubai" style="position:absolute; left:16px;" class="ev-desktop-back">
-            <i class="fa fa-angle-left"></i> Escorts in Dubai
+        <a href="javascript:history.back()" style="position:absolute; left:16px;" class="ev-desktop-back">
+            <i class="fa fa-angle-left"></i> Back
         </a>
         <a href="javascript:history.back()" style="position:absolute; left:16px; display:none;" class="ev-mobile-back">
             <i class="fa fa-angle-left"></i> Back
@@ -1197,9 +1197,18 @@
                                     <i class="fa fa-play"></i> Resume
                                 </button>
                                 @endif
-                                <a class="ev-btn ev-btn-danger" href="javascript:void(0)" onclick="if(confirm('Are you sure you want to DELETE this profile? This cannot be reversed.')) window.location='/action/listings/{{ $profile->id }}'">
-                                    <i class="fa fa-trash"></i> Delete
-                                </a>
+                                <button type="button" class="ev-btn ev-btn-danger"
+                                        wire:click="deleteProfile({{ $profile->id }})"
+                                        wire:confirm="Are you sure you want to DELETE this profile? It will be moved to Archived."
+                                        wire:loading.attr="disabled"
+                                        wire:target="deleteProfile({{ $profile->id }})">
+                                    <span wire:loading.remove wire:target="deleteProfile({{ $profile->id }})">
+                                        <i class="fa fa-trash"></i> Delete
+                                    </span>
+                                    <span wire:loading wire:target="deleteProfile({{ $profile->id }})">
+                                        <i class="fa fa-spinner fa-spin"></i> Deleting...
+                                    </span>
+                                </button>
                             </div>
 
                             <!-- Share Row -->
@@ -1256,7 +1265,9 @@
 
             <!-- Delete Profile -->
             <div style="text-align: right; padding: 0 4px;">
-                <a class="ev-delete-link" href="javascript:void(0)" onclick="if(confirm('Are you sure you want to DELETE this profile? This cannot be reversed.')) window.location='/action/listings/{{ $user->id }}'">
+                <a class="ev-delete-link" href="javascript:void(0)"
+                   wire:click="deleteProfile({{ $user->id }})"
+                   wire:confirm="Are you sure you want to DELETE this profile? It will be moved to Archived.">
                     <i class="fa fa-times"></i> Delete Profile
                 </a>
             </div>

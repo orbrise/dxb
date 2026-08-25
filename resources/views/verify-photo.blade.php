@@ -251,109 +251,147 @@ body { background: #0a0a0a !important; }
 
 /* Profile selector */
 .profile-selector {
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin-bottom: 20px;
+    background: linear-gradient(180deg, rgba(193,241,29,0.05) 0%, rgba(193,241,29,0.02) 100%);
+    border: 1px solid rgba(193, 241, 29, 0.18);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
     position: relative;
+    max-width: 50%;
 }
 .profile-selector h4 {
     color: #C1F11D;
-    font-weight: normal;
-    font-size: 16px;
-    white-space: nowrap;
-    margin: 0;
-}
-.profile-selector .selector-row {
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    margin: 0 0 12px 0;
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 8px;
+}
+.profile-selector h4 i {
+    font-size: 16px;
+}
+.profile-selector .selector-row {
+    display: block;
 }
 .profile-search-wrapper {
     position: relative;
-    flex: 1;
-    max-width: 520px;
+    width: 100%;
+    max-width: 100%;
 }
 .profile-search-wrapper .search-group {
     display: flex;
+    background: #0f0f0f;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) inset;
+}
+.profile-search-wrapper .search-group:focus-within {
+    border-color: #C1F11D;
+    box-shadow: 0 0 0 3px rgba(193, 241, 29, 0.12), 0 2px 8px rgba(0,0,0,0.3) inset;
 }
 #profileResults {
     display: none;
     position: absolute;
-    top: 100%;
+    top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: #1a1a1a;
+    background: #141414;
     border: 1px solid #2a2a2a;
-    border-radius: 8px;
-    margin-top: 5px;
-    max-height: 300px;
+    border-radius: 12px;
+    max-height: 360px;
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(193,241,29,0.08);
+    padding: 6px;
 }
 #profileResults.show {
     display: block;
+    animation: dropdownFade 0.18s ease-out;
 }
+@keyframes dropdownFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+#profileResults::-webkit-scrollbar { width: 8px; }
+#profileResults::-webkit-scrollbar-track { background: transparent; }
+#profileResults::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+#profileResults::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
 .profile-option {
-    padding: 6px 12px;
+    padding: 10px 12px;
     cursor: pointer;
-    background: #1a1a1a;
-    transition: all 0.2s;
+    background: transparent;
+    transition: all 0.15s ease;
     color: #fff;
-    border-bottom: 1px solid #2a2a2a;
+    border-radius: 8px;
+    margin-bottom: 2px;
 }
 .profile-option:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
 }
 .profile-option:hover {
-    background: #222;
+    background: rgba(193, 241, 29, 0.08);
 }
 .profile-option.selected {
-    background: #C1F11D;
-    color: #000;
-    font-weight: 500;
+    background: rgba(193, 241, 29, 0.15);
+    border-left: 3px solid #C1F11D;
+    padding-left: 9px;
 }
 .profile-option .opt-row {
     display: flex;
     align-items: center;
+    gap: 12px;
 }
 .profile-thumb {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     object-fit: cover;
-    margin-right: 10px;
+    margin-right: 0;
+    border-radius: 8px;
+    border: 1px solid #2a2a2a;
+    flex-shrink: 0;
 }
 #profileSearch {
-    background: #1a1a1a;
-    border: 1px solid #C1F11D;
+    background: transparent;
+    border: none;
     color: #fff;
-    padding: 6px 12px;
-    font-size: 14px;
-    border-radius: 6px 0 0 6px;
+    padding: 14px 18px;
+    font-size: 15px;
+    border-radius: 0;
     outline: none;
     flex: 1;
     min-width: 0;
-}
-#profileSearch:focus {
-    background: #222;
-    border-color: #C1F11D;
 }
 #profileSearch::placeholder {
     color: #666;
 }
 #searchBtn {
     background: #C1F11D;
-    border: 1px solid #C1F11D;
+    border: none;
     color: #000;
-    padding: 6px 12px;
-    border-radius: 0 6px 6px 0;
+    padding: 0 20px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    transition: background 0.2s ease;
 }
 #searchBtn:hover {
     background: #d4f84d;
+}
+#searchBtn i {
+    transition: transform 0.2s ease;
+}
+#profileResults.show ~ .search-group #searchBtnIcon,
+.search-group:has(+ #profileResults.show) #searchBtnIcon {
+    transform: rotate(180deg);
 }
 
 /* Modal overrides for dark theme */
@@ -545,13 +583,16 @@ body { background: #0a0a0a !important; }
     .ev-container { padding: 0 16px !important; }
 
     /* Profile selector */
-    .profile-selector { margin-bottom: 12px !important; }
-    .profile-selector .selector-row {
-        flex-direction: column !important;
-        gap: 8px !important;
+    .profile-selector {
+        margin-bottom: 16px !important;
+        padding: 14px 14px !important;
+        border-radius: 10px !important;
+        max-width: 100% !important;
     }
-    .profile-selector h4 { font-size: 14px !important; }
+    .profile-selector h4 { font-size: 12px !important; margin-bottom: 10px !important; }
     .profile-search-wrapper { max-width: 100% !important; }
+    #profileSearch { padding: 12px 14px !important; font-size: 14px !important; }
+    #searchBtn { min-width: 46px !important; padding: 0 14px !important; }
 
     /* Layout - single column, right column first */
     .verify-layout {
@@ -640,21 +681,20 @@ body { background: #0a0a0a !important; }
 <div class="ev-container" style="padding-top: 30px; padding-bottom: 60px;">
     {{-- Profile Selector --}}
     <div class="profile-selector">
-        <div class="selector-row">
-            <h4><i class="fas fa-user-circle" style="margin-right:6px"></i>Select Profile to Verify</h4>
-            <div class="profile-search-wrapper">
-                <div class="search-group">
-                    <input type="text"
-                           id="profileSearch"
-                           placeholder="Search or select your profile..."
-                           autocomplete="off"
-                           readonly-hint>
-                    <button type="button" id="searchBtn" aria-label="Toggle profiles list">
-                        <i class="fas fa-chevron-down" id="searchBtnIcon"></i>
-                    </button>
-                </div>
-                <div id="profileResults"></div>
+        <h4><i class="fas fa-user-circle"></i>Select Profile to Verify</h4>
+        <div class="profile-search-wrapper">
+            <div class="search-group">
+                <input type="text"
+                       id="profileSearch"
+                       placeholder="Search or select your profile..."
+                       value="{{ $user->name ?? '' }}"
+                       autocomplete="off"
+                       readonly-hint>
+                <button type="button" id="searchBtn" aria-label="Toggle profiles list">
+                    <i class="fas fa-chevron-down" id="searchBtnIcon"></i>
+                </button>
             </div>
+            <div id="profileResults"></div>
         </div>
     </div>
 
@@ -1063,7 +1103,15 @@ body { background: #0a0a0a !important; }
         if (!profileSearch || profileSearch.__bound) return;
         profileSearch.__bound = true;
         var selectedProfileId = userId;
-        var assetBaseUrl = 'https://assets.massagerepublic.com.co/';
+        // Derive the userimages base URL from smart_asset() so it points at
+        // the disk actually serving user photos in this environment
+        // (external CDN in prod, local /storage in dev). The previous
+        // hardcoded massagerepublic host silently 404'd every thumbnail.
+        @php
+            $_probe = smart_asset('userimages/placeholder.png');
+            $_assetBase = rtrim(str_replace('userimages/placeholder.png', '', $_probe), '/') . '/';
+        @endphp
+        var assetBaseUrl = @json($_assetBase);
         // Fetched once, filtered client-side. A user's own profile list is small
         // (typically <20) so the initial round-trip is cheap and typing is instant.
         var allProfiles = null;

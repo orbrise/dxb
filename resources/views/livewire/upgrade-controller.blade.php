@@ -89,6 +89,10 @@
 body.evoory-upgrade-controller-active { background: #000 !important; }
 body.evoory-upgrade-controller-active #header .nav-bar { background: #1f2222 !important; }
 body.evoory-upgrade-controller-active #header { margin-bottom: 0px !important; }
+/* Top logo bar was rendering with the layout's default #0D1011 background,
+   which sat as a visibly lighter strip over this page's #000 body. Blend
+   it into the body so the top of the page reads as one continuous surface. */
+body.evoory-upgrade-controller-active #header .ev-header { background: transparent !important; }
 
 /* Mobile: hide only the top nav (My Profile / My Account / Sign Out
    buttons row) — the page's `< Back ... Upgrade for X` sub-header lives
