@@ -987,7 +987,7 @@
         <a href="javascript:history.back()" style="position:absolute; left:16px; display:none;" class="ev-mobile-back">
             <i class="fa fa-angle-left"></i> Back
         </a>
-        <h1><a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}">{{Auth::user()->name}}'s Dubai profile</a></h1>
+        <h1><a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}">Welcome {{Auth::user()->name}}</a></h1>
     </div>
 </div>
 

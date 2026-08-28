@@ -376,6 +376,9 @@
             font-size: 12px;
             color: #fff;
             border-radius: 5px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
         
         .custom-select2-selection:hover {
@@ -1034,6 +1037,10 @@ form.listing textarea#listing_description {
     padding: 14px 16px !important;
     display: block !important;
     box-sizing: border-box !important;
+    font-family: inherit !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    font-weight: normal !important;
 }
 form.listing textarea#listing_description:focus {
     border-color: #c8ff00 !important;
@@ -2035,8 +2042,13 @@ form.listing textarea#listing_description:focus {
                         <label class="city optional control-label ev-city-label" for="listing_city_url"><span class="ev-desktop-label">in</span><span class="ev-mobile-city-label" style="display:none;">City <span style="color:#f87171">*</span></span></label>
                         <style>@media(max-width:768px){.ev-desktop-label{display:none!important}.ev-mobile-city-label{display:inline!important}}</style>
                         <div class='typeahead-city-wrapper'>
-                          <input class="city optional form-control" placeholder="Find city..." name="listing[city_url]" wire:model='selectedcity' type="text" value="" id="citysearch"/>
-                          <input type="hidden" wire:model.lazy='city' value="{{$user->city}}" id="selectedcity">
+                          {{-- wire:model.lazy (not wire:model) — same pattern as new-profile page. --}}
+                          {{-- Immediate wire:model fires a Livewire round-trip on every keystroke; --}}
+                          {{-- the resulting morph replaces #citysearch, wipes the dropdown, and forces --}}
+                          {{-- CitySearch to re-init between letters. That kills the "delete a char to --}}
+                          {{-- re-open suggestions after selecting" flow. Lazy syncs on blur only. --}}
+                          <input class="city optional form-control" placeholder="Find city..." name="listing[city_url]" wire:model.lazy='selectedcity' type="text" value="" id="citysearch"/>
+                          <input type="hidden" wire:model.lazy='city' value="{{$user->city}}" id="selectedcityid">
 
                         <div id="cityappend" class="citys"></div>
                         <span class="hint city-hint left">
@@ -2260,7 +2272,13 @@ form.listing textarea#listing_description:focus {
                   <div id="contact-information">
                     <h2 class="h3 title-block">Contact information</h2>
                     <label>Phone:</label>
-                    <div class="inline-group">
+                    {{-- wire:ignore on the whole phone block — matches new-profile.
+                         Without it, every countrycode/countrycode2 change triggers
+                         a Livewire round-trip that morphs the phone section and
+                         destroys every custom-select2 wrapper inside. wire:model
+                         bindings on the inner selects/checkboxes still submit
+                         via change events, so form functionality is unaffected. --}}
+                    <div class="inline-group" wire:ignore>
                       <div class="form-group phone_number">
                         <div style="margin-bottom:15px" class="d-flex align-items-center wrappper">
                           <div class="insidewrapper" wire:ignore>
@@ -3171,18 +3189,13 @@ form.listing textarea#listing_description:focus {
         
         // Initialize the city search
         init: function() {
-            // Prevent double initialization
-            if (this.initialized) {
-                return;
-            }
+            if (this.initialized) return;
 
-            // Get DOM elements
             this.input = document.getElementById('citysearch');
             this.dropdown = document.querySelector('.citys');
             this.results = document.getElementById('cityappend');
 
             if (!this.input || !this.dropdown || !this.results) {
-                // Retry after a short delay if elements not found
                 var self = this;
                 setTimeout(function() { self.init(); }, 300);
                 return;
@@ -3193,99 +3206,103 @@ form.listing textarea#listing_description:focus {
             this.watchForDomReplacement();
         },
 
-        // Watch the wrapper for Livewire morphs that swap our input element
-        // out from under us. Livewire 3 doesn't fire livewire:update, and the
-        // morph replaces #citysearch with a fresh DOM node — our old listeners
-        // stay bound to the detached element and every future keystroke is
-        // lost. When we detect the swap, tear down and re-init against the
-        // new element.
+        // Watch for the input node being replaced by Livewire morph. Observe
+        // document.body (not the input's own parent) — the parent itself can
+        // get morphed away, taking our observer with it.
         watchForDomReplacement: function() {
-            var self = this;
-            var parent = this.input && this.input.parentElement;
-            if (!parent || typeof MutationObserver === 'undefined') return;
+            if (typeof MutationObserver === 'undefined') return;
+            if (document.__citySearchDomObserver) return;
 
-            if (this._domObserver) { this._domObserver.disconnect(); }
-
-            this._domObserver = new MutationObserver(function() {
+            var observer = new MutationObserver(function() {
                 var current = document.getElementById('citysearch');
-                if (current && current !== self.input) {
-                    self.initialized = false;
-                    self.input = null;
-                    self.dropdown = null;
-                    self.results = null;
-                    if (self._domObserver) { self._domObserver.disconnect(); self._domObserver = null; }
-                    self.init();
+                if (!current) return;
+                if (current !== CitySearch.input) {
+                    // Input was replaced — tear down and re-bind.
+                    CitySearch.initialized = false;
+                    CitySearch.input = null;
+                    CitySearch.dropdown = null;
+                    CitySearch.results = null;
+                    CitySearch.init();
                 }
             });
-            this._domObserver.observe(parent, { childList: true, subtree: true });
+            observer.observe(document.body, { childList: true, subtree: true });
+            document.__citySearchDomObserver = observer;
         },
-        
-        // Bind all event listeners
+
+        // Bind all event listeners directly on the elements. On top of these,
+        // we also install document-level delegated fallbacks (outside this
+        // object) — see the block after this IIFE. The direct bindings work
+        // most of the time; the delegated ones catch the case where morph
+        // replaces the input and the MutationObserver hasn't fired yet.
         bindEvents: function() {
             var self = this;
-            
-            // Input events - using multiple for cross-browser support
-            // Safari sometimes doesn't fire 'input' reliably
-            var inputHandler = function(e) {
-                self.handleInput(e);
-            };
-            
+
+            var inputHandler = function(e) { self.handleInput(e); };
             this.input.addEventListener('input', inputHandler, false);
             this.input.addEventListener('keyup', inputHandler, false);
             this.input.addEventListener('paste', function(e) {
-                // Delay to get pasted value
                 setTimeout(function() { self.handleInput(e); }, 10);
             }, false);
-            
-            // Focus event
+
             this.input.addEventListener('focus', function(e) {
                 var query = self.input.value.trim();
                 if (query.length >= self.config.minChars) {
                     self.handleInput(e);
                 }
             }, false);
-            
-            // Blur event - hide dropdown with delay (to allow click on option)
+
             this.input.addEventListener('blur', function(e) {
                 setTimeout(function() {
-                    if (!self.isSelecting) {
-                        self.hideDropdown();
-                    }
+                    if (!self.isSelecting) self.hideDropdown();
                 }, 200);
             }, false);
-            
-            // Click event on results container (event delegation)
-            this.results.addEventListener('click', function(e) {
-                self.handleSelect(e);
-            }, false);
-            
-            // Touch events for mobile
-            this.results.addEventListener('touchend', function(e) {
-                self.handleSelect(e);
-            }, false);
-            
-            // Prevent mousedown from triggering blur before click registers
-            this.results.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                self.isSelecting = true;
-            }, false);
-            
-            // Close on outside click
-            document.addEventListener('click', function(e) {
-                if (!self.input.contains(e.target) && !self.dropdown.contains(e.target)) {
-                    self.hideDropdown();
-                }
-            }, false);
-            
-            // Handle keyboard navigation
+
             this.input.addEventListener('keydown', function(e) {
                 self.handleKeydown(e);
             }, false);
+
+            // Results click/touch/mousedown — delegated on document because
+            // #cityappend itself can be morphed out, killing direct listeners.
+            // Guarded so we install only once per page.
+            if (!document.__citySearchResultsDelegated) {
+                document.__citySearchResultsDelegated = true;
+                document.addEventListener('click', function(e) {
+                    var r = document.getElementById('cityappend');
+                    if (r && r.contains(e.target)) CitySearch.handleSelect(e);
+                }, false);
+                document.addEventListener('touchend', function(e) {
+                    var r = document.getElementById('cityappend');
+                    if (r && r.contains(e.target)) CitySearch.handleSelect(e);
+                }, false);
+                document.addEventListener('mousedown', function(e) {
+                    var r = document.getElementById('cityappend');
+                    if (r && r.contains(e.target)) {
+                        e.preventDefault();
+                        CitySearch.isSelecting = true;
+                    }
+                }, false);
+                // Outside-click closes the dropdown.
+                document.addEventListener('click', function(e) {
+                    CitySearch.syncDropdownRef();
+                    CitySearch.syncInputRef();
+                    if (CitySearch.input && CitySearch.dropdown &&
+                        !CitySearch.input.contains(e.target) &&
+                        !CitySearch.dropdown.contains(e.target)) {
+                        CitySearch.hideDropdown();
+                    }
+                }, false);
+            }
+        },
+
+        syncInputRef: function() {
+            var live = document.getElementById('citysearch');
+            if (live && live !== this.input) this.input = live;
         },
         
         // Handle input changes
         handleInput: function(e) {
             var self = this;
+            this.syncDropdownRef();
             var query = this.input.value.trim();
 
             // Clear any pending request
@@ -3410,14 +3427,38 @@ form.listing textarea#listing_description:focus {
             }
         },
         
+        // Re-query the dropdown/results container from the live DOM.
+        // Livewire morphs on this page (triggered by any wire:model interaction
+        // elsewhere in the form) can replace the #cityappend div with a fresh
+        // empty node while leaving the #citysearch input alone. That leaves
+        // our cached `this.dropdown` / `this.results` pointing at a detached
+        // element, so setting innerHTML or display style has no visible
+        // effect. Call this before every read/write of those refs.
+        syncDropdownRef: function() {
+            // In this page dropdown === results (same element: id="cityappend"
+            // AND class="citys"). getElementById is unambiguous and fastest.
+            var live = document.getElementById('cityappend');
+            if (live && live !== this.results) {
+                this.results  = live;
+                this.dropdown = live;
+            }
+        },
+
         // Render search results
         renderResults: function(cities) {
+            this.syncDropdownRef();
+            // Cancel any pending error-hide so it can't nuke these results.
+            if (this._errorHideTimer) {
+                clearTimeout(this._errorHideTimer);
+                this._errorHideTimer = null;
+            }
+
             if (!cities || cities.length === 0) {
                 this.results.innerHTML = '<div class="opt" style="color: #ccc; padding: 10px; text-align: center;">No cities found</div>';
                 this.showDropdown();
                 return;
             }
-            
+
             var html = '';
             for (var i = 0; i < cities.length; i++) {
                 var city = cities[i];
@@ -3427,13 +3468,19 @@ form.listing textarea#listing_description:focus {
                         this.escapeHtml(city.name) +
                         '</div>';
             }
-            
+
             this.results.innerHTML = html;
             this.showDropdown();
         },
         
         // Handle city selection
         handleSelect: function(e) {
+            // Delegated from document click on #cityappend; the input
+            // reference may be stale after a prior morph, refresh it
+            // before we set this.input.value.
+            this.syncInputRef();
+            this.syncDropdownRef();
+
             var target = e.target;
 
             // Find the optc-item element
@@ -3457,11 +3504,23 @@ form.listing textarea#listing_description:focus {
             
             // Update input field
             this.input.value = cityName;
-            
-            // Update hidden field
-            var hiddenInput = document.getElementById('selectedcity');
+
+            // Dispatch input event to trigger wire:model.lazy sync. Wrap with a
+            // one-shot suppress flag so our own handleInput ignores this
+            // synthetic dispatch (see the guard in handleInput). Matches the
+            // new-profile page behavior.
+            this._suppressInputEvent = true;
+            var inputEvent = new Event('input', { bubbles: true });
+            this.input.dispatchEvent(inputEvent);
+            this._suppressInputEvent = false;
+
+            // Update hidden field (id renamed to selectedcityid to match new-profile
+            // and avoid collision with the Livewire `selectedcity` property).
+            var hiddenInput = document.getElementById('selectedcityid');
             if (hiddenInput) {
                 hiddenInput.value = cityId;
+                var hiddenInputEvent = new Event('input', { bubbles: true });
+                hiddenInput.dispatchEvent(hiddenInputEvent);
             }
             
             // Auto-select currency based on city's country
@@ -3494,6 +3553,7 @@ form.listing textarea#listing_description:focus {
         
         // Handle keyboard navigation
         handleKeydown: function(e) {
+            this.syncDropdownRef();
             var items = this.results.querySelectorAll('.optc-item');
             if (items.length === 0) return;
             
@@ -3633,27 +3693,56 @@ form.listing textarea#listing_description:focus {
         
         // Show the dropdown
         showDropdown: function() {
+            this.syncDropdownRef();
             this.dropdown.style.display = 'block';
         },
-        
+
         // Hide the dropdown
         hideDropdown: function() {
+            this.syncDropdownRef();
+            // Cancel any pending error auto-hide — otherwise a late-firing
+            // timer wipes out results the user is now looking at.
+            if (this._errorHideTimer) {
+                clearTimeout(this._errorHideTimer);
+                this._errorHideTimer = null;
+            }
             this.dropdown.style.display = 'none';
             this.results.innerHTML = '';
         },
-        
+
         // Show loading state
         showLoading: function() {
+            this.syncDropdownRef();
+            // Cancel any pending error-hide before we replace the dropdown
+            // with new content. Prevents a stale error timer from clearing
+            // fresh results a moment after they arrive.
+            if (this._errorHideTimer) {
+                clearTimeout(this._errorHideTimer);
+                this._errorHideTimer = null;
+            }
             this.results.innerHTML = '<div class="opt" style="color: #999; padding: 10px; text-align: center;"><i class="fa fa-spinner fa-spin"></i> Searching...</div>';
             this.showDropdown();
         },
-        
-        // Show error message
+
+        // Show error message. Errors here are transient (network hiccup,
+        // CSRF race, backend timeout). Reset lastQuery so the same query
+        // retries on the next keystroke instead of being short-circuited
+        // by the "same query" guard in handleInput. The auto-hide timer is
+        // stored on the instance so hideDropdown / showLoading / renderResults
+        // can cancel it — without that, a 3-second-old error hide would fire
+        // AFTER a subsequent successful search and wipe the good results.
         showError: function(message) {
+            this.syncDropdownRef();
+            if (this._errorHideTimer) {
+                clearTimeout(this._errorHideTimer);
+                this._errorHideTimer = null;
+            }
+            this.lastQuery = '';
             this.results.innerHTML = '<div class="opt" style="color: #ff6b6b; padding: 10px; text-align: center;">' + this.escapeHtml(message) + '</div>';
             this.showDropdown();
             var self = this;
-            setTimeout(function() {
+            this._errorHideTimer = setTimeout(function() {
+                self._errorHideTimer = null;
                 self.hideDropdown();
             }, 3000);
         },
@@ -3715,7 +3804,56 @@ form.listing textarea#listing_description:focus {
     
     // Expose for debugging
     window.CitySearch = CitySearch;
-    
+
+    // ----------------------------------------------------------------------
+    // Bulletproof fallback: document-level input event delegation. Runs on
+    // TOP of the direct listeners bound in bindEvents(). The direct listeners
+    // handle 99% of cases; this fallback catches the moment right after a
+    // Livewire morph swaps #citysearch but before the MutationObserver has
+    // reinitialized. On every event, refresh refs to point at the CURRENT
+    // element so this.input / this.dropdown / this.results are never stale.
+    // Guarded to install once per page (survives Livewire script re-runs).
+    // ----------------------------------------------------------------------
+    if (!document.__citySearchInputDelegated) {
+        document.__citySearchInputDelegated = true;
+
+        function refreshRefsForInput(inputEl) {
+            var W = window.CitySearch;
+            if (!W) return;
+            W.input = inputEl;
+            var live = document.getElementById('cityappend');
+            if (live) { W.dropdown = live; W.results = live; }
+            // Deliberately NOT setting W.initialized = true here — that would
+            // short-circuit the module's own init() and prevent direct
+            // listeners from ever being bound. Let init() manage that flag.
+        }
+
+        document.addEventListener('input', function(e) {
+            if (!e.target || e.target.id !== 'citysearch') return;
+            var W = window.CitySearch;
+            if (!W) return;
+            if (W.input !== e.target) refreshRefsForInput(e.target);
+            W.handleInput(e);
+        }, true);
+
+        document.addEventListener('keyup', function(e) {
+            if (!e.target || e.target.id !== 'citysearch') return;
+            var W = window.CitySearch;
+            if (!W) return;
+            if (W.input !== e.target) refreshRefsForInput(e.target);
+            W.handleInput(e);
+        }, true);
+
+        document.addEventListener('focus', function(e) {
+            if (!e.target || e.target.id !== 'citysearch') return;
+            var W = window.CitySearch;
+            if (!W) return;
+            if (W.input !== e.target) refreshRefsForInput(e.target);
+            var query = e.target.value.trim();
+            if (query.length >= W.config.minChars) W.handleInput(e);
+        }, true);
+    }
+
 })();
 
 // Character count function for About Me textarea
@@ -4337,21 +4475,19 @@ window.CustomSelect2 = class CustomSelect2 {
         // Add new selection
         optionElement.classList.add('selected');
 
-        // Update selection box display text
+        // Update selection box display text. Show full option text so
+        // country name is visible alongside "+code". If it overflows the
+        // narrow phone-code box, CSS ellipsis truncates it visually while
+        // the full value stays in the underlying <select>.
         const fullText = optionElement.textContent.trim();
         let displayText = fullText;
 
-        // Only extract country code for country code selects (select2-country class)
-        if (this.selectElement.classList.contains('select2-country')) {
-            const codeMatch = fullText.match(/^(\+\d+)/);
-            displayText = codeMatch ? codeMatch[1] : fullText.split('-')[0].trim();
-        }
-        // For currency selects in price-control, show only the currency code
-        else if (this.selectElement.classList.contains('price-currency')) {
+        // Currency selects in price-control: strip padding whitespace only.
+        if (this.selectElement.classList.contains('price-currency')) {
             displayText = fullText.trim();
         }
 
-        this.selectionBox.innerHTML = displayText;
+        this.selectionBox.textContent = displayText;
 
         // Update original select
         this.selectElement.value = optionElement.dataset.value;
@@ -4382,55 +4518,104 @@ window.CustomSelect2 = class CustomSelect2 {
     }
 }
 
-// Initialize custom select2 ONLY for selects with .apply-custom-select2 class
+// Initialize custom select2 ONLY for selects with .apply-custom-select2 class.
+// Ported from new-profile: checks that the wrapper is still attached to the
+// document before skipping — otherwise re-inits. Without this check, a Livewire
+// morph can rip out the .custom-select2 wrapper while leaving the native
+// <select> untouched (with its stale .customSelect2Instance property intact),
+// so the old code would think "already initialized" and never rebuild the
+// wrapper. Result: every dropdown disappears the moment you change a country
+// code (which triggers a morph via wire:model).
 function initializeCustomSelect2() {
-    console.log('Initializing Custom Select2...');
-
     const customSelects = document.querySelectorAll('select.apply-custom-select2');
 
     customSelects.forEach(select => {
-        if (!select.customSelect2Instance) {
-            const wireModel = select.getAttribute('wire:model');
-            const placeholder = select.querySelector('option[value=""]')?.textContent || 'Select...';
+        // Re-init if the previous instance's DOM was ripped out by Livewire
+        // morph (the wrapper is no longer connected to document).
+        const inst = select.customSelect2Instance;
+        const instanceIsLive = inst && inst.container && document.body.contains(inst.container);
+        if (instanceIsLive) return;
 
-            select.customSelect2Instance = new CustomSelect2(select, {
-                placeholder: placeholder,
-                searchable: true,
-                onChange: (value) => {
-                    // Trigger native change event for wire:model to pick up
-                    select.value = value;
-                    select.dispatchEvent(new Event('change', { bubbles: true }));
-                    select.dispatchEvent(new Event('input', { bubbles: true }));
+        // Clear any stale instance reference before re-wrapping.
+        select.customSelect2Instance = null;
 
-                    // Also try direct Livewire sync
-                    if (wireModel && typeof Livewire !== 'undefined') {
-                        try {
-                            const component = Livewire.find(select.closest('[wire\\:id]')?.getAttribute('wire:id'));
-                            if (component) {
-                                component.set(wireModel, value);
-                            }
-                        } catch (e) {
-                            console.log('Livewire sync fallback:', e);
-                        }
-                    }
-                }
-            });
-            console.log('Initialized custom select2 for:', select.id || wireModel);
-        }
+        const wireModel = select.getAttribute('wire:model');
+        const placeholder = select.querySelector('option[value=""]')?.textContent || 'Select...';
+
+        select.customSelect2Instance = new CustomSelect2(select, {
+            placeholder: placeholder,
+            searchable: true,
+            onChange: (value) => {
+                // Sync into native <select> and fire input/change so wire:model
+                // picks up the value on the next commit. We deliberately don't
+                // call component.set() here — that would force an immediate
+                // round-trip and re-trigger the morph that wipes wrappers.
+                select.value = value;
+                select.dispatchEvent(new Event('input', { bubbles: true }));
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
     });
-
-    console.log('Custom Select2 initialized for', customSelects.length, 'dropdowns');
 }
 
-// Destroy all custom select2 instances
+// Watchdog: Livewire's morph can strip our custom-select2 wrappers and reset
+// display:none on the underlying <select>. A MutationObserver fires in a
+// microtask (before the browser paints), so restoring the wrapping happens
+// without any visible flash — the user never sees the raw native <select>.
+let _select2WatchdogInstalled = false;
+function installSelect2Watchdog() {
+    if (_select2WatchdogInstalled) return;
+    _select2WatchdogInstalled = true;
+
+    const root = document.querySelector('[wire\\:id]') || document.body;
+    const observer = new MutationObserver(() => {
+        let needsRestore = false;
+        document.querySelectorAll('select.apply-custom-select2').forEach(select => {
+            const inst = select.customSelect2Instance;
+            if (!inst || !inst.container || !document.body.contains(inst.container)) {
+                needsRestore = true;
+            } else if (select.style.display !== 'none') {
+                select.style.display = 'none';
+            }
+        });
+        if (needsRestore) initializeCustomSelect2();
+    });
+    observer.observe(root, { childList: true, subtree: true });
+}
+
+// Destroy stale / orphaned custom select2 instances. Selects still wrapped
+// correctly are left alone — otherwise every Livewire commit would tear down
+// and rebuild every dropdown on the page, causing them to visibly shake.
 function destroyCustomSelect2() {
-    const allSelects = document.querySelectorAll('select');
-    allSelects.forEach(select => {
+    document.querySelectorAll('select.apply-custom-select2').forEach(select => {
+        // Selects inside wire:ignore are never touched by Livewire morph,
+        // so their wrapper is guaranteed intact — skip them entirely.
+        if (select.closest('[wire\\:ignore]')) return;
+
+        const wrapper = select.nextElementSibling;
+        const wrapperOk = wrapper && wrapper.classList && wrapper.classList.contains('custom-select2');
+
+        if (select.customSelect2Instance && wrapperOk) return;
+
         if (select.customSelect2Instance) {
-            select.customSelect2Instance.destroy();
+            try { select.customSelect2Instance.destroy(); } catch (e) {}
             select.customSelect2Instance = null;
         }
+        select.style.display = '';
     });
+
+    // Sweep leftover wrappers whose <select> is gone.
+    document.querySelectorAll('.custom-select2').forEach(wrap => {
+        const prev = wrap.previousElementSibling;
+        if (!prev || prev.tagName !== 'SELECT' || !prev.classList.contains('apply-custom-select2')) {
+            wrap.remove();
+        }
+    });
+}
+
+function refreshCustomSelect2() {
+    destroyCustomSelect2();
+    initializeCustomSelect2();
 }
 
 // Initialize on DOM ready
@@ -4445,20 +4630,45 @@ window.addEventListener('load', function() {
     }
 });
 
-// Re-initialize after Livewire updates
-if (typeof Livewire !== 'undefined') {
-    Livewire.hook('message.processed', (message, component) => {
-        setTimeout(initializeCustomSelect2, 100);
-    });
-}
-
 document.addEventListener('livewire:navigated', function() {
-    setTimeout(initializeCustomSelect2, 200);
+    setTimeout(function () {
+        initializeCustomSelect2();
+        installSelect2Watchdog();
+    }, 0);
 });
 
 document.addEventListener('livewire:load', function() {
     setTimeout(initializeCustomSelect2, 200);
 });
+
+// Livewire integration. After every commit that morphs the DOM, restore any
+// wrappers that got stripped. Also try to prevent morph from removing them
+// in the first place via the morph.removing hook.
+if (typeof Livewire !== 'undefined') {
+    document.addEventListener('livewire:initialized', () => {
+        refreshCustomSelect2();
+        installSelect2Watchdog();
+
+        try {
+            if (typeof Livewire.hook === 'function') {
+                Livewire.hook('morph.removing', ({ el, skip }) => {
+                    if (el && el.classList && el.classList.contains('custom-select2')) {
+                        skip();
+                    }
+                });
+            }
+        } catch (e) {}
+    });
+
+    // Debounced fallback: after any processed message, re-check quickly.
+    var _select2RefreshDebounce = null;
+    try {
+        Livewire.hook('message.processed', () => {
+            clearTimeout(_select2RefreshDebounce);
+            _select2RefreshDebounce = setTimeout(initializeCustomSelect2, 80);
+        });
+    } catch (e) {}
+}
 
 // Drag and Drop Image Reordering Functionality
 function initializeDragAndDrop() {

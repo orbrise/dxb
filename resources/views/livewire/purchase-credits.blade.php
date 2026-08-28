@@ -316,7 +316,7 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
         text-decoration: none;
         font-size: 13px;
         font-weight: 600;
-        padding: 8px 14px;
+        padding: 5px 14px;
         border-radius: 999px;
         transition: all 0.2s ease;
         white-space: nowrap;
