@@ -83,17 +83,64 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     height: 112px;
     object-fit: contain;
 }
+
+/* Mobile: let the card use the full viewport width */
+@media (max-width: 768px) {
+    .main-wrapper { padding-left: 0 !important; padding-right: 0 !important; }
+    .container-fluid { padding-left: 6px !important; padding-right: 6px !important; }
+    .container-fluid > .row { margin-left: 0 !important; margin-right: 0 !important; }
+    .container-fluid > .row > [class*="col-"] { padding-left: 0 !important; padding-right: 0 !important; }
+    .card { border-radius: 6px; }
+    .card .card-body { padding: 10px !important; }
+    .card .card-header { padding: 10px !important; }
+}
+
+/* Mobile responsive: card header + filter form */
+@media (max-width: 768px) {
+    #verificationTable + .d-flex,
+    .card-header.d-flex {
+        flex-wrap: wrap !important;
+        gap: 10px;
+    }
+    .card-header .card-title { flex: 1 1 100%; }
+    .card-header .d-flex.gap-2 { flex: 1 1 100%; justify-content: flex-start; }
+
+    /* Filter form: allow wrap and 2 fields per row */
+    #searchForm .row.flex-nowrap { flex-wrap: wrap !important; }
+    #searchForm .row > .col,
+    #searchForm .row > .col-auto {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    #searchForm .row > .col-auto {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    #searchForm .col-auto.d-flex {
+        justify-content: flex-start;
+        gap: 8px;
+    }
+    #searchForm .col-auto .btn { margin: 0 !important; }
+
+    /* Pagination row */
+    #verificationTable + .d-flex.justify-content-between {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px;
+        text-align: center;
+    }
+}
 </style>
 @endpush
 
 @section('content')
- <div class="row page-title clearfix">
+ <div class="row page-title clearfix" style="padding: 0 2.78571em !important;">
                 <div class="page-title-left">
                     <h5 class="mr-0 mr-r-5">Pending Profiles</h5>
                     <p class="mr-0 text-muted d-none d-md-inline-block">Manage pending profiles effectively</p>
                 </div>
                 <!-- /.page-title-left -->
-                <div class="page-title-right d-none d-sm-inline-flex">
+                <div class="page-title-right d-none d-sm-inline-flex" >
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{url('admin/dashboard')}}">Dashboard</a>
                         </li>

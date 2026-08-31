@@ -40,6 +40,9 @@
         position: relative;
         width: 100%;
         z-index: 6;
+        /* Override .header-light .navbar { height: 68px } from master layout */
+        height: auto !important;
+        min-height: 0;
     }
 
     .navbar-filters ul.nav {
@@ -246,29 +249,49 @@
     /* Mobile Responsive */
     @media (max-width: 768px) {
         .navbar-filters {
-            padding: 10px 15px;
+            padding: 10px 12px;
         }
-        
+
+        .navbar-filters #filter-form {
+            width: 100%;
+        }
+
         .navbar-filters ul.nav {
-            flex-direction: column;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
             align-items: stretch;
         }
-        
-        .navbar-filters .dropdown-toggle {
+
+        .navbar-filters .nav-item,
+        .navbar-filters .dropdown {
+            width: 100%;
+        }
+
+        .navbar-filters ul.nav > li:last-child {
+            grid-column: 1 / -1;
+        }
+
+        .navbar-filters .dropdown-toggle,
+        .navbar-filters .reset-filter-btn {
             width: 100%;
             justify-content: center;
+            padding: 8px 6px;
+            font-size: 12px;
         }
-        
+
+        .navbar-filters .dropdown-toggle i {
+            font-size: 11px;
+        }
+
         .navbar-filters .dropdown-menu {
-            min-width: 100%;
-            position: static !important;
+            min-width: 90vw;
+            max-width: 90vw;
+            position: absolute !important;
+            left: 0 !important;
+            right: auto !important;
             transform: none !important;
-            margin-top: 10px;
-        }
-        
-        .navbar-filters .filter-icon {
-            align-self: center;
+            margin-top: 5px;
         }
     }
 
@@ -356,6 +379,23 @@
         }
     }
 
+    /* Desktop: right-align the "Pending Profile Photo Verify" button */
+    .pending-verify-col { text-align: right; }
+
+    /* Mobile: clean layout for "Show entries" + "Pending Photo Verify" row */
+    @media (max-width: 768px) {
+        .entries-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .entries-toolbar .dataTables_length { margin: 0; text-align: left; }
+        .entries-toolbar .btn { margin: 0; }
+        .pending-verify-col { text-align: right; }
+    }
 
 </style>
 @endpush
@@ -543,34 +583,26 @@
             
         </div>
 <div class="col-md-12">
-<div class="row mb-3">
-<div class="col-md-6">
-    <div class="row">
-        <div class="col-sm-12 col-md-12">
-           
-        </div>
-        <div class="col-sm-12 col-md-12 text-end">
-            <div class="dataTables_length">
-                <label class="d-inline-flex align-items-center">
-                    Show 
-                    <select name="per_page" id="per-page-select" class="form-select form-select-sm mx-2" style="width: auto;">
-                        <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
-                        <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
-                        <option value="250" {{ request('per_page', 10) == 250 ? 'selected' : '' }}>250</option>
-                        <option value="500" {{ request('per_page', 10) == 500 ? 'selected' : '' }}>500</option>
-                        <option value="1000" {{ request('per_page', 10) == 1000 ? 'selected' : '' }}>1000</option>
-                    </select>
-                    entries
-                </label>
-            </div>
+<div class="row mb-3 entries-toolbar">
+    <div class="col-md-6">
+        <div class="dataTables_length">
+            <label class="d-inline-flex align-items-center mb-0">
+                Show
+                <select name="per_page" id="per-page-select" class="form-select form-select-sm mx-2" style="width: auto;">
+                    <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
+                    <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
+                    <option value="250" {{ request('per_page', 10) == 250 ? 'selected' : '' }}>250</option>
+                    <option value="500" {{ request('per_page', 10) == 500 ? 'selected' : '' }}>500</option>
+                    <option value="1000" {{ request('per_page', 10) == 1000 ? 'selected' : '' }}>1000</option>
+                </select>
+                entries
+            </label>
         </div>
     </div>
+    <div class="col-md-6 pending-verify-col">
+        <a href="{{ route('admin.verifications') }}" class="btn btn-primary">Pending Profile Photo Verify</a>
     </div>
-    
-    <div class="col-md-6" style="text-align: right;">
-                <a href="{{ route('admin.verifications') }}" class="btn btn-primary">Pending Profile Photo Verify</a>
-                </div>
-    </div>
+</div>
         <div class="card row">
             <div class="card-header">
                 <div class="float-start mb-2" >

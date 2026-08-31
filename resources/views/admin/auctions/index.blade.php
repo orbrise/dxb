@@ -6,6 +6,48 @@
     padding-left: 4px;
     padding-right: 4px;
 }
+
+/* Mobile responsive tweaks */
+@media (max-width: 768px) {
+    /* Full-width card */
+    .main-wrapper { padding-left: 15px !important; padding-right: 15px !important; }
+    .container-fluid { padding-left: 6px !important; padding-right: 6px !important; }
+    .container-fluid > .row { margin-left: 0 !important; margin-right: 0 !important; }
+    .container-fluid > .row > [class*="col-"] { padding-left: 0 !important; padding-right: 0 !important; }
+    .card { border-radius: 6px; }
+    .card > .card-body { padding: 10px !important; }
+    .card > .card-header { padding: 10px !important; }
+
+    /* Create button: full width above the card, left aligned */
+    .float-right { float: none !important; text-align: center; }
+    .float-right .btn { width: 100%; }
+
+    /* Filters: 2 per row */
+    form.row { margin: 0 !important; }
+    form.row > .col-md-2 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        padding: 4px !important;
+    }
+    /* The city search dropdown gets full width so results are readable */
+    form.row > .col-md-2:first-child {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    /* Buttons row spans full width */
+    form.row > .col-md-2:last-child {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    form.row > .col-md-2:last-child .form-group > div { display: flex; gap: 8px; }
+    form.row > .col-md-2:last-child .btn { flex: 1; margin: 0 !important; }
+    form.row > .col-md-2:last-child label { display: none; }
+    form.row .form-group { margin-bottom: 6px; }
+    form.row label { font-size: 12px; margin-bottom: 4px; font-weight: 600; }
+
+    /* Table stays scrollable horizontally */
+    .card-body > .table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>
  <div class="row page-title clearfix">
                 <div class="page-title-left">

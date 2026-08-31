@@ -248,10 +248,179 @@ img.logo-expand {
     width: 70%;
 }
 
+/* Fresh mobile menu — completely self-contained, no reliance on theme.js */
+@media (max-width: 960px) {
+    /* Hide theme's broken sidebar entirely on mobile */
+    .site-sidebar { display: none !important; }
+    /* Hide theme's broken hamburger to avoid confusion */
+    .navbar .sidebar-toggle { display: none !important; }
+}
+#mm-btn {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    width: 44px;
+    height: 44px;
+    background: #2c2c2c;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    z-index: 100000;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    padding: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+#mm-btn:focus { outline: none; }
+#mm-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 85%;
+    max-width: 320px;
+    height: 100vh;
+    background: #2c2c2c;
+    color: #fff;
+    z-index: 100002;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.4);
+}
+#mm-panel.mm-open { transform: translateX(0); }
+#mm-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100001;
+}
+#mm-backdrop.mm-open { display: block; }
+#mm-panel .mm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: #1f1f1f;
+}
+#mm-panel .mm-header .mm-title { font-size: 16px; font-weight: 600; }
+#mm-panel .mm-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+#mm-panel ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+#mm-panel a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    color: #fff;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 14px;
+}
+#mm-panel a:hover, #mm-panel a.mm-active { background: #3a3a3a; }
+#mm-panel .mm-icon { width: 22px; text-align: center; opacity: 0.8; }
+#mm-panel .mm-badge {
+    margin-left: auto;
+    background: #dc3545;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+/* Center the theme's caret vertically on expandable items */
+#mm-panel li.menu-item-has-children > a {
+    position: relative;
+    padding-right: 40px;
+}
+#mm-panel li.menu-item-has-children > a::after,
+#mm-panel li.menu-item-has-children > a::before {
+    position: absolute !important;
+    right: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    transition: transform 0.2s ease !important;
+}
+#mm-panel li.menu-item-has-children.mm-expanded > a::after,
+#mm-panel li.menu-item-has-children.mm-expanded > a::before {
+    transform: translateY(-50%) rotate(90deg) !important;
+}
+/* Neutralize theme's fly-out sub-menu positioning inside our panel */
+#mm-panel .sub-menu {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: #232323 !important;
+    overflow: visible !important;
+    transform: none !important;
+    display: none;
+}
+#mm-panel li.mm-expanded > .sub-menu { display: block !important; }
+#mm-panel .sub-menu li { background: transparent !important; }
+#mm-panel .sub-menu a { padding-left: 48px !important; font-size: 13px; }
+@media (max-width: 960px) {
+    #mm-btn { display: flex; align-items: center; justify-content: center; }
+    body.mm-body-lock { overflow: hidden; }
+}
+
+/* Global mobile card spacing + footer breathing room */
+@media (max-width: 768px) {
+    .card { margin-bottom: 16px !important; }
+    .card:last-child { margin-bottom: 24px; }
+    .main-wrapper { padding-bottom: 32px !important; padding-top: 64px !important; }
+    /* Reserve room so page-title + first content don't hide behind #mm-btn */
+    .page-title { padding-left: 60px !important; }
+    /* Theme footer is position:absolute bottom:0 with margin-left for sidebar —
+       reset all of that on mobile so it flows below content with breathing room. */
+    .footer {
+        position: static !important;
+        margin-left: 0 !important;
+        margin-top: 24px !important;
+        height: auto !important;
+        line-height: 1.4 !important;
+        padding: 16px 10px !important;
+    }
+}
+
 </style>
 </head>
 
 <body class="header-light sidebar-dark sidebar-expand">
+    <!-- Mobile menu (only visible below 961px) -->
+    <button type="button" id="mm-btn" aria-label="Open menu">&#9776;</button>
+    <div id="mm-backdrop"></div>
+    <aside id="mm-panel" aria-hidden="true">
+        <div class="mm-header">
+            <span class="mm-title">Menu</span>
+            <button type="button" class="mm-close" aria-label="Close menu">&times;</button>
+        </div>
+        @include('admin.layout.left')
+    </aside>
+
     <div id="wrapper" class="wrapper">
         <!-- HEADER & TOP NAVIGATION -->
         @include('admin.layout.top')
@@ -435,27 +604,31 @@ img.logo-expand {
     <script>
     // Force sidebar rendering fix on page load
     $(document).ready(function() {
-        // Force repaint of sidebar elements
-        $('.site-sidebar').hide().show(0);
-        
+        // Repaint only on desktop; on mobile this would override the theme's
+        // display:none and pin the sidebar permanently open.
+        if (window.innerWidth >= 961) {
+            $('.site-sidebar').hide().show(0);
+        }
+
         // Ensure all sidebar text is visible
         $('.sidebar-nav .nav li > a').css({
             'opacity': '1',
             'visibility': 'visible',
             'color': 'white'
         });
-        
+
         $('.sidebar-nav .nav li > a .hide-menu').css({
             'opacity': '1',
             'visibility': 'visible',
             'display': 'inline-block'
         });
-        
+
         // Force material icons to render
         $('.sidebar-nav .material-icons').css({
             'opacity': '1',
             'visibility': 'visible'
-        }); 
+        });
+
 
         // Cache clear notifications
         @if(session('cache_success'))
@@ -479,6 +652,75 @@ img.logo-expand {
     </script>
 
     @stack('js')
+
+    <script>
+    (function() {
+        function ready(fn) {
+            if (document.readyState !== 'loading') fn();
+            else document.addEventListener('DOMContentLoaded', fn);
+        }
+
+        ready(function() {
+            var btn = document.getElementById('mm-btn');
+            var panel = document.getElementById('mm-panel');
+            var backdrop = document.getElementById('mm-backdrop');
+            var closeBtn = panel ? panel.querySelector('.mm-close') : null;
+            if (!btn || !panel || !backdrop) return;
+
+            function open() {
+                panel.classList.add('mm-open');
+                backdrop.classList.add('mm-open');
+                document.body.classList.add('mm-body-lock');
+                panel.setAttribute('aria-hidden', 'false');
+            }
+            function close() {
+                panel.classList.remove('mm-open');
+                backdrop.classList.remove('mm-open');
+                document.body.classList.remove('mm-body-lock');
+                panel.setAttribute('aria-hidden', 'true');
+            }
+            function toggle() {
+                if (panel.classList.contains('mm-open')) close(); else open();
+            }
+
+            btn.addEventListener('click', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                toggle();
+            });
+            if (closeBtn) closeBtn.addEventListener('click', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                close();
+            });
+            backdrop.addEventListener('click', close);
+
+            // Convert sub-menus inside the panel to a simple expand/collapse.
+            panel.querySelectorAll('li.menu-item-has-children').forEach(function(li) {
+                li.classList.add('mm-has-sub');
+                var link = li.querySelector(':scope > a');
+                var sub = li.querySelector(':scope > ul');
+                if (!link || !sub) return;
+                sub.classList.add('mm-sub');
+                if (li.classList.contains('current-page')) li.classList.add('mm-expanded');
+                link.addEventListener('click', function(e) {
+                    e.preventDefault(); e.stopPropagation();
+                    li.classList.toggle('mm-expanded');
+                });
+            });
+
+            // Close the panel when tapping a real navigation link.
+            panel.querySelectorAll('a[href]').forEach(function(a) {
+                var href = a.getAttribute('href') || '';
+                if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
+                a.addEventListener('click', function() { close(); });
+            });
+
+            // Close on Esc.
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') close();
+            });
+        });
+    })();
+    </script>
 </body>
 
 </html>

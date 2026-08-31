@@ -1,5 +1,17 @@
 @extends('admin.layout.master')
 
+@push('css')
+<style>
+/* On mobile, last widget tile (Verified Profiles) spans full width */
+@media (max-width: 767.98px) {
+    .row.justify-content-center > .widget-holder:last-child {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+</style>
+@endpush
+
 @section('content')
 
    <div class="row page-title clearfix">
@@ -21,7 +33,7 @@
 
 <div class="row justify-content-center mt-3">
 
-<div class="col-md col-sm-6 widget-holder widget-full-height">
+<div class="col-6 col-md widget-holder widget-full-height">
                         <div class="widget-bg bg-primary text-inverse" style="background-color: #fb8c00 !important">
                             <div class="widget-body">
                             <a style="color:black; text-decoration:none" href="{{ route('admin.users') }}">
@@ -38,7 +50,7 @@
                     </div>
 
     <!--end col-->
-    <div class="col-md col-sm-6 widget-holder widget-full-height">
+    <div class="col-6 col-md widget-holder widget-full-height">
                         <div class="widget-bg bg-color-scheme text-inverse" style="background-color: #0acc95 !important">
                             <div class="widget-body clearfix">
                             <a style="color:black; text-decoration:none" href="{{ route('admin.profiles.index') }}">
@@ -55,7 +67,7 @@
                     </div>
 
 
-    <div class="col-md col-sm-6 widget-holder widget-full-height">
+    <div class="col-6 col-md widget-holder widget-full-height">
                         <div class="widget-bg" style="background-color: #186dde !important; color:white">
                             <div class="widget-body clearfix">
                              <a style="color:white" href="{{ url('admin/profiles?id=&start_date=&end_date=&title=&city=&status=1&premium=') }}">
@@ -73,7 +85,7 @@
                     </div>
 
 
-<div class="col-md col-sm-6 widget-holder widget-full-height">
+<div class="col-6 col-md widget-holder widget-full-height">
                         <div class="widget-bg" style="background-color: #2f3d4a !important; color:white">
                             <div class="widget-body clearfix">
                              <a style="color:white" href="{{ url('admin/profiles?id=&start_date=&end_date=&title=&city=&status=0&premium=') }}">
@@ -89,7 +101,7 @@
                         <!-- /.widget-bg -->
                     </div>
 
-<div class="col-md col-sm-6 widget-holder widget-full-height">
+<div class="col-6 col-md widget-holder widget-full-height">
                         <div class="widget-bg" style="background-color: #6f42c1 !important; color:white">
                             <div class="widget-body clearfix">
                              <a style="color:white" href="{{ url('admin/profiles?id=&start_date=&end_date=&title=&city=&status=verified&premium=') }}">

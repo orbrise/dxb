@@ -1,5 +1,43 @@
 @extends('admin.layout.master')
 
+@push('css')
+<style>
+/* Blog posts — mobile layout */
+@media (max-width: 768px) {
+    /* Full-width card */
+    .main-wrapper { padding-left: 15px !important; padding-right: 15px !important; }
+
+    /* Top toolbar: stack button then filter form */
+    .blog-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+    .blog-toolbar > .btn { width: 100%; }
+    .blog-toolbar .form-inline {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+    }
+    .blog-toolbar .form-inline > .form-control {
+        margin: 0 !important;
+        width: 100%;
+    }
+    /* Search input + submit button span both columns */
+    .blog-toolbar .form-inline > input[name="search"] { grid-column: 1 / -1; }
+    .blog-toolbar .form-inline > .btn {
+        grid-column: 1 / -1;
+        margin: 0 !important;
+    }
+
+    /* Table stays horizontally scrollable so all columns remain reachable */
+    .card > .card-body { padding: 8px !important; overflow-x: auto; }
+    .card > .card-body > table { min-width: 640px; }
+}
+</style>
+@endpush
+
 @section('content')
 <div class="row page-title clearfix">
     <div class="page-title-left">
@@ -14,7 +52,7 @@
     </div>
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+<div class="d-flex justify-content-between align-items-center mb-3 mt-3 blog-toolbar">
     <a href="{{ route('admin.blog.posts.create') }}" class="btn btn-primary">
         <i class="fas fa-plus"></i> Create New Post
     </a>

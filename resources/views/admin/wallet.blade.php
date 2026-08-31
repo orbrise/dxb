@@ -175,11 +175,17 @@
 
     .transfer-arrow i {
         color: #28a745;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         background: #f8f9fa;
-        padding: 8px;
         border-radius: 50%;
         border: 2px solid #e9ecef;
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 1;
     }
 
     .amount-note-row {
@@ -202,15 +208,38 @@
         .transfer-row {
             flex-direction: column;
             gap: 15px;
+            align-items: stretch;
         }
-        
+
+        .transfer-field {
+            width: 100%;
+            min-width: 0;
+            flex: 1 1 100%;
+        }
+
         .transfer-arrow {
-            transform: rotate(90deg);
-            margin: 10px 0;
+            width: 100%;
+            text-align: center;
+            margin: 4px 0;
         }
-        
+        .transfer-arrow i {
+            transform: rotate(90deg);
+        }
+
         .amount-note-row {
             flex-direction: column;
+        }
+
+        .amount-field,
+        .note-field {
+            width: 100%;
+            min-width: 0;
+            flex: 1 1 100%;
+        }
+
+        .form-input,
+        .form-group {
+            width: 100%;
         }
     }
 
@@ -335,20 +364,32 @@
     /* Responsive design */
     @media (max-width: 768px) {
         .wallet-container {
-            padding: 15px;
+            padding: 12px;
+            margin-top: 8px;
         }
-        
+
         .wallet-form {
-            padding: 20px;
+            padding: 16px;
+            max-width: 100%;
         }
-        
+
         .tabs-header {
-            flex-direction: column;
-            align-items: center;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
         }
-        
+
         .tab-btn {
-            width: 200px;
+            width: 100%;
+            min-width: 0;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        .transactions-section .card-header .d-flex {
+            flex-wrap: wrap;
+            gap: 10px;
         }
     }
 
