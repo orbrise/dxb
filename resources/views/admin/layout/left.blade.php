@@ -311,8 +311,22 @@
                         </a>
                     </li>
 
-                   
-  @php
+                    <li class="{{ str_contains(Route::currentRouteName(), 'admin.reports') ? 'current-page' : '' }}">
+                        <a class="ripple" href="{{route('admin.reports.wallet')}}">
+                           <i class="list-icon material-icons" style="font-size: 20px;">credit_card</i>
+                            <span class="hide-menu">Transactions</span>
+                            @php
+                                $failedTx = \App\Models\WalletTransaction::whereIn('status', ['failed', 'pending'])
+                                    ->where('created_at', '<', now()->subMinutes(30))
+                                    ->count();
+                            @endphp
+                            @if($failedTx > 0)
+                                <span class="badge badge-pill badge-danger ml-2">{{ $failedTx }}</span>
+                            @endif
+                        </a>
+                    </li>
+
+                    @php
                         $settingsRoutes = ['admin.appsetting', 'admin.url-redirects.index', 'admin.url-aliases.index', 'admin.mail-settings.index', 'seo.index', 'default-seo.index'];
                         $isSettingsSectionOpen = in_array(Route::currentRouteName(), $settingsRoutes) || 
                                                  str_contains(Route::currentRouteName(), 'admin.appsetting') ||

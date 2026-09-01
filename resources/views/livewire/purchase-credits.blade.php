@@ -634,9 +634,20 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             });
         }
         
-        // Listen for message from iframe (payment success or failure)
+        // Listen for message from iframe (payment success, failure, or started)
         window.addEventListener('message', function(event) {
             if (event.origin !== 'https://myadsnetwork.com' && event.origin !== window.location.origin) return;
+
+            if (event.data && event.data.type === 'payment_started') {
+                var startedRef = event.data.reference_id;
+                if (window.primaryPaymentStartLogged && window.primaryPaymentStartLogged === startedRef) return;
+                window.primaryPaymentStartLogged = startedRef;
+
+                Livewire.dispatch('startPrimaryPaymentAttempt', {
+                    amount: parseFloat(event.data.amount || (window.primaryPaymentReference && window.primaryPaymentReference.amount) || 0),
+                    referenceId: startedRef
+                });
+            }
 
             if (event.data && event.data.type === 'payment_success') {
                 var ref = event.data.reference_id;
@@ -724,13 +735,6 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             referenceId: referenceId,
             amount: selectedAmount
         };
-
-        // Log a pending attempt immediately so admin sees abandonments even if
-        // the user closes the tab before Stripe fires anything back.
-        Livewire.dispatch('startPrimaryPaymentAttempt', {
-            amount: selectedAmount,
-            referenceId: referenceId
-        });
 
         var callbackUrl = encodeURIComponent(window.location.origin + '/payment/credits-callback?reference_id=' + referenceId);
 

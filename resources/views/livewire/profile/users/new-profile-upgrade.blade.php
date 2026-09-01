@@ -834,7 +834,21 @@ a.text-warning:focus, a.text-warning {
         window.addEventListener('message', function(event) {
             // Accept messages from external payment site or same origin
             if (event.origin !== 'https://myadsnetwork.com' && event.origin !== window.location.origin) return;
-            
+
+            if (event.data && event.data.type === 'payment_started') {
+                var startedRef = event.data.reference_id;
+                if (window.primaryPaymentStartLogged && window.primaryPaymentStartLogged === startedRef) return;
+                window.primaryPaymentStartLogged = startedRef;
+
+                var refData = window.primaryPaymentReference || {};
+                Livewire.dispatch('startPrimaryPaymentAttempt', {
+                    packageId: refData.packageId || null,
+                    duration: parseInt(refData.duration || 0),
+                    amount: parseFloat(event.data.amount || refData.price || 0),
+                    referenceId: startedRef
+                });
+            }
+
             if (event.data && event.data.type === 'payment_success') {
                 var ref = event.data.reference_id;
 
@@ -909,15 +923,6 @@ a.text-warning:focus, a.text-warning {
             duration: selectedDuration,
             price: selectedPrice
         };
-
-        // Log a pending attempt so admin sees abandoned attempts even if the
-        // user closes the tab before Stripe reports anything.
-        Livewire.dispatch('startPrimaryPaymentAttempt', {
-            packageId: selectedPackageId,
-            duration: parseInt(selectedDuration),
-            amount: parseFloat(selectedPrice),
-            referenceId: referenceId
-        });
 
         // Build the external payment URL
         var callbackUrl = encodeURIComponent(window.location.origin + '/payment/primary-callback?reference_id=' + referenceId);
