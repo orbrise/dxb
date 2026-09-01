@@ -80,33 +80,48 @@
 
     <script>
         (function() {
-            // Get reference ID from URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const referenceId = urlParams.get('reference_id') || urlParams.get('ref');
             const status = urlParams.get('status') || 'success';
-            
-            if (status === 'success' && referenceId) {
-                // Set localStorage flags for the parent window
-                localStorage.setItem('primary_payment_status', 'success');
-                localStorage.setItem('primary_payment_reference', referenceId);
-                
-                // Try to communicate with parent window via postMessage
+            const errorCode = urlParams.get('error_code');
+            const declineCode = urlParams.get('decline_code');
+            const errorMessage = urlParams.get('error_message');
+
+            function relay(payload) {
                 if (window.opener) {
-                    try {
-                        window.opener.postMessage({
-                            type: 'payment_success',
-                            reference_id: referenceId
-                        }, '*');
-                    } catch (e) {
-                        console.log('Could not send message to parent window');
-                    }
+                    try { window.opener.postMessage(payload, '*'); } catch (e) {}
+                }
+                if (window.parent !== window) {
+                    try { window.parent.postMessage(payload, '*'); } catch (e) {}
                 }
             }
-            
-            // Close window after a short delay
+
+            if (status === 'success' && referenceId) {
+                localStorage.setItem('primary_payment_status', 'success');
+                localStorage.setItem('primary_payment_reference', referenceId);
+                relay({ type: 'payment_success', reference_id: referenceId });
+            } else if (referenceId) {
+                localStorage.setItem('primary_payment_status', status);
+                localStorage.setItem('primary_payment_reference', referenceId);
+
+                const heading = document.querySelector('h1');
+                const subtitle = document.querySelector('p');
+                const icon = document.querySelector('.success-icon');
+                if (icon) icon.style.background = '#ef4444';
+                if (heading) heading.textContent = status === 'cancelled' ? 'Payment Cancelled' : 'Payment Failed';
+                if (subtitle) subtitle.textContent = errorMessage || 'Your payment could not be processed.';
+
+                relay({
+                    type: 'payment_failed',
+                    reference_id: referenceId,
+                    error_code: errorCode,
+                    decline_code: declineCode,
+                    error_message: errorMessage || status
+                });
+            }
+
             setTimeout(function() {
                 window.close();
-                // If window.close() doesn't work (some browsers block it), show a message
                 setTimeout(function() {
                     document.querySelector('.closing-text').textContent = 'Please close this window and return to the previous page.';
                     document.querySelector('.spinner').style.display = 'none';

@@ -15,5 +15,6 @@ class VerifyCsrfToken extends Middleware
         'profile/*/track-view',
         'cities/search',
         'searchcity',
+        'payment/primary/webhook',
     ];
 }

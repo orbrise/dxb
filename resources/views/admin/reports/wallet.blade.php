@@ -53,8 +53,11 @@
                                 <label>Status</label>
                                 <select name="status" class="form-control">
                                     <option value="">All Status</option>
-                                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : 'selected' }}>Completed</option>
+                                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                                     <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
+                                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                    <option value="abandoned" {{ request('status') == 'abandoned' ? 'selected' : '' }}>Abandoned</option>
                                 </select>
                             </div>
                         </div>
@@ -138,24 +141,26 @@
     </div>
 
     <div class="col-xl-3 col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex">
-                    <div class="flex-grow-1">
-                        <p class="text-truncate font-size-14 mb-2">Average Amount</p>
-                        <h4 class="mb-2">${{ number_format($stats['average_amount'], 2) }}</h4>
-                        <p class="text-muted mb-0">Per transaction</p>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <div class="avatar-sm">
-                            <span class="avatar-title bg-light text-warning rounded-3">
-                                <i class="fa fa-calculator font-size-24"></i>
-                            </span>
+        <a href="{{ route('admin.reports.wallet', array_merge(request()->query(), ['status' => 'failed'])) }}" class="text-decoration-none">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-truncate font-size-14 mb-2">Failed</p>
+                            <h4 class="mb-2 text-danger">{{ $stats['failed_transactions'] }}</h4>
+                            <p class="text-muted mb-0">Click to review &amp; contact users</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="avatar-sm">
+                                <span class="avatar-title bg-light text-danger rounded-3">
+                                    <i class="fa fa-exclamation-triangle font-size-24"></i>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -173,51 +178,134 @@
                             <tr>
                                 <th>ID</th>
                                 <th>User</th>
-                                <th>Wallet ID</th>
                                 <th>Type</th>
+                                <th>Method</th>
                                 <th>Amount</th>
                                 <th>Status</th>
-                                <th>Description</th>
+                                <th>Reason / Description</th>
+                                <th>Reference</th>
                                 <th>Date</th>
+                                <th>Contact</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($transactions as $transaction)
+                                @php
+                                    $txUser = ($transaction->wallet && $transaction->wallet->user)
+                                        ? $transaction->wallet->user
+                                        : $transaction->user;
+                                @endphp
                                 <tr>
                                     <td>{{ $transaction->id }}</td>
                                     <td>
-                                        @if($transaction->wallet && $transaction->wallet->user)
-                                            {{ $transaction->wallet->user->name }}
-                                            <br><small class="text-muted">{{ $transaction->wallet->user->email }}</small>
+                                        @if($txUser)
+                                            {{ $txUser->name }}
+                                            <br><small class="text-muted">{{ $txUser->email }}</small>
+                                            @if(!empty($txUser->phone))
+                                                <br><small class="text-muted">{{ $txUser->phone }}</small>
+                                            @endif
                                         @else
                                             <span class="text-muted">N/A</span>
                                         @endif
                                     </td>
-                                    <td>{{ $transaction->wallet_id }}</td>
                                     <td>
-                                        <span class="badge bg-{{ 
-                                            $transaction->type == 'deposit' ? 'success' : 
-                                            ($transaction->type == 'withdrawal' ? 'danger' : 
-                                            ($transaction->type == 'transfer' ? 'info' : 'warning')) 
+                                        <span class="badge bg-{{
+                                            $transaction->type == 'deposit' ? 'success' :
+                                            ($transaction->type == 'withdrawal' ? 'danger' :
+                                            ($transaction->type == 'transfer' ? 'info' : 'warning'))
                                         }}">
                                             {{ ucfirst(str_replace('_', ' ', $transaction->type)) }}
                                         </span>
                                     </td>
+                                    <td>
+                                        @if($transaction->payment_method)
+                                            <small>{{ ucfirst(str_replace('_', ' ', $transaction->payment_method)) }}</small>
+                                        @else
+                                            <span class="text-muted">&mdash;</span>
+                                        @endif
+                                    </td>
                                     <td>${{ number_format($transaction->amount, 2) }}</td>
                                     <td>
-                                        <span class="badge bg-{{ 
-                                            $transaction->status == 'completed' ? 'success' : 
-                                            ($transaction->status == 'failed' ? 'danger' : 'warning') 
-                                        }}">
+                                        @php
+                                            $badgeColor = [
+                                                'completed' => 'success',
+                                                'failed' => 'danger',
+                                                'cancelled' => 'warning',
+                                                'abandoned' => 'secondary',
+                                                'pending' => 'info',
+                                            ][$transaction->status] ?? 'warning';
+                                        @endphp
+                                        <span class="badge bg-{{ $badgeColor }}">
                                             {{ ucfirst($transaction->status) }}
                                         </span>
                                     </td>
-                                    <td>{{ $transaction->description ?? 'N/A' }}</td>
-                                    <td>{{ $transaction->created_at->format('M d, Y H:i') }}</td>
+                                    <td>
+                                        @if(in_array($transaction->status, ['failed', 'cancelled', 'abandoned']))
+                                            @php
+                                                $reasonColor = [
+                                                    'failed' => 'text-danger',
+                                                    'cancelled' => 'text-warning',
+                                                    'abandoned' => 'text-muted',
+                                                ][$transaction->status] ?? 'text-muted';
+                                            @endphp
+                                            <div class="{{ $reasonColor }}">
+                                                <strong>{{ $transaction->error_message ?: ucfirst($transaction->status) }}</strong>
+                                            </div>
+                                            @if($transaction->error_code || $transaction->decline_code)
+                                                <small class="text-muted">
+                                                    @if($transaction->error_code) code: <code>{{ $transaction->error_code }}</code>@endif
+                                                    @if($transaction->decline_code) &middot; decline: <code>{{ $transaction->decline_code }}</code>@endif
+                                                </small>
+                                            @endif
+                                        @elseif($transaction->status === 'pending')
+                                            <div class="text-info">
+                                                <strong>Awaiting completion</strong>
+                                                <small class="text-muted d-block">Started {{ $transaction->created_at->diffForHumans() }}</small>
+                                            </div>
+                                        @else
+                                            {{ $transaction->description ?? 'N/A' }}
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($transaction->reference)
+                                            <small><code>{{ $transaction->reference }}</code></small>
+                                        @else
+                                            <span class="text-muted">&mdash;</span>
+                                        @endif
+                                    </td>
+                                    <td><small>{{ $transaction->created_at->format('M d, Y H:i') }}</small></td>
+                                    <td>
+                                        @if($txUser && $txUser->email)
+                                            @php
+                                                $subject = rawurlencode('About your recent payment (' . ($transaction->reference ?: '#' . $transaction->id) . ')');
+                                                $body = rawurlencode(
+                                                    "Hi " . ($txUser->name ?: '') . ",\n\n" .
+                                                    "We noticed a recent payment attempt on our site could not be completed" .
+                                                    ($transaction->error_message ? " (reason: " . $transaction->error_message . ")" : "") .
+                                                    ". We'd like to help you complete it.\n\nAmount: $" . number_format($transaction->amount, 2) . "\n" .
+                                                    ($transaction->reference ? "Reference: " . $transaction->reference . "\n" : "") .
+                                                    "\nPlease reply to this email if you need any assistance."
+                                                );
+                                            @endphp
+                                            <a href="mailto:{{ $txUser->email }}?subject={{ $subject }}&body={{ $body }}"
+                                               class="btn btn-sm btn-outline-primary" title="Email user">
+                                                <i class="fa fa-envelope"></i>
+                                            </a>
+                                            @if(!empty($txUser->phone))
+                                                @php $wa = preg_replace('/\D+/', '', $txUser->phone); @endphp
+                                                <a href="https://wa.me/{{ $wa }}" target="_blank" rel="noopener"
+                                                   class="btn btn-sm btn-outline-success" title="WhatsApp user">
+                                                    <i class="fa fa-whatsapp"></i>
+                                                </a>
+                                            @endif
+                                        @else
+                                            <span class="text-muted">&mdash;</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">No transactions found</td>
+                                    <td colspan="10" class="text-center">No transactions found</td>
                                 </tr>
                             @endforelse
                         </tbody>

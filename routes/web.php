@@ -91,6 +91,10 @@ Route::post('/cities/search', 'App\Http\Controllers\Api\CityController@search')-
 // WhatsApp uses send-otp/verify-otp (server-owned OTP via Wasender). SMS
 // uses precheck-sms + verify-sms-firebase (browser-side Firebase Phone
 // Auth; server just verifies the returned ID token).
+// Primary payment gateway (myads/Stripe) failure webhook — public, HMAC-verified in controller
+Route::post('payment/primary/webhook', [\App\Http\Controllers\PaymentWebhookController::class, 'primary'])
+    ->name('payment.primary.webhook');
+
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/profile/{id}/claim/send-otp', [\App\Http\Controllers\ProfileClaimController::class, 'sendOtp'])
         ->name('profile.claim.send-otp')

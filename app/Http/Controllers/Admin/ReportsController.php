@@ -30,7 +30,7 @@ class ReportsController extends Controller
         $status = $request->get('status', 'all');
 
         // Base query for wallet transactions
-        $query = WalletTransaction::with(['wallet.user'])
+        $query = WalletTransaction::with(['wallet.user', 'user'])
             ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
 
         if ($transactionType !== 'all') {
@@ -41,13 +41,13 @@ class ReportsController extends Controller
             $query->where('status', $status);
         }
 
-        $transactions = $query->orderBy('created_at', 'desc')->paginate(50);
+        $transactions = (clone $query)->orderBy('created_at', 'desc')->paginate(50);
 
-        // Summary statistics
-        $totalTransactions = $query->count();
-        $totalAmount = $query->sum('amount');
-        $completedTransactions = $query->where('status', 'completed')->count();
-        $failedTransactions = $query->where('status', 'failed')->count();
+        // Summary statistics (compute against the filtered query, not the paginated slice)
+        $totalTransactions = (clone $query)->count();
+        $totalAmount = (clone $query)->sum('amount');
+        $completedTransactions = (clone $query)->where('status', 'completed')->count();
+        $failedTransactions = (clone $query)->where('status', 'failed')->count();
         $stats = [
             'total_transactions' => $totalTransactions,
             'total_amount' => $totalAmount,

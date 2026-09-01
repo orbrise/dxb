@@ -30,7 +30,7 @@ class NewProfileUpgrade extends Component
     public $paypalOrderId;
     public $paypalClientId = 'AXEOnZr8asYD0Wav8y-eNaDpv_Vj80sF1wvMXV-iu4V6MMnZWolAo1xfwXJvakd-QSsi7qBHnjZcvFlr';
 
-    protected $listeners = ['processWalletPayment', 'handlePayPalApproval', 'processPrimaryPayment'];
+    protected $listeners = ['processWalletPayment', 'handlePayPalApproval', 'processPrimaryPayment', 'processPrimaryPaymentFailure', 'handlePayPalFailure', 'startPrimaryPaymentAttempt'];
 
     public function mount()
     {
@@ -283,12 +283,33 @@ class NewProfileUpgrade extends Component
         }
     }
 
+    public function startPrimaryPaymentAttempt($packageId = null, $duration = null, $amount = null, $referenceId = null)
+    {
+        $user = auth()->user();
+
+        if ($referenceId && WalletTransaction::where('reference', $referenceId)->exists()) {
+            return;
+        }
+
+        WalletTransaction::create([
+            'user_id' => $user ? $user->id : null,
+            'wallet_id' => $user && $user->wallet ? $user->wallet->id : null,
+            'amount' => $amount,
+            'type' => 'primary_gateway_payment',
+            'status' => 'pending',
+            'payment_method' => 'primary_gateway',
+            'description' => 'Profile upgrade attempt started on primary gateway - Ref: ' . $referenceId,
+            'package_id' => $packageId,
+            'reference' => $referenceId,
+        ]);
+    }
+
     public function processPrimaryPayment($packageId = null, $duration = null, $amount = null, $referenceId = null)
     {
         $user = auth()->user();
         $userEmail = $user->email ?? 'unknown';
         $userId = $user->id;
-        
+
         \Log::info('[NEW PROFILE] Primary Gateway Payment Started', [
             'user_id' => $userId,
             'user_email' => $userEmail,
@@ -298,14 +319,14 @@ class NewProfileUpgrade extends Component
             'reference_id' => $referenceId,
             'payment_method' => 'primary_gateway'
         ]);
-        
-        // Prevent duplicate transactions - check if this reference ID was already processed
+
+        // Idempotency: only a `completed` row blocks re-processing. Pending
+        // rows (from startPrimaryPaymentAttempt) should be promoted below.
         if ($referenceId) {
-            $existingTransaction = WalletTransaction::where('description', 'LIKE', '%' . $referenceId . '%')
-                ->where('user_id', auth()->id())
-                ->where('type', 'primary_gateway_payment')
+            $existingTransaction = WalletTransaction::where('reference', $referenceId)
+                ->where('status', 'completed')
                 ->first();
-                 
+
             if ($existingTransaction) {
                 \Log::warning('[NEW PROFILE] Duplicate Primary Gateway payment attempt blocked', [
                     'reference_id' => $referenceId,
@@ -313,12 +334,11 @@ class NewProfileUpgrade extends Component
                     'user_email' => $userEmail,
                     'existing_transaction_id' => $existingTransaction->id
                 ]);
-                
-                // Check if profile was already created and redirect
+
                 $profile = UsersProfile::where('user_id', auth()->id())
                     ->orderBy('created_at', 'desc')
                     ->first();
-                    
+
                 if ($profile) {
                     $redirectUrl = "/my-profile/{$profile->slug}/{$profile->id}";
                     $this->js("setTimeout(function() { window.location.href = '{$redirectUrl}'; }, 500);");
@@ -395,16 +415,23 @@ class NewProfileUpgrade extends Component
                     $wallet = $user->wallet()->create(['balance' => 0]);
                 }
 
-                // Create wallet transaction record for tracking
-                WalletTransaction::create([
-                    'user_id' => auth()->id(),
-                    'wallet_id' => $wallet->id,
-                    'amount' => $selectedAmount,
-                    'type' => 'primary_gateway_payment',
-                    'status' => 'completed',
-                    'description' => 'Primary Gateway package purchase for new profile - Ref: ' . $referenceId,
-                    'package_id' => $selectedPackage,
-                ]);
+                // Promote the pending row (or create fresh if it never landed) to completed.
+                WalletTransaction::updateOrCreate(
+                    ['reference' => $referenceId],
+                    [
+                        'user_id' => auth()->id(),
+                        'wallet_id' => $wallet->id,
+                        'amount' => $selectedAmount,
+                        'type' => 'primary_gateway_payment',
+                        'status' => 'completed',
+                        'payment_method' => 'primary_gateway',
+                        'description' => 'Primary Gateway package purchase for new profile - Ref: ' . $referenceId,
+                        'package_id' => $selectedPackage,
+                        'error_code' => null,
+                        'decline_code' => null,
+                        'error_message' => null,
+                    ]
+                );
                 
                 \Log::info('[NEW PROFILE] Primary Gateway Transaction Record Created', [
                     'user_id' => $userId,
@@ -460,6 +487,94 @@ class NewProfileUpgrade extends Component
                 'message' => 'Profile creation failed. Please contact support.'
             ]);
         }
+    }
+
+    public function handlePayPalFailure($packageId = null, $duration = null, $amount = null, $orderId = null, $reason = null, $errorMessage = null)
+    {
+        $user = auth()->user();
+
+        \Log::warning('[NEW PROFILE] PayPal Payment Failed', [
+            'user_id' => $user ? $user->id : null,
+            'user_email' => $user ? $user->email : null,
+            'package_id' => $packageId,
+            'amount' => $amount,
+            'order_id' => $orderId,
+            'reason' => $reason,
+            'error_message' => $errorMessage,
+        ]);
+
+        // Never demote a completed payment
+        $existing = $orderId ? WalletTransaction::where('reference', $orderId)->first() : null;
+        if ($existing && $existing->status === 'completed') {
+            return;
+        }
+
+        $lookup = $orderId
+            ? ['reference' => $orderId]
+            : ['reference' => 'PAYPAL_ERR_' . uniqid()];
+
+        WalletTransaction::updateOrCreate(
+            $lookup,
+            [
+                'user_id' => $user ? $user->id : null,
+                'wallet_id' => $user && $user->wallet ? $user->wallet->id : null,
+                'amount' => $amount,
+                'type' => 'paypal_payment',
+                'status' => $reason === 'cancelled' ? 'cancelled' : 'failed',
+                'payment_method' => 'paypal',
+                'description' => 'Profile upgrade payment ' . ($reason === 'cancelled' ? 'cancelled' : 'failed') . ' on PayPal',
+                'package_id' => $packageId,
+                'error_code' => $reason,
+                'error_message' => $errorMessage,
+            ]
+        );
+    }
+
+    public function processPrimaryPaymentFailure($packageId = null, $duration = null, $amount = null, $referenceId = null, $errorCode = null, $declineCode = null, $errorMessage = null)
+    {
+        $userId = auth()->id();
+        $user = auth()->user();
+
+        \Log::warning('[NEW PROFILE] Primary Gateway Payment Failed', [
+            'user_id' => $userId,
+            'user_email' => $user ? $user->email : null,
+            'package_id' => $packageId,
+            'amount' => $amount,
+            'reference_id' => $referenceId,
+            'error_code' => $errorCode,
+            'decline_code' => $declineCode,
+            'error_message' => $errorMessage,
+        ]);
+
+        // Never demote a completed payment
+        $existing = $referenceId ? WalletTransaction::where('reference', $referenceId)->first() : null;
+        if ($existing && $existing->status === 'completed') {
+            return;
+        }
+
+        $wallet = $user ? $user->wallet : null;
+
+        WalletTransaction::updateOrCreate(
+            ['reference' => $referenceId],
+            [
+                'user_id' => $userId,
+                'wallet_id' => $wallet ? $wallet->id : null,
+                'amount' => $amount,
+                'type' => 'primary_gateway_payment',
+                'status' => 'failed',
+                'payment_method' => 'primary_gateway',
+                'description' => 'Profile upgrade payment failed on primary gateway - Ref: ' . $referenceId,
+                'package_id' => $packageId,
+                'error_code' => $errorCode,
+                'decline_code' => $declineCode,
+                'error_message' => $errorMessage,
+            ]
+        );
+
+        $this->dispatch('showMessage', [
+            'type' => 'error',
+            'message' => $errorMessage ?: 'Payment failed. Please try again or use a different card.'
+        ]);
     }
 
     public function createPayPalOrder()
@@ -580,16 +695,22 @@ class NewProfileUpgrade extends Component
                 $wallet = $user->wallet()->create(['balance' => 0]);
             }
 
-            WalletTransaction::create([
-                'user_id' => auth()->id(),
-                'wallet_id' => $wallet->id,
-                'amount' => $orderData['amount'],
-                'type' => 'paypal_payment',
-                'status' => 'completed',
-                'description' => 'PayPal payment for new profile package - Order: ' . $paypalOrderId,
-                'reference' => $paypalOrderId,
-                'package_id' => $orderData['package_id'],
-            ]);
+            WalletTransaction::updateOrCreate(
+                ['reference' => $paypalOrderId],
+                [
+                    'user_id' => auth()->id(),
+                    'wallet_id' => $wallet->id,
+                    'amount' => $orderData['amount'],
+                    'type' => 'paypal_payment',
+                    'status' => 'completed',
+                    'payment_method' => 'paypal',
+                    'description' => 'PayPal payment for new profile package - Order: ' . $paypalOrderId,
+                    'package_id' => $orderData['package_id'],
+                    'error_code' => null,
+                    'decline_code' => null,
+                    'error_message' => null,
+                ]
+            );
             
             \Log::info('[NEW PROFILE] PayPal Transaction Record Created', [
                 'user_id' => $userId,

@@ -51,48 +51,75 @@ class PurchaseCredits extends Component
         return view('livewire.purchase-credits');
     }
     
+    #[On('startPrimaryPaymentAttempt')]
+    public function startPrimaryPaymentAttempt($amount, $referenceId)
+    {
+        $user = Auth::user();
+
+        // If a row already exists for this reference (retry, or race with a
+        // fast success/failure), don't overwrite its terminal state with pending.
+        if ($referenceId && WalletTransaction::where('reference', $referenceId)->exists()) {
+            return;
+        }
+
+        WalletTransaction::create([
+            'user_id' => $user ? $user->id : null,
+            'wallet_id' => $user && $user->wallet ? $user->wallet->id : null,
+            'amount' => $amount,
+            'type' => 'credit_purchase',
+            'status' => 'pending',
+            'payment_method' => 'primary_gateway',
+            'description' => 'Credit purchase attempt started on primary gateway',
+            'reference' => $referenceId,
+        ]);
+    }
+
     #[On('handlePayPalApproval')]
     public function handlePayPalApproval($orderId)
     {
-        // Validate amount before processing
         $this->validate();
-        
-        // Get user wallet
+
         $user = Auth::user();
         $wallet = $user->wallet;
-        
+
         if (!$wallet) {
-            // Create wallet if it doesn't exist
-            $wallet = $user->wallet()->create([
-                'balance' => 0
-            ]);
+            $wallet = $user->wallet()->create(['balance' => 0]);
         }
-        
-        // Add credits to wallet
+
+        // Idempotency: if a completed row already exists for this order, do not
+        // increment the wallet balance a second time.
+        $existing = WalletTransaction::where('reference', $orderId)->first();
+        if ($existing && $existing->status === 'completed') {
+            return;
+        }
+
         $wallet->increment('balance', $this->amount);
-        
-        // Create transaction record
-        WalletTransaction::create([
-            'user_id' => $user->id,
-            'wallet_id' => $wallet->id,
-            'amount' => $this->amount,
-            'type' => 'credit_purchase',
-            'status' => 'completed',
-            'description' => 'PayPal payment for credits purchase',
-            'reference' => $orderId
-        ]);
-        
-        // Send success message
+
+        WalletTransaction::updateOrCreate(
+            ['reference' => $orderId],
+            [
+                'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
+                'amount' => $this->amount,
+                'type' => 'credit_purchase',
+                'status' => 'completed',
+                'payment_method' => 'paypal',
+                'description' => 'PayPal payment for credits purchase',
+                'error_code' => null,
+                'decline_code' => null,
+                'error_message' => null,
+            ]
+        );
+
         $this->dispatch('showMessage', [
             'type' => 'success',
             'message' => $this->amount . ' credits have been added to your account'
         ]);
     }
-    
+
     #[On('processPrimaryPayment')]
     public function processPrimaryPayment($amount, $referenceId)
     {
-        // Validate amount
         if ($amount < 5) {
             $this->dispatch('showMessage', [
                 'type' => 'error',
@@ -100,46 +127,111 @@ class PurchaseCredits extends Component
             ]);
             return;
         }
-        
-        // Check if this reference has already been processed
-        $existingTransaction = WalletTransaction::where('reference', $referenceId)->first();
-        if ($existingTransaction) {
+
+        $user = Auth::user();
+        $wallet = $user->wallet;
+
+        if (!$wallet) {
+            $wallet = $user->wallet()->create(['balance' => 0]);
+        }
+
+        // Idempotency: only credit the wallet if this reference hasn't already
+        // been settled. A pending row is fine to promote to completed; a
+        // completed row means we've already paid the user.
+        $existing = WalletTransaction::where('reference', $referenceId)->first();
+        if ($existing && $existing->status === 'completed') {
             $this->dispatch('showMessage', [
                 'type' => 'error',
                 'message' => 'This payment has already been processed.'
             ]);
             return;
         }
-        
-        // Get user wallet
-        $user = Auth::user();
-        $wallet = $user->wallet;
-        
-        if (!$wallet) {
-            // Create wallet if it doesn't exist
-            $wallet = $user->wallet()->create([
-                'balance' => 0
-            ]);
-        }
-        
-        // Add credits to wallet
+
         $wallet->increment('balance', $amount);
-        
-        // Create transaction record
-        WalletTransaction::create([
-            'user_id' => $user->id,
-            'wallet_id' => $wallet->id,
-            'amount' => $amount,
-            'type' => 'credit_purchase',
-            'status' => 'completed',
-            'description' => 'Primary gateway payment for credits purchase',
-            'reference' => $referenceId
-        ]);
-        
-        // Send success message
+
+        WalletTransaction::updateOrCreate(
+            ['reference' => $referenceId],
+            [
+                'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
+                'amount' => $amount,
+                'type' => 'credit_purchase',
+                'status' => 'completed',
+                'payment_method' => 'primary_gateway',
+                'description' => 'Primary gateway payment for credits purchase',
+                'error_code' => null,
+                'decline_code' => null,
+                'error_message' => null,
+            ]
+        );
+
         $this->dispatch('showMessage', [
             'type' => 'success',
             'message' => $amount . ' credits have been added to your account'
+        ]);
+    }
+
+    #[On('handlePayPalFailure')]
+    public function handlePayPalFailure($amount, $orderId = null, $reason = null, $errorMessage = null)
+    {
+        $user = Auth::user();
+
+        // Never demote a completed payment
+        $existing = $orderId ? WalletTransaction::where('reference', $orderId)->first() : null;
+        if ($existing && $existing->status === 'completed') {
+            return;
+        }
+
+        $lookup = $orderId
+            ? ['reference' => $orderId]
+            : ['reference' => 'PAYPAL_ERR_' . uniqid()];
+
+        WalletTransaction::updateOrCreate(
+            $lookup,
+            [
+                'user_id' => $user ? $user->id : null,
+                'wallet_id' => $user && $user->wallet ? $user->wallet->id : null,
+                'amount' => $amount,
+                'type' => 'credit_purchase',
+                'status' => $reason === 'cancelled' ? 'cancelled' : 'failed',
+                'payment_method' => 'paypal',
+                'description' => 'Credit purchase ' . ($reason === 'cancelled' ? 'cancelled' : 'failed') . ' on PayPal',
+                'error_code' => $reason,
+                'error_message' => $errorMessage,
+            ]
+        );
+    }
+
+    #[On('processPrimaryPaymentFailure')]
+    public function processPrimaryPaymentFailure($amount, $referenceId, $errorCode = null, $declineCode = null, $errorMessage = null)
+    {
+        $user = Auth::user();
+
+        // Never demote a completed payment
+        $existing = $referenceId ? WalletTransaction::where('reference', $referenceId)->first() : null;
+        if ($existing && $existing->status === 'completed') {
+            return;
+        }
+
+        WalletTransaction::updateOrCreate(
+            ['reference' => $referenceId],
+            [
+                'user_id' => $user ? $user->id : null,
+                'wallet_id' => $user && $user->wallet ? $user->wallet->id : null,
+                'amount' => $amount,
+                'type' => 'credit_purchase',
+                'status' => 'failed',
+                'payment_method' => 'primary_gateway',
+                'description' => 'Credit purchase failed on primary gateway',
+                'error_code' => $errorCode,
+                'decline_code' => $declineCode,
+                'error_message' => $errorMessage,
+            ]
+        );
+
+        $this->dispatch('showMessage', [
+            'type' => 'error',
+            'message' => $errorMessage ?: 'Payment failed. Please try again or use a different card.'
         ]);
     }
 }

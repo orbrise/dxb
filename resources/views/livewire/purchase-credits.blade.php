@@ -634,29 +634,46 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             });
         }
         
-        // Listen for message from iframe (payment success)
+        // Listen for message from iframe (payment success or failure)
         window.addEventListener('message', function(event) {
             if (event.origin !== 'https://myadsnetwork.com' && event.origin !== window.location.origin) return;
-            
+
             if (event.data && event.data.type === 'payment_success') {
                 var ref = event.data.reference_id;
-                
+
                 // Prevent duplicate processing
                 if (window.primaryPaymentProcessed && window.primaryPaymentProcessed === ref) {
                     console.log('Payment already processed, ignoring duplicate message');
                     return;
                 }
                 window.primaryPaymentProcessed = ref;
-                
+
                 // Show success in iframe container
                 document.getElementById('primary-gateway-iframe').style.display = 'none';
                 document.getElementById('primary-gateway-loading').innerHTML = '<i class="fa fa-check-circle fa-2x text-success"></i><p class="mt-2">Payment successful! Processing...</p>';
                 document.getElementById('primary-gateway-loading').style.display = 'block';
-                
+
                 // Process the payment in Livewire
-                Livewire.dispatch('processPrimaryPayment', { 
+                Livewire.dispatch('processPrimaryPayment', {
                     amount: parseFloat(window.primaryPaymentReference.amount),
                     referenceId: ref
+                });
+            }
+
+            if (event.data && event.data.type === 'payment_failed') {
+                var failedRef = event.data.reference_id;
+
+                if (window.primaryPaymentFailedLogged && window.primaryPaymentFailedLogged === failedRef) {
+                    return;
+                }
+                window.primaryPaymentFailedLogged = failedRef;
+
+                Livewire.dispatch('processPrimaryPaymentFailure', {
+                    amount: parseFloat(window.primaryPaymentReference ? window.primaryPaymentReference.amount : 0),
+                    referenceId: failedRef,
+                    errorCode: event.data.error_code || null,
+                    declineCode: event.data.decline_code || null,
+                    errorMessage: event.data.error_message || 'Payment failed'
                 });
             }
         });
@@ -707,6 +724,13 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             referenceId: referenceId,
             amount: selectedAmount
         };
+
+        // Log a pending attempt immediately so admin sees abandonments even if
+        // the user closes the tab before Stripe fires anything back.
+        Livewire.dispatch('startPrimaryPaymentAttempt', {
+            amount: selectedAmount,
+            referenceId: referenceId
+        });
 
         var callbackUrl = encodeURIComponent(window.location.origin + '/payment/credits-callback?reference_id=' + referenceId);
 
@@ -803,17 +827,37 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
                     return actions.order.capture().then(function(details) {
                         console.log('PayPal approved:', data.orderID);
                         $container.innerHTML = '<div class="alert alert-info">Processing your payment...</div>';
-                        
+
                         // Call Livewire to handle payment
                         Livewire.dispatch('handlePayPalApproval', { orderId: data.orderID });
+                    }).catch(function(captureErr) {
+                        console.error('PayPal capture failed:', captureErr);
+                        Livewire.dispatch('handlePayPalFailure', {
+                            amount: currentAmount,
+                            orderId: data.orderID || null,
+                            reason: 'capture_failed',
+                            errorMessage: (captureErr && captureErr.message) ? captureErr.message : 'PayPal capture failed'
+                        });
                     });
                 },
                 onError: function(err) {
                     console.error('PayPal Error:', err);
+                    Livewire.dispatch('handlePayPalFailure', {
+                        amount: currentAmount,
+                        orderId: null,
+                        reason: 'paypal_error',
+                        errorMessage: (err && err.message) ? err.message : 'PayPal payment failed'
+                    });
                     alert('Payment failed. Please try again.');
                 },
-                onCancel: function() {
+                onCancel: function(data) {
                     console.log('Payment cancelled');
+                    Livewire.dispatch('handlePayPalFailure', {
+                        amount: currentAmount,
+                        orderId: (data && data.orderID) ? data.orderID : null,
+                        reason: 'cancelled',
+                        errorMessage: 'User cancelled the PayPal payment'
+                    });
                 }
             }).render('#paypal-button-container');
             
