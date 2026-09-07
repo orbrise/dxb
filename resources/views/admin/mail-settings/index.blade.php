@@ -2,13 +2,116 @@
 
 @section('title', 'Mail Settings')
 
+@push('css')
+@include('admin._partials.settings-modern')
+@endpush
+
 @section('content')
+<div class="s-modern">
 <style>
-.form-check-input
- {
-    margin-left: 0px;
+/* Fix checkbox/radio/switch alignment — put the control to the left of the
+   label instead of overlapping it. Works for regular checkboxes/radios AND
+   Bootstrap 4/5 switches. */
+.s-modern .form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding-left: 0 !important;
+    margin-bottom: 4px;
+    min-height: auto;
+}
+.s-modern .form-check .form-check-input {
+    position: static !important;
+    float: none !important;
+    margin: 3px 0 0 0 !important;
+    flex-shrink: 0;
+}
+/* Switches: keep the pill nice and tall, aligned with the label's first line */
+.s-modern .form-check.form-switch .form-check-input {
+    margin-top: 2px !important;
+    width: 40px !important;
+    height: 22px !important;
+    border-radius: 999px !important;
+    background-color: var(--sm-slate-300);
+    border: 0 !important;
+    cursor: pointer;
+}
+.s-modern .form-check.form-switch .form-check-input:checked {
+    background-color: var(--sm-primary);
+}
+.s-modern .form-check .form-check-label {
+    margin: 0 !important;
+    padding-left: 0 !important;
+    line-height: 1.4;
+    font-size: 14px !important;
+    font-weight: 500;
+    color: var(--sm-slate-700) !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    flex: 1;
+    cursor: pointer;
+}
+.s-modern .form-check .form-check-label strong {
+    color: var(--sm-slate-800);
+    font-weight: 600;
+}
+.s-modern .form-check .form-check-label small {
+    display: block;
+    margin-top: 3px;
+    font-size: 12px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--sm-slate-500);
+}
+/* Driver selector: render the two radios as spacious selectable cards
+   with proper breathing room between them */
+.s-modern .d-flex.gap-4 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px !important;
+    margin-top: 6px;
+    margin-bottom: 8px;
+}
+.s-modern .d-flex.gap-4 > .form-check {
+    padding: 18px 22px !important;
+    background: var(--sm-slate-50);
+    border: 1px solid var(--sm-slate-200);
+    border-radius: 12px;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+    margin: 0;
+    gap: 14px;
+    min-width: 0;
+}
+.s-modern .d-flex.gap-4 > .form-check:hover {
+    border-color: var(--sm-slate-300);
+    background: #fff;
+}
+.s-modern .d-flex.gap-4 > .form-check:has(> .form-check-input:checked) {
+    border-color: var(--sm-primary);
+    background: #eef2ff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
+}
+.s-modern .d-flex.gap-4 > .form-check .form-check-input {
+    margin-top: 4px !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+.s-modern .d-flex.gap-4 > .form-check .form-check-label strong {
+    font-size: 15px;
+}
+.s-modern .d-flex.gap-4 > .form-check .form-check-label small {
+    margin-top: 5px;
+    font-size: 12.5px;
+    line-height: 1.5;
 }
 
+@media (max-width: 768px) {
+    .s-modern .d-flex.gap-4 {
+        grid-template-columns: 1fr;
+        gap: 12px !important;
+    }
+}
 </style>
  <div class="row page-title clearfix">
                 <div class="page-title-left">
@@ -421,6 +524,7 @@
         </div>
     </div>
 </div>
+</div>{{-- /.s-modern --}}
 @endsection
 
 @section('scripts')

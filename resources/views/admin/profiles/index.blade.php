@@ -4,399 +4,631 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <style>
-    .w-5{
-        display:none
-    }
+/* ===== Profiles page: modern redesign ===== */
+:root {
+    --p-primary: #6366f1;
+    --p-primary-dark: #4f46e5;
+    --p-success: #10b981;
+    --p-danger: #ef4444;
+    --p-warning: #f59e0b;
+    --p-info: #06b6d4;
+    --p-slate-50: #f8fafc;
+    --p-slate-100: #f1f5f9;
+    --p-slate-200: #e2e8f0;
+    --p-slate-300: #cbd5e1;
+    --p-slate-500: #64748b;
+    --p-slate-600: #475569;
+    --p-slate-700: #334155;
+    --p-slate-800: #1e293b;
+}
 
-    /* Table responsive fix */
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .table {
-        width: 100% !important;
-        max-width: 100%;
-    }
-    
-    .table td, .table th {
-        white-space: normal;
-        word-wrap: break-word;
-    }
-    
-    .table td:nth-child(4) { /* Name column */
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+.w-5 { display: none; }
 
-     .navbar-filters {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 15px 20px;
-        margin-bottom: 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        position: relative;
-        width: 100%;
-        z-index: 6;
-        /* Override .header-light .navbar { height: 68px } from master layout */
-        height: auto !important;
-        min-height: 0;
-    }
+/* ---- Stats strip ---- */
+.p-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 4px 0 18px;
+}
+.p-stat {
+    position: relative;
+    padding: 16px 18px;
+    border-radius: 12px;
+    color: #fff;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15,23,42,.08);
+}
+.p-stat .p-stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    opacity: .9;
+    margin: 0 0 4px 0;
+    font-weight: 600;
+}
+.p-stat .p-stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0;
+}
+.p-stat .p-stat-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 34px;
+    opacity: .35;
+}
+.p-stat.total    { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+.p-stat.active   { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.p-stat.premium  { background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); }
+.p-stat.showing  { background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%); }
 
+/* ---- Filter card ---- */
+.p-filter-card {
+    background: #fff;
+    border: 1px solid var(--p-slate-200);
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(15,23,42,.06);
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+
+.navbar-filters {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 14px 18px;
+    margin: 0;
+    box-shadow: none;
+    position: relative;
+    width: 100%;
+    z-index: 6;
+    height: auto !important;
+    min-height: 0;
+}
+
+.navbar-filters ul.nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.navbar-filters .filter-icon {
+    background: linear-gradient(135deg, var(--p-primary) 0%, var(--p-primary-dark) 100%);
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 15px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, .35);
+}
+
+.navbar-filters .dropdown {
+    position: relative;
+    width: auto;
+    min-width: 130px;
+}
+
+.navbar-filters .dropdown-toggle {
+    background: #fff;
+    border: 1px solid var(--p-slate-200);
+    border-radius: 9px;
+    padding: 9px 14px;
+    color: var(--p-slate-700);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all .15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    height: 40px;
+}
+.navbar-filters .dropdown-toggle:hover {
+    background: var(--p-slate-50);
+    border-color: var(--p-primary);
+    color: var(--p-primary-dark);
+    text-decoration: none;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+}
+.navbar-filters .dropdown-toggle.filter-active {
+    background: #eef2ff;
+    border-color: var(--p-primary);
+    color: var(--p-primary-dark);
+}
+.navbar-filters .dropdown-toggle::after {
+    border-top-color: var(--p-slate-400, #94a3b8);
+    margin-left: 4px;
+}
+.navbar-filters .dropdown-toggle i {
+    color: var(--p-primary);
+    font-size: 12px;
+}
+
+.navbar-filters .dropdown-menu {
+    background: #fff;
+    border: 1px solid var(--p-slate-200);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(15,23,42,.12);
+    padding: 14px;
+    min-width: 250px;
+    margin-top: 6px;
+    position: absolute;
+    z-index: 1000;
+}
+
+.backpack-filter { padding: 0; }
+.backpack-filter .form-control,
+.date-filter-container .form-control,
+.select-filter select {
+    border: 1px solid var(--p-slate-200);
+    border-radius: 9px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--p-slate-800);
+    background: #fff;
+    height: 40px;
+    transition: all .15s ease;
+    width: 100%;
+}
+.backpack-filter .form-control:focus,
+.date-filter-container .form-control:focus,
+.select-filter select:focus {
+    border-color: var(--p-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+    outline: none;
+}
+
+.date-filter-container .form-control { margin-bottom: 10px; }
+.date-filter-container .btn-primary {
+    background: linear-gradient(135deg, var(--p-primary) 0%, var(--p-primary-dark) 100%);
+    border: 0;
+    border-radius: 9px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99,102,241,.35);
+}
+
+.reset-filter-btn {
+    background: #fff;
+    border: 1px solid var(--p-slate-200);
+    border-radius: 9px;
+    padding: 9px 16px;
+    color: var(--p-danger);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all .15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+}
+.reset-filter-btn:hover {
+    background: #fef2f2;
+    border-color: var(--p-danger);
+    color: var(--p-danger);
+    text-decoration: none;
+}
+.reset-filter-btn i { color: var(--p-danger); }
+
+/* Autocomplete list refinement */
+#city-suggestions .autocomplete-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; }
+#city-suggestions .autocomplete-item:hover { background: var(--p-slate-50); }
+#city-suggestions .autocomplete-item:last-child { border-bottom: 0; }
+
+/* ---- Main table card ---- */
+.p-main-card {
+    background: #fff;
+    border: 1px solid var(--p-slate-200);
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(15,23,42,.06);
+    overflow: hidden;
+}
+.p-main-card .card-header {
+    background: linear-gradient(180deg, #fff 0%, #fbfbff 100%);
+    border-bottom: 1px solid var(--p-slate-100);
+    padding: 18px 22px;
+}
+.p-main-card .card-body {
+    padding: 0;
+}
+.p-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.p-header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--p-slate-800);
+}
+.p-header-title .p-title-icon {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: rgba(99,102,241,.12);
+    color: var(--p-primary-dark);
+    font-size: 15px;
+}
+.p-header-title small {
+    font-weight: 400;
+    color: var(--p-slate-500);
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+/* Toolbar */
+.p-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 14px 22px;
+    background: var(--p-slate-50);
+    border-bottom: 1px solid var(--p-slate-100);
+}
+.p-toolbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.p-perpage {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--p-slate-600);
+}
+.p-perpage .form-select {
+    border: 1px solid var(--p-slate-200);
+    border-radius: 8px;
+    padding: 5px 26px 5px 10px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--p-slate-700);
+    cursor: pointer;
+    height: auto;
+}
+.p-perpage .form-select:focus {
+    outline: none;
+    border-color: var(--p-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .18);
+}
+.p-entries-info {
+    color: var(--p-slate-500);
+    font-size: 13px;
+    font-weight: 500;
+}
+.p-verify-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, var(--p-primary) 0%, var(--p-primary-dark) 100%);
+    color: #fff !important;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(99,102,241,.35);
+    transition: box-shadow .15s;
+    border: 0;
+}
+.p-verify-btn:hover { color: #fff; box-shadow: 0 6px 16px rgba(99,102,241,.5); text-decoration: none; }
+
+/* Bulk actions */
+.p-bulk-bar {
+    background: #eef2ff;
+    border-bottom: 1px solid #c7d2fe;
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    transition: all .3s ease;
+}
+.p-bulk-bar #selected-count {
+    color: var(--p-primary-dark);
+    font-weight: 700;
+    font-size: 13px;
+    margin-right: 6px;
+}
+.p-bulk-bar .btn {
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Table */
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.p-main-card .table {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0;
+    font-size: 13.5px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.p-main-card .table thead th {
+    background: var(--p-slate-50);
+    color: var(--p-slate-500);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 14px 14px;
+    border: 0;
+    border-bottom: 1px solid var(--p-slate-200);
+    white-space: nowrap;
+    text-align: left;
+}
+.p-main-card .table tbody td {
+    padding: 14px;
+    vertical-align: middle;
+    color: var(--p-slate-700);
+    border: 0;
+    border-bottom: 1px solid var(--p-slate-100);
+    background: #fff;
+    white-space: normal;
+    word-wrap: break-word;
+}
+.p-main-card .table tbody tr { transition: background .12s; }
+.p-main-card .table tbody tr:hover td { background: #fafbff; }
+.p-main-card .table tbody tr.selected td { background: #eef2ff !important; }
+.p-main-card .table tbody tr:last-child td { border-bottom: 0; }
+
+.p-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 150px;
+}
+.p-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+.p-name-link {
+    font-weight: 600;
+    color: var(--p-primary-dark) !important;
+    line-height: 1.2;
+    text-decoration: none;
+}
+.p-id-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+    color: var(--p-slate-700);
+    background: var(--p-slate-100);
+    font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+.p-date-cell {
+    color: var(--p-slate-600);
+    font-size: 12.5px;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+.p-city-cell {
+    color: var(--p-primary-dark);
+    font-weight: 600;
+}
+.p-picture-thumb {
+    width: 68px;
+    height: 84px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--p-slate-200);
+    background: var(--p-slate-100);
+    box-shadow: 0 1px 3px rgba(15,23,42,.08);
+    transition: transform .15s, box-shadow .15s;
+}
+.p-picture-thumb:hover { transform: scale(1.05); box-shadow: 0 6px 16px rgba(15,23,42,.18); }
+.p-picture-empty {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    height: 84px;
+    border-radius: 8px;
+    border: 1px dashed var(--p-slate-300);
+    background: var(--p-slate-50);
+    color: var(--p-slate-300);
+    font-size: 11px;
+    gap: 4px;
+}
+
+/* Badges (modern) */
+.p-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.p-badge i { font-size: 10px; }
+.p-badge-muted   { background: var(--p-slate-100); color: var(--p-slate-500); }
+.p-badge-warning { background: #fef3c7; color: #92400e; }
+.p-badge-info    { background: #cffafe; color: #155e75; }
+.p-badge-success { background: #d1fae5; color: #065f46; }
+.p-badge-primary { background: #eef2ff; color: #4338ca; }
+.p-badge-danger  { background: #fee2e2; color: #991b1b; }
+.p-badge-archive { background: #f1f5f9; color: #475569; }
+
+/* Phone cell */
+.p-phone { color: var(--p-slate-700); font-size: 13px; }
+.p-whatsapp {
+    color: #25D366 !important;
+    margin-left: 6px;
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+/* Actions */
+.p-action-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px !important;
+    background: linear-gradient(135deg, var(--p-primary) 0%, var(--p-primary-dark) 100%) !important;
+    color: #fff !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 3px 8px rgba(99,102,241,.3);
+    line-height: 1 !important;
+}
+.p-action-btn:hover, .p-action-btn:focus { box-shadow: 0 5px 12px rgba(99,102,241,.45); color: #fff !important; }
+.p-action-btn::after {
+    border-top-color: rgba(255,255,255,.8);
+    margin-left: 2px;
+}
+
+/* Fancy dropdown menu */
+.p-main-card .dropdown-menu {
+    border: 1px solid var(--p-slate-200);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(15,23,42,.15);
+    padding: 6px;
+    min-width: 180px;
+}
+.p-main-card .dropdown-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--p-slate-700);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.p-main-card .dropdown-item:hover { background: var(--p-slate-50); color: var(--p-slate-800); }
+.p-main-card .dropdown-item.text-danger:hover { background: #fef2f2; color: #b91c1c; }
+.p-main-card .dropdown-item i { width: 14px; text-align: center; }
+.p-main-card .dropdown-divider { margin: 4px 2px; border-color: var(--p-slate-100); }
+
+/* Checkboxes */
+.form-check-input { margin-left: .25rem; cursor: pointer; }
+.profile-checkbox, #select-all { cursor: pointer; width: 16px; height: 16px; }
+
+/* Legacy IE / bootstrap overrides */
+.img-thumbnail { border: 0; }
+
+/* Pagination */
+.p-pagination-wrap {
+    padding: 16px 22px;
+    border-top: 1px solid var(--p-slate-100);
+    background: var(--p-slate-50);
+}
+.p-pagination-wrap .pagination { margin: 0; justify-content: flex-end; }
+.p-pagination-wrap .pagination .page-link {
+    color: var(--p-slate-600);
+    border-color: var(--p-slate-200);
+    padding: 6px 12px;
+    font-size: 13px;
+    margin: 0 2px;
+    border-radius: 7px !important;
+}
+.p-pagination-wrap .pagination .page-item.active .page-link {
+    background: var(--p-primary);
+    border-color: var(--p-primary);
+    color: #fff;
+}
+
+/* Select2 keeps clean look if used */
+.select2-container--default .select2-selection--single {
+    height: 40px;
+    border: 1px solid var(--p-slate-200);
+    border-radius: 9px;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 38px;
+    padding-left: 12px;
+    color: var(--p-slate-800);
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px;
+    right: 8px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 992px) {
+    .p-stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 768px) {
+    .p-stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .p-stat { padding: 14px; }
+    .p-stat .p-stat-value { font-size: 22px; }
+    .navbar-filters { padding: 12px; }
+    .navbar-filters #filter-form { width: 100%; }
     .navbar-filters ul.nav {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        align-items: center;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        justify-content: flex-start;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
     }
-
-    .navbar-filters .filter-icon {
-        background: #6c757d;
-        border-radius: 8px;
-        width: 35px;
-        height: 35px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 14px;
-    }
-
-    .navbar-filters .dropdown {
-        position: relative;
-        width:130px;
-    }
-
-    .navbar-filters .dropdown-toggle {
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        padding: 8px 16px;
-        color: #495057;
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 14px;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        white-space: nowrap;
-    }
-
-    .navbar-filters .dropdown-toggle:hover {
-        background: #f8f9fa;
-        border-color: #adb5bd;
-        color: #495057;
-        text-decoration: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .navbar-filters .dropdown-toggle::after {
-        border-top-color: #6c757d;
-        margin-left: 8px;
-    }
-
-    .navbar-filters .dropdown-toggle i {
-        color: #6c757d;
-        font-size: 12px;
-    }
-
-    .navbar-filters .dropdown-menu {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        padding: 15px;
-        min-width: 250px;
-        margin-top: 5px;
-        position: absolute;
-        z-index: 1000;
-    }
-
-    .backpack-filter {
-        padding: 0;
-    }
-
-    .backpack-filter .input-group {
-        border-radius: 6px;
-        overflow: hidden;
-    }
-
-    .backpack-filter .form-control {
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        padding: 8px 12px;
-        font-size: 14px;
-        transition: all 0.2s ease;
-        color: #495057;
-    }
-
-    .backpack-filter .form-control:focus {
-        border-color: #80bdff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    }
-
-    .backpack-filter .input-group-text {
-        background: #6c757d;
-        border: 1px solid #6c757d;
-        border-left: none;
-    }
-
-    .backpack-filter .input-group-text button {
-        color: white;
-        border: none;
-        background: none;
-    }
-
-    .date-filter-container {
-        padding: 0;
-    }
-
-    .date-filter-container .form-control {
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin-bottom: 10px;
-        font-size: 14px;
-        transition: all 0.2s ease;
-        color: #495057;
-    }
-
-    .date-filter-container .form-control:focus {
-        border-color: #80bdff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    }
-
-    .date-filter-container .btn-primary {
-        background: #007bff;
-        border: 1px solid #007bff;
-        border-radius: 6px;
-        padding: 6px 16px;
-        font-size: 13px;
-        font-weight: 500;
-        color: white;
-    }
-
-    .select-filter select {
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        padding: 8px 12px;
-        font-size: 14px;
-        background: white;
-        transition: all 0.2s ease;
+    .navbar-filters ul.nav > li:first-child { grid-column: 1 / -1; display: flex; justify-content: flex-start; }
+    .navbar-filters .nav-item,
+    .navbar-filters .dropdown { width: 100%; min-width: 0; }
+    .navbar-filters ul.nav > li:last-child { grid-column: 1 / -1; }
+    .navbar-filters .dropdown-toggle,
+    .navbar-filters .reset-filter-btn {
         width: 100%;
-        color: #495057;
+        justify-content: center;
     }
-
-    .select-filter select:focus {
-        border-color: #80bdff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        outline: none;
+    .navbar-filters .dropdown-menu {
+        min-width: 90vw;
+        max-width: 90vw;
+        position: absolute !important;
+        left: 0 !important;
+        right: auto !important;
+        transform: none !important;
     }
-
-    .reset-filter-btn {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        padding: 8px 16px;
-        color: #dc3545;
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 14px;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .reset-filter-btn:hover {
-        background: #e9ecef;
-        border-color: #adb5bd;
-        color: #dc3545;
-        text-decoration: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .select2-container--default .select2-selection--single {
-        height: 38px;
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 36px;
-        padding-left: 12px;
-        color: #495057;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px;
-        right: 8px;
-    }
-
-    .select2-dropdown {
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .navbar-filters {
-            padding: 10px 12px;
-        }
-
-        .navbar-filters #filter-form {
-            width: 100%;
-        }
-
-        .navbar-filters ul.nav {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-            align-items: stretch;
-        }
-
-        .navbar-filters .nav-item,
-        .navbar-filters .dropdown {
-            width: 100%;
-        }
-
-        .navbar-filters ul.nav > li:last-child {
-            grid-column: 1 / -1;
-        }
-
-        .navbar-filters .dropdown-toggle,
-        .navbar-filters .reset-filter-btn {
-            width: 100%;
-            justify-content: center;
-            padding: 8px 6px;
-            font-size: 12px;
-        }
-
-        .navbar-filters .dropdown-toggle i {
-            font-size: 11px;
-        }
-
-        .navbar-filters .dropdown-menu {
-            min-width: 90vw;
-            max-width: 90vw;
-            position: absolute !important;
-            left: 0 !important;
-            right: auto !important;
-            transform: none !important;
-            margin-top: 5px;
-        }
-    }
-
-    /* Pagination Info Styling */
-    .dataTables_info {
-        color: #6c757d;
-        font-size: 16px;
-        font-weight: 500;
-        margin: 0;
-        padding: 6px 0;
-    }
-
-    @media (max-width: 768px) {
-        .dataTables_info {
-            text-align: center;
-            font-size: 13px;
-        }
-    }
-
-    /* Bulk Delete Styling */
-    .clickable-cell {
-        cursor: pointer;
-    }
-
-    #bulk-actions {
-        transition: all 0.3s ease;
-    }
-
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .table tbody tr.selected {
-        background-color: #e3f2fd;
-    }
-
-    .profile-checkbox {
-        cursor: pointer;
-    }
-
-    #select-all {
-        cursor: pointer;
-    }
-
-    .form-check-input {
-    margin-left: 0.25rem;
-    }
-
-    .img-thumbnail {
-    border: 0px solid #ddd;
-    }
-
-    /* Per Page Dropdown Styling */
-    .dataTables_length {
-        color: #6c757d;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    .dataTables_length label {
-        margin: 0;
-        font-weight: normal;
-    }
-
-    .dataTables_length .form-select {
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        padding: 4px 8px;
-        font-size: 14px;
-        color: #495057;
-        background-color: white;
-        cursor: pointer;
-    }
-
-    .dataTables_length .form-select:focus {
-        border-color: #80bdff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        outline: none;
-    }
-
-    @media (max-width: 768px) {
-        .dataTables_length {
-            text-align: center;
-            margin-top: 10px;
-        }
-    }
-
-    /* Desktop: right-align the "Pending Profile Photo Verify" button */
-    .pending-verify-col { text-align: right; }
-
-    /* Mobile: clean layout for "Show entries" + "Pending Photo Verify" row */
-    @media (max-width: 768px) {
-        .entries-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            margin: 12px 0;
-        }
-        .entries-toolbar .dataTables_length { margin: 0; text-align: left; }
-        .entries-toolbar .btn { margin: 0; }
-        .pending-verify-col { text-align: right; }
-    }
-
+    .p-toolbar { padding: 12px; }
+    .p-pagination-wrap { padding: 12px; }
+    .p-pagination-wrap .pagination { justify-content: center; }
+    .p-main-card .table thead { display: none; }
+    .p-main-card .table tbody td { padding: 10px 12px; }
+}
 </style>
 @endpush
 
@@ -413,228 +645,218 @@
                         </li>
                         <li class="breadcrumb-item active">Profiles</li>
                     </ol>
-                   
+
                 </div>
                 <!-- /.page-title-right -->
         </div>
 
-<div class="row mt-3 mb-3">
-<div class="col-md-12">
-<div class="card">
-<div class="card-body">
-<nav class="navbar navbar-expand-lg navbar-filters">
-    <form id="filter-form" action="{{ route('admin.profiles.index') }}" method="GET">
-        <ul class="nav">
-            <!-- Filter Icon -->
-            <li class="nav-item">
-                <div class="filter-icon">
-                    <i class="fas fa-filter"></i>
-                </div>
-            </li>
+@php
+    $hasAnyFilter = request()->hasAny(['id','title','phone','city','status','premium','start_date','end_date']);
+    $totalProfiles = $profiles->total();
+    $onPageActive  = $profiles->getCollection()->filter(fn($p) => $p->is_active && !$p->isArchived())->count();
+    $onPagePremium = $profiles->getCollection()->filter(fn($p) => $p->getpackage || $p->activeAuction)->count();
+@endphp
 
-            <!-- ID Filter -->
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-hashtag"></i> ID/Reference
-                </a>
-                <div class="dropdown-menu">
-                    <div class="backpack-filter">
-                        <div class="input-group">
-                            <input type="text" name="id" id="text-filter-id" class="form-control" value="{{ request('id') }}" placeholder="Enter ID">
-                            {{-- <span class="input-group-text">
-                                <button type="submit" class="btn btn-link p-0">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </span> --}}
+<div class="container-fluid px-0">
+
+    {{-- ===== Stats strip ===== --}}
+    <div class="p-stats-row">
+        <div class="p-stat total">
+            <p class="p-stat-label">Total Profiles</p>
+            <p class="p-stat-value">{{ number_format($totalProfiles) }}</p>
+            <i class="fas fa-users p-stat-icon"></i>
+        </div>
+        <div class="p-stat active">
+            <p class="p-stat-label">Active · On This Page</p>
+            <p class="p-stat-value">{{ number_format($onPageActive) }}</p>
+            <i class="fas fa-check-circle p-stat-icon"></i>
+        </div>
+        <div class="p-stat premium">
+            <p class="p-stat-label">Premium / Auction · On This Page</p>
+            <p class="p-stat-value">{{ number_format($onPagePremium) }}</p>
+            <i class="fas fa-crown p-stat-icon"></i>
+        </div>
+        <div class="p-stat showing">
+            <p class="p-stat-label">{{ $hasAnyFilter ? 'Filtered Results' : 'Showing' }}</p>
+            <p class="p-stat-value">{{ number_format($profiles->count()) }}</p>
+            <i class="fas fa-filter p-stat-icon"></i>
+        </div>
+    </div>
+
+    {{-- ===== Filters card ===== --}}
+    <div class="p-filter-card">
+        <nav class="navbar navbar-expand-lg navbar-filters">
+            <form id="filter-form" action="{{ route('admin.profiles.index') }}" method="GET" class="w-100">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <div class="filter-icon" title="Filters">
+                            <i class="fas fa-filter"></i>
                         </div>
-                    </div>
-                </div>
-            </li>
+                    </li>
 
-            <!-- Title Filter -->
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-heading"></i> Title
-                </a>
-                <div class="dropdown-menu">
-                    <div class="backpack-filter">
-                        <div class="input-group">
-                            <input type="text" name="title" class="form-control" value="{{ request('title') }}" placeholder="Enter title">
-                            {{-- <span class="input-group-text">
-                                <button type="submit" class="btn btn-link p-0">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </span> --}}
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle {{ request('id') ? 'filter-active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-hashtag"></i> ID/Reference
+                        </a>
+                        <div class="dropdown-menu">
+                            <div class="backpack-filter">
+                                <input type="text" name="id" id="text-filter-id" class="form-control" value="{{ request('id') }}" placeholder="Enter ID">
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </li>
+                    </li>
 
-            <!-- Phone Filter -->
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-phone"></i> Phone
-                </a>
-                <div class="dropdown-menu">
-                    <div class="backpack-filter">
-                        <div class="input-group">
-                            <input type="text" name="phone" class="form-control" value="{{ request('phone') }}" placeholder="Enter phone number">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle {{ request('title') ? 'filter-active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-heading"></i> Title
+                        </a>
+                        <div class="dropdown-menu">
+                            <div class="backpack-filter">
+                                <input type="text" name="title" class="form-control" value="{{ request('title') }}" placeholder="Enter title">
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </li>
+                    </li>
 
-            <!-- City Filter -->
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-map-marker-alt"></i> City
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle {{ request('phone') ? 'filter-active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-phone"></i> Phone
+                        </a>
+                        <div class="dropdown-menu">
+                            <div class="backpack-filter">
+                                <input type="text" name="phone" class="form-control" value="{{ request('phone') }}" placeholder="Enter phone number">
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle {{ request('city') ? 'filter-active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-map-marker-alt"></i> City
+                        </a>
+                        <div class="dropdown-menu" style="min-width: 280px;">
+                            <div class="city-autocomplete-wrapper" style="position: relative;">
+                                <input type="text"
+                                       name="city_search"
+                                       id="city-autocomplete"
+                                       class="form-control"
+                                       placeholder="Type to search city..."
+                                       autocomplete="off"
+                                       value="{{ request('city') ? $cities->firstWhere('id', request('city'))?->name : '' }}">
+                                <input type="hidden" name="city" id="city-id" value="{{ request('city') }}">
+                                <div id="city-suggestions" class="autocomplete-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; z-index: 1050; box-shadow: 0 4px 12px rgba(15,23,42,.12);"></div>
+                            </div>
+                            @if(request('city'))
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="clear-city-filter" style="width: 100%;">
+                                <i class="fas fa-times"></i> Clear City Filter
+                            </button>
+                            @endif
+                        </div>
+                    </li>
+
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle {{ request('status') !== null && request('status') !== '' ? 'filter-active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-toggle-on"></i> Status
+                        </a>
+                        <div class="dropdown-menu">
+                            <div class="select-filter">
+                                <select name="status">
+                                    <option value="">All Status</option>
+                                    <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Active</option>
+                                    <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
+                                    <option value="verified" {{ request('status') == 'verified' ? 'selected' : '' }}>Verified</option>
+                                    <option value="unverified" {{ request('status') == 'unverified' ? 'selected' : '' }}>Unverified</option>
+                                    <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Archived</option>
+                                </select>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle {{ request('premium') ? 'filter-active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-crown"></i> Package
+                        </a>
+                        <div class="dropdown-menu">
+                            <div class="select-filter">
+                                <select name="premium">
+                                    <option value="">All Packages</option>
+                                    @foreach($packages as $package)
+                                        <option value="{{ $package->id }}" {{ request('premium') == $package->id ? 'selected' : '' }}>{{ $package->name }}</option>
+                                    @endforeach
+                                    <option value="auction" {{ request('premium') == 'auction' ? 'selected' : '' }}>Auction</option>
+                                </select>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle {{ request('start_date') || request('end_date') ? 'filter-active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-calendar-alt"></i> Date Range
+                        </a>
+                        <div class="dropdown-menu">
+                            <div class="date-filter-container">
+                                <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}" placeholder="Start Date">
+                                <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}" placeholder="End Date">
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="nav-item ml-auto">
+                        <a href="{{ route('admin.profiles.index') }}" class="reset-filter-btn">
+                            <i class="fas fa-eraser"></i> Reset
+                        </a>
+                    </li>
+                </ul>
+            </form>
+        </nav>
+    </div>
+
+    @if(session('success'))
+        <div class="alert alert-success" style="border-radius:10px;">{{session('success')}}</div>
+    @endif
+
+    {{-- ===== Main card ===== --}}
+    <div class="p-main-card">
+
+        <div class="card-header">
+            <div class="p-header-flex">
+                <h5 class="p-header-title">
+                    <span class="p-title-icon"><i class="fas fa-users"></i></span>
+                    All Profiles
+                    <small>Manage, archive & moderate profiles</small>
+                </h5>
+                <a href="{{ route('admin.verifications') }}" class="p-verify-btn">
+                    <i class="fas fa-user-shield"></i> Pending Photo Verify
                 </a>
-                <div class="dropdown-menu" style="min-width: 280px; padding: 10px;">
-                    <div class="city-autocomplete-wrapper" style="position: relative;">
-                        <input type="text" 
-                               name="city_search" 
-                               id="city-autocomplete" 
-                               class="form-control" 
-                               placeholder="Type to search city..." 
-                               autocomplete="off"
-                               value="{{ request('city') ? $cities->firstWhere('id', request('city'))?->name : '' }}">
-                        <input type="hidden" name="city" id="city-id" value="{{ request('city') }}">
-                        <div id="city-suggestions" class="autocomplete-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; z-index: 1050; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
-                    </div>
-                    @if(request('city'))
-                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="clear-city-filter" style="width: 100%;">
-                        <i class="fas fa-times"></i> Clear City Filter
-                    </button>
+            </div>
+        </div>
+
+        <div class="p-toolbar">
+            <div class="p-toolbar-left">
+                <div class="p-perpage">
+                    <span>Show</span>
+                    <select name="per_page" id="per-page-select" class="form-select form-select-sm">
+                        <option value="10"   {{ request('per_page', 10) == 10   ? 'selected' : '' }}>10</option>
+                        <option value="50"   {{ request('per_page', 10) == 50   ? 'selected' : '' }}>50</option>
+                        <option value="250"  {{ request('per_page', 10) == 250  ? 'selected' : '' }}>250</option>
+                        <option value="500"  {{ request('per_page', 10) == 500  ? 'selected' : '' }}>500</option>
+                        <option value="1000" {{ request('per_page', 10) == 1000 ? 'selected' : '' }}>1000</option>
+                    </select>
+                    <span>entries</span>
+                </div>
+                <div class="p-entries-info" id="entries-info">
+                    @if($profiles->total() > 0)
+                        Showing <strong>{{ $profiles->firstItem() }}</strong> to <strong>{{ $profiles->lastItem() }}</strong> of <strong>{{ number_format($profiles->total()) }}</strong> entries
+                    @else
+                        Showing 0 to 0 of 0 entries
                     @endif
                 </div>
-            </li>
+            </div>
+        </div>
 
-            <!-- Status Filter -->
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-toggle-on"></i> Status
-                </a>
-                <div class="dropdown-menu">
-                    <div class="select-filter">
-                        <select name="status">
-                            <option value="">All Status</option>
-                            <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Active</option>
-                            <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
-                            <option value="verified" {{ request('status') == 'verified' ? 'selected' : '' }}>Verified</option>
-                            <option value="unverified" {{ request('status') == 'unverified' ? 'selected' : '' }}>Unverified</option>
-                            <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Archived</option>
-                        </select>
-                    </div>
-                </div>
-            </li>
-
-            <!-- Premium Filter -->
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-crown"></i> Package
-                </a>
-                <div class="dropdown-menu">
-                    <div class="select-filter">
-                        <select name="premium">
-                            <option value="">All Packages</option>
-                            @foreach($packages as $package)
-                                <option value="{{ $package->id }}" {{ request('premium') == $package->id ? 'selected' : '' }}>{{ $package->name }}</option>
-                            @endforeach
-                            <option value="auction" {{ request('premium') == 'auction' ? 'selected' : '' }}>Auction</option>
-                        </select>
-                    </div>
-                </div>
-            </li>
-
-
-
-            <!-- Date Range Filter -->
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-calendar-alt"></i> Date Range
-                </a>
-                <div class="dropdown-menu">
-                    <div class="date-filter-container">
-                        <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}" placeholder="Start Date">
-                        <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}" placeholder="End Date">
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
-                        </div>
-                    </div>
-                </div>
-            </li>
-
-            <!-- Reset Filters -->
-            <li class="nav-item">
-                <a href="{{ route('admin.profiles.index') }}" class="reset-filter-btn">
-                    <i class="fas fa-eraser"></i> Reset
-                </a>
-            </li>
-        </ul>
-    </form>
-</nav>
-</div>
-</div>
-</div>
-
-
-    <div class="col-lg-12">
         <div class="card-body">
-            
-        </div>
-<div class="col-md-12">
-<div class="row mb-3 entries-toolbar">
-    <div class="col-md-6">
-        <div class="dataTables_length">
-            <label class="d-inline-flex align-items-center mb-0">
-                Show
-                <select name="per_page" id="per-page-select" class="form-select form-select-sm mx-2" style="width: auto;">
-                    <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
-                    <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
-                    <option value="250" {{ request('per_page', 10) == 250 ? 'selected' : '' }}>250</option>
-                    <option value="500" {{ request('per_page', 10) == 500 ? 'selected' : '' }}>500</option>
-                    <option value="1000" {{ request('per_page', 10) == 1000 ? 'selected' : '' }}>1000</option>
-                </select>
-                entries
-            </label>
-        </div>
-    </div>
-    <div class="col-md-6 pending-verify-col">
-        <a href="{{ route('admin.verifications') }}" class="btn btn-primary">Pending Profile Photo Verify</a>
-    </div>
-</div>
-        <div class="card row">
-            <div class="card-header">
-                <div class="float-start mb-2" >
-                    <div class="d-flex">
-                        <div style="margin-right:13px">
-                            <h5 class="card-title mt-2">All Profiles</h5>
-                        </div>
-                        <div class="">
-                             <div class="dataTables_info" id="entries-info">
-                @if($profiles->total() > 0)
-                    Showing {{ $profiles->firstItem() }} to {{ $profiles->lastItem() }} of {{ number_format($profiles->total()) }} entries
-                @else
-                    Showing 0 to 0 of 0 entries
-                @endif
-            </div>
-                        </div>
-                    </div>
-                
-                </div>
-                
-            </div>
-            <div class="card-body">
-                @if(session('success'))
-                    <div class="alert alert-success">{{session('success')}}</div>
-                @endif
-                
-                <div id="table-container">
-                    @include('admin.profiles.table')
-                </div>
-
-
-
+            <div id="table-container">
+                @include('admin.profiles.table')
             </div>
         </div>
     </div>

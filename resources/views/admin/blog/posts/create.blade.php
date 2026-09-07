@@ -18,9 +18,11 @@
         width: 100% !important;
     }
 </style>
+@include('admin._partials.settings-modern')
 @endpush
 
 @section('content')
+<div class="s-modern">
 <div class="row page-title clearfix">
     <div class="page-title-left">
         <h5 class="mr-0 mr-r-5">Create Blog Post</h5>
@@ -221,6 +223,7 @@
         </form>
     </div>
 </div>
+</div>{{-- /.s-modern --}}
 @endsection
 
 @push('js')

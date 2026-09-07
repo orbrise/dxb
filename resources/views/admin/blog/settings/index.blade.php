@@ -1,7 +1,12 @@
 @extends('admin.layout.master')
 @section('title', 'Blog SEO Settings')
 
+@push('css')
+@include('admin._partials.settings-modern')
+@endpush
+
 @section('content')
+<div class="s-modern">
 <div class="main-content-wrapper">
     <div class="row d-flex justify-content-center no-gutters">
         <div class="col-lg-10 col-md-12">
@@ -180,6 +185,7 @@
         </div>
     </div>
 </div>
+</div>{{-- /.s-modern --}}
 @endsection
 
 @push('scripts')

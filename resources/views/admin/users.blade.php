@@ -7,302 +7,725 @@
 <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap4.min.css" rel="stylesheet" />
 
 <style>
-  span.input { display: none; }
-  .dataTables_wrapper .dataTables_filter input {
-    margin-left: 0.5em;
-  }
-  .dataTables_wrapper .dataTables_length select {
+/* ===== Users page: modern redesign ===== */
+:root {
+    --u-primary: #6366f1;
+    --u-primary-dark: #4f46e5;
+    --u-success: #10b981;
+    --u-danger: #ef4444;
+    --u-warning: #f59e0b;
+    --u-info: #06b6d4;
+    --u-slate-50: #f8fafc;
+    --u-slate-100: #f1f5f9;
+    --u-slate-200: #e2e8f0;
+    --u-slate-300: #cbd5e1;
+    --u-slate-500: #64748b;
+    --u-slate-600: #475569;
+    --u-slate-700: #334155;
+    --u-slate-800: #1e293b;
+}
+
+/* Datatable overrides */
+span.input { display: none; }
+.dataTables_wrapper .dataTables_filter input { margin-left: 0.5em; }
+.dataTables_wrapper .dataTables_length select {
     padding: 4px 30px 4px 10px;
     min-width: 80px;
     width: auto;
-  }
+}
+@media (min-width: 576px) {
+    .modal-dialog { max-width: 800px; }
+}
 
-  @media (min-width: 576px) {
-    .modal-dialog {
-        max-width: 800px;
-    }
+/* Stats strip */
+.u-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 4px 0 18px;
+}
+.u-stat {
+    position: relative;
+    padding: 16px 18px;
+    border-radius: 12px;
+    color: #fff;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15,23,42,.08);
+}
+.u-stat .u-stat-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+    opacity: .9; margin: 0 0 4px; font-weight: 600;
+}
+.u-stat .u-stat-value {
+    font-size: 26px; font-weight: 700; line-height: 1.1; margin: 0;
+}
+.u-stat .u-stat-icon {
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%); font-size: 34px; opacity: .35;
+}
+.u-stat.total    { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+.u-stat.active   { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.u-stat.pending  { background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); }
+.u-stat.verified { background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%); }
+
+/* Header row w/ Add button */
+.u-page-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 14px;
+}
+.u-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--u-primary) 0%, var(--u-primary-dark) 100%);
+    color: #fff !important;
+    border: 0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, .35);
+    transition: box-shadow .15s;
+    cursor: pointer;
+}
+.u-add-btn:hover { color: #fff; box-shadow: 0 6px 18px rgba(99, 102, 241, .5); }
+
+/* Main card */
+.u-card {
+    background: #fff;
+    border: 1px solid var(--u-slate-200);
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(15,23,42,.06);
+    overflow: hidden;
+}
+
+/* Filter bar (redesign of .q-filter-bar) */
+.q-filter-bar {
+    padding: 14px 20px !important;
+    background: var(--u-slate-50) !important;
+    border-bottom: 1px solid var(--u-slate-100) !important;
+}
+.q-filter-bar #uFiltersForm { gap: 8px !important; }
+.q-filter-bar .fa-filter {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: inline-flex !important; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--u-primary) 0%, var(--u-primary-dark) 100%);
+    color: #fff !important;
+    font-size: 13px !important;
+    margin-right: 4px;
+    box-shadow: 0 3px 10px rgba(99, 102, 241, .35);
+}
+.q-filter-bar > span:first-child {
+    color: #fff !important; padding: 0 !important; margin-right: 6px !important;
+}
+.q-filter-bar .dropdown-menu {
+    padding: 12px;
+    border: 1px solid var(--u-slate-200) !important;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(15,23,42,.15);
+}
+.q-filter-bar .dropdown-menu input,
+.q-filter-bar .dropdown-menu select { cursor: auto; }
+.q-filter-bar .dropdown-menu .form-control-sm {
+    border-radius: 8px;
+    border-color: var(--u-slate-200);
+    padding: 7px 10px;
+    font-size: 13px;
+    height: 36px;
+}
+.q-filter-bar .dropdown-menu .form-control-sm:focus {
+    border-color: var(--u-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+}
+.q-filter-bar .dropdown-menu .btn-primary {
+    background: linear-gradient(135deg, var(--u-primary) 0%, var(--u-primary-dark) 100%);
+    border: 0;
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(99, 102, 241, .3);
+}
+.q-filter-bar .dropdown-toggle::after { display: none !important; }
+.q-filter-bar .filter-caret {
+    display: inline-block; margin-left: 6px; font-size: 10px;
+}
+.q-filter-bar .btn-outline-dark {
+    color: var(--u-slate-700) !important;
+    background: #fff !important;
+    border: 1px solid var(--u-slate-200) !important;
+    border-radius: 9px !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center;
+    transition: all .15s;
+}
+.q-filter-bar .btn-outline-dark:hover,
+.q-filter-bar .btn-outline-dark:focus {
+    color: var(--u-primary-dark) !important;
+    background: #fff !important;
+    border-color: var(--u-primary) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .12) !important;
+}
+.q-filter-bar .btn-outline-dark .filter-caret { color: var(--u-slate-500); opacity: 1; }
+.q-filter-bar .btn-primary {
+    background: #eef2ff !important;
+    color: var(--u-primary-dark) !important;
+    border: 1px solid var(--u-primary) !important;
+    border-radius: 9px !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center;
+    box-shadow: none !important;
+}
+.q-filter-bar .btn-primary .filter-caret { color: var(--u-primary-dark); }
+.q-filter-bar .btn-outline-danger {
+    color: var(--u-danger) !important;
+    background: #fff !important;
+    border: 1px solid var(--u-slate-200) !important;
+    border-radius: 9px !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center;
+}
+.q-filter-bar .btn-outline-danger:hover {
+    background: #fef2f2 !important;
+    border-color: var(--u-danger) !important;
+    color: var(--u-danger) !important;
+}
+.q-filter-bar .ml-auto {
+    background: #fff;
+    border: 1px solid var(--u-slate-200);
+    border-radius: 9px;
+    padding: 6px 12px;
+    height: 38px;
+}
+.q-filter-bar .ml-auto .text-muted { color: var(--u-slate-700) !important; font-weight: 600 !important; }
+.q-filter-bar .ml-auto label { color: var(--u-slate-500) !important; }
+.q-filter-bar .ml-auto .form-control-sm {
+    border: 1px solid var(--u-slate-200);
+    border-radius: 6px;
+    font-size: 12px;
+    height: 28px;
+    padding: 2px 22px 2px 8px;
+}
+
+/* Users table */
+.u-card .card-body { padding: 0; }
+#usersTable { width: 100% !important; margin: 0 !important; font-size: 13.5px; border-collapse: separate; border-spacing: 0; }
+#usersTable thead th {
+    background: var(--u-slate-50);
+    color: var(--u-slate-500);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    padding: 14px 14px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--u-slate-200) !important;
+    text-align: left;
+    white-space: nowrap;
+}
+#usersTable thead th:last-child { text-align: right; }
+#usersTable tbody td {
+    padding: 14px !important;
+    vertical-align: middle;
+    border: 0 !important;
+    border-bottom: 1px solid var(--u-slate-100) !important;
+    color: var(--u-slate-700);
+    background: #fff !important;
+}
+#usersTable tbody tr:hover td { background: #fafbff !important; }
+#usersTable tbody tr:last-child td { border-bottom: 0 !important; }
+
+/* Cell primitives */
+.u-date-cell {
+    color: var(--u-slate-700);
+    font-size: 13px;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+.u-date-cell small {
+    display: block; color: var(--u-slate-500); font-size: 11px;
+}
+.u-name-cell {
+    display: flex; align-items: center; gap: 10px;
+    min-width: 180px;
+}
+.u-name-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff; display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; text-transform: uppercase;
+    flex-shrink: 0;
+}
+.u-name-text {
+    font-weight: 600; color: var(--u-slate-800); font-size: 13.5px;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    max-width: 240px;
+}
+.u-email {
+    color: var(--u-slate-600); font-size: 13px;
+    word-break: break-all;
+}
+.u-country-cell {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--u-slate-700); font-weight: 500; font-size: 13px;
+}
+.u-country-cell img { border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.06); }
+.u-country-na { color: var(--u-slate-300); font-weight: 500; }
+
+/* Status pill (must include .status-badge-{id} for JS) */
+#usersTable .badge.status-badge-,
+#usersTable .badge[class*="status-badge-"] {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    line-height: 1.4 !important;
+    text-transform: capitalize;
+}
+#usersTable .badge[class*="status-badge-"].bg-success { background: #d1fae5 !important; color: #065f46 !important; }
+#usersTable .badge[class*="status-badge-"].bg-warning { background: #fef3c7 !important; color: #92400e !important; }
+#usersTable .badge[class*="status-badge-"].bg-danger  { background: #fee2e2 !important; color: #991b1b !important; }
+
+/* Verified icon */
+.u-verified-cell { display: inline-flex; align-items: center; gap: 6px; }
+.u-verified-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px;
+    border-radius: 8px; font-size: 13px; font-weight: 700;
+}
+.u-verified-badge.yes { background: #d1fae5; color: #065f46; }
+.u-verified-badge.no  { background: #fee2e2; color: #991b1b; }
+.u-google-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 20px;
+    background: var(--u-slate-100); color: var(--u-slate-600);
+    font-size: 11px; font-weight: 600;
+}
+.u-google-tag img { width: 12px; height: 12px; }
+
+/* Buttons - view / actions dropdown */
+.u-view-btn {
+    display: inline-flex !important;
+    align-items: center; gap: 6px;
+    padding: 7px 14px !important;
+    background: #eef2ff !important;
+    color: var(--u-primary-dark) !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    transition: background .15s;
+    line-height: 1 !important;
+}
+.u-view-btn:hover { background: #e0e7ff !important; color: var(--u-primary-dark) !important; }
+
+.u-actions-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px !important;
+    background: linear-gradient(135deg, var(--u-primary) 0%, var(--u-primary-dark) 100%) !important;
+    color: #fff !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 3px 8px rgba(99, 102, 241, .3);
+    line-height: 1 !important;
+}
+.u-actions-btn::after {
+    border-top-color: rgba(255,255,255,.8) !important;
+    margin-left: 4px !important;
+}
+.u-actions-btn:hover, .u-actions-btn:focus {
+    box-shadow: 0 5px 12px rgba(99, 102, 241, .45);
+    color: #fff !important;
+}
+
+#usersTable .dropdown-menu {
+    border: 1px solid var(--u-slate-200);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(15,23,42,.15);
+    padding: 6px;
+    min-width: 200px;
+}
+#usersTable .dropdown-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--u-slate-700);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#usersTable .dropdown-item:hover { background: var(--u-slate-50); color: var(--u-slate-800); }
+#usersTable .dropdown-item.text-danger:hover { background: #fef2f2; color: #b91c1c; }
+#usersTable .dropdown-item i { width: 14px; text-align: center; color: var(--u-slate-500); }
+#usersTable .dropdown-item.text-danger i { color: var(--u-danger); }
+#usersTable .dropdown-divider { margin: 4px 2px; border-color: var(--u-slate-100); }
+
+/* Pagination footer */
+.u-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 22px;
+    border-top: 1px solid var(--u-slate-100);
+    background: var(--u-slate-50);
+    font-size: 13px;
+    color: var(--u-slate-600);
+}
+.u-pagination .pagination { margin: 0; }
+.u-pagination .pagination .page-link {
+    color: var(--u-slate-600);
+    border-color: var(--u-slate-200);
+    padding: 6px 12px;
+    font-size: 13px;
+    margin: 0 2px;
+    border-radius: 7px !important;
+}
+.u-pagination .pagination .page-item.active .page-link {
+    background: var(--u-primary);
+    border-color: var(--u-primary);
+    color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .u-stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 768px) {
+    .main-wrapper { padding-left: 8px !important; padding-right: 8px !important; }
+    .container-fluid { padding-left: 6px !important; padding-right: 6px !important; }
+    .u-stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .q-filter-bar { padding: 12px !important; }
+    .u-add-btn { width: 100%; justify-content: center; }
+    .u-pagination { flex-direction: column; text-align: center; }
+    #usersTable thead { display: none; }
+    #usersTable tbody td { padding: 10px 12px !important; }
 }
 </style>
 @endpush
 
 @section("content")
 
- <div class="row page-title clearfix">
-                <div class="page-title-left">
-                    <h5 class="mr-0 mr-r-5">Users</h5>
-                    <p class="mr-0 text-muted d-none d-md-inline-block">Manage users effectively</p>
-                </div>
-                <!-- /.page-title-left -->
-                <div class="page-title-right d-none d-sm-inline-flex">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{url('admin/dashboard')}}">Dashboard</a>
-                        </li>
-                        <li class="breadcrumb-item active">Users</li>
-                    </ol>
-                   
-                </div>
-                <!-- /.page-title-right -->
-        </div>
+<div class="row page-title clearfix">
+    <div class="page-title-left">
+        <h5 class="mr-0 mr-r-5">Users</h5>
+        <p class="mr-0 text-muted d-none d-md-inline-block">Manage users effectively</p>
+    </div>
+    <div class="page-title-right d-none d-sm-inline-flex">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url('admin/dashboard')}}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Users</li>
+        </ol>
+    </div>
+</div>
 
-<!-- Add User Button -->
-<div class="row mt-3">
-    <div class="col-lg-12">
-        <button type="button" class="btn btn-primary" id="addUserBtn">
+@php
+    $totalUsers      = !empty($users) ? $users->total() : 0;
+    $onPageActive    = !empty($users) ? collect($users->items())->filter(fn($u) => ($u->status ?? 'pending') === 'active')->count() : 0;
+    $onPagePending   = !empty($users) ? collect($users->items())->filter(fn($u) => ($u->status ?? 'pending') !== 'active')->count() : 0;
+    $onPageVerified  = !empty($users) ? collect($users->items())->filter(fn($u) => $u->verified == 1)->count() : 0;
+@endphp
+
+<div class="container-fluid px-0">
+
+    {{-- Stats --}}
+    <div class="u-stats-row">
+        <div class="u-stat total">
+            <p class="u-stat-label">Total Users</p>
+            <p class="u-stat-value">{{ number_format($totalUsers) }}</p>
+            <i class="fas fa-users u-stat-icon"></i>
+        </div>
+        <div class="u-stat active">
+            <p class="u-stat-label">Active · On This Page</p>
+            <p class="u-stat-value">{{ number_format($onPageActive) }}</p>
+            <i class="fas fa-check-circle u-stat-icon"></i>
+        </div>
+        <div class="u-stat pending">
+            <p class="u-stat-label">Pending · On This Page</p>
+            <p class="u-stat-value">{{ number_format($onPagePending) }}</p>
+            <i class="fas fa-hourglass-half u-stat-icon"></i>
+        </div>
+        <div class="u-stat verified">
+            <p class="u-stat-label">Verified · On This Page</p>
+            <p class="u-stat-value">{{ number_format($onPageVerified) }}</p>
+            <i class="fas fa-shield-alt u-stat-icon"></i>
+        </div>
+    </div>
+
+    {{-- Add User button --}}
+    <div class="u-page-actions">
+        <button type="button" class="u-add-btn" id="addUserBtn">
             <i class="fa fa-plus"></i> Add New User
         </button>
     </div>
-</div>
 
+    {{-- Main card --}}
+    @if(!empty($users))
+    <div class="u-card">
+        @php
+            $statusLabels = ['active' => 'Active', 'pending' => 'Pending'];
+            $verifiedLabels = ['1' => 'Verified', '0' => 'Not verified'];
+            $activeCount = collect(['id','name','email','status','verified','date_from','date_to'])
+                ->filter(fn($k) => request()->filled($k))
+                ->count();
+            $pp = (int) request('per_page', 25);
+        @endphp
 
-<!-- Users List -->
-@if(!empty($users))
-<div class="row mt-3 mb-3">
-    <div class="col-lg-12">
-        <div class="card">
-            @php
-                $statusLabels = ['active' => 'Active', 'pending' => 'Pending'];
-                $verifiedLabels = ['1' => 'Verified', '0' => 'Not verified'];
-                $activeCount = collect(['id','name','email','status','verified','date_from','date_to'])
-                    ->filter(fn($k) => request()->filled($k))
-                    ->count();
-            @endphp
+        {{-- Filter bar --}}
+        <div class="card-header q-filter-bar">
+            <form method="GET" action="{{ route('admin.users') }}" id="uFiltersForm" class="d-flex align-items-center flex-wrap" style="gap:6px;">
+                <span><i class="fa fa-filter"></i></span>
 
-            @php $pp = (int) request('per_page', 25); @endphp
-            <div class="card-header q-filter-bar py-2">
-                <form method="GET" action="{{ route('admin.users') }}" id="uFiltersForm" class="d-flex align-items-center flex-wrap" style="gap:6px;">
-                    <span class="text-muted mr-1"><i class="fa fa-filter"></i></span>
-
-                    {{-- ID --}}
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm {{ request('id') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
-                            ID{{ request('id') ? ': '.request('id') : '' }} <i class="fa fa-chevron-down filter-caret"></i>
-                        </button>
-                        <div class="dropdown-menu p-2" style="min-width:220px;">
-                            <input type="number" name="id" value="{{ request('id') }}" class="form-control form-control-sm mb-2" placeholder="User ID" min="1">
-                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
-                        </div>
-                    </div>
-
-                    {{-- Name --}}
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm {{ request('name') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
-                            Name{{ request('name') ? ': '.\Illuminate\Support\Str::limit(request('name'), 20) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
-                        </button>
-                        <div class="dropdown-menu p-2" style="min-width:240px;">
-                            <input type="text" name="name" value="{{ request('name') }}" class="form-control form-control-sm mb-2" placeholder="Search by name...">
-                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
-                        </div>
-                    </div>
-
-                    {{-- Email --}}
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm {{ request('email') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
-                            Email{{ request('email') ? ': '.\Illuminate\Support\Str::limit(request('email'), 22) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
-                        </button>
-                        <div class="dropdown-menu p-2" style="min-width:260px;">
-                            <input type="text" name="email" value="{{ request('email') }}" class="form-control form-control-sm mb-2" placeholder="Search by email...">
-                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
-                        </div>
-                    </div>
-
-                    {{-- Status --}}
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm {{ request()->filled('status') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
-                            Status{{ request()->filled('status') ? ': '.($statusLabels[request('status')] ?? request('status')) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
-                        </button>
-                        <div class="dropdown-menu p-2" style="min-width:180px;">
-                            <select name="status" class="form-control form-control-sm mb-2" onchange="this.form.submit()">
-                                <option value="">All statuses</option>
-                                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {{-- Verified --}}
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm {{ request()->filled('verified') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
-                            Verified{{ request()->filled('verified') ? ': '.($verifiedLabels[request('verified')] ?? '') : '' }} <i class="fa fa-chevron-down filter-caret"></i>
-                        </button>
-                        <div class="dropdown-menu p-2" style="min-width:180px;">
-                            <select name="verified" class="form-control form-control-sm mb-2" onchange="this.form.submit()">
-                                <option value="">Any</option>
-                                <option value="1" {{ request('verified') === '1' ? 'selected' : '' }}>Verified</option>
-                                <option value="0" {{ request('verified') === '0' ? 'selected' : '' }}>Not verified</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {{-- Registered (date range) --}}
-                    <div class="btn-group">
-                        @php
-                            $dateLabel = '';
-                            if (request('date_from') && request('date_to')) $dateLabel = ': '.request('date_from').' → '.request('date_to');
-                            elseif (request('date_from')) $dateLabel = ': from '.request('date_from');
-                            elseif (request('date_to')) $dateLabel = ': to '.request('date_to');
-                        @endphp
-                        <button type="button" class="btn btn-sm {{ ($dateLabel !== '') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
-                            Registered{{ $dateLabel }} <i class="fa fa-chevron-down filter-caret"></i>
-                        </button>
-                        <div class="dropdown-menu p-2" style="min-width:260px;">
-                            <label class="small mb-1">From</label>
-                            <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm mb-2">
-                            <label class="small mb-1">To</label>
-                            <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm mb-2">
-                            <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
-                        </div>
-                    </div>
-
-                    @if($activeCount > 0)
-                        <a href="{{ route('admin.users') }}" class="btn btn-sm btn-outline-danger" title="Reset all filters">
-                            <i class="fa fa-times"></i> Reset ({{ $activeCount }})
-                        </a>
-                    @endif
-
-                    <div class="ml-auto d-flex align-items-center" style="gap:10px;">
-                        <span class="text-muted small">{{ number_format($users->total()) }} user(s)</span>
-                        <label class="mb-0 small text-muted">Per page</label>
-                        <select name="per_page" class="form-control form-control-sm" style="width:auto;" onchange="this.form.submit()">
-                            @foreach([10, 25, 50, 100] as $opt)
-                                <option value="{{ $opt }}" {{ $pp === $opt ? 'selected' : '' }}>{{ $opt }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </form>
-            </div>
-
-            <style>
-                .q-filter-bar .dropdown-menu { padding: 10px; }
-                .q-filter-bar .dropdown-menu input,
-                .q-filter-bar .dropdown-menu select { cursor: auto; }
-                .q-filter-bar .dropdown-toggle::after { display: none !important; }
-                .q-filter-bar .filter-caret {
-                    display: inline-block;
-                    margin-left: 6px;
-                    font-size: 10px;
-                }
-                .q-filter-bar .btn-outline-dark {
-                    color: #000 !important;
-                    border-color: #6c757d !important;
-                    background: #fff !important;
-                    font-weight: 500;
-                }
-                .q-filter-bar .btn-outline-dark:hover,
-                .q-filter-bar .btn-outline-dark:focus {
-                    color: #000 !important;
-                    background: #f1f3f5 !important;
-                    border-color: #343a40 !important;
-                }
-                .q-filter-bar .btn-outline-dark .filter-caret { color: #000; opacity: 0.75; }
-                .q-filter-bar .btn-primary { color: #fff !important; font-weight: 500; }
-                .q-filter-bar .btn-primary .filter-caret { color: #fff; opacity: 0.9; }
-            </style>
-            <script>
-                (function() {
-                    document.querySelectorAll('.q-filter-bar .dropdown-menu').forEach(function(m) {
-                        m.addEventListener('click', function(e) { e.stopPropagation(); });
-                    });
-                })();
-            </script>
-            <div class="card-body">
-                <table id="usersTable" class="table table-bordered table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Country</th>
-                            <th>Status</th>
-                            <th>Verified Email</th>
-                            <th>Profiles</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($users as $user)
-                        <tr id="row{{$user->id}}">
-                            <td>{{ $user->created_at ? $user->created_at->format('Y-m-d H:i') : 'N/A' }}</td>
-                            <td>{{$user->name}}</td>
-                            <td>{{$user->email}}</td>
-                            <td>
-                                @if($user->country)
-                                    <img src="https://flagcdn.com/16x12/{{ strtolower($user->country) }}.png" alt="{{ $user->country }}" style="margin-right: 5px;">
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                <span class="badge status-badge-{{$user->id}} {{ $user->status == 'active' ? 'bg-success' : 'bg-warning' }}">
-                                    {{ ucfirst($user->status ?? 'pending') }}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                @if($user->verified == 1)
-                                    <span class="badge bg-success">✓</span>
-                                @else
-                                    <span class="badge bg-danger">✗</span>
-                                @endif
-                                @if($user->google_id)
-                                    <img src="https://www.google.com/favicon.ico" alt="Google" style="width: 16px; height: 16px; margin-left: 5px;" title="Google Account">
-                                @endif
-                            </td>
-                            <td>
-                                <button class="btn btn-info btn-sm" onclick="showProfiles({{$user->id}})">
-                                    <i class="fa fa-eye"></i> View
-                                </button>
-                            </td>
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton{{$user->id}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        Actions <i class="fa fa-chevron-down"></i>
-                                    </button>
-                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton{{$user->id}}">
-                                        <a class="dropdown-item edit-user" href="javascript:void(0)" data-id="{{$user->id}}">
-                                            <i class="fa fa-edit"></i> Edit
-                                        </a>
-                                        <a class="dropdown-item toggle-status" href="javascript:void(0)" 
-                                           data-id="{{$user->id}}" 
-                                           data-status="{{$user->status}}">
-                                            <i class="fa {{ $user->status == 'active' ? 'fa-ban' : 'fa-check-circle' }}"></i> 
-                                            {{ $user->status == 'active' ? 'Deactivate' : 'Activate' }}
-                                        </a>
-                                        @if(!$user->email_verified_at && !$user->verified)
-                                        <a class="dropdown-item send-verification" href="javascript:void(0)" data-id="{{$user->id}}" data-email="{{$user->email}}">
-                                            <i class="fa fa-envelope"></i> Send Verification
-                                        </a>
-                                        @endif
-                                        <a class="dropdown-item impersonate-user" href="javascript:void(0)" data-id="{{$user->id}}" data-name="{{$user->name}}">
-                                            <i class="fa fa-sign-in"></i> Login as User
-                                        </a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item text-danger delete-user" href="javascript:void(0)" data-id="{{$user->id}}">
-                                            <i class="fa fa-trash"></i> Delete
-                                        </a>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <div class="text-muted small">
-                        @if($users->total() > 0)
-                            Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ number_format($users->total()) }} entries
-                        @else
-                            No users match the selected filters
-                        @endif
-                    </div>
-                    <div>
-                        {{ $users->links() }}
+                {{-- ID --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm {{ request('id') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-hashtag mr-1"></i> ID{{ request('id') ? ': '.request('id') : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                    </button>
+                    <div class="dropdown-menu" style="min-width:220px;">
+                        <input type="number" name="id" value="{{ request('id') }}" class="form-control form-control-sm mb-2" placeholder="User ID" min="1">
+                        <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
                     </div>
                 </div>
+
+                {{-- Name --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm {{ request('name') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-user mr-1"></i> Name{{ request('name') ? ': '.\Illuminate\Support\Str::limit(request('name'), 20) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                    </button>
+                    <div class="dropdown-menu" style="min-width:240px;">
+                        <input type="text" name="name" value="{{ request('name') }}" class="form-control form-control-sm mb-2" placeholder="Search by name...">
+                        <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
+                    </div>
+                </div>
+
+                {{-- Email --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm {{ request('email') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-envelope mr-1"></i> Email{{ request('email') ? ': '.\Illuminate\Support\Str::limit(request('email'), 22) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                    </button>
+                    <div class="dropdown-menu" style="min-width:260px;">
+                        <input type="text" name="email" value="{{ request('email') }}" class="form-control form-control-sm mb-2" placeholder="Search by email...">
+                        <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
+                    </div>
+                </div>
+
+                {{-- Status --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm {{ request()->filled('status') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-toggle-on mr-1"></i> Status{{ request()->filled('status') ? ': '.($statusLabels[request('status')] ?? request('status')) : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                    </button>
+                    <div class="dropdown-menu" style="min-width:180px;">
+                        <select name="status" class="form-control form-control-sm mb-2" onchange="this.form.submit()">
+                            <option value="">All statuses</option>
+                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                        </select>
+                    </div>
+                </div>
+
+                {{-- Verified --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm {{ request()->filled('verified') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-shield-alt mr-1"></i> Verified{{ request()->filled('verified') ? ': '.($verifiedLabels[request('verified')] ?? '') : '' }} <i class="fa fa-chevron-down filter-caret"></i>
+                    </button>
+                    <div class="dropdown-menu" style="min-width:180px;">
+                        <select name="verified" class="form-control form-control-sm mb-2" onchange="this.form.submit()">
+                            <option value="">Any</option>
+                            <option value="1" {{ request('verified') === '1' ? 'selected' : '' }}>Verified</option>
+                            <option value="0" {{ request('verified') === '0' ? 'selected' : '' }}>Not verified</option>
+                        </select>
+                    </div>
+                </div>
+
+                {{-- Registered (date range) --}}
+                <div class="btn-group">
+                    @php
+                        $dateLabel = '';
+                        if (request('date_from') && request('date_to')) $dateLabel = ': '.request('date_from').' → '.request('date_to');
+                        elseif (request('date_from')) $dateLabel = ': from '.request('date_from');
+                        elseif (request('date_to')) $dateLabel = ': to '.request('date_to');
+                    @endphp
+                    <button type="button" class="btn btn-sm {{ ($dateLabel !== '') ? 'btn-primary' : 'btn-outline-dark' }} dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-calendar-alt mr-1"></i> Registered{{ $dateLabel }} <i class="fa fa-chevron-down filter-caret"></i>
+                    </button>
+                    <div class="dropdown-menu" style="min-width:260px;">
+                        <label class="small mb-1">From</label>
+                        <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm mb-2">
+                        <label class="small mb-1">To</label>
+                        <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm mb-2">
+                        <button type="submit" class="btn btn-sm btn-primary btn-block">Apply</button>
+                    </div>
+                </div>
+
+                @if($activeCount > 0)
+                    <a href="{{ route('admin.users') }}" class="btn btn-sm btn-outline-danger" title="Reset all filters">
+                        <i class="fa fa-times"></i> Reset ({{ $activeCount }})
+                    </a>
+                @endif
+
+                <div class="ml-auto d-flex align-items-center" style="gap:10px;">
+                    <span class="text-muted small">{{ number_format($users->total()) }} user(s)</span>
+                    <label class="mb-0 small text-muted">Per page</label>
+                    <select name="per_page" class="form-control form-control-sm" style="width:auto;" onchange="this.form.submit()">
+                        @foreach([10, 25, 50, 100] as $opt)
+                            <option value="{{ $opt }}" {{ $pp === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            (function() {
+                document.querySelectorAll('.q-filter-bar .dropdown-menu').forEach(function(m) {
+                    m.addEventListener('click', function(e) { e.stopPropagation(); });
+                });
+            })();
+        </script>
+
+        <div class="card-body">
+            <table id="usersTable" class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Country</th>
+                        <th>Status</th>
+                        <th>Verified Email</th>
+                        <th>Profiles</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($users as $user)
+                    <tr id="row{{$user->id}}">
+                        <td>
+                            @if($user->created_at)
+                                <div class="u-date-cell">
+                                    {{ $user->created_at->format('M d, Y') }}
+                                    <small>{{ $user->created_at->format('H:i') }}</small>
+                                </div>
+                            @else
+                                <span style="color:#cbd5e1;">N/A</span>
+                            @endif
+                        </td>
+                        <td>
+                            <div class="u-name-cell">
+                                <span class="u-name-avatar">{{ strtoupper(mb_substr($user->name, 0, 1)) }}</span>
+                                <span class="u-name-text">{{ $user->name }}</span>
+                            </div>
+                        </td>
+                        <td><span class="u-email">{{ $user->email }}</span></td>
+                        <td>
+                            @if($user->country)
+                                <span class="u-country-cell">
+                                    <img src="https://flagcdn.com/16x12/{{ strtolower($user->country) }}.png" alt="{{ $user->country }}">
+                                    {{ strtoupper($user->country) }}
+                                </span>
+                            @else
+                                <span class="u-country-na">N/A</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <span class="badge status-badge-{{$user->id}} {{ $user->status == 'active' ? 'bg-success' : 'bg-warning' }}">
+                                {{ ucfirst($user->status ?? 'pending') }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="u-verified-cell">
+                                @if($user->verified == 1)
+                                    <span class="badge bg-success u-verified-badge yes">✓</span>
+                                @else
+                                    <span class="badge bg-danger u-verified-badge no">✗</span>
+                                @endif
+                                @if($user->google_id)
+                                    <span class="u-google-tag" title="Google Account">
+                                        <img src="https://www.google.com/favicon.ico" alt="Google">
+                                        Google
+                                    </span>
+                                @endif
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-info btn-sm u-view-btn" onclick="showProfiles({{$user->id}})">
+                                <i class="fa fa-eye"></i> View
+                            </button>
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-primary btn-sm dropdown-toggle u-actions-btn" type="button" id="dropdownMenuButton{{$user->id}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-cog"></i> Actions
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton{{$user->id}}">
+                                    <a class="dropdown-item edit-user" href="javascript:void(0)" data-id="{{$user->id}}">
+                                        <i class="fa fa-edit"></i> Edit
+                                    </a>
+                                    <a class="dropdown-item toggle-status" href="javascript:void(0)"
+                                       data-id="{{$user->id}}"
+                                       data-status="{{$user->status}}">
+                                        <i class="fa {{ $user->status == 'active' ? 'fa-ban' : 'fa-check-circle' }}"></i>
+                                        {{ $user->status == 'active' ? 'Deactivate' : 'Activate' }}
+                                    </a>
+                                    @if(!$user->email_verified_at && !$user->verified)
+                                    <a class="dropdown-item send-verification" href="javascript:void(0)" data-id="{{$user->id}}" data-email="{{$user->email}}">
+                                        <i class="fa fa-envelope"></i> Send Verification
+                                    </a>
+                                    @endif
+                                    <a class="dropdown-item impersonate-user" href="javascript:void(0)" data-id="{{$user->id}}" data-name="{{$user->name}}">
+                                        <i class="fa fa-sign-in"></i> Login as User
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item text-danger delete-user" href="javascript:void(0)" data-id="{{$user->id}}">
+                                        <i class="fa fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="u-pagination">
+            <div>
+                @if($users->total() > 0)
+                    Showing <strong>{{ $users->firstItem() }}</strong> to
+                    <strong>{{ $users->lastItem() }}</strong> of
+                    <strong>{{ number_format($users->total()) }}</strong> entries
+                @else
+                    No users match the selected filters
+                @endif
             </div>
+            <div>{{ $users->links() }}</div>
         </div>
     </div>
+    @endif
 </div>
-@endif
 
 <!-- User Profiles Modal -->
 <div class="modal fade" id="profilesModal" tabindex="-1" aria-labelledby="profilesModalLabel" aria-hidden="true">

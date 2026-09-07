@@ -1,6 +1,11 @@
 @extends('admin.layout.master')
 
+@push('css')
+@include('admin._partials.settings-modern')
+@endpush
+
 @section('content')
+<div class="s-modern">
 
 <div class="row page-title clearfix">
     <div class="page-title-left">
@@ -131,6 +136,7 @@
     </div>
 </div>
 
+</div>{{-- /.s-modern --}}
 @endsection
 
 @push('js')

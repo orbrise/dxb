@@ -1,6 +1,11 @@
 @extends('admin.layout.master')
 
+@push('css')
+@include('admin._partials.settings-modern')
+@endpush
+
 @section('content')
+<div class="s-modern">
 <div class="row page-title clearfix">
     <div class="page-title-left">
         <h5 class="mr-0 mr-r-5">Blog Categories</h5>
@@ -119,4 +124,5 @@
         </div>
     </div>
 </div>
+</div>{{-- /.s-modern --}}
 @endsection

@@ -2,12 +2,11 @@
 
 @push('css')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-  .form-label { font-weight: bold; }
-</style>
+@include('admin._partials.settings-modern')
 @endpush
 
 @section("content")
+<div class="s-modern">
 <style>
 .form-check-input {
     margin-left: -0.25rem;
@@ -344,6 +343,7 @@
     </div>
 </div>
 
+</div>{{-- /.s-modern --}}
 @endsection
 
 @push('js')

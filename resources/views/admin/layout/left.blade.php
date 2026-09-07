@@ -311,19 +311,48 @@
                         </a>
                     </li>
 
-                    <li class="{{ str_contains(Route::currentRouteName(), 'admin.reports') ? 'current-page' : '' }}">
-                        <a class="ripple" href="{{route('admin.reports.wallet')}}">
-                           <i class="list-icon material-icons" style="font-size: 20px;">credit_card</i>
-                            <span class="hide-menu">Transactions</span>
-                            @php
-                                $failedTx = \App\Models\WalletTransaction::whereIn('status', ['failed', 'pending'])
-                                    ->where('created_at', '<', now()->subMinutes(30))
-                                    ->count();
-                            @endphp
-                            @if($failedTx > 0)
-                                <span class="badge badge-pill badge-danger ml-2">{{ $failedTx }}</span>
-                            @endif
+                    @php
+                        $reportRoutes = ['admin.reports.index', 'admin.reports.dashboard', 'admin.reports.wallet', 'admin.reports.balance-transfers', 'admin.reports.paid-ads'];
+                        $isReportsSectionOpen = in_array(Route::currentRouteName(), $reportRoutes) || str_contains(Route::currentRouteName(), 'admin.reports');
+                        $failedTx = \App\Models\WalletTransaction::whereIn('status', ['failed', 'pending'])
+                            ->where('created_at', '<', now()->subMinutes(30))
+                            ->count();
+                    @endphp
+                    <li class="menu-item-has-children {{ $isReportsSectionOpen ? 'current-page' : '' }}">
+                        <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isReportsSectionOpen ? 'true' : 'false' }}">
+                            <span class="color-color-scheme">
+                                <i class="list-icon material-icons">assessment</i>
+                                <span class="hide-menu">Reports</span>
+                                @if($failedTx > 0)
+                                    <span class="badge badge-pill badge-danger ml-2">{{ $failedTx }}</span>
+                                @endif
+                            </span>
                         </a>
+                        <ul class="list-unstyled sub-menu collapse {{ $isReportsSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isReportsSectionOpen ? 'true' : 'false' }}" style="{{ $isReportsSectionOpen ? '' : 'height: 0px;' }}">
+                            <li class="{{ Route::currentRouteName() == 'admin.reports.index' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.reports.index')}}">
+                                    <span class="hide-menu">Overview</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.reports.wallet' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.reports.wallet')}}">
+                                    <span class="hide-menu">Wallet Transactions</span>
+                                    @if($failedTx > 0)
+                                        <span class="badge badge-pill badge-danger ml-2">{{ $failedTx }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.reports.balance-transfers' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.reports.balance-transfers')}}">
+                                    <span class="hide-menu">Balance Transfers</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.reports.paid-ads' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.reports.paid-ads')}}">
+                                    <span class="hide-menu">Paid Ads</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
 
                     @php
