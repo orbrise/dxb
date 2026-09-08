@@ -276,9 +276,20 @@ Route::group(['middleware'=>'auth'], function(){
         return redirect()->route('sign-in');
     });
 
-    Route::get("my-profile/{name}/{id}", UserDashboard::class)->name("user.dashboard");
+    Route::get("my-listings", UserDashboard::class)->name("user.dashboard");
     Route::get("my-statistics", UserStatistics::class)->name("user.statistics");
-    Route::get("my-profile/{name}/{id}/upgrade/", UpgradeController::class)->name("user.upgrade");
+    Route::get("my-listings/upgrade", UpgradeController::class)->name("user.upgrade");
+
+    // Backward-compat: legacy per-profile URLs redirect to the clean
+    // dashboard/upgrade pages. The clean pages default to the auth user's
+    // latest profile and expose a selector to switch — the ID in the old
+    // URL is preserved via ?profile= so upgrade lands on the right one.
+    Route::get("my-profile/{name}/{id}", function ($name, $id) {
+        return redirect()->route('user.dashboard');
+    });
+    Route::get("my-profile/{name}/{id}/upgrade", function ($name, $id) {
+        return redirect()->route('user.upgrade', ['profile' => $id]);
+    });
     
     // Primary Gateway Payment Callback
     Route::get('payment/primary-callback', function() {
@@ -286,7 +297,11 @@ Route::group(['middleware'=>'auth'], function(){
     })->name('payment.primary.callback');
     
     Route::get("select-package", \App\Livewire\Profile\Users\NewProfileUpgrade::class)->name("upgrade.profile.new");
-    Route::get('my-profile/{slug}/{id}/verify-photo', [App\Http\Controllers\VerifyPhotoController::class, 'index'])->name('verify.photo');
+    Route::get('verify-photo', [App\Http\Controllers\VerifyPhotoController::class, 'index'])->name('verify.photo');
+    // Legacy per-profile verify URL → clean /verify-photo with profile pre-selected
+    Route::get('my-profile/{slug}/{id}/verify-photo', function ($slug, $id) {
+        return redirect()->route('verify.photo', ['profile' => $id]);
+    });
     Route::get('rejected-verifications', RejectedVerifications::class)->name('rejected.verifications');
     Route::get('archived-profiles', \App\Livewire\Profile\Users\ArchivedProfiles::class)->name('profile.archived');
     Route::get("my-account", \App\Livewire\UserAccount::class)->name("user.account");
@@ -300,7 +315,9 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get("my-chat/{userId}", \App\Livewire\Chat::class)->name("user.chat.with");
     Route::get("my-questions", \App\Livewire\Questions::class)->name("user.questions");
     Route::get("my-reviews", \App\Livewire\Reviews::class)->name("user.reviews");
-    Route::post('my-profile/{slug}/{id}/verify-photo', [App\Http\Controllers\VerifyPhotoController::class, 'store'])->name('verify.photo.store');
+    Route::post('verify-photo', [App\Http\Controllers\VerifyPhotoController::class, 'store'])->name('verify.photo.store');
+    // Legacy POST endpoint kept for older JS clients — profile ID comes from the URL.
+    Route::post('my-profile/{slug}/{id}/verify-photo', [App\Http\Controllers\VerifyPhotoController::class, 'store']);
     Route::get('/api/search-my-profiles', [App\Http\Controllers\VerifyPhotoController::class, 'searchProfiles'])->name('api.search.profiles');
     Route::get('/my-favorites', FavoriteProfilesDashboard::class)->name('favorites.dashboard');
     Route::get('questions', App\Livewire\QuestionManagement::class)->name('users.questions');
@@ -335,6 +352,10 @@ Route::group(['middleware'=>'auth'], function(){
     // Exit impersonation route (accessible from frontend)
     Route::get('exit-impersonation', [App\Http\Controllers\Admin\AdminUserController::class, 'exitImpersonation'])->name('exit.impersonation');
 
+    // Clean landing URL — no gender/city segment. AuctionPage falls back
+    // to the user's own profile city (or the site default) when neither
+    // is present in the route params.
+    Route::get('auctions', AuctionPage::class)->name('auctions.landing');
     Route::get('auctions/{gender?}-escorts-in-{city?}', AuctionPage::class)->name('auctions.index');
     Route::get('auctions/{gender?}-escorts-in-{cityname?}/spot/{spot}', SpotBidding::class);
     Route::get('purchase-credits', PurchaseCredits::class)->name('purchase.credits');

@@ -987,7 +987,7 @@
         <a href="javascript:history.back()" style="position:absolute; left:16px; display:none;" class="ev-mobile-back">
             <i class="fa fa-angle-left"></i> Back
         </a>
-        <h1><a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}">Welcome {{Auth::user()->name}}</a></h1>
+        <h1><a href="{{ route('user.dashboard') }}">Welcome {{Auth::user()->name}}</a></h1>
     </div>
 </div>
 
@@ -1018,15 +1018,15 @@
     <!-- Dashboard Tabs -->
     <div class="ev-dashboard-tabs">
         <div class="ev-dashboard-nav">
-            <a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id]) }}" 
-               class="{{ !request()->has('filter') && request()->routeIs('user.dashboard') && !request()->has('filter') ? 'active' : '' }}">
+            <a href="{{ route('user.dashboard') }}"
+               class="{{ !request()->has('filter') && request()->routeIs('user.dashboard') ? 'active' : '' }}">
                 <i class="fa fa-check-circle"></i> Active ({{ $activeCount }})
             </a>
-            <a href="{{ route('rejected.verifications') }}" 
+            <a href="{{ route('rejected.verifications') }}"
                class="{{ request()->routeIs('rejected.verifications') ? 'active' : '' }}">
                 <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount }})
             </a>
-            <a href="{{ route('user.dashboard', ['name' => $user->slug, 'id' => $user->id, 'filter' => 'pending']) }}" 
+            <a href="{{ route('user.dashboard', ['filter' => 'pending']) }}"
                class="{{ request()->get('filter') == 'pending' ? 'active' : '' }}">
                 <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
             </a>
@@ -1183,7 +1183,7 @@
                                      button icons on this page to visibly
                                      disappear before the redirect. A full page
                                      load avoids that transition. --}}
-                                <a class="ev-btn ev-btn-dark" href="/my-profile/{{$profile->slug}}/{{$profile->id}}/upgrade">
+                                <a class="ev-btn ev-btn-dark" href="{{ route('user.upgrade', ['profile' => $profile->id]) }}">
                                     <i class="fa fa-arrow-up"></i> Upgrade
                                 </a>
                                 @if($profile->is_active == 1)
@@ -1246,7 +1246,7 @@
             <div class="ev-sidebar-card ev-sidebar-accent">
                 <h3>Get to the top!</h3>
                 <p>Move to a Top Spot for a week:</p>
-                <a class="ev-btn ev-btn-dark-solid" href="/auctions/female-escorts-in-dubai" style="width: 100%; justify-content: space-between;">
+                <a class="ev-btn ev-btn-dark-solid" href="{{ route('auctions.landing') }}" style="width: 100%; justify-content: space-between;">
                     See Auctions <i class="fa fa-arrow-right"></i>
                 </a>
                 <p class="ev-sub-text">or</p>
@@ -1258,7 +1258,7 @@
             <div class="ev-sidebar-card">
                 <h3>Free Listing</h3>
                 <p>Upgrade to VIP and get more enquiries!</p>
-                <a class="ev-btn ev-btn-accent" href="/my-profile/{{$user->slug}}/{{$user->id}}/upgrade" wire:navigate>
+                <a class="ev-btn ev-btn-accent" href="{{ route('user.upgrade') }}" wire:navigate>
                     Upgrade now <i class="fa fa-arrow-right"></i>
                 </a>
             </div>
@@ -1289,7 +1289,7 @@
         <!-- Verify Photos -->
         <div class="ev-stats-card">
             <div class="ev-verify-preview">
-                <a href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>
+                <a href="{{ route('verify.photo') }}" wire:navigate>
                     @if(!empty($user->coverimg->image))
                     <img alt="{{$user->name}}" src="{{webp_asset('userimages/'.$user->user_id.'/'.$user->id.'/'.$user->coverimg->image)}}" />
                     @elseif(!empty($user->singleimg->image))
@@ -1317,22 +1317,22 @@
                     <i class="fa fa-check-circle"></i> Verified
                 </div>
                 <p>Your photo has been verified.</p>
-                <a class="ev-btn ev-btn-outline" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Verify another profile</a>
+                <a class="ev-btn ev-btn-outline" href="{{ route('verify.photo') }}" wire:navigate>Verify another profile</a>
             @elseif($verifyStatus === 'pending')
                 <div class="ev-verify-status ev-verify-status-pending">
                     <i class="fa fa-clock"></i> Pending review
                 </div>
                 <p>Your photo is under review. This can take up to 48 hours.</p>
-                <a class="ev-btn ev-btn-outline" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Verify another profile</a>
+                <a class="ev-btn ev-btn-outline" href="{{ route('verify.photo') }}" wire:navigate>Verify another profile</a>
             @elseif($verifyStatus === 'rejected')
                 <div class="ev-verify-status ev-verify-status-rejected">
                     <i class="fa fa-times-circle"></i> Rejected
                 </div>
                 <p>Your last verification was rejected. Please resubmit.</p>
-                <a class="ev-btn ev-btn-accent" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Resubmit</a>
+                <a class="ev-btn ev-btn-accent" href="{{ route('verify.photo') }}" wire:navigate>Resubmit</a>
             @else
                 <p>Verified profiles get more enquiries.</p>
-                <a class="ev-btn ev-btn-accent" href="{{ url('my-profile/'.$user->slug.'/'.$user->id.'/verify-photo') }}" wire:navigate>Verify now</a>
+                <a class="ev-btn ev-btn-accent" href="{{ route('verify.photo') }}" wire:navigate>Verify now</a>
             @endif
             <br>
             <a class="ev-share-link" href="javascript:void(0)" data-copy-btn="#verifLink">
@@ -1362,7 +1362,7 @@
             <p>There are <span class="ev-highlight">6566 female escorts</span> listings in Dubai.</p>
             <p>Increase your chance to be noticed. Upgrade your listing to a VIP profile for <span class="ev-highlight">less than $10 a day!</span></p>
             <div class="ev-modal-actions">
-                <a class="ev-btn ev-btn-accent" href="/my-profile/{{$user->slug}}/{{$user->id}}/upgrade" style="padding: 12px 32px; font-size: 15px;">
+                <a class="ev-btn ev-btn-accent" href="{{ route('user.upgrade') }}" style="padding: 12px 32px; font-size: 15px;">
                     Upgrade Profile <i class="fa fa-arrow-right"></i>
                 </a>
                 <button class="ev-btn ev-btn-outline" onclick="document.getElementById('upgradeModal').classList.remove('active')" style="padding: 8px 24px;">Close</button>

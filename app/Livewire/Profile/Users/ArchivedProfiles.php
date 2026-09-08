@@ -54,10 +54,7 @@ class ArchivedProfiles extends Component
             session()->flash('success', 'Profile reposted successfully!');
             
             // Redirect to main dashboard
-            return redirect()->route('user.dashboard', [
-                'name' => $profile->slug,
-                'id' => $profile->id
-            ]);
+            return redirect()->route('user.dashboard');
             
         } catch (\Exception $e) {
             \Log::error('Error reposting profile', [

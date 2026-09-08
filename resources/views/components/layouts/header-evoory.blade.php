@@ -55,6 +55,7 @@
     //   - My Account  → any of the account-area routes from $accountPageTitles
     //                   above (Messages, Reviews, Buy Credits, Favorites, …).
     $isMyProfileActive = str_starts_with($currentPath, 'my-profile/')
+        || str_starts_with($currentPath, 'my-listings')
         || in_array($currentRoute, ['new.profile', 'user.profile', 'user.dashboard'], true);
     $isMyAccountActive = $isAccountPage;
 @endphp
@@ -167,7 +168,7 @@
                             // link then points to the create-profile flow so users have a
                             // clear path forward instead of a missing menu item.
                             $myProfileHref = $userProfile
-                                ? url('my-profile/'.$userProfile->slug.'/'.$userProfile->id)
+                                ? route('user.dashboard')
                                 : route('new.profile');
                         @endphp
                         <a href="{{ $myProfileHref }}" class="ev-nav-link {{ $isMyProfileActive ? 'active' : '' }}" wire:navigate>

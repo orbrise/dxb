@@ -297,15 +297,15 @@
 
 <div class=" profile-dashboard-nav" style="margin-bottom:4rem">
     <div class="btn-group" role="group">
-        <a href="{{ route('user.dashboard', ['name' => $userSlug, 'id' => $userId]) }}" 
+        <a href="{{ route('user.dashboard') }}"
            class="btn {{ !request()->has('filter') && request()->routeIs('user.dashboard') ? 'btn-primary' : 'nbtn' }}">
             <i class="fa fa-check-circle"></i> Active ({{ $activeCount }})
         </a>
-        <a href="{{ route('rejected.verifications') }}" 
+        <a href="{{ route('rejected.verifications') }}"
            class="btn {{ request()->routeIs('rejected.verifications') ? 'btn-primary' : 'nbtn' }}">
             <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount }})
         </a>
-        <a href="{{ route('user.dashboard', ['name' => $userSlug, 'id' => $userId, 'filter' => 'pending']) }}" 
+        <a href="{{ route('user.dashboard', ['filter' => 'pending']) }}"
            class="btn {{ request()->get('filter') == 'pending' ? 'btn-primary' : 'nbtn' }}">
             <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
         </a>

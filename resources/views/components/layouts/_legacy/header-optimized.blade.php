@@ -8,7 +8,7 @@
                             $userProfile = auth()->user()->profiles->first();
                         @endphp
                         <a class="btn btn-navbar-header active" 
-                           href="{{ $userProfile ? route('user.dashboard', ['name' => $userProfile->name, 'id' => $userProfile->id]) : route('new.profile') }}"
+                           href="{{ $userProfile ? route('user.dashboard') : route('new.profile') }}"
                            wire:navigate>
                             <i class="fa fa-escort"></i>
                             <span class="sr-only-xs">My Profile</span>

@@ -999,7 +999,7 @@
         // without a profile id.
         $firstProfile = $u ? $u->profiles->first() : null;
         $myProfilesHref = $firstProfile
-            ? route('user.dashboard', ['name' => $firstProfile->slug, 'id' => $firstProfile->id])
+            ? route('user.dashboard')
             : url('/archived-profiles');
     @endphp
     @if($u)

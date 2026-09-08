@@ -194,7 +194,7 @@ class GoogleController extends Controller
                 
                 if ($user->type == 1) {
                     if ($user->getprofile->count() > 0) {
-                        return redirect()->to("my-profile/" . $user->name . "/" . $user->id)
+                        return redirect()->route('user.dashboard')
                             ->with('success', 'Welcome back!');
                     }
                     return redirect()->route('new.profile')
@@ -242,7 +242,7 @@ class GoogleController extends Controller
                 
                 if ($existingUser->type == 1) {
                     if ($existingUser->getprofile->count() > 0) {
-                        return redirect()->to("my-profile/" . $existingUser->name . "/" . $existingUser->id)
+                        return redirect()->route('user.dashboard')
                             ->with('success', 'Google account linked successfully!');
                     }
                     return redirect()->route('new.profile')

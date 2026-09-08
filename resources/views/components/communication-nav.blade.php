@@ -149,7 +149,7 @@
             <i class="fa fa-comments"></i>
             Communication
         </h2>
-        <a href="{{ route('user.dashboard', ['name' => auth()->user()->profiles->first()->slug ?? 'user', 'id' => auth()->user()->profiles->first()->id ?? auth()->id()]) }}" class="communication-nav-back">
+        <a href="{{ route('user.dashboard') }}" class="communication-nav-back">
             <span aria-hidden="true" style="font-size:16px;line-height:1;">&lsaquo;</span>
             Back to dashboard
         </a>

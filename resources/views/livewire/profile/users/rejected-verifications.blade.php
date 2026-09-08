@@ -432,17 +432,17 @@
     <div class="ev-dashboard-tabs">
         <div class="ev-dashboard-nav">
             @if($firstProfile)
-            <a href="{{ route('user.dashboard', ['name' => $firstProfile->slug, 'id' => $firstProfile->id]) }}" 
+            <a href="{{ route('user.dashboard') }}"
                class="{{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
                 <i class="fa fa-check-circle"></i> Active ({{ $activeCount }})
             </a>
             @endif
-            <a href="{{ route('rejected.verifications') }}" 
+            <a href="{{ route('rejected.verifications') }}"
                class="{{ request()->routeIs('rejected.verifications') ? 'active' : '' }}">
                 <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount }})
             </a>
             @if($firstProfile)
-            <a href="{{ route('user.dashboard', ['name' => $firstProfile->slug, 'id' => $firstProfile->id, 'filter' => 'pending']) }}" 
+            <a href="{{ route('user.dashboard', ['filter' => 'pending']) }}"
                class="{{ request()->get('filter') == 'pending' ? 'active' : '' }}">
                 <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
             </a>
@@ -508,7 +508,7 @@
                                 <i class="fa fa-external-link-alt"></i> Fix Errors
                             </a>
                         @else
-                            <a class="ev-btn ev-btn-danger-solid" href="{{url('my-profile/'.$profile->slug.'/'.$profile->id.'/verify-photo')}}">
+                            <a class="ev-btn ev-btn-danger-solid" href="{{ route('verify.photo', ['profile' => $profile->id]) }}">
                                 <i class="fa fa-pencil-alt"></i> Fix Errors
                             </a>
                         @endif

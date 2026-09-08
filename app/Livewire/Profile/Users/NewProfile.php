@@ -134,7 +134,7 @@ class NewProfile extends Component
         if(request()->route()->getName() !== 'new.profile') {
             $profile = UsersProfile::where('user_id', auth()->id())->first();
             if($profile) {
-                return redirect()->route('user.dashboard', ['name' => $profile->name, 'id' => $profile->id]);
+                return redirect()->route('user.dashboard');
             }
         }
         

@@ -1112,7 +1112,7 @@ a.text-warning:focus, a.text-warning {
 document.addEventListener('livewire:init', () => {
     Livewire.on('profileCreated', (data) => {
         setTimeout(() => {
-            window.location.href = '/my-profile/' + data[0].slug + '/' + data[0].id;
+            window.location.href = '/my-listings';
         }, 1500);
     });
     

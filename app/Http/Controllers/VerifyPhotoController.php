@@ -12,20 +12,42 @@ use Illuminate\Support\Facades\Storage;
 class VerifyPhotoController extends Controller
 {
 
-    public function index($slug, $id)
+    public function index(Request $request, $slug = null, $id = null)
 {
-    $user = UsersProfile::findOrFail($id);
+    // The clean /verify-photo URL doesn't carry a profile id — resolve one
+    // from the ?profile= query param first, then fall back to the auth
+    // user's latest profile. The page itself has a selector for switching.
+    $profileId = $id ?? $request->query('profile');
+    $user = null;
+
+    if ($profileId) {
+        $user = UsersProfile::where('id', $profileId)
+            ->where('user_id', auth()->id())
+            ->first();
+    }
+
+    if (!$user) {
+        $user = UsersProfile::where('user_id', auth()->id())
+            ->whereNull('archived_at')
+            ->orderBy('created_at', 'desc')
+            ->firstOrFail();
+    }
+
     $photo_code = mt_rand(1000, 9999);
-    
-    // Update user's photo code
     $user->update(['photo_code' => $photo_code]);
-    
+
     return view('verify-photo', compact('user', 'photo_code'));
 }
 
-public function store(Request $request, $slug, $id)
+public function store(Request $request, $slug = null, $id = null)
 {
-    $user = UsersProfile::findOrFail($id);
+    // POST works both from the legacy /my-profile/{slug}/{id}/verify-photo
+    // endpoint (id in URL) and the new /verify-photo endpoint (id in body).
+    $profileId = $id ?? $request->input('profile_id');
+    $user = UsersProfile::where('id', $profileId)
+        ->where('user_id', auth()->id())
+        ->firstOrFail();
+    $id = $user->id;
     
     // Get the photo data from request
     $photoData = $request->input('photoData');
@@ -105,7 +127,7 @@ public function store(Request $request, $slug, $id)
         ]);
     }
 
-    return redirect('my-profile/'.$user->slug.'/'.$user->id)
+    return redirect()->route('user.dashboard')
         ->with('success', 'Verification photo uploaded successfully!');
 }
 

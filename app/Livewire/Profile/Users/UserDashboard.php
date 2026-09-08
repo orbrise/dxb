@@ -26,29 +26,48 @@ class UserDashboard extends Component
         'filter' => ['except' => null]
     ];
 
-    public function mount($id)
+    public function mount($id = null)
     {
-        $this->id = $id;
         $this->filter = request()->get('filter');
-        
-        $user = UsersProfile::with(['ggender', 'getcity', 'coverimg', 'singleimg'])
-            ->where('id', $this->id)
-            ->first();
-        
+
+        // Route no longer carries a profile id — default to the auth user's
+        // latest profile so the dashboard has a "featured" one to show in
+        // sidebar tiles (Verify Photos, Upgrade). Individual profile cards
+        // in the list still link to their own per-profile actions.
+        $user = null;
+        if ($id) {
+            $user = UsersProfile::with(['ggender', 'getcity', 'coverimg', 'singleimg'])
+                ->where('id', $id)
+                ->where('user_id', Auth::id())
+                ->first();
+        }
+
+        if (!$user) {
+            $user = UsersProfile::with(['ggender', 'getcity', 'coverimg', 'singleimg'])
+                ->where('user_id', Auth::id())
+                ->whereNull('archived_at')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+
         if (!$user) {
             return redirect()->route('new.profile');
         }
-        
-        $this->check = (int)$user->is_active;
+
+        $this->id = $user->id;
+        $this->check = (int) $user->is_active;
         $this->profileLink = "{$user->ggender->name}-escorts-in-{$user->getcity->name}/{$user->id}/{$user->slug}";
         $this->currentUser = $user;
     }
 
     public function render()
-    {   
-        // Get current user profile
+    {
+        // Get current user profile — mount() guarantees $this->id points at
+        // one of the auth user's profiles (or the request already redirected
+        // to new.profile), so a firstOrFail is safe here.
         $user = UsersProfile::with(['ggender', 'getcity', 'coverimg', 'singleimg'])
             ->where('id', $this->id)
+            ->where('user_id', Auth::id())
             ->firstOrFail();
         $this->check = $user->is_active;
         

@@ -12,7 +12,7 @@
       {{-- Back link is absolutely positioned on the left so the title
            can be perfectly centered in the row regardless of the back
            link's width. --}}
-      <a class="back-link" href="/my-profile/{{$profile->slug}}/{{$profile->id}}"
+      <a class="back-link" href="{{ route('user.dashboard') }}"
          style="position:absolute; left:16px; top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; gap:4px; z-index:2;">
         <i class="fa fa-angle-left fa-fw"></i>
         <span style="color: #C1F11D !important;">Back</span>
@@ -22,6 +22,33 @@
       </div>
     </div>
   </div>
+
+  {{-- Profile selector: only shown when the URL has no ?profile= param.
+       That's the ambiguous case (user landed from the sidebar's generic
+       "Upgrade now" button, which defaults to the latest profile). When
+       the URL carries an explicit ?profile= (per-profile card button),
+       the target is unambiguous and the selector would just add noise. --}}
+  @unless(request()->has('profile'))
+  <div class="ev-upgrade-profile-selector-wrap">
+    <div class="ev-upgrade-profile-selector">
+      <h4><i class="fas fa-user-circle"></i> Upgrading profile</h4>
+      <div class="ev-ups-search-wrapper">
+        <div class="ev-ups-search-group">
+          <input type="text"
+                 id="upgradeProfileSearch"
+                 placeholder="Search or select your profile..."
+                 value="{{ $profile->name ?? '' }}"
+                 data-current-id="{{ $profile->id }}"
+                 autocomplete="off">
+          <button type="button" id="upgradeSearchBtn" aria-label="Toggle profiles list">
+            <i class="fas fa-chevron-down" id="upgradeSearchBtnIcon"></i>
+          </button>
+        </div>
+        <div id="upgradeProfileResults"></div>
+      </div>
+    </div>
+  </div>
+  @endunless
   @push('css')
   <style>
     /* Sub-header + select-days layout, pushed to <head> so it survives
@@ -77,6 +104,120 @@
     }
     .evoory-upgrade-controller .upgrade-duration .upgrade-title [data-listing-upgrade-form-back-to-upgrade-selection-btn] {
       flex-shrink: 0 !important;
+    }
+
+    /* Profile selector — mirrors the /verify-photo selector look. Scoped
+       under .ev-upgrade-profile-selector-wrap so the IDs (used by the
+       matching JS) don't collide with any other selector on the site. */
+    .ev-upgrade-profile-selector-wrap {
+      max-width: 1200px;
+      margin: 20px auto 0;
+      padding: 0 16px;
+    }
+    .ev-upgrade-profile-selector {
+      background: linear-gradient(180deg, rgba(193,241,29,0.05) 0%, rgba(193,241,29,0.02) 100%);
+      border: 1px solid rgba(193, 241, 29, 0.18);
+      border-radius: 14px;
+      padding: 18px 20px;
+      position: relative;
+      max-width: 520px;
+    }
+    .ev-upgrade-profile-selector h4 {
+      color: #C1F11D;
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ev-upgrade-profile-selector h4 i { font-size: 16px; }
+    .ev-ups-search-wrapper { position: relative; width: 100%; }
+    .ev-ups-search-group {
+      display: flex;
+      background: #0f0f0f;
+      border: 1.5px solid #2a2a2a;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3) inset;
+    }
+    .ev-ups-search-group:focus-within {
+      border-color: #C1F11D;
+      box-shadow: 0 0 0 3px rgba(193, 241, 29, 0.12), 0 2px 8px rgba(0,0,0,0.3) inset;
+    }
+    #upgradeProfileSearch {
+      background: transparent;
+      border: none;
+      color: #fff;
+      padding: 14px 18px;
+      font-size: 15px;
+      outline: none;
+      flex: 1;
+      min-width: 0;
+    }
+    #upgradeProfileSearch::placeholder { color: #666; }
+    #upgradeSearchBtn {
+      background: #C1F11D;
+      border: none;
+      color: #000;
+      padding: 0 20px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      transition: background 0.2s ease;
+    }
+    #upgradeSearchBtn:hover { background: #d4f84d; }
+    #upgradeProfileResults {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      max-height: 360px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(193,241,29,0.08);
+      padding: 6px;
+    }
+    #upgradeProfileResults.show { display: block; }
+    .ev-ups-option {
+      padding: 10px 12px;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.15s ease;
+      color: #fff;
+      border-radius: 8px;
+      margin-bottom: 2px;
+    }
+    .ev-ups-option:hover { background: rgba(193, 241, 29, 0.08); }
+    .ev-ups-option.selected {
+      background: rgba(193, 241, 29, 0.15);
+      border-left: 3px solid #C1F11D;
+      padding-left: 9px;
+    }
+    .ev-ups-option .opt-row { display: flex; align-items: center; gap: 12px; }
+    .ev-ups-thumb {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+      flex-shrink: 0;
+    }
+    @media (max-width: 768px) {
+      .ev-upgrade-profile-selector { max-width: 100%; padding: 14px; border-radius: 10px; }
+      .ev-upgrade-profile-selector h4 { font-size: 12px; margin-bottom: 10px; }
+      #upgradeProfileSearch { padding: 12px 14px; font-size: 14px; }
+      #upgradeSearchBtn { min-width: 46px; padding: 0 14px; }
     }
   </style>
   @endpush
@@ -1054,7 +1195,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
             var d = e.detail[0];
             if (d.type === 'success') {
                 sessionStorage.setItem('successMessage', d.message);
-                window.location.href = '/my-profile/' + d.name + '/' + d.id;
+                window.location.href = '/my-listings';
             } else {
                 alert(d.message);
                 $('#wallet-payment-button').prop('disabled', false).find('.button-text').show();
@@ -1266,6 +1407,141 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
             setTimeout(initUpgradePage, 100);
         }
     });
+})();
+</script>
+
+<script>
+(function () {
+    // Profile selector for the upgrade page. Loads the user's own profiles
+    // once (small list), filters client-side, and navigates to
+    // /my-listings/upgrade?profile=<id> on selection so mount() rebinds to
+    // the chosen profile and the whole upgrade state resets cleanly.
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function initUpgradeProfileSelector() {
+      var input = document.getElementById('upgradeProfileSearch');
+      var btn = document.getElementById('upgradeSearchBtn');
+      var btnIcon = document.getElementById('upgradeSearchBtnIcon');
+      var results = document.getElementById('upgradeProfileResults');
+      if (!input || input.__bound) return;
+      input.__bound = true;
+
+      var currentId = input.getAttribute('data-current-id');
+      var allProfiles = null;
+      var loading = false;
+      // Read the asset base URL the profile-thumbnail source needs. Mirrored
+      // from verify-photo.blade.php so the CDN vs local /storage split is
+      // handled the same way in both selectors.
+      @php
+        $_probe = smart_asset('userimages/placeholder.png');
+        $_assetBase = rtrim(str_replace('userimages/placeholder.png', '', $_probe), '/') . '/';
+      @endphp
+      var assetBaseUrl = @json($_assetBase);
+
+      function setChevron(open) {
+        if (!btnIcon) return;
+        btnIcon.classList.remove('fa-chevron-down', 'fa-chevron-up');
+        btnIcon.classList.add(open ? 'fa-chevron-up' : 'fa-chevron-down');
+      }
+      function openDropdown() { results.classList.add('show'); setChevron(true); }
+      function closeDropdown() { results.classList.remove('show'); setChevron(false); }
+
+      function display(profiles) {
+        results.innerHTML = '';
+        if (!profiles || profiles.length === 0) {
+          results.innerHTML = '<div style="padding:12px;color:#666">No profiles found</div>';
+          openDropdown();
+          return;
+        }
+        profiles.forEach(function (p) {
+          var isSelected = String(p.id) === String(currentId) ? 'selected' : '';
+          var isCurrent = String(p.id) === String(currentId) ? ' <span style="color:#C1F11D">(Current)</span>' : '';
+          var img = '/assets/images/default-avatar.png';
+          if (p.cover_image) img = assetBaseUrl + 'userimages/' + p.user_id + '/' + p.id + '/' + p.cover_image;
+          else if (p.single_image) img = assetBaseUrl + 'userimages/' + p.user_id + '/' + p.id + '/' + p.single_image;
+          var div = document.createElement('div');
+          div.className = 'ev-ups-option ' + isSelected;
+          div.setAttribute('data-profile-id', p.id);
+          div.innerHTML = '<div class="opt-row">'
+            + '<img src="' + img + '" class="ev-ups-thumb" alt="" onerror="this.src=\'/assets/images/default-avatar.png\'">'
+            + '<div><strong>' + escapeHtml(p.name) + '</strong>' + isCurrent
+            + '<br><small style="color:#aaa">ID: ' + p.id + '</small></div></div>';
+          div.addEventListener('click', function () {
+            var id = this.getAttribute('data-profile-id');
+            if (String(id) === String(currentId)) { closeDropdown(); return; }
+            window.location.href = '/my-listings/upgrade?profile=' + id;
+          });
+          results.appendChild(div);
+        });
+        openDropdown();
+      }
+
+      function load(cb) {
+        if (allProfiles !== null) { cb && cb(); return; }
+        if (loading) return;
+        loading = true;
+        results.innerHTML = '<div style="padding:12px;color:#666">Loading profiles...</div>';
+        openDropdown();
+        fetch('/api/search-my-profiles', {
+          method: 'GET',
+          credentials: 'same-origin',
+          headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (r) { return r.json(); }).then(function (data) {
+          allProfiles = data.profiles || [];
+          loading = false;
+          cb && cb();
+        }).catch(function () {
+          loading = false;
+          results.innerHTML = '<div style="padding:12px;color:#c66">Error loading profiles</div>';
+          openDropdown();
+        });
+      }
+
+      function filter(q) {
+        if (!allProfiles) return [];
+        q = (q || '').trim().toLowerCase();
+        if (!q) return allProfiles;
+        return allProfiles.filter(function (p) {
+          return String(p.name || '').toLowerCase().indexOf(q) !== -1
+              || String(p.id).indexOf(q) !== -1;
+        });
+      }
+
+      function showAll() { load(function () { display(allProfiles); }); }
+
+      input.addEventListener('focus', showAll);
+      input.addEventListener('click', showAll);
+      input.addEventListener('input', function () {
+        var q = this.value;
+        load(function () { display(filter(q)); });
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeDropdown();
+      });
+      if (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (results.classList.contains('show')) closeDropdown();
+          else { showAll(); input.focus(); }
+        });
+      }
+      document.addEventListener('click', function (e) {
+        if (!e.target.closest('.ev-ups-search-wrapper') && !e.target.closest('#upgradeSearchBtn')) {
+          closeDropdown();
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initUpgradeProfileSelector);
+    } else {
+      initUpgradeProfileSelector();
+    }
+    document.addEventListener('livewire:navigated', initUpgradeProfileSelector);
 })();
 </script>
 @endpush

@@ -202,6 +202,7 @@
         $currentPath = request()->path();
         $showDashboardLogo = Auth::check() && (
           str_contains($currentPath, 'my-profile/') ||
+          str_contains($currentPath, 'my-listings') ||
           str_contains($currentPath, 'my-account') ||
           str_contains($currentPath, 'purchase-credits') ||
           str_contains($currentPath, 'action/listings/new')

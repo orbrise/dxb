@@ -68,12 +68,16 @@
 
 /* ---- Filter card ---- */
 .p-filter-card {
+    position: relative;
     background: #fff;
     border: 1px solid var(--p-slate-200);
     border-radius: 14px;
     box-shadow: 0 6px 24px rgba(15,23,42,.06);
     margin-bottom: 18px;
-    overflow: hidden;
+    /* NOTE: no overflow:hidden — it would clip the filter dropdowns.
+       Border-radius still looks fine because the inner content
+       doesn't cross the rounded corners. */
+    z-index: 20;
 }
 
 .navbar-filters {
@@ -157,6 +161,7 @@
 }
 
 .navbar-filters .dropdown-menu {
+    display: none;
     background: #fff;
     border: 1px solid var(--p-slate-200);
     border-radius: 10px;
@@ -165,8 +170,17 @@
     min-width: 250px;
     margin-top: 6px;
     position: absolute;
-    z-index: 1000;
+    top: 100%;
+    left: 0;
+    z-index: 1050;
 }
+.navbar-filters .dropdown-menu.show {
+    display: block !important;
+}
+/* Filter dropdowns must sit above the .p-main-card below them */
+.navbar-filters .dropdown { position: relative; z-index: 30; }
+.navbar-filters .dropdown-menu { z-index: 1055; }
+.p-main-card { position: relative; z-index: 1; }
 
 .backpack-filter { padding: 0; }
 .backpack-filter .form-control,
@@ -615,14 +629,46 @@
         width: 100%;
         justify-content: center;
     }
+    /* MOBILE FILTER DROPDOWN — menu appears directly below the tapped pill,
+       spanning the full width of the filter card (across both grid columns)
+       so there's plenty of space for inputs.
+
+       Because the .dropdown li stays position:relative, `top: 100%`
+       anchors the menu right below the pill it belongs to.
+       `width: calc(200% + 8px)` = 2 pill columns + the 8px grid gap. */
     .navbar-filters .dropdown-menu {
-        min-width: 90vw;
-        max-width: 90vw;
         position: absolute !important;
+        top: 100% !important;
+        width: calc(200% + 8px) !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        margin-top: 8px !important;
+        transform: none !important;
+        z-index: 1055 !important;
+    }
+    /* Left-column pills (nth-child even, because the filter icon li is #1):
+       anchor menu to their left edge and grow rightward. */
+    .navbar-filters ul.nav > li.dropdown:nth-child(even) .dropdown-menu {
         left: 0 !important;
         right: auto !important;
-        transform: none !important;
     }
+    /* Right-column pills (nth-child odd): anchor to right edge, grow left. */
+    .navbar-filters ul.nav > li.dropdown:nth-child(odd) .dropdown-menu {
+        left: auto !important;
+        right: 0 !important;
+    }
+    /* Open dropdowns need to sit above the pills below them.
+       Every .dropdown li creates its own stacking context via position:
+       relative + z-index, but a plain z-index would let later siblings
+       (which come after in DOM order) render on top of earlier menus.
+       The trick: raise the z-index only on the .dropdown that currently
+       has an open menu, via :has(). */
+    .navbar-filters ul.nav > li.dropdown { z-index: 1; }
+    .navbar-filters ul.nav > li.dropdown:has(> .dropdown-menu.show) {
+        z-index: 1000 !important;
+    }
+    /* Filter card must not clip the overflowing menu */
+    .p-filter-card { overflow: visible !important; }
     .p-toolbar { padding: 12px; }
     .p-pagination-wrap { padding: 12px; }
     .p-pagination-wrap .pagination { justify-content: center; }

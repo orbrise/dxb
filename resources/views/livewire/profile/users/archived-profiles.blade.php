@@ -415,13 +415,13 @@
     <!-- Dashboard Tabs -->
     <div class="ev-dashboard-tabs">
         <div class="ev-dashboard-nav">
-            <a href="{{ route('user.dashboard', ['name' => $user->slug ?? 'profile', 'id' => $user->id ?? 0]) }}">
+            <a href="{{ route('user.dashboard') }}">
                 <i class="fa fa-check-circle"></i> Active ({{ $activeCount ?? 0 }})
             </a>
             <a href="{{ route('rejected.verifications') }}">
                 <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount ?? 0 }})
             </a>
-            <a href="{{ route('user.dashboard', ['name' => $user->slug ?? 'profile', 'id' => $user->id ?? 0, 'filter' => 'pending']) }}">
+            <a href="{{ route('user.dashboard', ['filter' => 'pending']) }}">
                 <i class="fa fa-clock"></i> Pending ({{ $pendingCount ?? 0 }})
             </a>
             <a href="{{ route('profile.archived') }}" class="active">

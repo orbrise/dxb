@@ -78,7 +78,7 @@ class LoginController extends Component
             if (Auth::user()->type == 1) {
                 if (Auth::user()->getprofile->count() > 0) {
                     session()->flash('success', 'Welcome back!');
-                    return redirect()->to("my-profile/".Auth::user()->name."/".Auth::user()->id);
+                    return redirect()->route('user.dashboard');
                 }
                 session()->flash('info', 'Please complete your profile');
                 return redirect()->route('new.profile');

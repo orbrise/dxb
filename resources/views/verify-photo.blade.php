@@ -667,7 +667,7 @@ body { background: #0a0a0a !important; }
 {{-- Page Sub-header --}}
 <div class="ev-page-header">
     <div class="ev-container">
-        <a class="ev-back-link" href="/my-profile/{{ $user->slug }}/{{ $user->id }}">
+        <a class="ev-back-link" href="{{ route('user.dashboard') }}">
             <span class="ev-desktop-back"><i class="fas fa-chevron-left"></i> My profile</span>
             <span class="ev-mobile-back" style="display:none;"><i class="fas fa-chevron-left"></i> Profile</span>
         </a>
@@ -1061,7 +1061,10 @@ body { background: #0a0a0a !important; }
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
-        fetch('/my-profile/' + userSlug + '/' + userId + '/verify-photo', {
+        // Clean POST endpoint — profile id travels in the body so the URL
+        // stays param-free and matches the /verify-photo GET route.
+        formData.append('profile_id', userId);
+        fetch('/verify-photo', {
             method: 'POST',
             body: formData,
             headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
@@ -1070,7 +1073,7 @@ body { background: #0a0a0a !important; }
             return r.text();
         }).then(function () {
             hideModal();
-            window.location.href = '/my-profile/' + userSlug + '/' + userId + '?verification_success=1';
+            window.location.href = '/my-listings?verification_success=1';
         }).catch(function (err) {
             console.error('[verify-photo] upload error:', err);
             alert('Failed to upload photo. Please try again.');
@@ -1204,7 +1207,7 @@ body { background: #0a0a0a !important; }
                     + '<div><strong>' + escapeHtml(profile.name) + '</strong>' + isCurrent
                     + '<br><small style="color:#aaa">ID: ' + profile.id + '</small></div></div>';
                 div.addEventListener('click', function () {
-                    window.location.href = '/my-profile/' + this.getAttribute('data-slug') + '/' + this.getAttribute('data-profile-id') + '/verify-photo';
+                    window.location.href = '/verify-photo?profile=' + this.getAttribute('data-profile-id');
                 });
                 profileResults.appendChild(div);
             });

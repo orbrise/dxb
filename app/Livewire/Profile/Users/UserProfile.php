@@ -388,7 +388,7 @@ class UserProfile extends Component
 
         DB::commit();
         session()->flash('success', 'Profile updated successfully');
-        return redirect()->route('user.dashboard', ['name' => $profile->name, 'id' => $profile->id]);
+        return redirect()->route('user.dashboard');
 
     } catch (\Exception $e) {
         DB::rollBack();

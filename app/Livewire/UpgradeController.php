@@ -25,15 +25,32 @@ class UpgradeController extends Component
 
     public $id, $check;
 
-    public function mount($id)
+    public function mount($id = null)
     {
-        $this->id = $id;
-        $user = UsersProfile::where('id', $id)->where("user_id", Auth()->user()->id)->first();
-        
+        // Clean /my-listings/upgrade URL doesn't carry a profile id — read it
+        // from ?profile= (set by the per-profile Upgrade button and by the
+        // legacy-URL redirect), then fall back to the user's latest profile.
+        $profileId = $id ?? request()->query('profile');
+        $user = null;
+
+        if ($profileId) {
+            $user = UsersProfile::where('id', $profileId)
+                ->where('user_id', Auth()->user()->id)
+                ->first();
+        }
+
+        if (!$user) {
+            $user = UsersProfile::where('user_id', Auth()->user()->id)
+                ->whereNull('archived_at')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+
         if (!$user) {
             return redirect()->route('new.profile');
         }
-        
+
+        $this->id = $user->id;
         $this->check = $user->is_active;
     }
 

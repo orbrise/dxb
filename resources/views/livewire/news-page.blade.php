@@ -854,7 +854,7 @@ form.activity-nav-form input.search-bar--city:focus-visible {
                     @if(Auth::user()->type != 1)
                         @php $userProfile = auth()->user()->profiles->first(); @endphp
                         @if($userProfile)
-                        <a href="{{ url('my-profile/'.$userProfile->slug.'/'.$userProfile->id) }}" class="ev-nav-link">
+                        <a href="{{ route('user.dashboard') }}" class="ev-nav-link">
                             {{-- Brand mark instead of the generic person SVG,
                                  matching the rest of the site (see
                                  header-evoory.blade.php). This page renders
