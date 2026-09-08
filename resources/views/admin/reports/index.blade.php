@@ -230,6 +230,11 @@
 @media (max-width: 480px) {
     .ro-stats-grid { grid-template-columns: 1fr; }
 }
+.modal-content .close {
+    top: 0.14286em;
+    right: 0.14286em;
+
+}
 </style>
 @endpush
 

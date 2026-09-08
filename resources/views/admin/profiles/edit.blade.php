@@ -31,44 +31,8 @@
         font-size: 14px;
     }
     
-    .card {
-        border: none;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        margin-bottom: 24px;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    
-    .card-header {
-        background: #4d77af;
-        color: white !important;
-        padding: 16px 24px;
-        border-bottom: none;
-    }
-    
-    .card-header h5 {
-        margin: 0;
-        font-weight: 600;
-        font-size: 18px;
-    }
-    
-    .card-body {
-        padding: 24px;
-    }
-    
-    .form-control, .form-select {
-        border-radius: 6px;
-        border: 1px solid #e0e0e0;
-        padding: 10px 14px;
-        font-size: 14px;
-        transition: all 0.3s ease;
-    }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        outline: none;
-    }
+    /* Card look now comes from the shared modern-style partial (.s-modern).
+       We only keep local rules that don't conflict with the modern theme. */
     
     .form-check {
         padding: 8px 12px;
@@ -505,10 +469,19 @@
     pointer-events: none;
 }
 
+/* ===== Local overrides so the modern .s-modern theme wins cleanly ===== */
+.s-modern .card-header h5,
+.s-modern .card-header h6 {
+    color: var(--sm-slate-800) !important;
+}
+/* Full-width form container inside .s-modern */
+.s-modern .container { max-width: none; padding: 0; }
 </style>
+@include('admin._partials.settings-modern')
 @endpush
 
 @section("content")
+<div class="s-modern">
 <div class="container">
 <div class="row page-title clearfix">
                 <div class="page-title-left">
@@ -1175,6 +1148,7 @@
         </div>
     </form>
 </div>
+</div>{{-- /.s-modern --}}
 @endsection
 
 @push('js')

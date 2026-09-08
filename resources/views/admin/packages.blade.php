@@ -444,6 +444,12 @@
         margin-bottom: 8px;
     }
 }
+
+.modal-content .close {
+    top: 0.14286em;
+    right: 0.14286em;
+
+}
 </style>
 @endpush
 
@@ -522,7 +528,9 @@
                 <div class="pk-card-body">
                     <div id="successMessage" style="display:none;" class="pk-alert alert-success alert-dismissible fade show">
                         <i class="fas fa-check-circle"></i> Package created successfully!
-                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" style="opacity:.6;"></button>
+                        <button type="button" class="close ml-auto" data-dismiss="alert" aria-label="Close" style="opacity:.6;">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
 
                     <form id="packageForm" method="post" action="{{route('admin.addpackage')}}">
@@ -595,7 +603,9 @@
                 <h5 class="modal-title">
                     <i class="fas fa-pen"></i> Edit Package for <span id="editCountryName" class="pk-country-name"></span>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="editPackageForm">
@@ -638,7 +648,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary close-modal-btn" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary close-modal-btn" data-dismiss="modal">
                     <i class="fas fa-times"></i> Close
                 </button>
                 <button type="button" class="btn btn-primary" id="savePackageChanges">
@@ -1012,7 +1022,9 @@ $(document).ready(function() {
                 $('#editPackageModal .modal-body').prepend(`
                     <div class="pk-alert alert-success alert-dismissible fade show">
                         <i class="fa fa-check-circle"></i> Package updated successfully!
-                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" style="opacity:.6;"></button>
+                        <button type="button" class="close ml-auto" data-dismiss="alert" aria-label="Close" style="opacity:.6;">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
                 `);
 

@@ -408,6 +408,12 @@
     #table-container .table thead { display: none; }
     #pagination-container .pagination { justify-content: center; }
 }
+
+.modal-content .close {
+    top: 0.14286em;
+    right: 0.14286em;
+
+}
 </style>
 @endpush
 

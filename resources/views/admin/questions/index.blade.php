@@ -408,6 +408,13 @@
     .q-table thead { display: none; }
     .q-pagination { flex-direction: column; text-align: center; }
 }
+
+.modal-content .close {
+    top: 0.14286em;
+    right: 0.14286em;
+
+}
+
 </style>
 @endpush
 

@@ -425,6 +425,12 @@
     .r-table thead { display: none; }
     .r-pagination { flex-direction: column; text-align: center; }
 }
+
+.modal-content .close {
+    top: 0.14286em;
+    right: 0.14286em;
+
+}
 </style>
 @endpush
 
