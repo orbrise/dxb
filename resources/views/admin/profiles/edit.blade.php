@@ -517,7 +517,7 @@
         <!-- User Information -->
         <div class="card mb-4 mt-3">
             <div class="card-header">
-                <h5 style="margin:0px; color: white !important;  ">Profile Creator Information</h5>
+                <h5>Profile Creator Information</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -543,7 +543,7 @@
          
         <div class="card">
             <div class="card-header">
-                <h5 style="color: white !important;">📝 Basic Information</h5>
+                <h5>📝 Basic Information</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -732,7 +732,7 @@
 
         <div class="card mt-4">
             <div class="card-header">
-                <h5 style="color: white !important;">👤 Profile Details</h5>
+                <h5>👤 Profile Details</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -887,7 +887,7 @@
         <!-- Services Section -->
         <div class="card mt-4">
             <div class="card-header">
-                <h5 style="color: white !important;">💼 Services Offered</h5>
+                <h5>💼 Services Offered</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -910,7 +910,7 @@
         <!-- Languages Section -->
         <div class="card mt-4">
             <div class="card-header">
-                <h5 style="color: white !important;">🌍 Languages</h5>
+                <h5>🌍 Languages</h5>
             </div>
             <div class="card-body">
                 @for($i = 1; $i <= 3; $i++)
@@ -961,7 +961,7 @@
         <!-- Additional Features -->
         <div class="card mt-4">
             <div class="card-header">
-                <h5 style="color: white !important;">⚙️ Additional Features</h5>
+                <h5>⚙️ Additional Features</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -1067,7 +1067,7 @@
         <!-- Image Management Section -->
         <div class="card mt-4">
             <div class="card-header">
-                <h5 style="color: white !important;">📷 Profile Images</h5>
+                <h5>📷 Profile Images</h5>
             </div>
             <div class="card-body">
                 <p class="text-muted mb-3">

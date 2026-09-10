@@ -277,6 +277,7 @@ Route::group(['middleware'=>'auth'], function(){
     });
 
     Route::get("my-listings", UserDashboard::class)->name("user.dashboard");
+    Route::get("my-listings/pending-profiles", UserDashboard::class)->name("user.pending");
     Route::get("my-statistics", UserStatistics::class)->name("user.statistics");
     Route::get("my-listings/upgrade", UpgradeController::class)->name("user.upgrade");
 

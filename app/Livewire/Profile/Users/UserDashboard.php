@@ -23,12 +23,17 @@ class UserDashboard extends Component
     
     protected $queryString = [
         'page' => ['except' => 1],
-        'filter' => ['except' => null]
     ];
 
     public function mount($id = null)
     {
-        $this->filter = request()->get('filter');
+        // Preserve old bookmark: /my-listings?filter=pending → new clean URL.
+        if (request()->routeIs('user.dashboard') && request()->get('filter') === 'pending') {
+            return redirect()->route('user.pending');
+        }
+
+        // Filter is now driven by the route name, not a query string.
+        $this->filter = request()->routeIs('user.pending') ? 'pending' : null;
 
         // Route no longer carries a profile id — default to the auth user's
         // latest profile so the dashboard has a "featured" one to show in

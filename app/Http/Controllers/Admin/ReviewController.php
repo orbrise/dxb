@@ -17,7 +17,17 @@ class ReviewController extends Controller
             $perPage = 10;
         }
 
-        $query = Review::with('user:id,email');
+        // Eager-load the sender (auth user), the reviewed profile, and
+        // just enough profile relations to build a clickable
+        // /{gender}-escorts-in-{city}/{id}/{slug} link + show a cover
+        // thumbnail in the "Review Details" modal.
+        $query = Review::with([
+            'user:id,name,email',
+            'profile:id,user_id,name,slug,gender,city,about',
+            'profile.ggender:id,name',
+            'profile.getcity:id,name,slug',
+            'profile.coverimg',
+        ]);
 
         if ($request->filled('id')) {
             $query->where('id', (int) $request->input('id'));

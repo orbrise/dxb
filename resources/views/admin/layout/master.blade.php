@@ -406,6 +406,11 @@ img.logo-expand {
     }
 }
 
+
+.modal-content .close {
+    top: 0.14286em !important;
+    right: 0.14286em;
+    }
 </style>
 </head>
 

@@ -305,8 +305,8 @@
            class="btn {{ request()->routeIs('rejected.verifications') ? 'btn-primary' : 'nbtn' }}">
             <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount }})
         </a>
-        <a href="{{ route('user.dashboard', ['filter' => 'pending']) }}"
-           class="btn {{ request()->get('filter') == 'pending' ? 'btn-primary' : 'nbtn' }}">
+        <a href="{{ route('user.pending') }}"
+           class="btn {{ request()->routeIs('user.pending') ? 'btn-primary' : 'nbtn' }}">
             <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
         </a>
         <a href="{{ route('profile.archived') }}" 

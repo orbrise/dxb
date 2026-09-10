@@ -1019,15 +1019,15 @@
     <div class="ev-dashboard-tabs">
         <div class="ev-dashboard-nav">
             <a href="{{ route('user.dashboard') }}"
-               class="{{ !request()->has('filter') && request()->routeIs('user.dashboard') ? 'active' : '' }}">
+               class="{{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
                 <i class="fa fa-check-circle"></i> Active ({{ $activeCount }})
             </a>
             <a href="{{ route('rejected.verifications') }}"
                class="{{ request()->routeIs('rejected.verifications') ? 'active' : '' }}">
                 <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount }})
             </a>
-            <a href="{{ route('user.dashboard', ['filter' => 'pending']) }}"
-               class="{{ request()->get('filter') == 'pending' ? 'active' : '' }}">
+            <a href="{{ route('user.pending') }}"
+               class="{{ request()->routeIs('user.pending') ? 'active' : '' }}">
                 <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
             </a>
             <a href="{{ route('profile.archived') }}" 

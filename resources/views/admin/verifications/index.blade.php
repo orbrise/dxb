@@ -481,6 +481,280 @@
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { margin: 0; line-height: 24px; }
 .modal-body h1, .modal-body h2, .modal-body h3, .modal-body h4, .modal-body h5, .modal-body h6 { color: #474747; }
 
+/* ===== Photo Verification Review — modern popup ===== */
+.vr-modal .modal-content {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .3);
+    background: #fff;
+}
+.vr-modal .modal-header {
+    padding: 18px 22px;
+    background: linear-gradient(180deg, #fff 0%, #fbfbff 100%);
+    border-bottom: 1px solid var(--v-slate-100);
+    align-items: center;
+}
+.vr-modal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--v-slate-800);
+    margin: 0;
+}
+.vr-modal .modal-title .vr-title-icon {
+    width: 34px; height: 34px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 9px;
+    background: rgba(99, 102, 241, .12);
+    color: var(--v-primary-dark);
+    font-size: 14px;
+}
+.vr-modal .modal-header .close {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--v-slate-100) !important;
+    color: var(--v-slate-600) !important;
+    opacity: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 20px; line-height: 1;
+    text-shadow: none;
+    padding: 0;
+    margin: 0;
+    transition: background .15s, color .15s;
+    border: 0;
+}
+.vr-modal .modal-header .close:hover {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+.vr-modal .modal-body { padding: 22px; background: #f8fafc; }
+.vr-modal .modal-footer {
+    padding: 14px 22px;
+    background: #fff;
+    border-top: 1px solid var(--v-slate-100);
+    gap: 10px;
+}
+
+/* Sub-cards inside modal */
+.vr-modal .vr-panel {
+    background: #fff;
+    border: 1px solid var(--v-slate-200);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .04);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.vr-modal .vr-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--v-slate-100);
+}
+.vr-modal .vr-panel-head.head-verify   { background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%); }
+.vr-modal .vr-panel-head.head-profile  { background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%); }
+.vr-modal .vr-panel-head.head-info     { background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%); }
+
+.vr-modal .vr-panel-head .vr-panel-title {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.vr-modal .vr-panel-head.head-verify .vr-panel-title { color: #78350f; }
+.vr-modal .vr-panel-head .vr-panel-icon {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .35);
+    color: inherit;
+    font-size: 12px;
+}
+.vr-modal .vr-panel-head.head-verify .vr-panel-icon { background: rgba(120, 53, 15, .18); }
+
+.vr-modal .vr-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .85);
+    color: var(--v-slate-800);
+    letter-spacing: .04em;
+}
+.vr-modal .vr-badge.vr-code {
+    background: #1e293b;
+    color: #fde68a;
+    font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+    letter-spacing: .1em;
+    padding: 5px 11px;
+    font-size: 12px;
+}
+
+.vr-modal .vr-panel-body { padding: 16px; }
+.vr-modal .vr-panel-body.pad-tight { padding: 14px; }
+
+.vr-modal .vr-verify-img {
+    display: block;
+    max-width: 100%;
+    max-height: 380px;
+    margin: 0 auto;
+    border-radius: 10px;
+    background: var(--v-slate-100);
+    border: 1px solid var(--v-slate-200);
+    object-fit: contain;
+}
+.vr-modal .vr-verify-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    color: var(--v-slate-500);
+    font-size: 12px;
+}
+
+.vr-modal .vr-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-height: 470px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+.vr-modal .vr-photo-grid::-webkit-scrollbar { width: 6px; }
+.vr-modal .vr-photo-grid::-webkit-scrollbar-thumb {
+    background: var(--v-slate-300);
+    border-radius: 3px;
+}
+.vr-modal .vr-photo-cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: var(--v-slate-100);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--v-slate-200);
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+}
+.vr-modal .vr-photo-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(15,23,42,.15);
+}
+.vr-modal .vr-photo-cell img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.vr-modal .vr-main-badge {
+    position: absolute;
+    top: 6px; left: 6px;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    box-shadow: 0 3px 8px rgba(16, 185, 129, .4);
+}
+
+.vr-modal .vr-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--v-slate-400, #94a3b8);
+}
+.vr-modal .vr-empty i { font-size: 32px; opacity: .5; margin-bottom: 8px; }
+
+.vr-modal .vr-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 22px;
+}
+.vr-modal .vr-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.vr-modal .vr-info-item .vr-info-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--v-slate-500);
+    display: flex; align-items: center; gap: 5px;
+}
+.vr-modal .vr-info-item .vr-info-label i { color: var(--v-primary); font-size: 11px; }
+.vr-modal .vr-info-item .vr-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--v-slate-800);
+}
+
+.vr-modal .vr-profile-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: var(--v-primary-dark) !important;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #c7d2fe;
+    text-decoration: none !important;
+    transition: background .15s;
+}
+.vr-modal .vr-profile-btn:hover { background: #e0e7ff; color: var(--v-primary-dark) !important; }
+
+/* Footer buttons */
+.vr-modal .vr-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 0;
+    cursor: pointer;
+    transition: box-shadow .15s, background .15s;
+}
+.vr-modal .vr-btn-close {
+    background: #fff;
+    color: var(--v-slate-700);
+    border: 1px solid var(--v-slate-200);
+}
+.vr-modal .vr-btn-close:hover { background: var(--v-slate-50); }
+.vr-modal .vr-action-select {
+    height: 40px;
+    padding: 0 32px 0 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--v-slate-700);
+    background: #fff;
+    border: 1px solid var(--v-slate-200);
+    border-radius: 9px;
+    cursor: pointer;
+    min-width: 180px;
+}
+.vr-modal .vr-action-select:focus {
+    outline: none;
+    border-color: var(--v-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .18);
+}
+
+@media (max-width: 767px) {
+    .vr-modal .vr-photo-grid { grid-template-columns: repeat(2, 1fr); }
+    .vr-modal .vr-info-grid { grid-template-columns: 1fr; }
+    .vr-modal .modal-footer { flex-direction: column-reverse; align-items: stretch; }
+    .vr-modal .vr-action-select, .vr-modal .vr-btn { width: 100%; }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 1200px) {
     .v-filters-grid {
@@ -654,8 +928,8 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { margin: 0; line-height: 2
                             <td>
                                 <img src="{{ smart_asset('userimages/'.$photo->user_id.'/verification/'.$photo->photo) }}"
                                      class="v-photo-thumb"
-                                     data-bs-toggle="modal"
-                                     data-bs-target="#photoModal{{ $photo->id }}"
+                                     data-toggle="modal"
+                                     data-target="#photoModal{{ $photo->id }}"
                                      alt="Verification photo">
                             </td>
                             <td>
@@ -734,24 +1008,34 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { margin: 0; line-height: 2
 
 @foreach($photos as $photo)
 @if($photo->profile && $photo->profile->ggender && $photo->profile->gcity)
-<div class="modal fade" id="photoModal{{ $photo->id }}">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade vr-modal" id="photoModal{{ $photo->id }}">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-body">
-                <img src="{{ smart_asset('userimages/'.$photo->user_id.'/verification/'.$photo->photo) }}" 
-                     class="img-fluid">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span class="vr-title-icon"><i class="fas fa-id-card"></i></span>
+                    Verification Photo
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <img src="{{ smart_asset('userimages/'.$photo->user_id.'/verification/'.$photo->photo) }}"
+                     class="img-fluid" style="border-radius:12px; max-height:70vh;">
             </div>
         </div>
     </div>
 </div>
 
 {{-- View Modal with All Photos --}}
-<div class="modal fade" id="viewModal{{ $photo->id }}" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+<div class="modal fade vr-modal" id="viewModal{{ $photo->id }}" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-images"></i> {{ $photo->profile->name }} - Photo Verification Review
+                    <span class="vr-title-icon"><i class="fas fa-images"></i></span>
+                    {{ $photo->profile->name }} &mdash; Photo Verification Review
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -760,103 +1044,118 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { margin: 0; line-height: 2
             <div class="modal-body">
                 <div class="row">
                     {{-- Verification Photo --}}
-                    <div class="col-md-6 mb-4">
-                        <div class="card">
-                            <div class="card-header bg-warning text-dark">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-id-card"></i> Verification Photo
-                                    <span class="badge badge-dark float-right" style="font-size: 16px;">Code: {{ $photo->profile->photo_code }}</span>
+                    <div class="col-md-6">
+                        <div class="vr-panel">
+                            <div class="vr-panel-head head-verify">
+                                <h6 class="vr-panel-title">
+                                    <span class="vr-panel-icon"><i class="fas fa-id-card"></i></span>
+                                    Verification Photo
                                 </h6>
+                                <span class="vr-badge vr-code">Code: {{ $photo->profile->photo_code }}</span>
                             </div>
-                            <div class="card-body text-center">
-                                <img src="{{ smart_asset('userimages/'.$photo->user_id.'/verification/'.$photo->photo) }}" 
-                                     class="img-fluid rounded shadow-sm" 
-                                     style="max-height: 400px;">
-                                <p class="text-muted mt-2 mb-0">
-                                    <small><i class="fas fa-clock"></i> Submitted {{ $photo->created_at->diffForHumans() }}</small>
-                                </p>
+                            <div class="vr-panel-body">
+                                <img src="{{ smart_asset('userimages/'.$photo->user_id.'/verification/'.$photo->photo) }}"
+                                     class="vr-verify-img"
+                                     alt="Verification photo">
+                                <div class="vr-verify-meta">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Submitted {{ $photo->created_at->diffForHumans() }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     {{-- Profile Photos --}}
-                    <div class="col-md-6 mb-4">
-                        <div class="card">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-images"></i> Profile Photos 
-                                    <span class="badge badge-light text-dark float-right">{{ $photo->profile->allimages ? $photo->profile->allimages->count() : 0 }} photos</span>
+                    <div class="col-md-6">
+                        <div class="vr-panel">
+                            <div class="vr-panel-head head-profile">
+                                <h6 class="vr-panel-title">
+                                    <span class="vr-panel-icon"><i class="fas fa-images"></i></span>
+                                    Profile Photos
                                 </h6>
+                                <span class="vr-badge">
+                                    {{ $photo->profile->allimages ? $photo->profile->allimages->count() : 0 }} photos
+                                </span>
                             </div>
-                            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                            <div class="vr-panel-body pad-tight">
                                 @if($photo->profile->allimages && $photo->profile->allimages->count() > 0)
-                                    <div class="row g-2">
+                                    <div class="vr-photo-grid">
                                         @foreach($photo->profile->allimages as $image)
-                                            <div class="col-6 col-md-4">
-                                                <div class="position-relative">
-                                                    <img src="{{ smart_asset('userimages/'.$photo->profile->user_id.'/'.$photo->profile->id.'/'.$image->image) }}" 
-                                                         class="img-fluid rounded shadow-sm profile-photo-thumb" 
-                                                         style="cursor: pointer; width: 100%; height: 150px; object-fit: cover;"
-                                                         data-toggle="modal" 
-                                                         data-target="#profilePhotoModal{{ $photo->id }}_{{ $image->id }}">
-                                                    @if($image->is_main)
-                                                        <span class="badge badge-success position-absolute" style="top: 5px; left: 5px;">
-                                                            <i class="fas fa-star"></i> Main
-                                                        </span>
-                                                    @endif
-                                                </div>
+                                            <div class="vr-photo-cell"
+                                                 data-toggle="modal"
+                                                 data-target="#profilePhotoModal{{ $photo->id }}_{{ $image->id }}">
+                                                <img src="{{ smart_asset('userimages/'.$photo->profile->user_id.'/'.$photo->profile->id.'/'.$image->image) }}"
+                                                     alt="Profile photo">
+                                                @if($image->is_main)
+                                                    <span class="vr-main-badge">
+                                                        <i class="fas fa-star"></i> Main
+                                                    </span>
+                                                @endif
                                             </div>
                                         @endforeach
                                     </div>
                                 @else
-                                    <div class="text-center text-muted py-5">
-                                        <i class="fas fa-image fa-3x mb-3 opacity-50"></i>
-                                        <p>No profile photos available</p>
+                                    <div class="vr-empty">
+                                        <i class="fas fa-image d-block"></i>
+                                        <p class="mb-0">No profile photos available</p>
                                     </div>
                                 @endif
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 {{-- Profile Info --}}
-                <div class="card">
-                    <div class="card-header bg-secondary text-white">
-                        <h6 class="mb-0 text-white"><i class="fas fa-user"></i> Profile Information</h6>
+                <div class="vr-panel" style="margin-bottom:0;">
+                    <div class="vr-panel-head head-info">
+                        <h6 class="vr-panel-title">
+                            <span class="vr-panel-icon"><i class="fas fa-user"></i></span>
+                            Profile Information
+                        </h6>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Name:</strong> {{ $photo->profile->name }}</p>
-                                <p><strong>City:</strong> {{ $photo->profile->getcity->name ?? 'N/A' }}</p>
-                                <p><strong>Gender:</strong> {{ $photo->profile->ggender->name ?? 'N/A' }}</p>
+                    <div class="vr-panel-body">
+                        <div class="vr-info-grid">
+                            <div class="vr-info-item">
+                                <span class="vr-info-label"><i class="fas fa-signature"></i> Name</span>
+                                <span class="vr-info-value">{{ $photo->profile->name }}</span>
                             </div>
-                            <div class="col-md-6">
-                                <p><strong>Age:</strong> {{ $photo->profile->age ?? 'N/A' }}</p>
-                                <p><strong>Profile Link:</strong> 
-                                    <a href="/{{ strtolower($photo->profile->ggender->name) }}-escorts-in-{{ strtolower($photo->profile->getcity->name) }}/{{ $photo->profile->id }}/{{ $photo->profile->name }}" 
-                                       target="_blank" class="btn btn-sm btn-outline-primary">
+                            <div class="vr-info-item">
+                                <span class="vr-info-label"><i class="fas fa-birthday-cake"></i> Age</span>
+                                <span class="vr-info-value">{{ $photo->profile->age ?? 'N/A' }}</span>
+                            </div>
+                            <div class="vr-info-item">
+                                <span class="vr-info-label"><i class="fas fa-city"></i> City</span>
+                                <span class="vr-info-value">{{ $photo->profile->getcity->name ?? 'N/A' }}</span>
+                            </div>
+                            <div class="vr-info-item">
+                                <span class="vr-info-label"><i class="fas fa-venus-mars"></i> Gender</span>
+                                <span class="vr-info-value">{{ $photo->profile->ggender->name ?? 'N/A' }}</span>
+                            </div>
+                            <div class="vr-info-item" style="grid-column: 1 / -1;">
+                                <span class="vr-info-label"><i class="fas fa-link"></i> Profile Link</span>
+                                <div>
+                                    <a href="/{{ strtolower($photo->profile->ggender->name) }}-escorts-in-{{ strtolower($photo->profile->getcity->name) }}/{{ $photo->profile->id }}/{{ $photo->profile->name }}"
+                                       target="_blank" class="vr-profile-btn">
                                         <i class="fas fa-external-link-alt"></i> View Profile
                                     </a>
-                                </p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <button type="button" class="vr-btn vr-btn-close" data-dismiss="modal">
                     <i class="fas fa-times"></i> Close
                 </button>
-                <select class="form-control form-control-sm action-dropdown" 
-                        style="max-width: 200px;"
+                <select class="vr-action-select action-dropdown"
                         data-id="{{ $photo->id }}"
                         data-profile-name="{{ $photo->profile->name }}"
                         data-profile-id="{{ $photo->profile->id }}"
                         data-profile-slug="{{ $photo->profile->slug }}">
                     <option value="">-- Select Action --</option>
-                    <option value="approve">Approve</option>
-                    <option value="reject">Reject</option>
+                    <option value="approve">✓ Approve</option>
+                    <option value="reject">✗ Reject</option>
                 </select>
             </div>
         </div>
@@ -866,12 +1165,21 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { margin: 0; line-height: 2
 {{-- Individual Profile Photo Modals --}}
 @if($photo->profile && $photo->profile->allimages)
 @foreach($photo->profile->allimages as $image)
-<div class="modal fade" id="profilePhotoModal{{ $photo->id }}_{{ $image->id }}">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade vr-modal" id="profilePhotoModal{{ $photo->id }}_{{ $image->id }}">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-body text-center">
-                <img src="{{ smart_asset('userimages/'.$photo->profile->user_id.'/'.$photo->profile->id.'/'.$image->image) }}" 
-                     class="img-fluid">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span class="vr-title-icon"><i class="fas fa-image"></i></span>
+                    Photo Preview
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <img src="{{ smart_asset('userimages/'.$photo->profile->user_id.'/'.$photo->profile->id.'/'.$image->image) }}"
+                     class="img-fluid" style="border-radius:12px; max-height:70vh;">
             </div>
         </div>
     </div>

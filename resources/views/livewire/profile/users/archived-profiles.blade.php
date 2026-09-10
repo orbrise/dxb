@@ -421,7 +421,7 @@
             <a href="{{ route('rejected.verifications') }}">
                 <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount ?? 0 }})
             </a>
-            <a href="{{ route('user.dashboard', ['filter' => 'pending']) }}">
+            <a href="{{ route('user.pending') }}">
                 <i class="fa fa-clock"></i> Pending ({{ $pendingCount ?? 0 }})
             </a>
             <a href="{{ route('profile.archived') }}" class="active">

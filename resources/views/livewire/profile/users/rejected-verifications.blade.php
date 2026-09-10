@@ -442,8 +442,8 @@
                 <i class="fa fa-exclamation-triangle"></i> Rejected ({{ $rejectedCount }})
             </a>
             @if($firstProfile)
-            <a href="{{ route('user.dashboard', ['filter' => 'pending']) }}"
-               class="{{ request()->get('filter') == 'pending' ? 'active' : '' }}">
+            <a href="{{ route('user.pending') }}"
+               class="{{ request()->routeIs('user.pending') ? 'active' : '' }}">
                 <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
             </a>
             @endif

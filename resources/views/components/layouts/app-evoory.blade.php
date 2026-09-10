@@ -201,6 +201,51 @@
     @stack('css')
 </head>
 <body>
+    {{-- Admin Impersonation Banner. Rendered here (not inside the header
+         partial) so it sits above every page that uses this layout,
+         including /my-listings which is where the admin-as-user flow
+         lands. --}}
+    @if(session('admin_impersonating'))
+    <div id="impersonation-banner" style="background: linear-gradient(45deg, #ff6b6b, #ffa500); color: white; padding: 10px 0; text-align: center; position: sticky; top: 0; z-index: 9999; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <strong><i class="fa fa-user-secret"></i> ADMIN IMPERSONATION MODE</strong>
+            @if(session('impersonating'))
+            - You are viewing as: <strong>{{ session('impersonating.user_name') }}</strong> ({{ session('impersonating.user_email') }})
+            @if(session('impersonating.via_profile'))
+            <br><small><i class="fa fa-id-card"></i> Via Profile: <strong>{{ session('impersonating.via_profile') }}</strong></small>
+            @endif
+            @endif
+            <span id="impersonation-timer" style="margin-left: 15px; font-size: 12px;"></span>
+          </div>
+          <div class="col-md-4 text-end">
+            <a href="{{ route('exit.impersonation') }}" class="btn btn-sm btn-light" onclick="return confirm('Are you sure you want to exit impersonation mode?')">
+              <i class="fa fa-sign-out"></i> Exit Impersonation
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+    @if(session('impersonation_started'))
+    (function () {
+      var startTime = new Date('{{ session('impersonation_started') }}');
+      function updateTimer() {
+        var el = document.getElementById('impersonation-timer');
+        if (!el) return;
+        var diff = Math.floor((new Date() - startTime) / 1000);
+        var minutes = Math.floor(diff / 60);
+        var seconds = diff % 60;
+        el.innerHTML = '(Active for ' + minutes + 'm ' + seconds + 's)';
+      }
+      setInterval(updateTimer, 1000);
+      updateTimer();
+    })();
+    @endif
+    </script>
+    @endif
+
     {{-- Header --}}
     @include('components.layouts.header-evoory')
 

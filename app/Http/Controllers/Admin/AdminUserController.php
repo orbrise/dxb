@@ -200,7 +200,7 @@ class AdminUserController extends Controller
                     <td>' . htmlspecialchars($profile->phone ?? 'N/A') . '</td>
                     <td>' . htmlspecialchars(ucfirst($genderName)) . '</td>
                     <td>
-                        <button class="btn btn-warning btn-sm edit-profile" data-id="' . $profile->id . '">Edit</button>
+                        <a class="btn btn-warning btn-sm" href="' . route('admin.profiles.edit', $profile->id) . '">Edit</a>
                         <button class="btn btn-danger btn-sm delete-profile" data-id="' . $profile->id . '">Delete</button>
                          <button class="btn btn-primary btn-sm assign-package" 
                 data-id="' . $profile->id . '" 
@@ -432,21 +432,10 @@ public function impersonate(Request $request)
         'ip' => $request->ip()
     ]);
     
-    // Determine redirect URL
-    $redirectUrl = '/';
-    if ($profileId) {
-        // Try to find a profile-specific URL or redirect to user dashboard
-        $profile = UsersProfile::find($profileId);
-        if ($profile && $profile->slug) {
-            // If profile has a slug, redirect to profile page
-            $redirectUrl = "/profile/{$profile->slug}/{$profile->id}";
-        } else {
-            // Otherwise redirect to user account page
-            $redirectUrl = "/my-account";
-        }
-    }
-    
-    // Redirect to the main site (user area) with a banner indicating impersonation
+    // Always land on the user's listings dashboard so the admin sees the
+    // account exactly as the user would after login.
+    $redirectUrl = route('user.dashboard');
+
     return redirect($redirectUrl)->with('impersonating', [
         'user_name' => $userToImpersonate->name,
         'user_email' => $userToImpersonate->email,

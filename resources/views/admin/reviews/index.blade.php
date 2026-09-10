@@ -666,16 +666,69 @@
                     </thead>
                     <tbody>
                         @forelse($reviews as $review)
-                            @php $starN = (int) ($review->star ?? 0); @endphp
+                            @php
+                                $starN   = (int) ($review->star ?? 0);
+                                $profile = $review->profile;
+                                // Public profile URL — match the canonical form the site
+                                // actually serves: lowercase gender, city's `slug` (not
+                                // `name`), and profile slug falling back to Str::slug(name).
+                                // Only build when all three components exist so we don't
+                                // render broken /--/{id}/ links for orphaned reviews.
+                                $profileUrl = null;
+                                if ($profile && $profile->ggender && $profile->getcity) {
+                                    $genderPart = strtolower($profile->ggender->name);
+                                    $cityPart   = $profile->getcity->slug
+                                        ?: strtolower(str_replace(' ', '-', $profile->getcity->name));
+                                    $slugPart   = $profile->slug ?: \Illuminate\Support\Str::slug($profile->name ?? '');
+                                    if ($genderPart && $cityPart && $slugPart) {
+                                        $profileUrl = url("/{$genderPart}-escorts-in-{$cityPart}/{$profile->id}/{$slugPart}");
+                                    }
+                                }
+                                $profileImg = null;
+                                if ($profile && $profile->coverimg && $profile->coverimg->image) {
+                                    $profileImg = smart_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image);
+                                }
+                                // JSON blob handed to the modal — single arg avoids the
+                                // addslashes/backtick escaping games the previous three-arg
+                                // form was playing (and which broke on reviews that had
+                                // backticks or newlines in them).
+                                $modalPayload = [
+                                    'id'         => $review->id,
+                                    'review'     => (string) $review->review,
+                                    'reply'      => (string) ($review->reply ?? ''),
+                                    'star'       => $starN,
+                                    'status'     => (int) $review->status,
+                                    'created_at' => optional($review->created_at)->format('M d, Y H:i'),
+                                    'profile'    => $profile ? [
+                                        'id'     => $profile->id,
+                                        'name'   => $profile->name,
+                                        'gender' => optional($profile->ggender)->name,
+                                        'city'   => optional($profile->getcity)->name,
+                                        'url'    => $profileUrl,
+                                        'img'    => $profileImg,
+                                    ] : null,
+                                    'sender'     => $review->user ? [
+                                        'id'    => $review->user->id,
+                                        'name'  => $review->user->name,
+                                        'email' => $review->user->email,
+                                    ] : null,
+                                ];
+                            @endphp
                             <tr>
                                 <td><span class="r-id-chip">#{{ $review->id }}</span></td>
                                 <td><span class="r-id-chip user">#{{ $review->user_id }}</span></td>
-                                <td><span class="r-id-chip profile">#{{ $review->profile_id }}</span></td>
+                                <td>
+                                    @if($profileUrl)
+                                        <a href="{{ $profileUrl }}" target="_blank" rel="noopener" class="r-id-chip profile" style="text-decoration:none;">#{{ $review->profile_id }}</a>
+                                    @else
+                                        <span class="r-id-chip profile">#{{ $review->profile_id }}</span>
+                                    @endif
+                                </td>
                                 <td><span class="r-email">{{ $review->user->email ?? '-' }}</span></td>
                                 <td>
                                     <div class="r-review">{{ $review->review }}</div>
                                     @if(strlen($review->review) > 120)
-                                        <a href="javascript:void(0)" class="r-read-more" onclick="showReviewModal({{ $review->id }}, `{{ addslashes($review->review) }}`, `{{ addslashes($review->reply ?? '') }}`)">
+                                        <a href="javascript:void(0)" class="r-read-more" onclick='showReviewModal(@json($modalPayload))'>
                                             Read more →
                                         </a>
                                     @endif
@@ -684,7 +737,7 @@
                                     @if($review->reply)
                                         <div class="r-reply">{{ $review->reply }}</div>
                                         @if(strlen($review->reply) > 60)
-                                            <a href="javascript:void(0)" class="r-read-more" onclick="showReviewModal({{ $review->id }}, `{{ addslashes($review->review) }}`, `{{ addslashes($review->reply) }}`)">
+                                            <a href="javascript:void(0)" class="r-read-more" onclick='showReviewModal(@json($modalPayload))'>
                                                 Read more →
                                             </a>
                                         @endif
@@ -723,7 +776,7 @@
                                 </td>
                                 <td>
                                     <div class="r-actions-cell">
-                                        <a href="javascript:void(0)" class="r-btn r-btn-view" onclick="showReviewModal({{ $review->id }}, `{{ addslashes($review->review) }}`, `{{ addslashes($review->reply ?? '') }}`)">
+                                        <a href="javascript:void(0)" class="r-btn r-btn-view" onclick='showReviewModal(@json($modalPayload))'>
                                             <i class="fa fa-eye"></i> View
                                         </a>
                                         @if($review->status == 0)
@@ -790,6 +843,39 @@
                 </button>
             </div>
             <div class="modal-body">
+                {{-- Profile block: cover thumbnail + name + city/gender + a
+                     clickable "#175" chip that opens the public profile page
+                     in a new tab. Hidden when the underlying profile is
+                     missing (orphaned review). --}}
+                <div id="modalProfileSection" class="mb-4" style="display:none;">
+                    <h6><i class="fas fa-id-badge"></i> Profile</h6>
+                    <div class="p-3 bg-light rounded" style="display:flex; align-items:center; gap:14px;">
+                        <img id="modalProfileImg" src="" alt="" style="width:64px; height:64px; border-radius:8px; object-fit:cover; background:#e2e8f0; flex-shrink:0; display:none;">
+                        <div style="min-width:0; flex:1;">
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <strong id="modalProfileName" style="font-size:15px; color:#0f172a;"></strong>
+                                <a id="modalProfileIdLink" href="#" target="_blank" rel="noopener" class="r-id-chip profile" style="text-decoration:none;"></a>
+                            </div>
+                            <div id="modalProfileMeta" style="margin-top:4px; color:#64748b; font-size:13px;"></div>
+                            <a id="modalProfileOpen" href="#" target="_blank" rel="noopener" style="display:none; margin-top:6px; font-size:13px; color:var(--r-primary, #4f46e5);">
+                                <i class="fa fa-external-link-alt"></i> Open profile page
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Sender (author of the review) — name / email / user_id. --}}
+                <div id="modalSenderSection" class="mb-4" style="display:none;">
+                    <h6><i class="fas fa-user"></i> Sender</h6>
+                    <div class="p-3 bg-light rounded">
+                        <div><strong id="modalSenderName"></strong></div>
+                        <div style="color:#64748b; font-size:13px; margin-top:2px;">
+                            <span id="modalSenderEmail"></span>
+                            <span id="modalSenderIdChip" class="r-id-chip user" style="margin-left:8px;"></span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <h6><i class="fas fa-comment"></i> Review</h6>
                     <div class="p-3 bg-light rounded" id="modalReviewText" style="white-space: pre-wrap;"></div>
@@ -809,14 +895,75 @@
 </div>
 
 <script>
-function showReviewModal(id, review, reply) {
-    document.getElementById('modalReviewText').textContent = review;
+// Single-arg signature — payload is the JSON blob rendered by the row.
+// Use `textContent` (not innerHTML) everywhere so review/reply/name
+// content can't be interpreted as HTML.
+function showReviewModal(payload) {
+    payload = payload || {};
 
-    if (reply && reply.trim() !== '') {
+    document.getElementById('modalReviewText').textContent = payload.review || '';
+
+    var reply = (payload.reply || '').trim();
+    if (reply) {
         document.getElementById('modalReplyText').textContent = reply;
         document.getElementById('modalReplySection').style.display = 'block';
     } else {
         document.getElementById('modalReplySection').style.display = 'none';
+    }
+
+    // Profile block
+    var profileSection = document.getElementById('modalProfileSection');
+    if (payload.profile) {
+        var p = payload.profile;
+        document.getElementById('modalProfileName').textContent = p.name || 'Untitled profile';
+
+        var meta = [];
+        if (p.gender) meta.push(p.gender);
+        if (p.city)   meta.push(p.city);
+        document.getElementById('modalProfileMeta').textContent = meta.join(' · ');
+
+        var chip = document.getElementById('modalProfileIdLink');
+        chip.textContent = '#' + p.id;
+        if (p.url) {
+            chip.setAttribute('href', p.url);
+            chip.style.pointerEvents = '';
+        } else {
+            chip.setAttribute('href', '#');
+            chip.style.pointerEvents = 'none';
+        }
+
+        var open = document.getElementById('modalProfileOpen');
+        if (p.url) {
+            open.setAttribute('href', p.url);
+            open.style.display = 'inline-block';
+        } else {
+            open.style.display = 'none';
+        }
+
+        var img = document.getElementById('modalProfileImg');
+        if (p.img) {
+            img.setAttribute('src', p.img);
+            img.style.display = 'block';
+        } else {
+            img.removeAttribute('src');
+            img.style.display = 'none';
+        }
+
+        profileSection.style.display = 'block';
+    } else {
+        profileSection.style.display = 'none';
+    }
+
+    // Sender block
+    var senderSection = document.getElementById('modalSenderSection');
+    if (payload.sender) {
+        var s = payload.sender;
+        document.getElementById('modalSenderName').textContent = s.name || '(no name)';
+        document.getElementById('modalSenderEmail').textContent = s.email || '';
+        document.getElementById('modalSenderIdChip').textContent = '#' + s.id;
+        senderSection.style.display = 'block';
+    } else {
+        senderSection.style.display = 'none';
     }
 
     $('#reviewModal').modal('show');

@@ -97,7 +97,11 @@ span.input { display: none; }
     border: 1px solid var(--u-slate-200);
     border-radius: 14px;
     box-shadow: 0 6px 24px rgba(15,23,42,.06);
-    overflow: hidden;
+    /* overflow:visible so the row-level Actions dropdown can escape the
+       card when the filtered result set puts the row near the bottom
+       edge. Corner clipping is handled by the filter bar + pagination
+       children below (they're the only children with backgrounds). */
+    overflow: visible;
 }
 
 /* Filter bar (redesign of .q-filter-bar) */
@@ -105,6 +109,8 @@ span.input { display: none; }
     padding: 14px 20px !important;
     background: var(--u-slate-50) !important;
     border-bottom: 1px solid var(--u-slate-100) !important;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
 }
 .q-filter-bar #uFiltersForm { gap: 8px !important; }
 .q-filter-bar .fa-filter {
@@ -367,6 +373,12 @@ span.input { display: none; }
     box-shadow: 0 12px 32px rgba(15,23,42,.15);
     padding: 6px;
     min-width: 200px;
+    /* Items are absolute-siblings inside a padded box; if any one
+       computes wider than the container (e.g. Bootstrap's default
+       `width:100%` + our padding under content-box sizing), clip it
+       rather than let the hover highlight bleed past the rounded
+       corners on the right. */
+    overflow: hidden;
 }
 #usersTable .dropdown-item {
     padding: 8px 12px;
@@ -376,6 +388,13 @@ span.input { display: none; }
     display: flex;
     align-items: center;
     gap: 8px;
+    /* Force border-box + width:100% so padding is counted inside the
+       item's box. Without this the item was extending ~18px past the
+       menu's right edge (visible as a bleeding hover highlight on the
+       "Login as User" row). */
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
 }
 #usersTable .dropdown-item:hover { background: var(--u-slate-50); color: var(--u-slate-800); }
 #usersTable .dropdown-item.text-danger:hover { background: #fef2f2; color: #b91c1c; }
@@ -394,6 +413,8 @@ span.input { display: none; }
     background: var(--u-slate-50);
     font-size: 13px;
     color: var(--u-slate-600);
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
 }
 .u-pagination .pagination { margin: 0; }
 .u-pagination .pagination .page-link {
@@ -408,6 +429,313 @@ span.input { display: none; }
     background: var(--u-primary);
     border-color: var(--u-primary);
     color: #fff;
+}
+
+/* ===== Modal — modern (scoped .u-modal) ===== */
+.u-modal .modal-dialog { max-width: 900px; }
+.u-modal .modal-content {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(15,23,42,.3);
+}
+.u-modal .modal-header {
+    padding: 18px 22px;
+    background: linear-gradient(180deg, #fff 0%, #fbfbff 100%);
+    border-bottom: 1px solid var(--u-slate-100);
+    align-items: center;
+}
+.u-modal .modal-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; font-weight: 700; color: var(--u-slate-800);
+    margin: 0;
+}
+.u-modal .u-title-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(99, 102, 241, .12); color: var(--u-primary-dark); font-size: 14px;
+}
+.u-modal .modal-header .close {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--u-slate-100) !important;
+    color: var(--u-slate-600) !important;
+    opacity: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 20px; line-height: 1;
+    text-shadow: none;
+    padding: 0; margin: 0;
+    border: 0;
+    transition: background .15s, color .15s;
+    top: auto !important;
+    right: auto !important;
+    position: static !important;
+}
+.u-modal .modal-header .close:hover {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+.u-modal .modal-body {
+    padding: 22px;
+    background: var(--u-slate-50);
+}
+
+/* Sections within the body */
+.u-modal .u-form-section {
+    background: #fff;
+    border: 1px solid var(--u-slate-200);
+    border-radius: 12px;
+    padding: 18px 18px 4px;
+    margin-bottom: 14px;
+    box-shadow: 0 3px 10px rgba(15,23,42,.04);
+}
+.u-modal .u-form-section-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--u-slate-500);
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--u-slate-200);
+}
+.u-modal .u-form-section-title i {
+    color: var(--u-primary);
+    font-size: 12px;
+}
+
+/* Form controls inside the modal */
+.u-modal .form-label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    color: var(--u-slate-500);
+    margin-bottom: 6px;
+}
+.u-modal .form-label i { color: var(--u-primary); font-size: 11px; }
+.u-modal .form-label .text-danger { color: var(--u-danger) !important; font-weight: 700; }
+
+.u-modal .form-control,
+.u-modal select.form-control {
+    height: 44px;
+    padding: 8px 14px;
+    font-size: 14px;
+    color: var(--u-slate-800);
+    background: #fff;
+    border: 1px solid var(--u-slate-200);
+    border-radius: 10px;
+    transition: border-color .15s, box-shadow .15s;
+    box-shadow: none;
+}
+.u-modal textarea.form-control { height: auto; min-height: 84px; }
+.u-modal .form-control:focus,
+.u-modal select.form-control:focus {
+    outline: none;
+    border-color: var(--u-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+}
+.u-modal .form-control::placeholder { color: var(--u-slate-300); }
+.u-modal .form-control[disabled],
+.u-modal .form-control[readonly] {
+    background: var(--u-slate-100);
+    color: var(--u-slate-600);
+    cursor: not-allowed;
+}
+
+/* Input-group (password + toggle) */
+.u-modal .input-group { position: relative; }
+.u-modal .input-group .form-control {
+    border-top-right-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+    padding-right: 46px;
+}
+.u-modal .input-group .btn {
+    position: absolute; top: 50%; right: 6px;
+    transform: translateY(-50%);
+    z-index: 4;
+    width: 34px; height: 34px;
+    padding: 0;
+    background: transparent !important;
+    border: 0 !important;
+    color: var(--u-slate-500) !important;
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.u-modal .input-group .btn:hover {
+    background: var(--u-slate-100) !important;
+    color: var(--u-primary-dark) !important;
+}
+.u-modal .input-group .btn:focus { box-shadow: none; }
+
+/* Password Management heading + info alert */
+.u-modal hr {
+    display: none;
+}
+.u-modal .u-alert-info {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 14px;
+    background: #dbeafe;
+    color: #1e40af;
+    border: 0;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+.u-modal .u-alert-info i { margin-top: 2px; }
+
+/* Small helper (min chars text) */
+.u-modal small.text-muted {
+    color: var(--u-slate-500) !important;
+    font-size: 11px;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+/* Generate password button (secondary style) */
+.u-modal #generateRandomPassword {
+    background: var(--u-slate-100);
+    color: var(--u-slate-700);
+    border: 1px solid var(--u-slate-200);
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background .15s, color .15s;
+}
+.u-modal #generateRandomPassword:hover {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fde68a;
+}
+
+/* Buttons — general inside .u-modal (body + footer) */
+.u-modal .btn {
+    height: 42px;
+    padding: 0 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: 0;
+    transition: box-shadow .15s, background .15s, color .15s;
+    white-space: nowrap;
+    line-height: 1;
+}
+.u-modal .btn-sm {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    gap: 5px;
+}
+.u-modal .btn-primary {
+    background: linear-gradient(135deg, var(--u-primary) 0%, var(--u-primary-dark) 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, .3);
+}
+.u-modal .btn-primary:hover {
+    box-shadow: 0 6px 18px rgba(99, 102, 241, .45);
+    color: #fff;
+}
+.u-modal .btn-secondary {
+    background: var(--u-slate-100);
+    color: var(--u-slate-700);
+}
+.u-modal .btn-secondary:hover {
+    background: var(--u-slate-200);
+    color: var(--u-slate-800);
+}
+.u-modal .btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, .3);
+}
+.u-modal .btn-success:hover {
+    box-shadow: 0 6px 18px rgba(16, 185, 129, .45);
+    color: #fff;
+}
+.u-modal .btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, .3);
+}
+.u-modal .btn-danger:hover {
+    box-shadow: 0 6px 18px rgba(239, 68, 68, .45);
+    color: #fff;
+}
+.u-modal .btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, .3);
+}
+.u-modal .btn-warning:hover {
+    box-shadow: 0 6px 18px rgba(245, 158, 11, .45);
+    color: #fff;
+}
+
+/* Footer */
+.u-modal .modal-footer {
+    padding: 14px 22px;
+    background: #fff;
+    border-top: 1px solid var(--u-slate-100);
+    gap: 8px;
+}
+
+/* Section head (title + right-aligned action) inside a .u-form-section */
+.u-modal .u-section-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin: 0 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--u-slate-200);
+}
+.u-modal .u-section-head h5,
+.u-modal .u-section-head .u-section-label {
+    margin: 0;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--u-slate-500);
+}
+.u-modal .u-section-head i { color: var(--u-primary); font-size: 12px; }
+
+/* Tables inside .u-modal */
+.u-modal .table {
+    width: 100% !important;
+    margin: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    font-size: 13.5px;
+    border: 0 !important;
+}
+.u-modal .table thead th {
+    background: var(--u-slate-50) !important;
+    color: var(--u-slate-500) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 12px 14px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--u-slate-200) !important;
+    text-align: left;
+    white-space: nowrap;
+}
+.u-modal .table tbody td {
+    padding: 12px 14px !important;
+    vertical-align: middle !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--u-slate-100) !important;
+    color: var(--u-slate-700) !important;
+    background: #fff !important;
+}
+.u-modal .table tbody tr:last-child td { border-bottom: 0 !important; }
+.u-modal .table tbody tr:hover td { background: #fafbff !important; }
+.u-modal .table td .btn + .btn { margin-left: 6px; }
+.u-modal .table-responsive-wrap {
+    background: #fff;
+    border: 1px solid var(--u-slate-200);
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 /* Responsive */
@@ -728,66 +1056,85 @@ span.input { display: none; }
 </div>
 
 <!-- User Profiles Modal -->
-<div class="modal fade" id="profilesModal" tabindex="-1" aria-labelledby="profilesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+<div class="modal fade u-modal" id="profilesModal" tabindex="-1" aria-labelledby="profilesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="profilesModalLabel">User Profiles</h5>
+                <h5 class="modal-title" id="profilesModalLabel">
+                    <span class="u-title-icon"><i class="fas fa-id-badge"></i></span>
+                    User Profiles
+                </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <!-- Add Profile Form -->
-                <div id="addProfileSection" class="mb-4" style="display: none;">
+                <div id="addProfileSection" class="u-form-section" style="display: none;">
+                    <h6 class="u-form-section-title"><i class="fas fa-plus-circle"></i> Add New Profile</h6>
                     <form id="addProfileForm">
-                         @csrf
+                        @csrf
                         <input type="hidden" name="user_id" id="profileUserId">
                         <div class="row">
-                            
-                            <div class="col-md-4">
-                                <label for="profileName" class="form-label">Name</label>
-                                <input type="text" class="form-control" name="name" id="profileName" required>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="profileName" class="form-label"><i class="fas fa-user"></i> Name</label>
+                                    <input type="text" class="form-control" name="name" id="profileName" required>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <label for="profileCity" class="form-label">City</label>
-                                <input type="text" class="form-control" name="city" id="profileCity">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="profileCity" class="form-label"><i class="fas fa-map-marker-alt"></i> City</label>
+                                    <input type="text" class="form-control" name="city" id="profileCity">
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <label for="profilePhone" class="form-label">Phone</label>
-                                <input type="text" class="form-control" name="phone" id="profilePhone">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="profilePhone" class="form-label"><i class="fas fa-phone"></i> Phone</label>
+                                    <input type="text" class="form-control" name="phone" id="profilePhone">
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <label for="profileGender" class="form-label">Gender</label>
-                                <select class="form-select" name="gender" id="profileGender">
-                                    <option value="" selected disabled>Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="profileGender" class="form-label"><i class="fas fa-venus-mars"></i> Gender</label>
+                                    <select class="form-control" name="gender" id="profileGender">
+                                        <option value="" selected disabled>Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary mt-3"><i class="fa-solid fa-floppy-disk"></i> Save Profile</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Profile
+                        </button>
                     </form>
                 </div>
 
                 <!-- Profiles List -->
-                <div class="d-flex justify-content-between">
-                    <h5>Profiles</h5>
-                    <button class="btn btn-success btn-sm" onclick="showAddProfileForm()">Add Profile</button>
+                <div class="u-form-section">
+                    <div class="u-section-head">
+                        <h5><i class="fas fa-list"></i> Profiles</h5>
+                        <button class="btn btn-success btn-sm" onclick="showAddProfileForm()">
+                            <i class="fas fa-plus"></i> Add Profile
+                        </button>
+                    </div>
+                    <div class="table-responsive-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>City</th>
+                                    <th>Phone</th>
+                                    <th>Gender</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profilesBody"></tbody>
+                        </table>
+                    </div>
                 </div>
-                <table class="table table-bordered mt-3">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>City</th>
-                            <th>Phone</th>
-                            <th>Gender</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="profilesBody"></tbody>
-                </table>
             </div>
         </div>
     </div>
@@ -881,11 +1228,14 @@ span.input { display: none; }
     </div>
 </div>
 
-<div class="modal fade" id="editUserModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade u-modal" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit User Information</h5>
+                <h5 class="modal-title">
+                    <span class="u-title-icon"><i class="fas fa-user-edit"></i></span>
+                    Edit User Information
+                </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -894,151 +1244,170 @@ span.input { display: none; }
                 <form id="editUserForm">
                     @csrf
                     <input type="hidden" id="editUserId" name="id">
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editUserName" name="name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="editUserEmail" name="email" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Account Type</label>
-                                <select class="form-control" id="editUserType" name="type">
-                                    <option value="2">Individual advertiser</option>
-                                    <option value="3">Agency</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Status</label>
-                                <select class="form-control" id="editUserStatus" name="status">
-                                    <option value="pending">Pending</option>
-                                    <option value="active">Active</option>
-                                    <option value="suspended">Suspended</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Email Verified</label>
-                                <select class="form-control" id="editUserVerified" name="verified">
-                                    <option value="0">Not Verified</option>
-                                    <option value="1">Verified</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Registration Country</label>
-                                <input type="text" class="form-control" id="editUserRegistrationCountry" readonly disabled>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Country Code</label>
-                                <select class="form-control" id="editUserCountryCode" name="country_code">
-                                    <option value="">Select</option>
-                                    @foreach($countries as $country)
-                                        <option value="+{{ $country->phonecode }}">+{{ $country->phonecode }} ({{ $country->iso }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label class="form-label">Phone Number</label>
-                                <input type="text" class="form-control" id="editUserPhone" name="phone" placeholder="Phone number">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">About</label>
-                        <textarea class="form-control" id="editUserAbout" name="about" rows="3" placeholder="User bio or description"></textarea>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Created At</label>
-                                <input type="text" class="form-control" id="editUserCreatedAt" readonly disabled>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Google Account</label>
-                                <input type="text" class="form-control" id="editUserGoogleId" readonly disabled>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label class="form-label">Registration IP</label>
-                                <input type="text" class="form-control" id="editUserRegistrationIp" readonly disabled>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    <h6 class="mb-3"><i class="fa fa-key"></i> Password Management</h6>
-                    
-                    <div class="alert alert-info py-2 mb-3">
-                        <i class="fa fa-info-circle"></i> <strong>Note:</strong> Passwords are encrypted and cannot be viewed. You can only set a new password.
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Set New Password</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control" id="editUserNewPassword" name="new_password" placeholder="Leave blank to keep current">
-                                    <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword" title="Show/Hide Password">
-                                        <i class="fa fa-eye"></i>
-                                    </button>
+
+                    {{-- Basic Info --}}
+                    <div class="u-form-section">
+                        <h6 class="u-form-section-title"><i class="fas fa-id-card"></i> Basic Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-user"></i> Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editUserName" name="name" required>
                                 </div>
-                                <small class="text-muted">Minimum 6 characters</small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-envelope"></i> Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="editUserEmail" name="email" required>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Confirm New Password</label>
-                                <input type="password" class="form-control" id="editUserConfirmPassword" name="confirm_password" placeholder="Confirm new password">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-briefcase"></i> Account Type</label>
+                                    <select class="form-control" id="editUserType" name="type">
+                                        <option value="2">Individual advertiser</option>
+                                        <option value="3">Agency</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-toggle-on"></i> Status</label>
+                                    <select class="form-control" id="editUserStatus" name="status">
+                                        <option value="pending">Pending</option>
+                                        <option value="active">Active</option>
+                                        <option value="suspended">Suspended</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-shield-alt"></i> Email Verified</label>
+                                    <select class="form-control" id="editUserVerified" name="verified">
+                                        <option value="0">Not Verified</option>
+                                        <option value="1">Verified</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-globe"></i> Registration Country</label>
+                                    <input type="text" class="form-control" id="editUserRegistrationCountry" readonly disabled>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-md-12">
-                            <button type="button" class="btn btn-warning" id="generateRandomPassword">
-                                <i class="fa fa-random"></i> Generate Random Password
-                            </button>
+
+                    {{-- Contact --}}
+                    <div class="u-form-section">
+                        <h6 class="u-form-section-title"><i class="fas fa-address-book"></i> Contact</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-flag"></i> Country Code</label>
+                                    <select class="form-control" id="editUserCountryCode" name="country_code">
+                                        <option value="">Select</option>
+                                        @foreach($countries as $country)
+                                            <option value="+{{ $country->phonecode }}">+{{ $country->phonecode }} ({{ $country->iso }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-phone"></i> Phone Number</label>
+                                    <input type="text" class="form-control" id="editUserPhone" name="phone" placeholder="Phone number">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-align-left"></i> About</label>
+                            <textarea class="form-control" id="editUserAbout" name="about" rows="3" placeholder="User bio or description"></textarea>
+                        </div>
+                    </div>
+
+                    {{-- Account Metadata (read-only) --}}
+                    <div class="u-form-section">
+                        <h6 class="u-form-section-title"><i class="fas fa-info-circle"></i> Account Metadata</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="far fa-clock"></i> Created At</label>
+                                    <input type="text" class="form-control" id="editUserCreatedAt" readonly disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fab fa-google"></i> Google Account</label>
+                                    <input type="text" class="form-control" id="editUserGoogleId" readonly disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-network-wired"></i> Registration IP</label>
+                                    <input type="text" class="form-control" id="editUserRegistrationIp" readonly disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Password Management --}}
+                    <div class="u-form-section">
+                        <h6 class="u-form-section-title"><i class="fas fa-key"></i> Password Management</h6>
+
+                        <div class="u-alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <div><strong>Note:</strong> Passwords are encrypted and cannot be viewed. You can only set a new password.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-lock"></i> Set New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="editUserNewPassword" name="new_password" placeholder="Leave blank to keep current">
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword" title="Show/Hide Password">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Minimum 6 characters</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-lock"></i> Confirm New Password</label>
+                                    <input type="password" class="form-control" id="editUserConfirmPassword" name="confirm_password" placeholder="Confirm new password">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="button" class="btn btn-warning" id="generateRandomPassword">
+                                    <i class="fa fa-random"></i> Generate Random Password
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveUserEdit">Save Changes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Close
+                </button>
+                <button type="button" class="btn btn-primary" id="saveUserEdit">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
             </div>
         </div>
     </div>
