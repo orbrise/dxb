@@ -3,23 +3,35 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
+use App\Models\Call;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Events\NewChatMessage;
 use App\Events\MessageStatusUpdated;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Chat extends Component
 {
+    use WithFileUploads;
+
     public $selectedConversationId = null;
     public $selectedUser = null; // The other user in conversation
+    public $selectedIsSupport = false;
     public $reply = '';
     public $searchTerm = '';
     public $conversationMessages = [];
 
+    // File uploads (Livewire temporary upload objects).
+    public $attachment = null;   // image / file
+    public $voiceNote = null;    // audio blob from MediaRecorder
+    public $voiceDuration = 0;   // seconds, sent from JS alongside blob
+
     protected $rules = [
-        'reply' => 'required|min:1|max:1000',
+        'reply' => 'nullable|min:1|max:2000',
     ];
 
     /**
@@ -30,9 +42,9 @@ class Chat extends Component
         if (!auth()->check()) {
             return [];
         }
-        
+
         $userId = auth()->id();
-        
+
         return [
             "echo-private:chat.{$userId},NewChatMessage" => 'handleNewMessage',
             "echo-private:chat.{$userId},MessageStatusUpdated" => 'handleStatusUpdate',
@@ -45,9 +57,6 @@ class Chat extends Component
      */
     public function handleStatusUpdate($event)
     {
-        Log::debug('Message status updated', $event);
-        
-        // Reload messages to show updated tick marks
         if ($this->selectedConversationId) {
             $this->loadConversationMessages();
         }
@@ -58,14 +67,33 @@ class Chat extends Component
      */
     public function refreshChat()
     {
-        // Mark messages as delivered when chat refreshes
         $this->markMessagesAsDelivered();
-        
-        // Reload messages if conversation is selected
+
         if ($this->selectedConversationId) {
             $this->loadConversationMessages();
             $this->markConversationAsRead();
+            // Also acknowledge any missed calls from the currently-open
+            // peer — otherwise the "1 missed call" badge in the sidebar
+            // keeps showing until the user re-clicks the tile.
+            $this->markMissedCallsSeen();
             $this->dispatch('message-received');
+        }
+    }
+
+    /**
+     * Background poll refresh — like refreshChat but WITHOUT the
+     * 'message-received' scroll-to-bottom dispatch. Called every ~3s from
+     * the client so sidebar badges clear + tick marks update even if the
+     * broadcast path is late/dropped. Doesn't hijack the user's scroll
+     * position if they're reading history above the fold.
+     */
+    public function pollRefresh()
+    {
+        if (!auth()->check()) return;
+        $this->markMessagesAsDelivered();
+        if ($this->selectedConversationId) {
+            $this->loadConversationMessages();
+            $this->markConversationAsRead();
         }
     }
 
@@ -74,37 +102,28 @@ class Chat extends Component
      */
     public function handleNewMessage($event)
     {
-        Log::debug('New chat message received', $event);
-        
-        // If the message is for the currently selected conversation, add it
         if ($this->selectedConversationId && isset($event['message']['conversation_id'])) {
             if ((int)$event['message']['conversation_id'] === (int)$this->selectedConversationId) {
-                // Reload messages for current conversation
                 $this->loadConversationMessages();
-                
-                // Mark as read since user is viewing
                 $this->markConversationAsRead();
-                
-                // Dispatch event to scroll to bottom
                 $this->dispatch('message-received');
             }
         }
-        
-        // Refresh the conversation list
+
         $this->dispatch('$refresh');
     }
 
     public function mount($userId = null)
     {
-        // Ensure user is authenticated
         if (!auth()->check()) {
             return redirect()->route('sign-in');
         }
 
-        // Mark messages as delivered when chat page loads
+        // Ensure this user has a Support conversation (created lazily, pinned to top).
+        Conversation::getOrCreateSupport(auth()->id());
+
         $this->markMessagesAsDelivered();
 
-        // If a userId is passed (from clicking on a profile), start/open that conversation
         if ($userId && $userId != auth()->id()) {
             $this->startConversation($userId);
         }
@@ -120,22 +139,62 @@ class Chat extends Component
     }
 
     /**
-     * Get all conversations for current user
+     * Open the Support conversation for the current user.
+     */
+    public function openSupport()
+    {
+        $conversation = Conversation::getOrCreateSupport(auth()->id());
+        $this->selectConversation($conversation->id);
+    }
+
+    /**
+     * Get all conversations for current user (Support pinned first).
      */
     public function getConversations()
     {
         $userId = auth()->id();
-        
+
+        // Callers whose missed calls this user hasn't acknowledged yet.
+        // Keyed by caller_id → count. Used to render the "missed call" badge
+        // on the corresponding conversation row.
+        $missedByCaller = Call::unseenMissedFor($userId)
+            ->select('caller_id')
+            ->selectRaw('COUNT(*) as cnt')
+            ->groupBy('caller_id')
+            ->pluck('cnt', 'caller_id');
+
         $conversations = Conversation::forUser($userId)
             ->with(['userOne', 'userTwo', 'latestMessage'])
+            ->orderByDesc('is_pinned')
             ->orderByDesc('last_message_at')
             ->get()
-            ->map(function ($conv) use ($userId) {
+            ->map(function ($conv) use ($userId, $missedByCaller) {
+                if ($conv->is_support) {
+                    return [
+                        'id' => $conv->id,
+                        'is_support' => true,
+                        'is_pinned' => true,
+                        'other_user' => null,
+                        'other_user_id' => null,
+                        'other_user_name' => 'Support',
+                        'other_user_email' => 'We usually reply within an hour',
+                        'other_user_avatar' => null,
+                        'last_message' => $conv->latestMessage?->message ?? '',
+                        'last_message_at' => $conv->last_message_at,
+                        'unread_count' => $conv->getUnreadCountFor($userId),
+                        'is_mine' => $conv->latestMessage?->sender_id === $userId,
+                        'missed_calls' => 0,
+                    ];
+                }
+
                 $otherUser = $conv->getOtherUser($userId);
+                $otherId = $conv->getOtherUserId($userId);
                 return [
                     'id' => $conv->id,
+                    'is_support' => false,
+                    'is_pinned' => (bool) $conv->is_pinned,
                     'other_user' => $otherUser,
-                    'other_user_id' => $conv->getOtherUserId($userId),
+                    'other_user_id' => $otherId,
                     'other_user_name' => $otherUser->name ?? $otherUser->email ?? 'Unknown',
                     'other_user_email' => $otherUser->email ?? '',
                     'other_user_avatar' => $otherUser->avatar ?? null,
@@ -143,10 +202,10 @@ class Chat extends Component
                     'last_message_at' => $conv->last_message_at,
                     'unread_count' => $conv->getUnreadCountFor($userId),
                     'is_mine' => $conv->latestMessage?->sender_id === $userId,
+                    'missed_calls' => (int) ($missedByCaller[$otherId] ?? 0),
                 ];
             });
 
-        // Apply search filter
         if ($this->searchTerm) {
             $search = strtolower($this->searchTerm);
             $conversations = $conversations->filter(function ($conv) use ($search) {
@@ -179,50 +238,32 @@ class Chat extends Component
     public function selectConversation($conversationId)
     {
         $conversation = Conversation::find($conversationId);
-        
+
         if (!$conversation || !$conversation->hasUser(auth()->id())) {
             return;
         }
 
         $this->selectedConversationId = $conversationId;
-        $this->selectedUser = $conversation->getOtherUser(auth()->id());
+        $this->selectedIsSupport = (bool) $conversation->is_support;
+        $this->selectedUser = $this->selectedIsSupport ? null : $conversation->getOtherUser(auth()->id());
         $this->loadConversationMessages();
         $this->markConversationAsRead();
+        $this->markMissedCallsSeen();
     }
 
     /**
-     * Called by polling to refresh messages
+     * Ack any unseen missed calls from the peer we just opened a chat with,
+     * so the red badge in the sidebar disappears.
      */
-    public function pollMessages()
+    protected function markMissedCallsSeen(): void
     {
-        if (!$this->selectedConversationId) {
-            return;
-        }
+        if ($this->selectedIsSupport || !$this->selectedUser) return;
 
-        // Mark any new incoming messages as read since user is actively viewing this conversation
-        $this->markConversationAsRead();
-
-        // Force fresh query from database
-        $messages = Message::where('conversation_id', $this->selectedConversationId)
-            ->with('sender')
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        // Create fresh array to force Livewire to detect changes
-        $freshMessages = [];
-        foreach ($messages as $msg) {
-            $freshMessages[] = [
-                'id' => $msg->id,
-                'message' => $msg->message,
-                'sender_id' => $msg->sender_id,
-                'sender_name' => $msg->sender?->name ?? $msg->sender?->email ?? 'Unknown',
-                'is_mine' => $msg->sender_id === auth()->id(),
-                'status' => $msg->status,
-                'created_at' => $msg->created_at->toISOString(),
-            ];
-        }
-        
-        $this->conversationMessages = $freshMessages;
+        Call::where('callee_id', auth()->id())
+            ->where('caller_id', $this->selectedUser->id)
+            ->where('status', 'missed')
+            ->whereNull('seen_at')
+            ->update(['seen_at' => now()]);
     }
 
     public function loadConversationMessages()
@@ -237,15 +278,29 @@ class Chat extends Component
             ->orderBy('created_at', 'asc')
             ->get();
 
-        $this->conversationMessages = $messages->map(function ($msg) {
+        $userId = auth()->id();
+        $isSupport = $this->selectedIsSupport;
+
+        $this->conversationMessages = $messages->map(function ($msg) use ($userId, $isSupport) {
+            $isMine = $msg->sender_id === $userId;
+            $senderName = $isSupport && !$isMine
+                ? 'Support'
+                : ($msg->sender?->name ?? $msg->sender?->email ?? 'Unknown');
+
             return [
                 'id' => $msg->id,
                 'message' => $msg->message,
                 'sender_id' => $msg->sender_id,
-                'sender_name' => $msg->sender?->name ?? $msg->sender?->email ?? 'Unknown',
-                'is_mine' => $msg->sender_id === auth()->id(),
+                'sender_name' => $senderName,
+                'is_mine' => $isMine,
                 'status' => $msg->status,
                 'created_at' => $msg->created_at->toISOString(),
+                'attachment_url' => $msg->attachment_url,
+                'attachment_type' => $msg->attachment_type,
+                'attachment_mime' => $msg->attachment_mime,
+                'attachment_size' => $msg->attachment_size,
+                'attachment_duration' => $msg->attachment_duration,
+                'attachment_original_name' => $msg->attachment_original_name,
             ];
         })->toArray();
     }
@@ -255,30 +310,24 @@ class Chat extends Component
         if (!$this->selectedConversationId) return;
 
         $userId = auth()->id();
-        
-        // Get messages that need to be marked as read
+
         $messagesToUpdate = Message::where('conversation_id', $this->selectedConversationId)
             ->where('sender_id', '!=', $userId)
-            ->whereIn('status', ['sent', 'delivered', 'unread'])
+            ->where(function ($q) {
+                $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
+            })
             ->get();
-        
-        // Also check for null status
-        $nullStatusMessages = Message::where('conversation_id', $this->selectedConversationId)
-            ->where('sender_id', '!=', $userId)
-            ->whereNull('status')
-            ->get();
-        
-        $allMessages = $messagesToUpdate->merge($nullStatusMessages);
-        
-        if ($allMessages->isNotEmpty()) {
-            // Update status to read
+
+        if ($messagesToUpdate->isNotEmpty()) {
             Message::where('conversation_id', $this->selectedConversationId)
                 ->where('sender_id', '!=', $userId)
+                ->where(function ($q) {
+                    $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
+                })
                 ->update(['status' => 'read']);
-            
-            // Notify each sender that their message was read (non-blocking)
+
             try {
-                $senderIds = $allMessages->pluck('sender_id')->unique();
+                $senderIds = $messagesToUpdate->pluck('sender_id')->filter()->unique();
                 foreach ($senderIds as $senderId) {
                     broadcast(new MessageStatusUpdated(
                         $this->selectedConversationId,
@@ -287,7 +336,7 @@ class Chat extends Component
                     ))->toOthers();
                 }
             } catch (\Exception $e) {
-                \Log::warning('Broadcast status update failed: ' . $e->getMessage());
+                Log::warning('Broadcast status update failed: ' . $e->getMessage());
             }
         }
     }
@@ -298,28 +347,24 @@ class Chat extends Component
     public function markMessagesAsDelivered()
     {
         $userId = auth()->id();
-        
-        // Get all conversations for this user
+
         $conversationIds = Conversation::forUser($userId)->pluck('id');
-        
-        // Get messages that need to be marked as delivered
+
         $messagesToUpdate = Message::whereIn('conversation_id', $conversationIds)
             ->where('sender_id', '!=', $userId)
             ->where('status', 'sent')
             ->get();
-        
+
         if ($messagesToUpdate->isNotEmpty()) {
-            // Update status to delivered
             Message::whereIn('conversation_id', $conversationIds)
                 ->where('sender_id', '!=', $userId)
                 ->where('status', 'sent')
                 ->update(['status' => 'delivered']);
-            
-            // Notify each sender that their message was delivered (non-blocking)
+
             try {
                 $grouped = $messagesToUpdate->groupBy('conversation_id');
                 foreach ($grouped as $convId => $messages) {
-                    $senderIds = $messages->pluck('sender_id')->unique();
+                    $senderIds = $messages->pluck('sender_id')->filter()->unique();
                     foreach ($senderIds as $senderId) {
                         broadcast(new MessageStatusUpdated(
                             $convId,
@@ -329,14 +374,23 @@ class Chat extends Component
                     }
                 }
             } catch (\Exception $e) {
-                \Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
+                Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
             }
         }
     }
 
     public function sendReply()
     {
-        $this->validate();
+        $this->validate([
+            'reply' => 'nullable|min:1|max:2000',
+            'attachment' => 'nullable|file|max:20480|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,mp4,mov,webm',
+            'voiceNote' => 'nullable|file|max:20480',
+        ]);
+
+        // Must have SOMETHING to send.
+        if (empty(trim((string)$this->reply)) && !$this->attachment && !$this->voiceNote) {
+            return;
+        }
 
         if (!$this->selectedConversationId) {
             session()->flash('error', 'No conversation selected.');
@@ -344,50 +398,101 @@ class Chat extends Component
         }
 
         $conversation = Conversation::find($this->selectedConversationId);
-        if (!$conversation) {
+        if (!$conversation || !$conversation->hasUser(auth()->id())) {
             session()->flash('error', 'Conversation not found.');
             return;
         }
 
-        // Create the message
-        $message = Message::create([
+        $data = [
             'conversation_id' => $this->selectedConversationId,
             'sender_id' => auth()->id(),
-            'message' => $this->reply,
+            // messages.message is NOT NULL in the schema — use '' for
+            // attachment-only rows so the insert doesn't fail.
+            'message' => $this->reply ?: '',
             'status' => 'sent',
-        ]);
+        ];
 
-        // Update conversation last_message_at
+        // Voice note takes precedence — it always gets its own message.
+        if ($this->voiceNote) {
+            $stored = $this->storeAttachment($this->voiceNote, $conversation->id, 'audio');
+            $data = array_merge($data, $stored, [
+                'attachment_duration' => (int) $this->voiceDuration ?: null,
+            ]);
+        } elseif ($this->attachment) {
+            $type = $this->detectAttachmentType($this->attachment->getMimeType());
+            $stored = $this->storeAttachment($this->attachment, $conversation->id, $type);
+            $data = array_merge($data, $stored);
+        }
+
+        $message = Message::create($data);
+
         $conversation->update(['last_message_at' => now()]);
 
-        // Broadcast to the other user
-        $otherUserId = $conversation->getOtherUserId(auth()->id());
-        
-        // Use try-catch to handle cases where socket ID is not available
         try {
-            // Only use toOthers() if we have a valid socket ID
-            if (request()->hasHeader('X-Socket-ID') && request()->header('X-Socket-ID')) {
-                broadcast(new NewChatMessage($message, $otherUserId))->toOthers();
+            if ($conversation->is_support) {
+                broadcast(new NewChatMessage($message, 0))->toOthers();
             } else {
-                // Broadcast to everyone including sender (sender will see via Livewire update anyway)
-                broadcast(new NewChatMessage($message, $otherUserId));
+                $otherUserId = $conversation->getOtherUserId(auth()->id());
+                if ($otherUserId) {
+                    broadcast(new NewChatMessage($message, $otherUserId))->toOthers();
+                }
             }
         } catch (\Exception $e) {
-            // Log the error but don't fail the message send
-            \Log::warning('Broadcast failed: ' . $e->getMessage());
+            Log::warning('Broadcast failed: ' . $e->getMessage());
         }
 
         $this->reply = '';
+        $this->attachment = null;
+        $this->voiceNote = null;
+        $this->voiceDuration = 0;
         $this->loadConversationMessages();
-        
-        // Dispatch scroll event
         $this->dispatch('message-received');
+    }
+
+    /**
+     * Persist a Livewire temporary upload to the public disk and return
+     * the columns needed to attach it to a Message.
+     *
+     * Uses raw file copy via getRealPath()/getPathname() rather than
+     * Storage::putFileAs — the latter blows up with "Path cannot be empty"
+     * on some Windows/Laragon setups where the temp-file backing chain
+     * confuses Flysystem.
+     */
+    protected function storeAttachment($upload, int $conversationId, string $type): array
+    {
+        $ext = $upload->getClientOriginalExtension() ?: $upload->extension() ?: 'bin';
+        $filename = Str::random(24) . '.' . $ext;
+        $relPath = "chat-media/{$conversationId}/{$filename}";
+        $absDir = storage_path('app/public/' . "chat-media/{$conversationId}");
+        if (!is_dir($absDir)) {
+            @mkdir($absDir, 0755, true);
+        }
+        $sourcePath = $upload->getRealPath() ?: $upload->getPathname();
+        copy($sourcePath, $absDir . DIRECTORY_SEPARATOR . $filename);
+
+        return [
+            'attachment_path' => $relPath,
+            'attachment_type' => $type,
+            'attachment_mime' => $upload->getMimeType(),
+            'attachment_size' => $upload->getSize(),
+            'attachment_original_name' => $upload->getClientOriginalName(),
+        ];
+    }
+
+    protected function detectAttachmentType(?string $mime): string
+    {
+        if (!$mime) return 'file';
+        if (str_starts_with($mime, 'image/')) return 'image';
+        if (str_starts_with($mime, 'audio/')) return 'audio';
+        if (str_starts_with($mime, 'video/')) return 'video';
+        return 'file';
     }
 
     public function closeConversation()
     {
         $this->selectedConversationId = null;
         $this->selectedUser = null;
+        $this->selectedIsSupport = false;
         $this->conversationMessages = [];
     }
 
@@ -397,9 +502,13 @@ class Chat extends Component
 
         $conversation = Conversation::find($this->selectedConversationId);
         if ($conversation && $conversation->hasUser(auth()->id())) {
-            // Delete all messages in conversation
+            // Never let a user delete their own pinned Support conversation
+            // — it's a system-owned thread and must always be present.
+            if ($conversation->is_support) {
+                session()->flash('error', 'The Support conversation cannot be deleted.');
+                return;
+            }
             Message::where('conversation_id', $this->selectedConversationId)->delete();
-            // Delete conversation
             $conversation->delete();
         }
 
@@ -412,7 +521,6 @@ class Chat extends Component
         $conversations = $this->getConversations();
         $searchResults = $this->searchUsers();
 
-        // Stats
         $totalConversations = Conversation::forUser(auth()->id())->count();
         $unreadCount = 0;
         foreach ($conversations as $conv) {

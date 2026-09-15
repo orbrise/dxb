@@ -6,11 +6,15 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageStatusUpdated implements ShouldBroadcast
+// Use ShouldBroadcastNow (not ShouldBroadcast) so tick updates dispatch
+// synchronously — the queued path was silently dropping updates for the
+// sender's browser when the queue driver hiccupped, so ticks only refreshed
+// when the sender re-opened the conversation.
+class MessageStatusUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

@@ -255,6 +255,22 @@
         @yield('content')
     </main>
 
+    {{-- WebRTC call UI (incoming banner + full-screen call overlay).
+         MUST live outside the Livewire component root so re-renders
+         (refreshChat every 3s, message-send re-renders) can't strip the
+         .open class off the call UI or blow away the video srcObject.
+         Only the HTML shell is here — call scripts stay on the chat
+         page, so this is cheap on pages that never open a call. --}}
+    @auth
+        @include('livewire.partials.webrtc-ui')
+        {{-- WebRTC signaling scripts. Runs on every authenticated page so
+             an incoming call rings the user wherever they are on the site —
+             not just when they happen to have /my-chat open. The scripts
+             are self-contained (fetch-based polling of /call/pending; no
+             Echo dependency) so they work without loading @vite globally. --}}
+        @include('livewire.partials.webrtc-scripts')
+    @endauth
+
     {{-- Footer --}}
     @include('components.layouts.footer-evoory')
 

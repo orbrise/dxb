@@ -43,10 +43,17 @@
                         <div class="form-group mt-2">
                             <label for="city_search">City</label>
                             <div class="position-relative">
-                                <input type="text" id="city_search" class="form-control @error('city_id') is-invalid @enderror" 
-                                       placeholder="Type to search cities..." autocomplete="off">
+                                <input type="text" id="city_search" class="form-control @error('city_id') is-invalid @enderror"
+                                       placeholder="Type to search cities..." autocomplete="off"
+                                       value="{{ old('city_id') && $cities->find(old('city_id')) ? $cities->find(old('city_id'))->name : '' }}">
                                 <input type="hidden" name="city_id" id="city_id" value="{{ old('city_id') }}" required>
-                                <div id="city_results" class="dropdown-menu w-100" style="display:none; max-height:250px; overflow-y:auto;"></div>
+                                {{-- Bootstrap 4 `.dropdown-menu` only renders when a parent .dropdown
+                                     toggle sets `.show`; using it here caused the results to render
+                                     off-screen (float:left + position:absolute w/ no anchor) so the
+                                     picker silently no-op'd. Use the same plain position-absolute
+                                     container as edit.blade.php — it works reliably. --}}
+                                <div id="city_results" class="position-absolute w-100 bg-white shadow-sm border rounded"
+                                     style="max-height:300px; overflow-y:auto; z-index:1000; display:none;"></div>
                             </div>
                             <small id="selected_city_name" class="form-text {{ old('city_id') ? 'text-success' : 'text-muted' }}">
                                 {{ old('city_id') ? 'Selected: ' . ($cities->find(old('city_id'))->name ?? 'Unknown city') : 'No city selected' }}
@@ -111,15 +118,12 @@
 </div>{{-- /.s-modern --}}
 @endsection
 
-@push('styles')
+@push('css')
 <style>
-    .city-item {
-        padding: 8px 12px;
-        cursor: pointer;
-    }
     .city-item:hover {
         background-color: #f8f9fa;
     }
+    #city_results .city-item:last-child { border-bottom: 0 !important; }
 </style>
 @endpush
 
@@ -148,27 +152,27 @@ $(document).ready(function() {
                 success: function(data) {
                     // Clear previous results
                     $('#city_results').empty();
-                    
+
                     if (data.length === 0) {
-                        $('#city_results').append('<div class="dropdown-item">No cities found</div>');
+                        $('#city_results').append('<div class="p-2 text-muted">No cities found</div>');
                     } else {
                         // Add each city to the results
                         $.each(data, function(index, city) {
                             const cityName = city.name + (city.country ? ` (${city.country})` : '');
-                            const item = $('<div class="dropdown-item city-item"></div>')
+                            const item = $('<div class="city-item p-2 border-bottom" style="cursor:pointer;"></div>')
                                 .text(cityName)
-                                .data('id', city.id)
-                                .data('name', city.name);
-                            
+                                .attr('data-id', city.id)
+                                .attr('data-name', city.name);
+
                             $('#city_results').append(item);
                         });
                     }
-                    
+
                     // Show the results dropdown
                     $('#city_results').show();
                 },
                 error: function() {
-                    $('#city_results').html('<div class="dropdown-item text-danger">Error loading cities</div>').show();
+                    $('#city_results').html('<div class="p-2 text-danger">Error loading cities</div>').show();
                 }
             });
         }, 300);

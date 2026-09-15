@@ -34,30 +34,30 @@
                                 <h6 class="m-0"><i class="material-icons align-middle">search</i> SEO Settings</h6>
                             </div>
                             <div class="card-body">
-                                @foreach($seoSettings as $setting)
+                                @foreach($seoSettings as $blogSetting)
                                     <div class="form-group row">
-                                        <label for="{{ $setting->key }}" class="col-sm-3 col-form-label">
-                                            {{ $setting->label }}
+                                        <label for="{{ $blogSetting->key }}" class="col-sm-3 col-form-label">
+                                            {{ $blogSetting->label }}
                                         </label>
                                         <div class="col-sm-9">
-                                            @if($setting->type === 'textarea')
-                                                <textarea name="{{ $setting->key }}" id="{{ $setting->key }}" 
-                                                    class="form-control" rows="3">{{ $setting->value }}</textarea>
-                                            @elseif($setting->type === 'boolean')
+                                            @if($blogSetting->type === 'textarea')
+                                                <textarea name="{{ $blogSetting->key }}" id="{{ $blogSetting->key }}"
+                                                    class="form-control" rows="3">{{ $blogSetting->value }}</textarea>
+                                            @elseif($blogSetting->type === 'boolean')
                                                 <div class="custom-control custom-switch">
-                                                    <input type="checkbox" class="custom-control-input" 
-                                                        id="{{ $setting->key }}" name="{{ $setting->key }}" 
-                                                        value="1" {{ $setting->value ? 'checked' : '' }}>
-                                                    <label class="custom-control-label" for="{{ $setting->key }}">
-                                                        {{ $setting->value ? 'Enabled' : 'Disabled' }}
+                                                    <input type="checkbox" class="custom-control-input"
+                                                        id="{{ $blogSetting->key }}" name="{{ $blogSetting->key }}"
+                                                        value="1" {{ $blogSetting->value ? 'checked' : '' }}>
+                                                    <label class="custom-control-label" for="{{ $blogSetting->key }}">
+                                                        {{ $blogSetting->value ? 'Enabled' : 'Disabled' }}
                                                     </label>
                                                 </div>
                                             @else
-                                                <input type="text" name="{{ $setting->key }}" id="{{ $setting->key }}" 
-                                                    class="form-control" value="{{ $setting->value }}">
+                                                <input type="text" name="{{ $blogSetting->key }}" id="{{ $blogSetting->key }}"
+                                                    class="form-control" value="{{ $blogSetting->value }}">
                                             @endif
-                                            @if($setting->description)
-                                                <small class="form-text text-muted">{{ $setting->description }}</small>
+                                            @if($blogSetting->description)
+                                                <small class="form-text text-muted">{{ $blogSetting->description }}</small>
                                             @endif
                                         </div>
                                     </div>
@@ -71,36 +71,36 @@
                                 <h6 class="m-0"><i class="material-icons align-middle">share</i> Social Media / Open Graph</h6>
                             </div>
                             <div class="card-body">
-                                @foreach($socialSettings as $setting)
+                                @foreach($socialSettings as $blogSetting)
                                     <div class="form-group row">
-                                        <label for="{{ $setting->key }}" class="col-sm-3 col-form-label">
-                                            {{ $setting->label }}
+                                        <label for="{{ $blogSetting->key }}" class="col-sm-3 col-form-label">
+                                            {{ $blogSetting->label }}
                                         </label>
                                         <div class="col-sm-9">
-                                            @if($setting->type === 'image')
+                                            @if($blogSetting->type === 'image')
                                                 <div class="input-group">
                                                     <div class="custom-file">
-                                                        <input type="file" class="custom-file-input" 
-                                                            id="{{ $setting->key }}" name="{{ $setting->key }}" 
+                                                        <input type="file" class="custom-file-input"
+                                                            id="{{ $blogSetting->key }}" name="{{ $blogSetting->key }}"
                                                             accept="image/*">
-                                                        <label class="custom-file-label" for="{{ $setting->key }}">
-                                                            {{ $setting->value ? basename($setting->value) : 'Choose file...' }}
+                                                        <label class="custom-file-label" for="{{ $blogSetting->key }}">
+                                                            {{ $blogSetting->value ? basename($blogSetting->value) : 'Choose file...' }}
                                                         </label>
                                                     </div>
                                                 </div>
-                                                @if($setting->value)
+                                                @if($blogSetting->value)
                                                     <div class="mt-2">
-                                                        <img src="{{ asset($setting->value) }}" alt="Current image" 
+                                                        <img src="{{ asset($blogSetting->value) }}" alt="Current image"
                                                             style="max-width: 200px; max-height: 100px; border: 1px solid #ddd; padding: 5px;">
                                                         <small class="d-block text-muted">Current image</small>
                                                     </div>
                                                 @endif
                                             @else
-                                                <input type="text" name="{{ $setting->key }}" id="{{ $setting->key }}" 
-                                                    class="form-control" value="{{ $setting->value }}">
+                                                <input type="text" name="{{ $blogSetting->key }}" id="{{ $blogSetting->key }}"
+                                                    class="form-control" value="{{ $blogSetting->value }}">
                                             @endif
-                                            @if($setting->description)
-                                                <small class="form-text text-muted">{{ $setting->description }}</small>
+                                            @if($blogSetting->description)
+                                                <small class="form-text text-muted">{{ $blogSetting->description }}</small>
                                             @endif
                                         </div>
                                     </div>
@@ -114,16 +114,16 @@
                                 <h6 class="m-0"><i class="material-icons align-middle">analytics</i> Analytics</h6>
                             </div>
                             <div class="card-body">
-                                @foreach($analyticsSettings as $setting)
+                                @foreach($analyticsSettings as $blogSetting)
                                     <div class="form-group row">
-                                        <label for="{{ $setting->key }}" class="col-sm-3 col-form-label">
-                                            {{ $setting->label }}
+                                        <label for="{{ $blogSetting->key }}" class="col-sm-3 col-form-label">
+                                            {{ $blogSetting->label }}
                                         </label>
                                         <div class="col-sm-9">
-                                            <input type="text" name="{{ $setting->key }}" id="{{ $setting->key }}" 
-                                                class="form-control" value="{{ $setting->value }}">
-                                            @if($setting->description)
-                                                <small class="form-text text-muted">{{ $setting->description }}</small>
+                                            <input type="text" name="{{ $blogSetting->key }}" id="{{ $blogSetting->key }}"
+                                                class="form-control" value="{{ $blogSetting->value }}">
+                                            @if($blogSetting->description)
+                                                <small class="form-text text-muted">{{ $blogSetting->description }}</small>
                                             @endif
                                         </div>
                                     </div>
@@ -137,36 +137,36 @@
                                 <h6 class="m-0"><i class="material-icons align-middle">code</i> Schema / Structured Data</h6>
                             </div>
                             <div class="card-body">
-                                @foreach($schemaSettings as $setting)
+                                @foreach($schemaSettings as $blogSetting)
                                     <div class="form-group row">
-                                        <label for="{{ $setting->key }}" class="col-sm-3 col-form-label">
-                                            {{ $setting->label }}
+                                        <label for="{{ $blogSetting->key }}" class="col-sm-3 col-form-label">
+                                            {{ $blogSetting->label }}
                                         </label>
                                         <div class="col-sm-9">
-                                            @if($setting->type === 'image')
+                                            @if($blogSetting->type === 'image')
                                                 <div class="input-group">
                                                     <div class="custom-file">
-                                                        <input type="file" class="custom-file-input" 
-                                                            id="{{ $setting->key }}" name="{{ $setting->key }}" 
+                                                        <input type="file" class="custom-file-input"
+                                                            id="{{ $blogSetting->key }}" name="{{ $blogSetting->key }}"
                                                             accept="image/*">
-                                                        <label class="custom-file-label" for="{{ $setting->key }}">
-                                                            {{ $setting->value ? basename($setting->value) : 'Choose file...' }}
+                                                        <label class="custom-file-label" for="{{ $blogSetting->key }}">
+                                                            {{ $blogSetting->value ? basename($blogSetting->value) : 'Choose file...' }}
                                                         </label>
                                                     </div>
                                                 </div>
-                                                @if($setting->value)
+                                                @if($blogSetting->value)
                                                     <div class="mt-2">
-                                                        <img src="{{ asset($setting->value) }}" alt="Current image" 
+                                                        <img src="{{ asset($blogSetting->value) }}" alt="Current image"
                                                             style="max-width: 200px; max-height: 100px; border: 1px solid #ddd; padding: 5px;">
                                                         <small class="d-block text-muted">Current image</small>
                                                     </div>
                                                 @endif
                                             @else
-                                                <input type="text" name="{{ $setting->key }}" id="{{ $setting->key }}" 
-                                                    class="form-control" value="{{ $setting->value }}">
+                                                <input type="text" name="{{ $blogSetting->key }}" id="{{ $blogSetting->key }}"
+                                                    class="form-control" value="{{ $blogSetting->value }}">
                                             @endif
-                                            @if($setting->description)
-                                                <small class="form-text text-muted">{{ $setting->description }}</small>
+                                            @if($blogSetting->description)
+                                                <small class="form-text text-muted">{{ $blogSetting->description }}</small>
                                             @endif
                                         </div>
                                     </div>

@@ -314,6 +314,35 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get("my-messages", \App\Livewire\Messages::class)->name("user.messages");
     Route::get("my-chat", \App\Livewire\Chat::class)->name("user.chat");
     Route::get("my-chat/{userId}", \App\Livewire\Chat::class)->name("user.chat.with");
+    Route::get("my-calls", \App\Livewire\CallLog::class)->name("user.calls");
+
+    // WebRTC 1:1 call signaling (voice & video). One endpoint relays all
+    // offer/answer/ICE/hangup/decline signals between the two peers over Reverb.
+    Route::post("call/signal", [\App\Http\Controllers\CallController::class, 'signal'])->name('call.signal');
+    Route::get("call/pending", [\App\Http\Controllers\CallController::class, 'pending'])->name('call.pending');
+    Route::get("call/history", [\App\Http\Controllers\CallController::class, 'history'])->name('call.history');
+    Route::post("rtc/ping-user/{targetUserId}", [\App\Http\Controllers\CallController::class, 'pingUser'])
+        ->whereNumber('targetUserId')
+        ->name('rtc.ping.user');
+    Route::get("rtc/diag", [\App\Http\Controllers\CallController::class, 'diag'])->name('rtc.diag');
+
+    // Dedicated voice-note upload endpoint. Livewire's programmatic upload API
+    // was returning "Path cannot be empty" for MediaRecorder blobs, so we take
+    // direct control: multipart POST → storage → Message → broadcast.
+    Route::post("chat/voice-upload", [\App\Http\Controllers\ChatMediaController::class, 'uploadVoice'])->name('chat.voice.upload');
+
+    // General attachment upload — image, video, file. Routed through the
+    // same controller because Livewire's built-in wire:model temp upload
+    // also hits the "Path cannot be empty" bug on this Windows/Laragon
+    // install (both use Storage::putFileAs internally).
+    Route::post("chat/attachment-upload", [\App\Http\Controllers\ChatMediaController::class, 'uploadAttachment'])->name('chat.attachment.upload');
+
+    // Media serve endpoint — streams a message's attachment with the correct
+    // Content-Type. Belt-and-braces fallback for hosts where Apache/Nginx
+    // hasn't mapped .webm / .opus / .m4a in its MIME table.
+    Route::get("chat/media/{messageId}", [\App\Http\Controllers\ChatMediaController::class, 'serve'])
+        ->whereNumber('messageId')
+        ->name('chat.media.serve');
     Route::get("my-questions", \App\Livewire\Questions::class)->name("user.questions");
     Route::get("my-reviews", \App\Livewire\Reviews::class)->name("user.reviews");
     Route::post('verify-photo', [App\Http\Controllers\VerifyPhotoController::class, 'store'])->name('verify.photo.store');
@@ -372,6 +401,7 @@ Route::get('/', [AuthController::class, 'checkLogin']);
 
     Route::group(['middleware'=>['web', 'admin']], function(){
         Route::get('dashboard', [HomeController::class, 'index'])->name('admin.dashboard');
+
 
         //cities
         Route::get('cities', [CityController::class, 'index'])->name('admin.cities');
@@ -997,4 +1027,15 @@ Route::get('/test-country-detection', function() {
             ];
         })
     ]);
+});
+
+// Admin Support Inbox (Livewire full-page component).
+// Defined OUTSIDE the main admin Route::group() because that group sets
+// `namespace => 'App\Http\Controllers\Admin'`, which Laravel prepends to any
+// class-string action — including Livewire component FQCNs — breaking
+// resolution. `Route::group(['namespace' => null], ...)` inside the group
+// does not clear the prepended namespace, so we define this route standalone
+// with the admin middleware applied directly.
+Route::middleware(['web', 'admin'])->prefix('admin')->group(function () {
+    Route::get('support-inbox', \App\Livewire\Admin\SupportInbox::class)->name('admin.support.inbox');
 });

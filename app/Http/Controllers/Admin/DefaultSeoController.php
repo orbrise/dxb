@@ -28,11 +28,57 @@ class DefaultSeoController extends Controller
     {
         $routes = $this->getSeoableRoutes();
 
-        $settings = DefaultSeoSetting::whereIn('name', $routes->pluck('path'))
+        // Pattern-based pages — dynamic routes with URL parameters ({gender},
+        // {city}, {type}, {slug}, …) can't be listed by concrete URI, so we
+        // expose them as named contexts here. Each row points at a single
+        // DefaultSeoSetting row (name = context) whose title/description/
+        // keywords may contain {gender}/{city}/{country}/{type} placeholders
+        // substituted at runtime by SeoService.
+        $patternPages = collect([
+            (object) [
+                'name'        => 'news-page',
+                'label'       => 'News (What\'s New)',
+                'description' => 'Applies to /{gender}-escort-news-in-{city} and /{gender}-escort-news-in-{city}/{type}. Supports placeholders: {gender}, {city}, {country}, {type}, {site_name}.',
+                'example_url' => url('/female-escort-news-in-abu-dhabi'),
+                'example_label' => '/female-escort-news-in-abu-dhabi',
+            ],
+            (object) [
+                'name'        => 'homepage',
+                'label'       => 'Homepage',
+                'description' => 'Applies to the site homepage (/).',
+                'example_url' => url('/'),
+                'example_label' => '/',
+            ],
+            (object) [
+                'name'        => 'city-pages',
+                'label'       => 'City / Listing Pages',
+                'description' => 'Default for /{gender}-escorts-in-{city}. Supports placeholders: {gender}, {city}, {country}, {site_name}.',
+                'example_url' => url('/female-escorts-in-dubai'),
+                'example_label' => '/female-escorts-in-dubai',
+            ],
+            (object) [
+                'name'        => 'escorts',
+                'label'       => 'Gender Fallback',
+                'description' => 'Fallback for gender-only escort pages (used when city context is missing).',
+                'example_url' => null,
+                'example_label' => null,
+            ],
+            (object) [
+                'name'        => 'global',
+                'label'       => 'Global Fallback',
+                'description' => 'Site-wide fallback applied when no other context matches.',
+                'example_url' => null,
+                'example_label' => null,
+            ],
+        ]);
+
+        $lookupNames = $routes->pluck('path')->merge($patternPages->pluck('name'))->unique();
+
+        $settings = DefaultSeoSetting::whereIn('name', $lookupNames)
             ->get()
             ->keyBy('name');
 
-        return view('admin.default-seo.pages', compact('routes', 'settings'));
+        return view('admin.default-seo.pages', compact('routes', 'settings', 'patternPages'));
     }
 
     /**

@@ -78,9 +78,32 @@
                         <li><strong>global:</strong> Site-wide fallback for all pages</li>
                         <li><strong>escorts:</strong> Default for all escort-related pages</li>
                         <li><strong>homepage:</strong> Specific fallback for the homepage</li>
-                        <li><strong>city-pages:</strong> Default for city-based pages</li>
+                        <li><strong>city-pages:</strong> Default for city-based pages (e.g. <code>/female-escorts-in-dubai</code>)</li>
+                        <li><strong>news-page:</strong> Default for the "What's New" page (e.g. <code>/female-escort-news-in-abu-dhabi</code>)</li>
                         <li><strong>my-chat, about, sign-in, …:</strong> Match a specific frontend route path (see <a href="{{ route('default-seo.pages') }}">Page-Specific SEO</a>)</li>
                     </ul>
+                </div>
+
+                {{-- Placeholder cheat-sheet — Title / Description / Keywords /
+                     Content on pattern-based contexts (news-page, city-pages,
+                     escorts, homepage) can contain these tokens; SeoService
+                     substitutes them per request based on the URL. --}}
+                <div class="alert alert-warning" role="alert">
+                    <i class="fa fa-magic mr-2"></i>
+                    <strong>Dynamic placeholders</strong> — usable in <em>Title</em>, <em>Meta Description</em>, <em>Meta Keywords</em>, and <em>Content</em> on pattern-based contexts (<code>news-page</code>, <code>city-pages</code>, <code>escorts</code>, <code>homepage</code>). They are replaced per request:
+                    <ul class="mb-0 mt-2">
+                        <li><code>{gender}</code> — e.g. <em>Female</em>, <em>Male</em>, <em>Shemale</em></li>
+                        <li><code>{city}</code> — e.g. <em>Abu Dhabi</em>, <em>Dubai</em></li>
+                        <li><code>{country}</code> — e.g. <em>United Arab Emirates</em></li>
+                        <li><code>{type}</code> — <em>news-page</em> only: <em>New Escorts</em>, <em>New Reviews</em>, <em>New Questions</em> (blank for the main /…-escort-news-in-… URL)</li>
+                        <li><code>{site_name}</code> — the site name from <code>APP_NAME</code></li>
+                    </ul>
+                    <div class="mt-2 small">
+                        <strong>Example for <code>news-page</code>:</strong><br>
+                        Title: <code>{city} Escort News — {type} | {site_name}</code><br>
+                        Description: <code>Latest {gender} escort updates in {city}, {country}: newly listed profiles, fresh reviews and Q&amp;A.</code><br>
+                        Keywords: <code>{city} escort news, {gender} escorts {city}, new reviews {city}</code>
+                    </div>
                 </div>
 
                 <form action="{{ route('default-seo.store') }}" method="POST">

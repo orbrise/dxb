@@ -13,12 +13,16 @@ class Conversation extends Model
         'user_one_id',
         'user_two_id',
         'last_message_at',
+        'is_support',
+        'is_pinned',
     ];
 
     protected $casts = [
         'last_message_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'is_support' => 'boolean',
+        'is_pinned' => 'boolean',
     ];
 
     /**
@@ -29,11 +33,30 @@ class Conversation extends Model
         // Always store with lower ID first for consistency
         $ids = [$userOneId, $userTwoId];
         sort($ids);
-        
+
         return self::firstOrCreate([
             'user_one_id' => $ids[0],
             'user_two_id' => $ids[1],
+            'is_support' => false,
         ]);
+    }
+
+    /**
+     * Get or create the pinned Support conversation for a user.
+     * Support conversations have user_two_id = NULL and any admin can reply.
+     */
+    public static function getOrCreateSupport(int $userId): self
+    {
+        return self::firstOrCreate(
+            [
+                'user_one_id' => $userId,
+                'is_support' => true,
+            ],
+            [
+                'user_two_id' => null,
+                'is_pinned' => true,
+            ]
+        );
     }
 
     /**
@@ -45,24 +68,33 @@ class Conversation extends Model
     }
 
     /**
-     * Get the other user in the conversation
+     * Get the other user in the conversation. For support conversations this
+     * returns null (the "other side" is any admin, not a specific user).
      */
     public function getOtherUser(int $currentUserId): ?User
     {
-        $otherId = $this->user_one_id === $currentUserId 
-            ? $this->user_two_id 
+        if ($this->is_support) {
+            return null;
+        }
+
+        $otherId = $this->user_one_id === $currentUserId
+            ? $this->user_two_id
             : $this->user_one_id;
-        
-        return User::find($otherId);
+
+        return $otherId ? User::find($otherId) : null;
     }
 
     /**
-     * Get the other user ID
+     * Get the other user ID. Returns null for support conversations.
      */
-    public function getOtherUserId(int $currentUserId): int
+    public function getOtherUserId(int $currentUserId): ?int
     {
-        return $this->user_one_id === $currentUserId 
-            ? $this->user_two_id 
+        if ($this->is_support) {
+            return null;
+        }
+
+        return $this->user_one_id === $currentUserId
+            ? $this->user_two_id
             : $this->user_one_id;
     }
 
@@ -116,11 +148,22 @@ class Conversation extends Model
     }
 
     /**
-     * Scope: Get conversations for a user
+     * Scope: Get conversations for a user (both 1:1 and support).
+     * Grouped so an outer ->where() can't be swallowed by the OR.
      */
     public function scopeForUser($query, int $userId)
     {
-        return $query->where('user_one_id', $userId)
-            ->orWhere('user_two_id', $userId);
+        return $query->where(function ($q) use ($userId) {
+            $q->where('user_one_id', $userId)
+              ->orWhere('user_two_id', $userId);
+        });
+    }
+
+    /**
+     * Scope: only support conversations.
+     */
+    public function scopeSupport($query)
+    {
+        return $query->where('is_support', true);
     }
 }

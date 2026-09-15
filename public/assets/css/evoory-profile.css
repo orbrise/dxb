@@ -196,6 +196,7 @@
 .listing-photos-sm-plus .img-wrapper {
     display: block;
     width: 100%;
+    position: relative;
 }
 /* Photo zoom icon overlay */
 .listing-photos-sm-plus .img-wrapper:before,
@@ -799,7 +800,7 @@ dl.languages dd {
     border-radius: 4px;
     font-size: 11px;
     position: absolute;
-    top: 8px;
+    bottom: 8px;
     left: 8px;
     z-index: 2;
 }

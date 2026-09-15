@@ -47,17 +47,103 @@ class SeoService
         if (preg_match('/^([a-zA-Z]+)-escorts-in-([a-zA-Z-]+)$/', $actualPath, $matches)) {
             $genderSlug = $matches[1]; // e.g., 'female'
             $citySlug = $matches[2];   // e.g., 'dubai'
-            
+
             $seoData = array_merge($seoData, $this->getSeoDataBySlug($genderSlug, $citySlug));
             $seoData['is_alias'] = $actualPath !== $path;
             $seoData['original_url'] = $path;
             $seoData['resolved_url'] = $actualPath;
-            
+
             return $seoData;
         }
-        
+
+        // News page pattern: {gender}-escort-news-in-{city}[/{type}]
+        // Routes: news.all + news.page (see routes/web.php)
+        if (preg_match('/^(female|male|shemale)-escort-news-in-([a-z0-9\-]+)(?:\/(new-escorts|new-reviews|new-questions))?$/', $actualPath, $matches)) {
+            $newsData = $this->getNewsPageSeoData($matches[1], $matches[2], $matches[3] ?? null);
+            $seoData = array_merge($seoData, $newsData);
+            $seoData['is_alias'] = $actualPath !== $path;
+            $seoData['original_url'] = $path;
+            $seoData['resolved_url'] = $actualPath;
+            return $seoData;
+        }
+
         // Try alternative patterns or specific pages
         return array_merge($seoData, $this->getSeoDataByPage($actualPath));
+    }
+
+    /**
+     * Resolve SEO for the News (What's New) pages. Admin sets a single
+     * "news-page" context in default_seo_settings; placeholders {gender},
+     * {city}, {country}, {type}, {site_name} are substituted at runtime.
+     * Falls back to a generated title when the context row is absent.
+     */
+    private function getNewsPageSeoData($genderSlug, $citySlug, $typeSlug = null)
+    {
+        $gender = Gender::where('slug', $genderSlug)
+                       ->orWhere('name', $genderSlug)
+                       ->first();
+
+        $city = City::where('slug', $citySlug)->first();
+
+        $genderName = $gender ? ucfirst($gender->name) : ucfirst($genderSlug);
+        $cityName = $city ? $city->name : ucwords(str_replace('-', ' ', $citySlug));
+        $countryName = ($city && !empty($city->country)) ? $city->country : '';
+
+        $typeLabelMap = [
+            'new-escorts'   => 'New Escorts',
+            'new-reviews'   => 'New Reviews',
+            'new-questions' => 'New Questions',
+        ];
+        $typeLabel = $typeSlug ? ($typeLabelMap[$typeSlug] ?? '') : '';
+
+        $defaultSeo = DefaultSeoSetting::where('name', 'news-page')
+                                       ->where('is_active', true)
+                                       ->first();
+
+        $siteName = config('app.name');
+
+        if ($defaultSeo) {
+            $placeholders = ['{gender}', '{city}', '{country}', '{type}', '{site_name}', '{sitename}'];
+            $values = [$genderName, $cityName, $countryName, $typeLabel, $siteName, $siteName];
+
+            $title = str_replace($placeholders, $values, $defaultSeo->title);
+            $description = str_replace($placeholders, $values, $defaultSeo->description ?? '');
+            $keywords = str_replace($placeholders, $values, $defaultSeo->keywords ?? '');
+            $content = str_replace($placeholders, $values, $defaultSeo->content ?? '');
+
+            $title = preg_replace('/\s+/', ' ', trim($title));
+            $description = preg_replace('/\s+/', ' ', trim($description));
+
+            return [
+                'title' => $title,
+                'keywords' => $keywords,
+                'description' => $description,
+                'content' => $content,
+                'gender' => $gender,
+                'city' => $city,
+                'country' => $city->country ?? null,
+                'seo_record' => null,
+                'default_seo_setting' => $defaultSeo,
+            ];
+        }
+
+        // Fallback title mirrors NewsPage::render() so head <title> stays sensible
+        // even before an admin fills in the news-page context row.
+        $title = $typeLabel
+            ? "{$cityName} Escort News: {$typeLabel} | {$siteName}"
+            : "{$cityName} Escort News | {$siteName}";
+
+        return [
+            'title' => $title,
+            'keywords' => "{$cityName} escort news, {$genderName} escorts, new reviews, new questions",
+            'description' => "Latest {$genderName} escort news in {$cityName}: newly listed escorts, fresh reviews, and answered questions.",
+            'content' => '',
+            'gender' => $gender,
+            'city' => $city,
+            'country' => $city->country ?? null,
+            'seo_record' => null,
+            'default_seo_setting' => null,
+        ];
     }
     
     /**

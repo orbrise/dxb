@@ -65,6 +65,17 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Dedicated channel for WebRTC / call signaling — everything the
+        // CallController and the JS caller/callee JS logs lands here so we
+        // can tail rtc-YYYY-MM-DD.log without wading through everything.
+        'rtc' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/rtc.log'),
+            'level' => 'debug',
+            'days' => 7,
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

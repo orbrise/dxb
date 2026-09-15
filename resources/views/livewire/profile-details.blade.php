@@ -1766,6 +1766,12 @@
                   <a class="pb-photo-link"
                     href="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}">
                     <span class="img-wrapper listing">
+                      @if($user->is_verified || ($user->photoverify && $user->photoverify->status == 'approved'))
+                      <span class="verified-image text-left small" title="Photos Verified by Evoory">
+                        <i class="fa fa-check"></i>
+                        <span>Verified photos</span>
+                      </span>
+                      @endif
                       <div class="image-wrapper">
                         <img alt="{{ $userName }} - escort in {{ $userCityField }}" class="img-responsive uniform-image"
                           loading="lazy" decoding="async"

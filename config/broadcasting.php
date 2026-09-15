@@ -38,9 +38,14 @@ return [
             'options' => [
                 'host' => env('REVERB_SERVER_HOST', '127.0.0.1'), // Internal connection to Reverb
                 'port' => env('REVERB_SERVER_PORT', 8080),
-                'scheme' => 'http', // Internal connection uses http
-                'useTLS' => false,
-            ], 
+                // Match Reverb's actual bind scheme. When REVERB_SCHEME=https,
+                // config/reverb.php's tls block engages (Laragon cert), so the
+                // Reverb server only speaks TLS. Sending plain http to a
+                // TLS-only endpoint dies with "cURL error 56 Connection reset"
+                // — which is exactly the CallSignal broadcast failure we saw.
+                'scheme' => env('REVERB_SCHEME', 'http'),
+                'useTLS' => env('REVERB_SCHEME', 'http') === 'https',
+            ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
                 'verify' => false,

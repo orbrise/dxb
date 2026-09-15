@@ -19,7 +19,10 @@ class NewChatMessage implements ShouldBroadcastNow
     public int $receiverId;
 
     /**
-     * Create a new event instance.
+     * @param  Message  $message
+     * @param  int      $receiverId  0 = broadcast to shared support-inbox channel
+     *                               (any admin can subscribe); otherwise the
+     *                               specific recipient's private chat channel.
      */
     public function __construct(Message $message, int $receiverId)
     {
@@ -27,23 +30,33 @@ class NewChatMessage implements ShouldBroadcastNow
         $this->receiverId = $receiverId;
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
     public function broadcastOn(): array
     {
-        return [
-            new PrivateChannel('chat.' . $this->receiverId),
-        ];
+        // Support messages: only to the shared support-inbox channel.
+        // Non-support messages: to the recipient's private chat channel.
+        // Admin replies to a support convo: to BOTH the customer's chat channel
+        // AND the support-inbox (so other admins see the update in real time).
+        $channels = [];
+
+        $conversation = $this->message->conversation;
+        $isSupport = $conversation && $conversation->is_support;
+
+        if ($isSupport) {
+            $channels[] = new PrivateChannel('support-inbox');
+
+            // If admin is replying, also push to the customer's channel.
+            if ($this->receiverId > 0) {
+                $channels[] = new PrivateChannel('chat.' . $this->receiverId);
+            }
+        } else {
+            if ($this->receiverId > 0) {
+                $channels[] = new PrivateChannel('chat.' . $this->receiverId);
+            }
+        }
+
+        return $channels;
     }
 
-    /**
-     * Get the data to broadcast.
-     *
-     * @return array<string, mixed>
-     */
     public function broadcastWith(): array
     {
         return [
@@ -55,14 +68,18 @@ class NewChatMessage implements ShouldBroadcastNow
                 'message' => $this->message->message,
                 'status' => $this->message->status,
                 'created_at' => $this->message->created_at->toISOString(),
-                'is_mine' => false, // It's never "mine" for the receiver
+                'is_support' => (bool) ($this->message->conversation?->is_support ?? false),
+                'is_mine' => false,
+                'attachment_url' => $this->message->attachment_url,
+                'attachment_type' => $this->message->attachment_type,
+                'attachment_mime' => $this->message->attachment_mime,
+                'attachment_size' => $this->message->attachment_size,
+                'attachment_duration' => $this->message->attachment_duration,
+                'attachment_original_name' => $this->message->attachment_original_name,
             ],
         ];
     }
 
-    /**
-     * The event's broadcast name.
-     */
     public function broadcastAs(): string
     {
         return 'NewChatMessage';

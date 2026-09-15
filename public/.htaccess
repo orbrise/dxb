@@ -19,3 +19,16 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Explicit MIME types for chat voice notes and other audio/video attachments.
+# Default Apache mime.types on some Laragon installs lacks .webm / .opus,
+# causing Chrome to refuse playback with "unable to play" even though the
+# file streams fine. Force the Content-Type here for anything served out
+# of public/ (which includes public/storage → storage/app/public).
+<IfModule mod_mime.c>
+    AddType audio/webm .webm .weba
+    AddType audio/ogg  .ogg .oga .opus
+    AddType audio/mp4  .m4a
+    AddType video/webm .webm
+    AddType video/mp4  .m4v .mp4
+</IfModule>

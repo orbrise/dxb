@@ -21,9 +21,16 @@
     // on non-polling pages without changing every caller.
     $active = $active ?? null;
     $isMessagesActive  = $active === 'messages'  || (is_null($active) && request()->routeIs('user.chat*'));
+    $isCallsActive     = $active === 'calls'     || (is_null($active) && request()->routeIs('user.calls'));
     $isQuestionsActive = $active === 'questions' || (is_null($active) && request()->routeIs('user.questions'));
     $isReviewsActive   = $active === 'reviews'   || (is_null($active) && request()->routeIs('user.reviews'));
     $isFavoritesActive = $active === 'favorites' || (is_null($active) && request()->routeIs('favorites.dashboard'));
+
+    // Unseen missed calls — powers the red badge on the Calls tab.
+    $missedCallCount = 0;
+    if (auth()->check()) {
+        $missedCallCount = \App\Models\Call::unseenMissedFor(auth()->id())->count();
+    }
 @endphp
 
 <style>
@@ -173,6 +180,15 @@
                 @endphp
                 @if($chatUnreadCount > 0)
                     <span class="communication-nav-badge">{{ $chatUnreadCount }}</span>
+                @endif
+            </a>
+        </li>
+        <li class="communication-nav-item">
+            <a href="{{ route('user.calls') }}" class="communication-nav-link {{ $isCallsActive ? 'active' : '' }}">
+                <i class="fa fa-phone"></i>
+                <span>Calls</span>
+                @if($missedCallCount > 0)
+                    <span class="communication-nav-badge" style="background:#ef4444;">{{ $missedCallCount }}</span>
                 @endif
             </a>
         </li>

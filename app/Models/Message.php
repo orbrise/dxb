@@ -19,7 +19,13 @@ class Message extends Model
         'phone',
         'reply',
         'status',
-        'replied_at'
+        'replied_at',
+        'attachment_path',
+        'attachment_type',
+        'attachment_mime',
+        'attachment_size',
+        'attachment_duration',
+        'attachment_original_name',
     ];
 
     /**
@@ -29,7 +35,33 @@ class Message extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'replied_at' => 'datetime',
+        'attachment_size' => 'integer',
+        'attachment_duration' => 'integer',
     ];
+
+    /**
+     * Full public URL to the attachment (for use in <img>, <a href>, <audio>).
+     *
+     * ALL attachment types go through the chat.media.serve route:
+     *  - forces the correct Content-Type (some hosts don't map .webm)
+     *  - enforces the conversation-participant permission check
+     *  - doesn't rely on a public/storage symlink (which is missing on
+     *    this host — public/storage is a real directory used for other
+     *    assets, not a symlink to storage/app/public)
+     */
+    public function getAttachmentUrlAttribute(): ?string
+    {
+        if (!$this->attachment_path || !$this->id) return null;
+        return route('chat.media.serve', $this->id);
+    }
+
+    /**
+     * Convenience: is this message just a media message?
+     */
+    public function hasAttachment(): bool
+    {
+        return !empty($this->attachment_path);
+    }
 
     /**
      * Get the conversation this message belongs to

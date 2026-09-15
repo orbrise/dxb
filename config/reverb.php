@@ -40,7 +40,10 @@ return [
                     'verify_peer' => false,
                 ] : [],
             ],
-            'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_000),
+            // Bumped to 128 KB — WebRTC offer/answer SDPs are ~5-15 KB and
+            // ICE candidate payloads accumulate. The default 10_000 silently
+            // dropped CallSignal broadcasts.
+            'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 131_072),
             'scaling' => [
                 'enabled' => env('REVERB_SCALING_ENABLED', false),
                 'channel' => env('REVERB_SCALING_CHANNEL', 'reverb'),
@@ -90,7 +93,8 @@ return [
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),
-                'max_message_size' => env('REVERB_APP_MAX_MESSAGE_SIZE', 10_000),
+                // See max_request_size above — SDP can be >10 KB.
+                'max_message_size' => env('REVERB_APP_MAX_MESSAGE_SIZE', 131_072),
             ],
         ],
 

@@ -8,6 +8,26 @@
                             <span class="hide-menu">Dashboard</span>
                         </a>
                     </li><!--end -->
+
+                    <li class="{{ Route::currentRouteName() == 'admin.support.inbox' ? 'current-page' : '' }}">
+                        <a class="ripple" href="{{route('admin.support.inbox')}}">
+                            <i class="list-icon material-icons">chat</i>
+                            <span class="hide-menu">Support Inbox</span>
+                            @php
+                                $pendingSupport = \App\Models\Conversation::support()
+                                    ->whereHas('messages', function ($q) {
+                                        $q->whereColumn('sender_id', 'conversations.user_one_id')
+                                          ->where(function ($qq) {
+                                              $qq->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
+                                          });
+                                    })
+                                    ->count();
+                            @endphp
+                            @if($pendingSupport > 0)
+                                <span class="badge badge-pill badge-danger ml-2">{{ $pendingSupport }}</span>
+                            @endif
+                        </a>
+                    </li><!--end -->
                     
                     @php
                         $profileRoutes = ['admin.profiles.index','admin.verifications', 'admin.genders', 'admin.busts', 'admin.haircolors', 'admin.ethnicities', 'admin.languages', 'admin.orientations'];

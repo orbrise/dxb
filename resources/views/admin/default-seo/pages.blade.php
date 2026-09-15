@@ -47,6 +47,73 @@
                     <strong>How it works:</strong> Each route below can have its own SEO. Rows marked <span class="badge badge-success">Custom</span> have an override; rows marked <span class="badge badge-light">Default</span> fall back to the global default. Click <em>Set SEO</em> to add a custom entry, or <em>Edit</em> to change an existing one.
                 </div>
 
+                {{-- Pattern-based pages: dynamic routes with URL parameters
+                     (news, homepage, city-listings, …) that can't be listed as
+                     concrete paths. Each maps to a named context in
+                     default_seo_settings; title/description/keywords may use
+                     {gender}/{city}/{country}/{type}/{site_name} placeholders
+                     that SeoService substitutes at runtime. --}}
+                <h6 class="mt-2 mb-2"><strong>Pattern-Based Pages</strong></h6>
+                <p class="text-muted small mb-2">These pages have dynamic URLs (gender/city/type in the path). Set one SEO entry per pattern — placeholders like <code>{gender}</code>, <code>{city}</code>, <code>{country}</code>, <code>{type}</code>, <code>{site_name}</code> are substituted for each request.</p>
+                <div class="table-responsive mb-4">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Page</th>
+                                <th>Context Name</th>
+                                <th>Status</th>
+                                <th>Current Title</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($patternPages as $page)
+                                @php $pageSeo = $settings[$page->name] ?? null; @endphp
+                                <tr>
+                                    <td>
+                                        <strong>{{ $page->label }}</strong>
+                                        <div class="text-muted small">{{ $page->description }}</div>
+                                        @if($page->example_url)
+                                            <div class="small mt-1">Example: <a href="{{ $page->example_url }}" target="_blank" rel="noopener">{{ $page->example_label }}</a></div>
+                                        @endif
+                                    </td>
+                                    <td><code>{{ $page->name }}</code></td>
+                                    <td>
+                                        @if($pageSeo && $pageSeo->is_active)
+                                            <span class="badge badge-success">Custom</span>
+                                        @elseif($pageSeo && !$pageSeo->is_active)
+                                            <span class="badge badge-warning">Custom (Inactive)</span>
+                                        @else
+                                            <span class="badge badge-light">Default</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $pageSeo ? Str::limit($pageSeo->title, 60) : '—' }}</td>
+                                    <td>
+                                        @if($pageSeo)
+                                            <a href="{{ route('default-seo.edit', $pageSeo->id) }}" class="btn btn-info btn-sm">
+                                                <i class="fa-solid fa-pen"></i> Edit
+                                            </a>
+                                            <form action="{{ route('default-seo.destroy', $pageSeo->id) }}" method="POST" style="display:inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove SEO for {{ $page->label }}? It will revert to the global default.')">
+                                                    <i class="fa-solid fa-trash-can"></i> Remove
+                                                </button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('default-seo.create', ['name' => $page->name, 'priority' => 10]) }}" class="btn btn-primary btn-sm">
+                                                <i class="fa-solid fa-plus"></i> Set SEO
+                                            </a>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <h6 class="mt-4 mb-2"><strong>Static Routes</strong></h6>
+
                 <div class="table-responsive">
                     <table id="page_seo_table" class="table table-striped">
                         <thead>
@@ -60,7 +127,7 @@
                         </thead>
                         <tbody>
                             @forelse($routes as $route)
-                                @php $setting = $settings[$route->path] ?? null; @endphp
+                                @php $routeSeo = $settings[$route->path] ?? null; @endphp
                                 <tr>
                                     <td>
                                         <a href="{{ url($route->path) }}" target="_blank" rel="noopener">/{{ $route->path }}</a>
@@ -73,21 +140,21 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if($setting && $setting->is_active)
+                                        @if($routeSeo && $routeSeo->is_active)
                                             <span class="badge badge-success">Custom</span>
-                                        @elseif($setting && !$setting->is_active)
+                                        @elseif($routeSeo && !$routeSeo->is_active)
                                             <span class="badge badge-warning">Custom (Inactive)</span>
                                         @else
                                             <span class="badge badge-light">Default</span>
                                         @endif
                                     </td>
-                                    <td>{{ $setting ? Str::limit($setting->title, 60) : '—' }}</td>
+                                    <td>{{ $routeSeo ? Str::limit($routeSeo->title, 60) : '—' }}</td>
                                     <td>
-                                        @if($setting)
-                                            <a href="{{ route('default-seo.edit', $setting->id) }}" class="btn btn-info btn-sm">
+                                        @if($routeSeo)
+                                            <a href="{{ route('default-seo.edit', $routeSeo->id) }}" class="btn btn-info btn-sm">
                                                 <i class="fa-solid fa-pen"></i> Edit
                                             </a>
-                                            <form action="{{ route('default-seo.destroy', $setting->id) }}" method="POST" style="display:inline-block;">
+                                            <form action="{{ route('default-seo.destroy', $routeSeo->id) }}" method="POST" style="display:inline-block;">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove custom SEO for /{{ $route->path }}? It will revert to the global default.')">
