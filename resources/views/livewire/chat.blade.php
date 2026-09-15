@@ -1871,15 +1871,25 @@
         // broadcast is late/dropped. pollRefresh (unlike refreshChat) does
         // NOT dispatch 'message-received', so it never fights the user's
         // scroll position when they're reading history.
-        // Sidebar-badge + tick-mark refresh. Uses refreshChat (which has
-        // existed since day 1) instead of a newer method — opcache on this
-        // Windows install stubbornly refuses to pick up newly-added Chat.php
-        // methods without a PHP restart, and a MethodNotFoundException from
-        // Livewire blanks the whole component.
+        // Sidebar-badge + tick-mark refresh. Anchored on #chatSidebar so
+        // the poll only fires when the Chat Livewire component is actually
+        // on the page — otherwise (e.g. after client-side navigation to
+        // another page that has its own Livewire component higher in the
+        // DOM), querySelector('[wire\\:id]') would find a non-Chat component
+        // and Livewire would throw MethodNotFoundException for refreshChat.
         if (!window.__chatState.tickPoll) {
             window.__chatState.tickPoll = setInterval(() => {
                 if (document.hidden) return;
-                const root = document.querySelector('[wire\\:id]');
+                // Skip while a voice recording is in progress — the poll's
+                // Livewire re-render morphs the input row and can cause the
+                // MediaRecorder pipeline to abort partway through, sending
+                // an incomplete blob.
+                if (window.__chatState.recorder) return;
+                // Chat sidebar only exists on /my-chat, so use it as the
+                // "am I still on the chat page?" sentinel.
+                const anchor = document.getElementById('chatSidebar');
+                if (!anchor) return;
+                const root = anchor.closest('[wire\\:id]');
                 if (!root) return;
                 const comp = Livewire.find(root.getAttribute('wire:id'));
                 if (!comp) return;

@@ -522,15 +522,14 @@
     }
 
     // --- Incoming ringtone (Web Audio) ---------------------------------
-    // A single "ring" is a warble that mimics classic phone ringtones:
-    //   ~800Hz beep — 400ms
-    //   pause      — 100ms
-    //   ~1000Hz beep — 400ms
-    //   silence    — 2000ms
-    // Each note fades in/out (100ms envelope) to avoid harsh clicks, and the
-    // pattern loops until stopIncomingRing() runs (accept/decline/hangup).
+    // Ringtone disabled for now — the incoming banner still shows visually,
+    // it just doesn't play audio. Set the flag below to true to re-enable
+    // the synthesized WhatsApp-style two-tone ring.
+    const RING_ENABLED = false;
+
     function startIncomingRing() {
         stopIncomingRing(); // ensure clean slate
+        if (!RING_ENABLED) return;   // audio disabled — banner only
 
         // Prefer the <audio> tag if it actually resolves — someone may drop
         // a proper ringtone.mp3 into public/assets/newtheme/ later.
@@ -539,11 +538,22 @@
             const p = audio.play();
             if (p && typeof p.then === 'function') {
                 p.then(() => { S.usingAudioElement = true; })
-                 .catch(() => { S.usingAudioElement = false; playSynthRing(); });
+                 .catch(() => { S.usingAudioElement = false; startSynthLoop(); });
                 return;
             }
         }
+        startSynthLoop();
+    }
+
+    // Schedule the repeating synth ring — the interval is created here,
+    // ONCE, so a single stopIncomingRing() call is enough to silence it.
+    // (Previous version set the interval inside playSynthRing itself,
+    // orphaning a new one on every tick; stopIncomingRing only cleared
+    // the newest reference so old intervals kept ringing forever.)
+    function startSynthLoop() {
         playSynthRing();
+        clearInterval(S.incomingRingInterval);
+        S.incomingRingInterval = setInterval(playSynthRing, 3000);
     }
 
     function playSynthRing() {
@@ -573,8 +583,6 @@
             const now = ctx.currentTime;
             playNote(800,  now,        0.40);
             playNote(1000, now + 0.50, 0.40);
-            // 3s total cycle (0.4 + 0.1 + 0.4 + 2.1 silence)
-            S.incomingRingInterval = setInterval(playSynthRing, 3000);
         } catch (err) {
             console.warn('[rtc] synth ringtone failed', err);
         }
