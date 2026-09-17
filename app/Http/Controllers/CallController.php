@@ -403,6 +403,60 @@ class CallController extends Controller
     }
 
     /**
+     * Mint short-lived ICE server credentials for the WebRTC client using the
+     * REST/HMAC scheme (RFC 7635 / draft-uberti-behave-turn-rest). The coturn
+     * server has `use-auth-secret` + `static-auth-secret=<shared>` set, so the
+     * credential the browser presents doesn't have to be pre-registered — coturn
+     * validates it on the fly by re-computing the HMAC. This lets us hand out
+     * per-user, time-limited creds without any allocation on the TURN server.
+     *
+     * Username: "<expiry-unix-ts>:<user-id>"
+     * Credential: base64(hmac_sha1(username, shared_secret))
+     *
+     * We serve UDP + TCP + TLS variants of the same TURN URL so the client
+     * picks whichever gets through its firewall. UDP is fastest; TCP/TLS are
+     * fallbacks for restrictive networks (corporate proxies, some CGNAT).
+     */
+    public function turnCredentials(Request $request)
+    {
+        abort_unless($request->user(), 401);
+
+        $host   = (string) config('services.turn.host', '');
+        $secret = (string) config('services.turn.secret', '');
+        $ttl    = (int) config('services.turn.ttl', 86400);
+        if ($ttl < 300 || $ttl > 86400) $ttl = 86400;
+
+        // If TURN isn't configured (local dev), return STUN-only so calls at
+        // least attempt over public IPs — cross-symmetric-NAT will fail
+        // cleanly rather than hang.
+        if ($host === '' || $secret === '') {
+            return response()->json([
+                'iceServers' => [
+                    ['urls' => 'stun:stun.l.google.com:19302'],
+                ],
+                'source' => 'stun-only',
+            ])->header('Cache-Control', 'no-store, private, max-age=0, must-revalidate');
+        }
+
+        $username   = (time() + $ttl) . ':' . $request->user()->id;
+        $credential = base64_encode(hash_hmac('sha1', $username, $secret, true));
+
+        return response()->json([
+            'iceServers' => [
+                ['urls' => [
+                    'stun:stun.l.google.com:19302',
+                    'stun:stun1.l.google.com:19302',
+                    "stun:{$host}:3478",
+                ]],
+                ['urls' => "turn:{$host}:3478?transport=udp",  'username' => $username, 'credential' => $credential],
+                ['urls' => "turn:{$host}:3478?transport=tcp",  'username' => $username, 'credential' => $credential],
+                ['urls' => "turns:{$host}:5349?transport=tcp", 'username' => $username, 'credential' => $credential],
+            ],
+            'source' => 'coturn-hmac',
+        ])->header('Cache-Control', 'no-store, private, max-age=0, must-revalidate');
+    }
+
+    /**
      * Insert a WhatsApp-style call-summary message into the associated
      * conversation so both participants see the call outcome in their thread.
      * Reuses the existing attachment_* columns (no schema change):

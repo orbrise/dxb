@@ -1658,42 +1658,51 @@
             });
         });
 
-        // Emoji picker: use event delegation so it survives Livewire DOM morphs.
-        function wireEmojiPicker() {
-            const wrapper = document.getElementById('emojiPickerWrapper');
-            const picker = document.getElementById('emojiPicker');
-            if (!picker || window.__chatState.emojiWired) return;
+        // Emoji picker — registered directly at script parse time.
+        // Fully document-delegated with fresh DOM lookups on every event,
+        // so it survives every Livewire re-render (poll refresh, message
+        // send, conversation switch) without needing to be re-wired.
+        (function wireEmojiPickerOnce() {
+            if (window.__chatState.emojiWired) return;
             window.__chatState.emojiWired = true;
 
             document.addEventListener('click', (e) => {
-                const toggle = e.target.closest('#emojiToggleBtn');
-                if (toggle) {
+                const toggleBtn = e.target.closest('#emojiToggleBtn');
+                if (toggleBtn) {
                     e.preventDefault();
-                    wrapper?.classList.toggle('open');
+                    e.stopPropagation();
+                    const wrap = document.getElementById('emojiPickerWrapper');
+                    if (!wrap) { console.warn('[emoji] wrapper not found in DOM'); return; }
+                    wrap.classList.toggle('open');
                     return;
                 }
-                // Close when clicking outside
-                if (!e.target.closest('.emoji-picker-wrapper') && !e.target.closest('#emojiToggleBtn')) {
-                    wrapper?.classList.remove('open');
+                // Click outside → close.
+                if (!e.target.closest('#emojiPickerWrapper')) {
+                    document.getElementById('emojiPickerWrapper')?.classList.remove('open');
                 }
             });
 
-            picker.addEventListener('emoji-click', (event) => {
+            // emoji-click bubbles from <emoji-picker> to document.
+            document.addEventListener('emoji-click', (event) => {
                 const input = document.getElementById('chatReplyInput');
                 if (!input) return;
-                const emoji = event.detail.unicode;
+                const emoji = event.detail?.unicode;
+                if (!emoji) return;
                 const start = input.selectionStart ?? input.value.length;
                 const end = input.selectionEnd ?? input.value.length;
                 input.value = input.value.slice(0, start) + emoji + input.value.slice(end);
                 input.setSelectionRange(start + emoji.length, start + emoji.length);
                 input.focus();
-                // Sync into Livewire's `reply` property.
                 const root = input.closest('[wire\\:id]');
-                if (root) {
-                    Livewire.find(root.getAttribute('wire:id')).set('reply', input.value, false);
+                if (root && window.Livewire) {
+                    Livewire.find(root.getAttribute('wire:id'))?.set('reply', input.value, false);
                 }
             });
-        }
+        })();
+
+        // Kept as a no-op so the existing DOMContentLoaded / livewire:navigated
+        // hooks that call wireEmojiPicker() don't error out.
+        function wireEmojiPicker() { /* IIFE above handles wiring */ }
 
         // Typing indicator via Echo whispers. Delegated to survive DOM morphs.
         function wireTypingWhispers() {

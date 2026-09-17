@@ -95,4 +95,27 @@ return [
         'enabled' => env('CLOUDFLARE_PURGE_ENABLED', false),
     ],
 
+    // Self-hosted coturn TURN server (used by the WebRTC 1:1 call flow).
+    // The coturn instance has `use-auth-secret` + `static-auth-secret=<secret>`
+    // configured, so CallController::turnCredentials() mints per-user short-
+    // lived HMAC credentials on the fly — no need to register users on the
+    // TURN server side. This is the standard REST/HMAC auth scheme
+    // (RFC 7635 / draft-uberti-behave-turn-rest) used by every serious
+    // WebRTC deployment.
+    //
+    // When either is empty (typically local dev), the endpoint returns
+    // STUN-only servers so same-network calls still work.
+    'turn' => [
+        // Hostname or IP of the coturn server. Ports 3478 (UDP+TCP) and 5349
+        // (TLS) must both be reachable from the public internet.
+        'host' => env('TURN_HOST'),
+        // Shared secret matching coturn's `static-auth-secret=` config line.
+        // Rotate it in both places if it leaks.
+        'secret' => env('TURN_SECRET'),
+        // Credential lifetime in seconds. Long enough that reconnects on the
+        // same page load stay authenticated; short enough that leaked creds
+        // don't relay traffic forever.
+        'ttl' => (int) env('TURN_TTL', 86400),
+    ],
+
 ];

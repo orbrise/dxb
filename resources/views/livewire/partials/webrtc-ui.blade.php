@@ -245,6 +245,13 @@
         </div>
         <video class="rtc-remote" id="rtcRemoteVideo" autoplay playsinline></video>
         <video class="rtc-local"  id="rtcLocalVideo"  autoplay playsinline muted></video>
+        {{-- Dedicated audio element for remote AUDIO tracks. Mobile browsers
+             (Chrome Android, Safari iOS, Samsung Internet) often refuse to
+             autoplay audio through a <video> element that has no video track
+             — the remote voice ends up silent. Routing audio tracks here
+             (see ontrack handler in webrtc-scripts.blade.php) fixes voice
+             calls on mobile. autoplay + playsinline are BOTH required. --}}
+        <audio id="rtcRemoteAudio" autoplay playsinline style="display:none;"></audio>
     </div>
 
     <div class="rtc-controls">

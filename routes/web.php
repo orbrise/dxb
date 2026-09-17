@@ -326,6 +326,11 @@ Route::group(['middleware'=>'auth'], function(){
         ->name('rtc.ping.user');
     Route::get("rtc/diag", [\App\Http\Controllers\CallController::class, 'diag'])->name('rtc.diag');
 
+    // Short-lived TURN credentials — the WebRTC client fetches this before
+    // creating an RTCPeerConnection so relay servers use fresh, per-session
+    // credentials rather than a hardcoded pair baked into the JS bundle.
+    Route::get("rtc/turn", [\App\Http\Controllers\CallController::class, 'turnCredentials'])->name('rtc.turn');
+
     // Dedicated voice-note upload endpoint. Livewire's programmatic upload API
     // was returning "Path cannot be empty" for MediaRecorder blobs, so we take
     // direct control: multipart POST → storage → Message → broadcast.

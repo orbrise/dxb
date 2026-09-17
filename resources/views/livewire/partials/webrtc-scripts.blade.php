@@ -18,6 +18,12 @@
     const S = window.__rtc = {
         pollTimer: null,
         pollSeen: new Set(),  // ids of signals we've already processed
+        // Call IDs the user has dismissed on this side (decline / hangup /
+        // caller-cancel). If a stray poll re-delivers an old offer, we
+        // ignore it instead of re-ringing the callee. Kept in-memory only —
+        // resets on page reload, which is fine (a genuine new call from
+        // the same peer will use a fresh call_id).
+        dismissedCallIds: new Set(),
         ringOscillators: [],  // active Web Audio oscillators for the incoming ring
         incomingRingInterval: null,
         pc: null,               // RTCPeerConnection
@@ -34,29 +40,45 @@
         startedAt: null,
         connectedAt: null,
         ringOsc: null,          // Web Audio oscillator used as ringback
+        iceServers: null,       // populated by fetchIceServers() on first call
     };
 
     // --- ICE servers ---------------------------------------------------
-    const iceServers = [
+    // Fetched at call time from /rtc/turn — the backend mints per-user
+    // short-lived HMAC credentials for our self-hosted coturn. STUN-only
+    // fallback below keeps same-network calls working if the endpoint fails.
+    const FALLBACK_ICE_SERVERS = [
         { urls: 'stun:stun.l.google.com:19302' },
-        // Metered Open Relay (free TURN — works when STUN alone fails behind
-        // strict NATs). Publicly published credentials.
-        {
-            urls: 'turn:openrelay.metered.ca:80',
-            username: 'openrelayproject',
-            credential: 'openrelayproject',
-        },
-        {
-            urls: 'turn:openrelay.metered.ca:443',
-            username: 'openrelayproject',
-            credential: 'openrelayproject',
-        },
-        {
-            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-            username: 'openrelayproject',
-            credential: 'openrelayproject',
-        },
     ];
+
+    async function fetchIceServers() {
+        if (S.iceServers) return S.iceServers;
+        try {
+            const csrf = document.querySelector('meta[name=csrf-token]')?.content;
+            const res = await fetch('/rtc/turn', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+                },
+                credentials: 'same-origin',
+                cache: 'no-store',
+            });
+            if (!res.ok) throw new Error('turn endpoint returned ' + res.status);
+            const data = await res.json();
+            if (!Array.isArray(data.iceServers) || !data.iceServers.length) {
+                throw new Error('turn endpoint returned no iceServers');
+            }
+            S.iceServers = data.iceServers;
+            console.log('[rtc] iceServers loaded, source:', data.source, 'count:', data.iceServers.length);
+            return S.iceServers;
+        } catch (err) {
+            console.warn('[rtc] fetchIceServers failed, using STUN-only fallback:', err);
+            S.iceServers = FALLBACK_ICE_SERVERS;
+            return S.iceServers;
+        }
+    }
 
     // --- Public API ----------------------------------------------------
     window.rtcStartCall = async function ({ userId, name, avatar, type, conversationId }) {
@@ -90,6 +112,8 @@
             await ensureLocalStream(type);
             console.log('[rtc] step: attachLocalPreview');
             attachLocalPreview();
+            console.log('[rtc] step: fetchIceServers');
+            await fetchIceServers();
             console.log('[rtc] step: createPeer');
             S.pc = createPeer();
             console.log('[rtc] step: addTracks', S.localStream.getTracks().length);
@@ -134,6 +158,18 @@
 
         try {
             if (t === 'offer') {
+                // If the user already dismissed this call (decline / hangup),
+                // never re-show the banner even if a stray poll re-delivers
+                // the offer. The caller will get a decline signal echoed by
+                // postSignal() below so their UI updates too.
+                if (S.dismissedCallIds.has(e.callId)) {
+                    console.log('[rtc] offer for dismissed callId — echoing decline & ignoring', e.callId);
+                    const prevCallId = S.callId;
+                    S.callId = e.callId;
+                    try { await postSignal('decline', {}, { targetOverride: e.from }); } catch (_) {}
+                    S.callId = prevCallId;
+                    return;
+                }
                 // Re-offer on an already-active call = ICE restart from the peer.
                 // Set as remote description, generate a new answer, send it back.
                 if (S.pc && S.callId === e.callId) {
@@ -241,6 +277,10 @@
             console.log('[rtc] accept step:', step);
             attachLocalPreview();
 
+            step = 'fetchIceServers';
+            console.log('[rtc] accept step:', step);
+            await fetchIceServers();
+
             step = 'createPeer';
             console.log('[rtc] accept step:', step);
             S.pc = createPeer();
@@ -294,43 +334,97 @@
         }
     }
 
+    // Bound-memory helper — the dismissedCallIds set grows one entry per
+    // ended/declined call. Trim to the most recent 200 IDs when it grows
+    // past 400, so a marathon session doesn't accumulate forever.
+    function rememberDismissed(callId) {
+        if (!callId) return;
+        S.dismissedCallIds.add(callId);
+        if (S.dismissedCallIds.size > 400) {
+            S.dismissedCallIds = new Set(Array.from(S.dismissedCallIds).slice(-200));
+        }
+    }
+
     async function declineIncoming() {
+        rememberDismissed(S.callId);
         hideIncoming();
         try { await postSignal('decline', {}); } catch (_) {}
         cleanup();
     }
 
     async function hangup() {
+        rememberDismissed(S.callId);
         try { await postSignal('hangup', {}); } catch (_) {}
         endCall(true);
     }
 
     // --- Peer factory --------------------------------------------------
     function createPeer() {
-        const pc = new RTCPeerConnection({ iceServers, iceCandidatePoolSize: 4 });
+        // S.iceServers is populated by fetchIceServers() before every call
+        // start; the FALLBACK_ICE_SERVERS default keeps the constructor
+        // usable if we somehow arrive here without a prior fetch (defensive).
+        // iceCandidatePoolSize omitted intentionally — pre-warming 4
+        // candidates was causing TCP-TURN allocations to time out before
+        // the offer even went out on mobile networks (slow round-trips).
+        // Default (0) starts gathering after setLocalDescription and
+        // trickles candidates as they arrive, which is faster and more
+        // reliable across mobile carriers.
+        const pc = new RTCPeerConnection({
+            iceServers: S.iceServers || FALLBACK_ICE_SERVERS,
+        });
 
         pc.onicecandidate = (ev) => {
             if (ev.candidate) postSignal('ice', { candidate: ev.candidate }).catch(() => {});
         };
 
         pc.ontrack = (ev) => {
-            if (!S.remoteStream) {
-                S.remoteStream = new MediaStream();
-                const el = document.getElementById('rtcRemoteVideo');
-                if (el) el.srcObject = S.remoteStream;
-            }
-            S.remoteStream.addTrack(ev.track);
-            // If the remote is sending video, hide the audio-only overlay.
-            if (ev.track.kind === 'video') {
+            // Split remote tracks by kind: audio → <audio>, video → <video>.
+            // Mobile browsers block autoplay of audio through a <video> tag
+            // when the video track is absent (voice-only calls), leaving
+            // the remote muted. A dedicated <audio> element works around it.
+            const rv = document.getElementById('rtcRemoteVideo');
+            const ra = document.getElementById('rtcRemoteAudio');
+
+            if (ev.track.kind === 'audio') {
+                if (!S.remoteAudioStream) {
+                    S.remoteAudioStream = new MediaStream();
+                    if (ra) ra.srcObject = S.remoteAudioStream;
+                }
+                S.remoteAudioStream.addTrack(ev.track);
+                // Some Android builds start the element paused despite
+                // autoplay — nudge it explicitly.
+                if (ra && ra.paused) ra.play().catch(() => {});
+            } else if (ev.track.kind === 'video') {
+                if (!S.remoteVideoStream) {
+                    S.remoteVideoStream = new MediaStream();
+                    if (rv) rv.srcObject = S.remoteVideoStream;
+                }
+                S.remoteVideoStream.addTrack(ev.track);
+                // Video arrived → hide the audio-only overlay, show video.
                 const ao = document.getElementById('rtcAudioOnly');
                 if (ao) ao.style.display = 'none';
-                const rv = document.getElementById('rtcRemoteVideo');
                 if (rv) rv.style.display = 'block';
+                if (rv && rv.paused) rv.play().catch(() => {});
             }
+
+            // Preserve S.remoteStream for callers that still reference it.
+            if (!S.remoteStream) S.remoteStream = new MediaStream();
+            S.remoteStream.addTrack(ev.track);
+        };
+
+        // Diagnostic — log every WebRTC state transition so we can see
+        // exactly where a failing call is dying (checking → connected vs
+        // checking → failed vs connected → disconnected, etc).
+        pc.oniceconnectionstatechange = () => {
+            console.log('[rtc] iceConnectionState →', pc.iceConnectionState);
+        };
+        pc.onicegatheringstatechange = () => {
+            console.log('[rtc] iceGatheringState →', pc.iceGatheringState);
         };
 
         pc.onconnectionstatechange = () => {
             const st = pc.connectionState;
+            console.log('[rtc] connectionState →', st);
             if (st === 'connected') {
                 S.connectedAt = S.connectedAt || Date.now();
                 setState('In call');
@@ -343,39 +437,39 @@
                 clearTimeout(S.reconnectHardTimer); S.reconnectHardTimer = null;
             }
 
-            // Transient blip: WebRTC often flips to 'disconnected' for 1-3s
-            // on network handoff (WiFi ↔ 4G, VPN switch). Give it grace before
-            // treating as fatal — most calls recover on their own within 5s.
-            if (st === 'disconnected') {
+            // 'disconnected' = transient blip (WiFi ↔ 4G handoff, VPN, etc.)
+            // 'failed' = ICE gave up. Try ICE restart in both cases; only give
+            // up entirely on 'closed' or on the fallback timeout.
+            if (st === 'disconnected' || st === 'failed') {
                 setState('Reconnecting…');
                 toast('Reconnecting…');
                 clearTimeout(S.reconnectTimer);
+                // Shorter grace for 'failed' — the browser has already given
+                // up so no point waiting 6s for a natural recovery.
+                const graceMs = (st === 'failed') ? 500 : 6000;
                 S.reconnectTimer = setTimeout(async () => {
                     if (!S.pc || S.pc.connectionState === 'connected') return;
-                    // Only the caller side initiates ICE restart to avoid
-                    // both peers restarting simultaneously.
                     if (S.role === 'caller') {
                         try {
                             const offer = await S.pc.createOffer({ iceRestart: true });
                             await S.pc.setLocalDescription(offer);
                             await postSignal('offer', { sdp: { type: offer.type, sdp: offer.sdp } });
+                            console.log('[rtc] ICE restart offer sent');
                         } catch (err) {
                             console.warn('ICE restart failed', err);
                         }
                     }
-                    // If not recovered within another 8s → give up.
                     clearTimeout(S.reconnectHardTimer);
                     S.reconnectHardTimer = setTimeout(() => {
                         if (S.pc && S.pc.connectionState !== 'connected') {
-                            toast('Connection lost.');
+                            toast('Connection lost — TURN may be blocked.');
                             endCall(false);
                         }
                     }, 8000);
-                }, 6000);
+                }, graceMs);
             }
 
-            if (st === 'failed' || st === 'closed') {
-                if (st === 'failed') toast('Connection lost.');
+            if (st === 'closed') {
                 endCall(false);
             }
         };
@@ -668,10 +762,8 @@
     }
 
     function endCall(hangupSent) {
+        rememberDismissed(S.callId);
         cleanup();
-        // Also dismiss the incoming-call banner — otherwise, if the caller
-        // hangs up before the callee picks up, the ringing card sits there
-        // with an Accept button leading to a dead call.
         hideIncoming();
         setTimeout(() => hideCallUI(), 200);
     }
@@ -685,8 +777,11 @@
         if (S.pc) { try { S.pc.close(); } catch (_) {} S.pc = null; }
         if (S.localStream) { S.localStream.getTracks().forEach(t => t.stop()); S.localStream = null; }
         S.remoteStream = null;
+        S.remoteAudioStream = null;
+        S.remoteVideoStream = null;
         const rv = document.getElementById('rtcRemoteVideo'); if (rv) rv.srcObject = null;
         const lv = document.getElementById('rtcLocalVideo');  if (lv) lv.srcObject = null;
+        const ra = document.getElementById('rtcRemoteAudio'); if (ra) ra.srcObject = null;
         S.callId = null; S.callType = null; S.peer = null; S.role = null; S.pendingIce = []; S._pendingOffer = null;
     }
 
