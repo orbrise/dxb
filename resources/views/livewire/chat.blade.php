@@ -1282,7 +1282,7 @@
                                             <span class="chat-chip-badge">{{ $chatUnreadCount }}</span>
                                         @endif
                                     </a>
-                                    <a href="{{ route('user.calls') }}" class="chat-chip">
+                                    <a href="{{ route('user.calls') }}" wire:navigate class="chat-chip">
                                         Calls
                                         @if($missedCallCount > 0)
                                             <span class="chat-chip-badge chat-chip-badge-red">{{ $missedCallCount }}</span>

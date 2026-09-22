@@ -18,6 +18,7 @@ class Setting extends Model
         'favicon',
         'admin_bg',
         'collapse_icon',
+        'call_ringtone_path',
         'auto_archive_enabled',
         'auto_archive_days',
         'send_archive_warning',

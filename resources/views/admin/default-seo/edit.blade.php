@@ -73,12 +73,17 @@
                 {{-- Show the placeholder cheat-sheet only for pattern-based
                      contexts. Fixed-path contexts (my-chat, about, …) get a
                      concrete URL — no placeholders to substitute. --}}
-                @if(in_array($defaultSeoSetting->name, ['news-page', 'city-pages', 'escorts', 'homepage']))
+                @if(in_array($defaultSeoSetting->name, ['news-page', 'city-pages', 'category-pages', 'escorts', 'homepage']))
                 <div class="alert alert-warning" role="alert">
                     <i class="fa fa-magic mr-2"></i>
                     <strong>Dynamic placeholders</strong> — usable in <em>Title</em>, <em>Meta Description</em>, <em>Meta Keywords</em>, and <em>Content</em>. Replaced per request based on the visited URL:
                     <ul class="mb-0 mt-2">
+                        @if($defaultSeoSetting->name !== 'category-pages')
                         <li><code>{gender}</code> — e.g. <em>Female</em>, <em>Male</em>, <em>Shemale</em></li>
+                        @endif
+                        @if($defaultSeoSetting->name === 'category-pages')
+                        <li><code>{category}</code> — e.g. <em>Massage</em>, <em>Phone &amp; Cam</em>, <em>Adult Products</em></li>
+                        @endif
                         <li><code>{city}</code> — e.g. <em>Abu Dhabi</em>, <em>Dubai</em></li>
                         <li><code>{country}</code> — e.g. <em>United Arab Emirates</em></li>
                         @if($defaultSeoSetting->name === 'news-page')
@@ -92,6 +97,14 @@
                         Title: <code>{city} Escort News — {type} | {site_name}</code><br>
                         Description: <code>Latest {gender} escort updates in {city}, {country}: newly listed profiles, fresh reviews and Q&amp;A.</code><br>
                         Keywords: <code>{city} escort news, {gender} escorts {city}, new reviews {city}</code>
+                    </div>
+                    @endif
+                    @if($defaultSeoSetting->name === 'category-pages')
+                    <div class="mt-2 small">
+                        <strong>Example:</strong><br>
+                        Title: <code>{category} in {city}, {country} | {site_name}</code><br>
+                        Description: <code>Browse {category} listings in {city}, {country}. Verified providers on {site_name}.</code><br>
+                        Keywords: <code>{category} {city}, {category} listings, {city} {category}</code>
                     </div>
                     @endif
                 </div>

@@ -11,6 +11,9 @@ use App\Models\Country;
 use App\Models\Language;
 use App\Models\HairColor;
 use App\Models\City;
+use App\Models\Listing;
+use Illuminate\Support\Facades\Cache;
+use App\Services\CacheService;
 
 class MobileSearch extends Component
 {
@@ -75,6 +78,14 @@ class MobileSearch extends Component
     
     public function render()
     {
+        $categoryOptions = Cache::remember('cache:category_options', CacheService::TTL_LOOKUP, function () {
+            return Listing::select('id', 'name', 'slug', 'is_escort_category', 'sort_order')
+                ->where('is_escort_category', false)
+                ->whereNotNull('slug')
+                ->orderBy('sort_order')
+                ->get();
+        });
+
         return view('livewire.mobile-search', [
             'currencies' => Currency::select('id', 'code', 'symbol')
                 ->get()
@@ -82,11 +93,12 @@ class MobileSearch extends Component
                 ->sortBy('code')
                 ->values(),
             'services' => Service::all(),
-            'busts' => Bust::all(), 
+            'busts' => Bust::all(),
             'ethnicities' => Ethnicity::all(),
             'countries' => Country::all(),
             'languages' => Language::all(),
             'hairs' => HairColor::all(),
+            'categoryOptions' => $categoryOptions,
         ])
         ->layout('layouts.mobile-search-layout');
     }

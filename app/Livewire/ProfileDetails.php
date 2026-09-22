@@ -23,17 +23,22 @@ use Illuminate\Support\Facades\Cache;
 #[Layout('components.layouts.app-evoory')]
 class ProfileDetails extends Component
 {
-    public  $city,$gender, $user, $images, $star, $review, $profileid, $question, $email, $msg, $code, $phone, $cityname;
+    public  $city,$gender, $category = '', $user, $images, $star, $review, $profileid, $question, $email, $msg, $code, $phone, $cityname;
     public $showReviewModal = false;
     public $reportType;
 public $reportDescription;
 
 
-    public function mount( $city = '', $gender= '', $id=''){
+    public function mount( $city = '', $gender= '', $category = '', $id=''){
 
         $this->profileid = $id;
         if(!empty($gender)){
           $this->gender = $gender;
+        }
+        // On /{category}-in-{city}/{id}/{slug} routes only $category is set;
+        // preserve it so any back-link in the view can rebuild the listing URL.
+        if(!empty($category)){
+          $this->category = $category;
         }
 
         if(!empty($city)){

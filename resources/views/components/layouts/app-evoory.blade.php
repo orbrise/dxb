@@ -268,6 +268,12 @@
              not just when they happen to have /my-chat open. The scripts
              are self-contained (fetch-based polling of /call/pending; no
              Echo dependency) so they work without loading @vite globally. --}}
+        {{-- Expose auth user info to the WebRTC scripts so we can pre-fill
+             the display name inside Jitsi's iframe. --}}
+        <script>
+            window.__authUserId   = @json(auth()->id());
+            window.__authUserName = @json(auth()->user()?->name ?: (auth()->user()?->email ?? ''));
+        </script>
         @include('livewire.partials.webrtc-scripts')
     @endauth
 

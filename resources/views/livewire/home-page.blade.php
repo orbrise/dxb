@@ -969,12 +969,32 @@
                 <!-- Basic search fields -->
                 <div class="form-group mb-3">
                     <label for="mobile_gender">I'm looking for</label>
-                    <select class="form-control form-control-lg" id="mobile_gender" wire:model="gender">
-                        <option value="female" selected>Female escorts</option>
-                        <option value="male">Male escorts</option>
-                        <option value="shemale">Shemale escorts</option>
+                    @php $currentCategory = $category ?? ''; @endphp
+                    <select class="form-control form-control-lg" id="mobile_gender" data-category-select data-city="{{ strtolower($selectedcity ?: 'dubai') }}">
+                        <option value="gender:female" @if($currentCategory === '' && ($gender ?? 'female') === 'female') selected @endif>Female escorts</option>
+                        <option value="gender:male" @if($currentCategory === '' && ($gender ?? '') === 'male') selected @endif>Male escorts</option>
+                        <option value="gender:shemale" @if($currentCategory === '' && ($gender ?? '') === 'shemale') selected @endif>Shemale escorts</option>
+                        @foreach($categoryOptions ?? [] as $opt)
+                            <option value="category:{{ $opt->slug }}" @if($currentCategory === $opt->slug) selected @endif>{{ $opt->name }}</option>
+                        @endforeach
                     </select>
                 </div>
+                <script>
+                    (function(){
+                        var sel = document.querySelector('#mobile_gender[data-category-select]');
+                        if(!sel || sel.dataset.bound === '1') return;
+                        sel.dataset.bound = '1';
+                        sel.addEventListener('change', function(){
+                            var val = this.value || '';
+                            var city = (this.dataset.city || 'dubai');
+                            if(val.indexOf('category:') === 0){
+                                window.location.href = '/' + val.slice(9) + '-in-' + city;
+                            } else if(val.indexOf('gender:') === 0){
+                                window.location.href = '/' + val.slice(7) + '-escorts-in-' + city;
+                            }
+                        });
+                    })();
+                </script>
                 
                 <!-- City search field -->
                 <div class="form-group mb-3">
@@ -1301,19 +1321,33 @@
                 {{-- Category --}}
                 <div class="ev-qf-group">
                     <label>Category</label>
+                    @php
+                        $qfCurrentCategory = $category ?? '';
+                        $qfCurrentLabel = $qfCurrentCategory !== ''
+                            ? ($categoryName ?: ucfirst(str_replace('-', ' ', $qfCurrentCategory)))
+                            : (ucfirst($gender ?? 'female') . ' escorts');
+                        // Hidden input carries "gender:female" or "category:massage" so
+                        // the apply-btn handler below can route to the correct URL.
+                        $qfHiddenVal = $qfCurrentCategory !== ''
+                            ? ('category:' . $qfCurrentCategory)
+                            : ('gender:' . ($gender ?? 'female'));
+                    @endphp
                     <div class="ev-qf-custom-dd" data-qf-dd data-qf-name="gender">
                         <button type="button" class="ev-qf-dd-trigger">
-                            <span class="ev-qf-dd-label" data-dd-label>{{ ucfirst($gender ?? 'female') }} escorts</span>
+                            <span class="ev-qf-dd-label" data-dd-label>{{ $qfCurrentLabel }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                         </button>
                         <div class="ev-qf-dd-menu" role="listbox">
                             <ul class="ev-qf-dd-options">
-                                <li data-val="female">Female escorts</li>
-                                <li data-val="male">Male escorts</li>
-                                <li data-val="shemale">Shemale escorts</li>
+                                <li data-val="gender:female">Female escorts</li>
+                                <li data-val="gender:male">Male escorts</li>
+                                <li data-val="gender:shemale">Shemale escorts</li>
+                                @foreach($categoryOptions ?? [] as $opt)
+                                    <li data-val="category:{{ $opt->slug }}">{{ $opt->name }}</li>
+                                @endforeach
                             </ul>
                         </div>
-                        <input type="hidden" id="ev-qf-gender" value="{{ $gender ?? 'female' }}">
+                        <input type="hidden" id="ev-qf-gender" value="{{ $qfHiddenVal }}">
                     </div>
                 </div>
 
@@ -1498,10 +1532,11 @@
         }
 
         // Apply button — navigate to /{gender}-escorts-in-{citySlug}?filters...
+        // or /{category}-in-{citySlug} depending on the hidden input's prefix.
         var applyBtn = document.getElementById('ev-qf-apply-btn');
         if(applyBtn){
             applyBtn.addEventListener('click', function(){
-                var genderVal = document.getElementById('ev-qf-gender').value || 'female';
+                var selection = document.getElementById('ev-qf-gender').value || 'gender:female';
                 var cityVal   = (document.getElementById('ev-qf-city').value || '').trim();
                 var cityIdVal = (document.getElementById('ev-qf-city-id') || {}).value || '';
                 var currencyVal = document.getElementById('ev-qf-currency').value;
@@ -1524,7 +1559,13 @@
                 if(rateVal) params.set('rate', rateVal);
                 serviceIds.forEach(function(id){ params.append('services[]', id); });
 
-                var url = '/' + genderVal + '-escorts-in-' + citySlug;
+                var url;
+                if(selection.indexOf('category:') === 0){
+                    url = '/' + selection.slice(9) + '-in-' + citySlug;
+                } else {
+                    var genderVal = selection.indexOf('gender:') === 0 ? selection.slice(7) : selection;
+                    url = '/' + (genderVal || 'female') + '-escorts-in-' + citySlug;
+                }
                 var qs = params.toString();
                 if(qs) url += '?' + qs;
 
@@ -1595,8 +1636,18 @@
       <div id="content" class="mt-3">
 
     <div class="col-md-9 col-xs-12" style="padding:0px">
-      <a class="page-title" href="/{{ $gender ?? 'female' }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}">
-        <h1 class="ev-city-heading">Escorts in {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}@if($currentCity && $currentCity->country), {{ $currentCity->country }}@endif</h1>
+      @php
+          $onCategory = ($category ?? '') !== '';
+          $listingCitySlug = $currentCity ? $currentCity->slug : 'dubai';
+          $listingBase = $onCategory
+              ? $category.'-in-'.$listingCitySlug
+              : ($gender ?? 'female').'-escorts-in-'.$listingCitySlug;
+          $listingHeading = $onCategory
+              ? ($categoryName ?: ucfirst(str_replace('-', ' ', $category)))
+              : 'Escorts';
+      @endphp
+      <a class="page-title" href="/{{ $listingBase }}">
+        <h1 class="ev-city-heading">{{ $listingHeading }} in {{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}@if($currentCity && $currentCity->country), {{ $currentCity->country }}@endif</h1>
       </a>
       
       {{-- Sort rotation indicator --}}
@@ -1634,8 +1685,16 @@
         @if($nearbyCities->count() > 0)
           We also have listings nearby in 
           @foreach($nearbyCities as $index => $nearbyCity)
-            <a title="{{ ucfirst($gender ?? 'Female') }} Escorts in {{ ucfirst($nearbyCity->name) }}" 
-               href="/{{ $gender ?? 'female' }}-escorts-in-{{ $nearbyCity->slug }}">{{ ucfirst($nearbyCity->name) }}</a>@if($index < $nearbyCities->count() - 2), @elseif($index == $nearbyCities->count() - 2), and @else. @endif
+            @php
+                $nearbyHref = $onCategory
+                    ? '/'.$category.'-in-'.$nearbyCity->slug
+                    : '/'.($gender ?? 'female').'-escorts-in-'.$nearbyCity->slug;
+                $nearbyTitleLabel = $onCategory
+                    ? ($categoryName ?: ucfirst(str_replace('-', ' ', $category)))
+                    : ucfirst($gender ?? 'Female').' Escorts';
+            @endphp
+            <a title="{{ $nearbyTitleLabel }} in {{ ucfirst($nearbyCity->name) }}"
+               href="{{ $nearbyHref }}">{{ ucfirst($nearbyCity->name) }}</a>@if($index < $nearbyCities->count() - 2), @elseif($index == $nearbyCities->count() - 2), and @else. @endif
           @endforeach
         @endif
       </p>
@@ -2006,6 +2065,17 @@
         </div> --}}
       </div>
       <div class="listings  @if($auctions->count() > 0 and Auth::check()) padding-top @endif">
+        @php
+            // Profile-card URL prefix. Category pages route through
+            // /{category}-in-{city}/{id}/{slug}; the legacy escort route
+            // stays /{gender}-escorts-in-{city}/{id}/{slug}.
+            // Route regexes require lowercase city slugs — $cityname carries
+            // the display-cased "Dubai" so slugify before embedding.
+            $profileCitySlug = strtolower(str_replace([' ', "'", '.'], ['-', '', ''], $cityname ?? 'dubai'));
+            $profilePathPrefix = ($category ?? '') !== ''
+                ? $category.'-in-'.$profileCitySlug
+                : ($gender ?: 'female').'-escorts-in-'.$profileCitySlug;
+        @endphp
         @forelse($profiles as $profile)
         @php
             $packageName = $profile->package ? strtolower($profile->package->name) : '';
@@ -2027,7 +2097,7 @@
                  title to a 404 for other profiles. Route to the real
                  profile using the same {gender}-escorts-in-{city}/{id}/{slug}
                  pattern as the desktop H2 further below. --}}
-            <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}" title="{{ $profile->name }}, escort in {{ $cityname }}">{{$profile->name}} <span class="badge" data-placement="top" data-toggle="tooltip" title="One review. Rating: ❤❤❤❤❤">
+            <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}" title="{{ $profile->name }}, escort in {{ $cityname }}">{{$profile->name}} <span class="badge" data-placement="top" data-toggle="tooltip" title="One review. Rating: ❤❤❤❤❤">
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 <span>1</span>
               </span>
@@ -2035,7 +2105,7 @@
           </h2>
           <div class="thumbs">
             <div class="main-thumbs">
-              <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper premium">
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2082,7 +2152,7 @@
             
               @forelse($profile->multipleimgs->take(3) as $imgs)
               <div class="thumb thumb-{{ $loop->index }}">
-                <a class="img img-responsive pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+                <a class="img img-responsive pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">
                  
                     @if($profile->is_verified)
@@ -2114,7 +2184,7 @@
           <div class="listing-info-wrapper">
             <div class="listing-info">
               <h2>
-                <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}" title="Lea, Ukrainian escort in Dubai (3)">{{$profile->name}} 
+                <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}" title="Lea, Ukrainian escort in Dubai (3)">{{$profile->name}} 
                   @if($profile->reviews_count > 0)
                   <span class="badge" data-placement="top" data-toggle="tooltip" title="{{$profile->reviews_count}} Reviews">
                   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -2128,11 +2198,11 @@
 
                 </a>
               </h2>
-              <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <p>{{str()->of($profile->about)->stripTags()->squish()->limit(400)}}</p>
               </a>
               <p class="no-margin see-more">
-                <a class="btn btn-dark" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
+                <a class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
               </p>
             </div>
           </div>
@@ -2141,11 +2211,11 @@
         @elseif($isFeatured)
         <div class="listing-li pb-3 featured thumbs-2 thumbs-mini">
           <h2 class="visible-xxs">
-            <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
+            <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
           </h2>
           <div class="thumbs">
             <div class="main-thumbs">
-              <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper featured">
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2168,7 +2238,7 @@
             <div class="other-thumbs pull-left">
           @forelse($profile->multipleimgs->take(2) as $k => $imgs)
               <div class="thumb thumb-{{ $k }}">
-                <a class="img img-responsive pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+                <a class="img img-responsive pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">
                     @if($profile->is_verified)
                     <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2195,13 +2265,13 @@
           <div class="listing-info-wrapper">
             <div class="listing-info">
               <h2>
-                <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}} </a>
+                <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}} </a>
               </h2>
-              <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <p>{{str()->of($profile->about)->stripTags()->squish()->limit(150)}}</p>
               </a>
               <p class="no-margin see-more">
-                <a class="btn btn-dark" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
+                <a class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
               </p>
             </div>
           </div>
@@ -2210,7 +2280,7 @@
         @elseif($isBasic)
         <div class="listing-li pb-3 basic thumbs-0 thumbs-basic" style="padding-left:0px">
           <h2 class="visible-xxs">
-            <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}  <span class="badge" data-placement="top" data-toggle="tooltip" title="" data-original-title="Curve Amber has answered 3 questions">
+            <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}  <span class="badge" data-placement="top" data-toggle="tooltip" title="" data-original-title="Curve Amber has answered 3 questions">
                 <i class="fa fa-question-circle"></i>
                 <span>3</span>
               </span>
@@ -2218,7 +2288,7 @@
           </h2>
           <div class="thumbs">
             <div class="main-thumbs">
-              <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2242,17 +2312,17 @@
           <div class="listing-info-wrapper">
             <div class="listing-info">
               <h2>
-                <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}  <span class="badge" data-placement="top" data-toggle="tooltip" title="" data-original-title="Curve Amber has answered 3 questions">
+                <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}  <span class="badge" data-placement="top" data-toggle="tooltip" title="" data-original-title="Curve Amber has answered 3 questions">
                     <i class="fa fa-question-circle"></i>
                     <span>3</span>
                   </span>
                 </a>
               </h2>
-              <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <p>{{str()->of($profile->about)->stripTags()->squish()->limit(70)}}</p>
               </a>
               <p class="no-margin see-more">
-                <a class="btn btn-dark" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
+                <a class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
               </p>
             </div>
           </div>
@@ -2262,11 +2332,11 @@
         {{-- Free profiles - same layout as basic --}}
         <div class="listing-li pb-3 basic thumbs-0 thumbs-basic" style="padding-left:0px">
           <h2 class="visible-xxs">
-            <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
+            <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
           </h2>
           <div class="thumbs">
             <div class="main-thumbs">
-              <a class="img pb-photo-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2290,13 +2360,13 @@
           <div class="listing-info-wrapper">
             <div class="listing-info">
               <h2>
-                <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
+                <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
               </h2>
-              <a class="nostyle-link" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <p>{{str()->of($profile->about)->stripTags()->squish()->limit(70)}}</p>
               </a>
               <p class="no-margin see-more">
-                <a class="btn btn-dark" href="{{url($gender.'-escorts-in-'.$cityname.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
+                <a class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
               </p>
             </div>
           </div>
@@ -2426,7 +2496,13 @@
                         ? ($fallbackCityModel->slug ?: strtolower(str_replace([' ', "'", '.'], ['-', '', ''], $fallbackCityModel->name)))
                         : ($cityname ?? 'dubai');
                     $fallbackCitySlug = preg_replace('/[^a-z0-9\-]/', '', $fallbackCitySlug);
-                    $fallbackUrl = url($gender.'-escorts-in-'.$fallbackCitySlug.'/'.$profile->id.'/'.$profile->slug);
+                    // Fallback profile URL respects the current listing context:
+                    // on /massage-in-dubai the fallback links point to
+                    // /massage-in-{fallbackCity}/{id}/{slug}; on escort pages
+                    // they keep the legacy /{gender}-escorts-in-… pattern.
+                    $fallbackUrl = ($category ?? '') !== ''
+                        ? url($category.'-in-'.$fallbackCitySlug.'/'.$profile->id.'/'.$profile->slug)
+                        : url($gender.'-escorts-in-'.$fallbackCitySlug.'/'.$profile->id.'/'.$profile->slug);
                     if (!empty($profile->coverimg->image)) {
                         $fallbackMainImg = webp_asset('userimages/'.$profile->user_id.'/'.$profile->id.'/'.$profile->coverimg->image);
                     } elseif (!empty($profile->singleimg->image)) {

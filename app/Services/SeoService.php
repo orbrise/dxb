@@ -9,6 +9,8 @@ use App\Models\Country;
 use App\Models\Setting;
 use App\Models\UrlAlias;
 use App\Models\DefaultSeoSetting;
+use App\Models\Listing;
+use App\Support\CategoryRoutes;
 
 class SeoService
 {
@@ -56,6 +58,20 @@ class SeoService
             return $seoData;
         }
 
+        // Non-escort category listings: /{category}-in-{city}
+        // Route: home.category (see routes/web.php). Category slug whitelist
+        // comes from CategoryRoutes so a bogus slug can't hijack this match.
+        $categoryPattern = CategoryRoutes::nonEscortSlugsPattern();
+        if ($categoryPattern !== ''
+            && preg_match('/^(' . $categoryPattern . ')-in-([a-z0-9\-]+)(?:\/page\/\d+)?$/', $actualPath, $matches)) {
+            $categoryData = $this->getCategoryPageSeoData($matches[1], $matches[2]);
+            $seoData = array_merge($seoData, $categoryData);
+            $seoData['is_alias'] = $actualPath !== $path;
+            $seoData['original_url'] = $path;
+            $seoData['resolved_url'] = $actualPath;
+            return $seoData;
+        }
+
         // News page pattern: {gender}-escort-news-in-{city}[/{type}]
         // Routes: news.all + news.page (see routes/web.php)
         if (preg_match('/^(female|male|shemale)-escort-news-in-([a-z0-9\-]+)(?:\/(new-escorts|new-reviews|new-questions))?$/', $actualPath, $matches)) {
@@ -69,6 +85,74 @@ class SeoService
 
         // Try alternative patterns or specific pages
         return array_merge($seoData, $this->getSeoDataByPage($actualPath));
+    }
+
+    /**
+     * Resolve SEO for non-escort category listings (/{category}-in-{city}).
+     * Admin sets a single "category-pages" context in default_seo_settings;
+     * placeholders {category}, {city}, {country}, {site_name} are substituted
+     * at runtime. Falls back to a generated title when the context row is absent.
+     */
+    private function getCategoryPageSeoData($categorySlug, $citySlug)
+    {
+        $listing = Listing::where('slug', $categorySlug)
+                          ->where('is_escort_category', false)
+                          ->first();
+
+        $city = City::where('slug', $citySlug)->first();
+
+        $categoryName = $listing ? $listing->name : ucwords(str_replace('-', ' ', $categorySlug));
+        $cityName = $city ? $city->name : ucwords(str_replace('-', ' ', $citySlug));
+        $countryName = ($city && !empty($city->country)) ? $city->country : '';
+
+        $defaultSeo = DefaultSeoSetting::where('name', 'category-pages')
+                                       ->where('is_active', true)
+                                       ->first();
+
+        $siteName = config('app.name');
+
+        if ($defaultSeo) {
+            $placeholders = ['{category}', '{city}', '{country}', '{site_name}', '{sitename}'];
+            $values = [$categoryName, $cityName, $countryName, $siteName, $siteName];
+
+            $title = str_replace($placeholders, $values, $defaultSeo->title);
+            $description = str_replace($placeholders, $values, $defaultSeo->description ?? '');
+            $keywords = str_replace($placeholders, $values, $defaultSeo->keywords ?? '');
+            $content = str_replace($placeholders, $values, $defaultSeo->content ?? '');
+
+            $title = preg_replace('/\s+/', ' ', trim($title));
+            $description = preg_replace('/\s+/', ' ', trim($description));
+
+            return [
+                'title' => $title,
+                'keywords' => $keywords,
+                'description' => $description,
+                'content' => $content,
+                'gender' => null,
+                'city' => $city,
+                'country' => $city->country ?? null,
+                'seo_record' => null,
+                'default_seo_setting' => $defaultSeo,
+            ];
+        }
+
+        // Fallback when no admin row exists yet.
+        $title = "{$categoryName} in {$cityName} | {$siteName}";
+        $description = "Browse {$categoryName} listings in {$cityName}"
+            . ($countryName ? ", {$countryName}" : '')
+            . '. Verified profiles and trusted providers on ' . $siteName . '.';
+
+        return [
+            'title' => $title,
+            'keywords' => "{$categoryName} {$cityName}, {$categoryName} listings, {$cityName} {$categoryName}",
+            'description' => $description,
+            'content' => '',
+            'gender' => null,
+            'city' => $city,
+            'country' => $city->country ?? null,
+            'seo_record' => null,
+            'default_seo_setting' => null,
+        ];
     }
 
     /**

@@ -96,6 +96,21 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Incoming Call Ringtone</label>
+                        <input type="file" name="call_ringtone" class="form-control" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp3,.wav,.ogg,.m4a">
+                        <small class="text-muted d-block mt-1">mp3 / wav / ogg / m4a, up to 2MB. Short loops (2–4s) work best. Plays while the browser tab is open even if minimized.</small>
+                        @if($settings['call_ringtone_path'])
+                        <audio controls preload="none" class="mt-2" style="max-width: 300px; width: 100%;">
+                            <source src="{{ smart_asset($settings->call_ringtone_path) }}">
+                            Your browser does not support the audio element.
+                        </audio>
+                        @endif
+                        @error("call_ringtone")
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Keywords</label>
                         <input type="text" name="keywords" class="form-control" value="{{ $settings->keywords }}">
                         @error("keywords")

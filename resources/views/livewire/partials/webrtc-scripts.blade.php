@@ -1,34 +1,39 @@
-<script>
+<script data-navigate-once>
+// Diagnostic — if this line prints more than once per browser session,
+// data-navigate-once isn't taking effect and window.__rtc state is being
+// wiped on every wire:navigate.
+console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, window.__rtc ? 'HAS state' : 'no state');
 /**
- * WebRTC 1:1 call flow. Signaling piggybacks on the existing chat.{userId}
- * private channel — the callee's browser listens for CallSignal broadcasts
- * (offer/answer/ice/hangup/decline/ringing) relayed by /call/signal.
+ * WebRTC 1:1 call flow. Simple phone-call UI (avatar / mute / hangup / timer),
+ * NOT a meeting-style embed. Media relays through our own coturn at
+ * turn.evoory.com (66.29.136.23) — see /rtc/turn for the HMAC creds endpoint.
  *
- * ICE servers:
- *  - Google's public STUN (free, always available)
- *  - Metered Open Relay TURN (free tier: 500 concurrent, 50 GB/mo). Falls
- *    back automatically if STUN alone can't punch through the peer's NAT.
+ * Signaling piggybacks on the /call/signal + /call/pending polling channel:
+ *   - offer:   caller → callee (SDP + call metadata)
+ *   - answer:  callee → caller (SDP)
+ *   - ice:     both directions, one signal per candidate
+ *   - ringing: callee → caller (visual "ringing…" state)
+ *   - decline: callee → caller
+ *   - hangup:  either → other
  *
- * State is stored on window.__rtc so it survives Livewire DOM morphs; the
- * whole call UI lives outside the Livewire component root and is manipulated
- * imperatively.
+ * State lives on window.__rtc so it survives Livewire DOM morphs. The whole
+ * call UI is rendered OUTSIDE the Livewire component root so re-renders
+ * (chat page's 3s refreshChat poll, message send re-renders) can't strip the
+ * .open class off the call container or blow away the video srcObject.
  */
 (function () {
     if (window.__rtc) return; // already initialized
     const S = window.__rtc = {
         pollTimer: null,
-        pollSeen: new Set(),  // ids of signals we've already processed
-        // Call IDs the user has dismissed on this side (decline / hangup /
-        // caller-cancel). If a stray poll re-delivers an old offer, we
-        // ignore it instead of re-ringing the callee. Kept in-memory only —
-        // resets on page reload, which is fine (a genuine new call from
-        // the same peer will use a fresh call_id).
+        pollSeen: new Set(),
         dismissedCallIds: new Set(),
-        ringOscillators: [],  // active Web Audio oscillators for the incoming ring
+        ringOscillators: [],
         incomingRingInterval: null,
         pc: null,               // RTCPeerConnection
-        localStream: null,      // MediaStream (mic + optional camera)
-        remoteStream: null,
+        localStream: null,      // getUserMedia stream
+        remoteStream: null,     // combined stream (for callers that reference it)
+        remoteAudioStream: null,
+        remoteVideoStream: null,
         callId: null,
         callType: null,         // 'audio' | 'video'
         role: null,             // 'caller' | 'callee'
@@ -39,14 +44,12 @@
         statsTicker: null,
         startedAt: null,
         connectedAt: null,
-        ringOsc: null,          // Web Audio oscillator used as ringback
         iceServers: null,       // populated by fetchIceServers() on first call
     };
 
-    // --- ICE servers ---------------------------------------------------
-    // Fetched at call time from /rtc/turn — the backend mints per-user
-    // short-lived HMAC credentials for our self-hosted coturn. STUN-only
-    // fallback below keeps same-network calls working if the endpoint fails.
+    // Minimal fallback if /rtc/turn fetch fails — same-network calls still
+    // work via host candidates; cross-NAT calls will fail cleanly rather
+    // than hanging until the browser's ICE timeout.
     const FALLBACK_ICE_SERVERS = [
         { urls: 'stun:stun.l.google.com:19302' },
     ];
@@ -57,13 +60,13 @@
             const csrf = document.querySelector('meta[name=csrf-token]')?.content;
             const res = await fetch('/rtc/turn', {
                 method: 'GET',
+                credentials: 'same-origin',
+                cache: 'no-store',
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                     ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
                 },
-                credentials: 'same-origin',
-                cache: 'no-store',
             });
             if (!res.ok) throw new Error('turn endpoint returned ' + res.status);
             const data = await res.json();
@@ -71,6 +74,7 @@
                 throw new Error('turn endpoint returned no iceServers');
             }
             S.iceServers = data.iceServers;
+            S.iceSource = data.source || 'unknown';
             console.log('[rtc] iceServers loaded, source:', data.source, 'count:', data.iceServers.length);
             return S.iceServers;
         } catch (err) {
@@ -80,16 +84,16 @@
         }
     }
 
-    // --- Public API ----------------------------------------------------
+    // --- Public API — start an outbound call ---------------------------
     window.rtcStartCall = async function ({ userId, name, avatar, type, conversationId }) {
-        // Self-heal — if a previous call was interrupted (Livewire morph, tab
-        // navigation) but S.pc wasn't cleaned up, force-close and start fresh
-        // instead of blocking the user with "already in a call" forever.
+        // Self-heal — if a previous call left S.pc lingering after a Livewire
+        // morph or tab nav, force-close and start fresh rather than blocking
+        // the user with "already in a call" forever.
         if (S.pc) {
             const callVisible = document.getElementById('rtcCall')?.classList.contains('open');
             const state = S.pc.connectionState;
             if (!callVisible || state === 'failed' || state === 'closed' || state === 'disconnected') {
-                console.warn('[rtc] stale call state detected, cleaning up before starting new call', { state, callVisible });
+                console.warn('[rtc] stale call state — cleaning up before new call', { state, callVisible });
                 cleanup();
                 hideCallUI();
             } else {
@@ -107,29 +111,21 @@
 
         showCallUI('Ringing…');
         console.log('[rtc] starting call', { userId, type, callId: S.callId });
+
         try {
-            console.log('[rtc] step: getUserMedia');
             await ensureLocalStream(type);
-            console.log('[rtc] step: attachLocalPreview');
             attachLocalPreview();
-            console.log('[rtc] step: fetchIceServers');
             await fetchIceServers();
-            console.log('[rtc] step: createPeer');
             S.pc = createPeer();
-            console.log('[rtc] step: addTracks', S.localStream.getTracks().length);
             S.localStream.getTracks().forEach(t => S.pc.addTrack(t, S.localStream));
-            console.log('[rtc] step: createOffer');
-            const offer = await S.pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: type === 'video' });
-            console.log('[rtc] step: setLocalDescription');
+
+            const offer = await S.pc.createOffer({
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: type === 'video',
+            });
             await S.pc.setLocalDescription(offer);
-            console.log('[rtc] outgoing offer SDP length:', offer.sdp.length,
-                'endsWithCRLF:', offer.sdp.endsWith('\r\n'));
-            console.log('[rtc] step: postSignal(offer)');
-            // Serialize the SessionDescription explicitly (type + sdp) so
-            // JSON.stringify doesn't do anything unexpected with the browser's
-            // native RTCSessionDescription wrapper.
-            await postSignal('offer', { sdp: { type: offer.type, sdp: offer.sdp } });
-            console.log('[rtc] offer sent');
+            await postSignal('offer', { sdp: { type: offer.type, sdp: sanitizeOutgoingSdp(offer.sdp) } });
+
             startRingback();
             S.ringTimeout = setTimeout(() => {
                 if (S.pc && S.pc.connectionState !== 'connected') {
@@ -138,7 +134,7 @@
                 }
             }, 45000);
         } catch (err) {
-            console.error('[rtc] rtcStartCall failed:', err, err?.stack);
+            console.error('[rtc] rtcStartCall failed:', err);
             let msg = 'Could not start call.';
             if (err?.name === 'NotAllowedError') msg = 'Camera / mic permission denied.';
             else if (err?.name === 'NotFoundError') msg = 'No microphone / camera detected.';
@@ -149,68 +145,73 @@
         }
     };
 
-    // --- Signal handler (called by Echo listener in chat.blade.php) ----
+    // --- Signal handler (delivered by polling /call/pending) ----------
     window.rtcHandleSignal = async function (e) {
-        // Ignore signals for a different active call. If we have no active
-        // call and this is an incoming 'offer', accept it.
         const t = e.type;
         if (S.callId && S.callId !== e.callId && t !== 'offer') return;
 
         try {
             if (t === 'offer') {
-                // If the user already dismissed this call (decline / hangup),
-                // never re-show the banner even if a stray poll re-delivers
-                // the offer. The caller will get a decline signal echoed by
-                // postSignal() below so their UI updates too.
+                // Suppress re-ring for calls the user already dismissed
                 if (S.dismissedCallIds.has(e.callId)) {
-                    console.log('[rtc] offer for dismissed callId — echoing decline & ignoring', e.callId);
-                    const prevCallId = S.callId;
+                    const prev = S.callId;
                     S.callId = e.callId;
                     try { await postSignal('decline', {}, { targetOverride: e.from }); } catch (_) {}
-                    S.callId = prevCallId;
+                    S.callId = prev;
                     return;
                 }
-                // Re-offer on an already-active call = ICE restart from the peer.
-                // Set as remote description, generate a new answer, send it back.
+                // ICE-restart offer arriving on an active call
                 if (S.pc && S.callId === e.callId) {
                     try {
                         await S.pc.setRemoteDescription(new RTCSessionDescription({
                             type: e.payload.sdp.type || 'offer',
-                            sdp: normalizeSdp(e.payload.sdp.sdp),
+                            sdp: sanitizeIncomingSdp(normalizeSdp(e.payload.sdp.sdp)),
                         }));
                         const answer = await S.pc.createAnswer();
                         await S.pc.setLocalDescription(answer);
-                        await postSignal('answer', { sdp: { type: answer.type, sdp: answer.sdp } });
+                        await postSignal('answer', { sdp: { type: answer.type, sdp: sanitizeOutgoingSdp(answer.sdp) } });
                         setState('Reconnecting…');
                     } catch (err) {
-                        console.warn('ICE-restart answer failed', err);
+                        console.warn('[rtc] ICE-restart answer failed', err);
                     }
                     return;
                 }
+                // Busy — reject the new call
                 if (S.pc) {
-                    // Different call while already busy — reject.
-                    const prevCallId = S.callId;
+                    const prev = S.callId;
                     S.callId = e.callId;
                     await postSignal('decline', {}, { targetOverride: e.from });
-                    S.callId = prevCallId;
+                    S.callId = prev;
                     return;
                 }
+                // Fresh incoming — show the incoming banner
                 S.callId = e.callId;
                 S.callType = e.callType;
                 S.role = 'callee';
                 S.peer = { id: e.from, name: e.fromName || 'Someone', avatar: e.fromAvatar || null };
                 await postSignal('ringing', {});
                 showIncoming(e);
-                // We stash the offer SDP on S for use when the user accepts.
                 S._pendingOffer = e.payload.sdp;
+                // Pre-warm mic (and camera for video calls) in parallel with
+                // the ringtone. getUserMedia can eat 300-700ms on first call
+                // while the browser wakes the hardware; kicking it off now
+                // means acceptIncoming() gets a ready stream instantly on
+                // click. WhatsApp / Zoom / Teams all do this. If the user
+                // declines, cleanup() stops the tracks.
+                ensureLocalStream(e.callType).catch(err => {
+                    // Don't tear down the incoming UI just because mic
+                    // access failed — user might have blocked permission
+                    // and we want acceptIncoming() to surface the real
+                    // error message.
+                    console.warn('[rtc] prewarm getUserMedia failed', err);
+                });
                 return;
             }
 
             if (t === 'answer' && S.pc) {
-                console.log('[rtc] answer received, sdp_len=', e.payload?.sdp?.sdp?.length);
                 await S.pc.setRemoteDescription(new RTCSessionDescription({
                     type: e.payload.sdp.type || 'answer',
-                    sdp: normalizeSdp(e.payload.sdp.sdp),
+                    sdp: sanitizeIncomingSdp(normalizeSdp(e.payload.sdp.sdp)),
                 }));
                 await flushPendingIce();
                 stopRingback();
@@ -221,15 +222,26 @@
             if (t === 'ice') {
                 const cand = e.payload.candidate;
                 if (!cand) return;
-                // Buffer if we don't have a peer connection yet (callee
-                // hasn't accepted, or caller hasn't received answer). We
-                // apply them via flushPendingIce() after setRemoteDescription.
+                // With TURN: reject peer candidates with private IPs —
+                // coturn would deny CreatePermission for them anyway
+                // (RFC1918), and accepting them just wastes ICE budget on
+                // checks that can't succeed.
+                // Without TURN (local dev): we NEED private IPs — the peer
+                // is on the same LAN and host candidates carry LAN addrs.
+                if (S.hasTurn) {
+                    const candStr = cand.candidate || '';
+                    const parts = candStr.split(' ');
+                    const ip = parts[4] || '';
+                    const typIdx = parts.indexOf('typ');
+                    const typ = typIdx >= 0 ? parts[typIdx + 1] : '';
+                    if (isPrivateIp(ip)) {
+                        console.log('[rtc] dropped remote candidate (private ip)', { typ, ip });
+                        return;
+                    }
+                }
                 if (S.pc && S.pc.remoteDescription && S.pc.remoteDescription.type) {
-                    await S.pc.addIceCandidate(new RTCIceCandidate(cand)).catch((err) => {
-                        console.warn('[rtc] addIceCandidate failed', err);
-                    });
+                    await S.pc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
                 } else {
-                    console.log('[rtc] buffering early ICE, pcReady=', !!S.pc);
                     S.pendingIce.push(cand);
                 }
                 return;
@@ -240,103 +252,48 @@
                 endCall(false);
                 return;
             }
-
-            if (t === 'hangup') {
-                toast('Call ended.');
-                endCall(false);
-                return;
-            }
-
-            if (t === 'ringing') {
-                setState('Ringing…');
-                return;
-            }
+            if (t === 'hangup') { toast('Call ended.'); endCall(false); return; }
+            if (t === 'ringing') { setState('Ringing…'); return; }
         } catch (err) {
-            console.error('rtc signal error', err);
+            console.error('[rtc] signal error', err);
         }
     };
 
-    // --- Accept / decline (bound in DOMContentLoaded below) ------------
+    // --- Accept incoming call -----------------------------------------
     async function acceptIncoming() {
-        console.log('[rtc] acceptIncoming called', {
-            callId: S.callId,
-            hasOffer: !!S._pendingOffer,
-            offerType: S._pendingOffer?.type,
-            offerSdpLen: S._pendingOffer?.sdp?.length,
-            callType: S.callType,
-        });
         hideIncoming();
         showCallUI('Connecting…');
-        let step = 'init';
         try {
-            step = 'ensureLocalStream';
-            console.log('[rtc] accept step:', step);
             await ensureLocalStream(S.callType);
-
-            step = 'attachLocalPreview';
-            console.log('[rtc] accept step:', step);
             attachLocalPreview();
-
-            step = 'fetchIceServers';
-            console.log('[rtc] accept step:', step);
             await fetchIceServers();
-
-            step = 'createPeer';
-            console.log('[rtc] accept step:', step);
             S.pc = createPeer();
-
-            step = 'addTracks';
-            console.log('[rtc] accept step:', step, S.localStream.getTracks().length);
             S.localStream.getTracks().forEach(t => S.pc.addTrack(t, S.localStream));
 
-            step = 'setRemoteDescription';
-            console.log('[rtc] accept step:', step, {
-                type: S._pendingOffer?.type,
-                sdp_len: S._pendingOffer?.sdp?.length,
-                sdp_endsWithCRLF: S._pendingOffer?.sdp?.endsWith('\r\n'),
-                sdp_tail: S._pendingOffer?.sdp?.slice(-60),
-            });
             if (!S._pendingOffer || !S._pendingOffer.sdp) {
-                throw new Error('missing offer SDP — polling delivered empty payload');
+                throw new Error('missing offer SDP');
             }
             await S.pc.setRemoteDescription(new RTCSessionDescription({
                 type: S._pendingOffer.type || 'offer',
-                sdp: normalizeSdp(S._pendingOffer.sdp),
+                sdp: sanitizeIncomingSdp(normalizeSdp(S._pendingOffer.sdp)),
             }));
-
-            step = 'createAnswer';
-            console.log('[rtc] accept step:', step);
             const answer = await S.pc.createAnswer();
-
-            step = 'setLocalDescription';
-            console.log('[rtc] accept step:', step);
             await S.pc.setLocalDescription(answer);
-
-            step = 'flushPendingIce';
-            console.log('[rtc] accept step:', step, 'buffered ICE:', S.pendingIce.length);
             await flushPendingIce();
-
-            step = 'postSignal(answer)';
-            console.log('[rtc] accept step:', step, 'answer SDP length:', answer.sdp.length);
-            await postSignal('answer', { sdp: { type: answer.type, sdp: answer.sdp } });
-
-            console.log('[rtc] accept COMPLETE');
+            await postSignal('answer', { sdp: { type: answer.type, sdp: sanitizeOutgoingSdp(answer.sdp) } });
         } catch (err) {
-            console.error('[rtc] accept FAILED at step:', step, err, err?.stack);
+            console.error('[rtc] accept failed', err);
             let msg = 'Could not accept call.';
             if (err?.name === 'NotAllowedError') msg = 'Mic permission denied.';
             else if (err?.name === 'NotFoundError') msg = 'No microphone / camera detected.';
             else if (err?.name === 'NotReadableError') msg = 'Mic / camera in use by another app.';
-            else if (err?.message) msg = 'Accept failed at ' + step + ': ' + err.message.slice(0, 140);
+            else if (err?.message) msg = 'Accept failed: ' + err.message.slice(0, 140);
             toast(msg);
             try { await postSignal('decline', {}); } catch (_) {}
             endCall(false);
         }
     }
 
-    // Bound-memory helper — the dismissedCallIds set grows one entry per
-    // ended/declined call. Trim to the most recent 200 IDs when it grows
-    // past 400, so a marathon session doesn't accumulate forever.
     function rememberDismissed(callId) {
         if (!callId) return;
         S.dismissedCallIds.add(callId);
@@ -344,44 +301,84 @@
             S.dismissedCallIds = new Set(Array.from(S.dismissedCallIds).slice(-200));
         }
     }
-
     async function declineIncoming() {
         rememberDismissed(S.callId);
         hideIncoming();
         try { await postSignal('decline', {}); } catch (_) {}
         cleanup();
     }
-
     async function hangup() {
         rememberDismissed(S.callId);
         try { await postSignal('hangup', {}); } catch (_) {}
         endCall(true);
     }
 
-    // --- Peer factory --------------------------------------------------
+    // --- Peer factory -------------------------------------------------
     function createPeer() {
-        // S.iceServers is populated by fetchIceServers() before every call
-        // start; the FALLBACK_ICE_SERVERS default keeps the constructor
-        // usable if we somehow arrive here without a prior fetch (defensive).
-        // iceCandidatePoolSize omitted intentionally — pre-warming 4
-        // candidates was causing TCP-TURN allocations to time out before
-        // the offer even went out on mobile networks (slow round-trips).
-        // Default (0) starts gathering after setLocalDescription and
-        // trickles candidates as they arrive, which is faster and more
-        // reliable across mobile carriers.
+        // Prefer iceTransportPolicy='relay' when we have TURN — browsers
+        // otherwise try host/srflx pairs first and can give up before
+        // attempting the relay pair on cross-country calls. Confirmed via
+        // coturn logs: with 'all', peer_usage rp/sp counters stayed at 0
+        // (relay never engaged). With 'relay', the browser immediately
+        // does CREATE_PERMISSION + CHANNEL_BIND on its TURN allocation and
+        // media flows. Same pattern WhatsApp/Zoom use for reliability.
+        //
+        // BUT when TURN isn't configured (local dev, source='stun-only'),
+        // forcing relay gives the browser nothing to allocate on — ICE
+        // gathering completes with zero candidates and the call dies before
+        // it even offers. Fall back to 'all' in that case so at least
+        // host/srflx pairs get tried (works for same-machine / same-LAN
+        // local testing; cross-NAT still fails but at least it fails
+        // AFTER attempting rather than never getting off the ground).
+        const hasTurn = Array.isArray(S.iceServers) && S.iceServers.some(s => {
+            const urls = Array.isArray(s.urls) ? s.urls : [s.urls];
+            return urls.some(u => typeof u === 'string' && /^turns?:/i.test(u));
+        });
+        S.hasTurn = hasTurn;
+        const policy = hasTurn ? 'relay' : 'all';
         const pc = new RTCPeerConnection({
             iceServers: S.iceServers || FALLBACK_ICE_SERVERS,
+            iceTransportPolicy: policy,
+            bundlePolicy: 'max-bundle',
+            rtcpMuxPolicy: 'require',
         });
+        console.log('[rtc] peer created, transport:', policy, hasTurn ? '(forced)' : '(no TURN → fallback)');
 
         pc.onicecandidate = (ev) => {
-            if (ev.candidate) postSignal('ice', { candidate: ev.candidate }).catch(() => {});
+            if (ev.candidate) {
+                const c = ev.candidate.candidate || '';
+                const typ = c.match(/typ (\S+)/)?.[1] || '?';
+                const proto = c.match(/(udp|tcp)\s/i)?.[1] || '?';
+                const ip = c.split(' ')[4] || '';
+                // Only apply relay-only / private-IP filtering when TURN is
+                // actually in play. Without TURN (local dev), we NEED host
+                // candidates with private IPs — filtering them out would
+                // leave the browser with zero candidates to trickle.
+                if (S.hasTurn) {
+                    const isPriv =
+                        /^10\./.test(ip) ||
+                        /^192\.168\./.test(ip) ||
+                        /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ||
+                        /^169\.254\./.test(ip) ||
+                        /^127\./.test(ip) ||
+                        /^fe80:/i.test(ip) || /^fc/i.test(ip) || /^fd/i.test(ip);
+                    if (typ !== 'relay' || isPriv) {
+                        console.log('[rtc] dropped local candidate', { typ, proto, ip });
+                        return;
+                    }
+                }
+                console.log('[rtc] local candidate', { typ, proto, ip });
+                postSignal('ice', { candidate: ev.candidate }).catch(() => {});
+            } else {
+                console.log('[rtc] local ICE gathering complete');
+            }
         };
 
+        // Split remote tracks by kind. Mobile browsers refuse to autoplay
+        // audio through a <video> tag when the video track is absent
+        // (voice-only calls), leaving the remote silent. Routing audio to a
+        // dedicated <audio> element fixes that.
         pc.ontrack = (ev) => {
-            // Split remote tracks by kind: audio → <audio>, video → <video>.
-            // Mobile browsers block autoplay of audio through a <video> tag
-            // when the video track is absent (voice-only calls), leaving
-            // the remote muted. A dedicated <audio> element works around it.
             const rv = document.getElementById('rtcRemoteVideo');
             const ra = document.getElementById('rtcRemoteAudio');
 
@@ -391,8 +388,6 @@
                     if (ra) ra.srcObject = S.remoteAudioStream;
                 }
                 S.remoteAudioStream.addTrack(ev.track);
-                // Some Android builds start the element paused despite
-                // autoplay — nudge it explicitly.
                 if (ra && ra.paused) ra.play().catch(() => {});
             } else if (ev.track.kind === 'video') {
                 if (!S.remoteVideoStream) {
@@ -400,21 +395,16 @@
                     if (rv) rv.srcObject = S.remoteVideoStream;
                 }
                 S.remoteVideoStream.addTrack(ev.track);
-                // Video arrived → hide the audio-only overlay, show video.
                 const ao = document.getElementById('rtcAudioOnly');
                 if (ao) ao.style.display = 'none';
                 if (rv) rv.style.display = 'block';
                 if (rv && rv.paused) rv.play().catch(() => {});
             }
 
-            // Preserve S.remoteStream for callers that still reference it.
             if (!S.remoteStream) S.remoteStream = new MediaStream();
             S.remoteStream.addTrack(ev.track);
         };
 
-        // Diagnostic — log every WebRTC state transition so we can see
-        // exactly where a failing call is dying (checking → connected vs
-        // checking → failed vs connected → disconnected, etc).
         pc.oniceconnectionstatechange = () => {
             console.log('[rtc] iceConnectionState →', pc.iceConnectionState);
         };
@@ -425,6 +415,37 @@
         pc.onconnectionstatechange = () => {
             const st = pc.connectionState;
             console.log('[rtc] connectionState →', st);
+            // On any terminal-ish state, dump the selected candidate pair
+            // and DTLS/ICE transport state so we can diagnose one-way media
+            // or failed handshakes without needing chrome://webrtc-internals.
+            if (st === 'connected' || st === 'failed' || st === 'disconnected') {
+                pc.getStats().then(stats => {
+                    let pair = null, localCand = null, remoteCand = null;
+                    stats.forEach(r => {
+                        if (r.type === 'candidate-pair' && (r.selected || r.nominated) && r.state === 'succeeded') pair = r;
+                    });
+                    if (!pair) stats.forEach(r => {
+                        if (r.type === 'candidate-pair' && r.state === 'succeeded' && r.bytesReceived > 0) pair = r;
+                    });
+                    if (pair) {
+                        stats.forEach(r => {
+                            if (r.id === pair.localCandidateId) localCand = r;
+                            if (r.id === pair.remoteCandidateId) remoteCand = r;
+                        });
+                    }
+                    console.log('[rtc] state=' + st + ' pair', {
+                        localType: localCand?.candidateType,
+                        localProto: localCand?.protocol,
+                        localAddr: localCand?.address || localCand?.ip,
+                        remoteType: remoteCand?.candidateType,
+                        remoteProto: remoteCand?.protocol,
+                        remoteAddr: remoteCand?.address || remoteCand?.ip,
+                        bytesSent: pair?.bytesSent,
+                        bytesReceived: pair?.bytesReceived,
+                        rtt: pair?.currentRoundTripTime,
+                    });
+                }).catch(() => {});
+            }
             if (st === 'connected') {
                 S.connectedAt = S.connectedAt || Date.now();
                 setState('In call');
@@ -432,46 +453,40 @@
                 startStatsSampling();
                 stopRingback();
                 clearTimeout(S.ringTimeout);
-                // Cancel any pending reconnect timers if we recovered.
                 clearTimeout(S.reconnectTimer); S.reconnectTimer = null;
                 clearTimeout(S.reconnectHardTimer); S.reconnectHardTimer = null;
             }
-
-            // 'disconnected' = transient blip (WiFi ↔ 4G handoff, VPN, etc.)
-            // 'failed' = ICE gave up. Try ICE restart in both cases; only give
-            // up entirely on 'closed' or on the fallback timeout.
+            // disconnected = transient blip; failed = ICE gave up. Cross-
+            // country relay calls (peer A → TURN in US → peer B in Asia)
+            // can briefly disconnect during DTLS handshake or media
+            // stabilization; give them time to recover before restarting.
             if (st === 'disconnected' || st === 'failed') {
                 setState('Reconnecting…');
-                toast('Reconnecting…');
                 clearTimeout(S.reconnectTimer);
-                // Shorter grace for 'failed' — the browser has already given
-                // up so no point waiting 6s for a natural recovery.
-                const graceMs = (st === 'failed') ? 500 : 6000;
+                // Longer grace for 'disconnected' — cross-country calls
+                // often recover on their own within 10-15 seconds.
+                const graceMs = (st === 'failed') ? 2000 : 12000;
                 S.reconnectTimer = setTimeout(async () => {
                     if (!S.pc || S.pc.connectionState === 'connected') return;
                     if (S.role === 'caller') {
                         try {
                             const offer = await S.pc.createOffer({ iceRestart: true });
                             await S.pc.setLocalDescription(offer);
-                            await postSignal('offer', { sdp: { type: offer.type, sdp: offer.sdp } });
-                            console.log('[rtc] ICE restart offer sent');
+                            await postSignal('offer', { sdp: { type: offer.type, sdp: sanitizeOutgoingSdp(offer.sdp) } });
                         } catch (err) {
-                            console.warn('ICE restart failed', err);
+                            console.warn('[rtc] ICE restart failed', err);
                         }
                     }
                     clearTimeout(S.reconnectHardTimer);
                     S.reconnectHardTimer = setTimeout(() => {
                         if (S.pc && S.pc.connectionState !== 'connected') {
-                            toast('Connection lost — TURN may be blocked.');
+                            toast('Connection lost.');
                             endCall(false);
                         }
-                    }, 8000);
+                    }, 15000);
                 }, graceMs);
             }
-
-            if (st === 'closed') {
-                endCall(false);
-            }
+            if (st === 'closed') endCall(false);
         };
 
         return pc;
@@ -485,7 +500,7 @@
         }
     }
 
-    // --- Media ---------------------------------------------------------
+    // --- Media --------------------------------------------------------
     async function ensureLocalStream(type) {
         if (S.localStream) return S.localStream;
         S.localStream = await navigator.mediaDevices.getUserMedia({
@@ -494,7 +509,6 @@
         });
         return S.localStream;
     }
-
     function attachLocalPreview() {
         const lv = document.getElementById('rtcLocalVideo');
         if (!lv) return;
@@ -506,7 +520,7 @@
         }
     }
 
-    // --- Connection quality (poor connection) --------------------------
+    // --- Connection quality indicator ---------------------------------
     function startStatsSampling() {
         if (!S.pc || S.statsTicker) return;
         const quality = document.getElementById('rtcQuality');
@@ -515,8 +529,7 @@
 
         S.statsTicker = setInterval(async () => {
             if (!S.pc) return;
-            let rttMs = null;
-            let lossPct = null;
+            let rttMs = null, lossPct = null;
             try {
                 const stats = await S.pc.getStats();
                 let inbound = null;
@@ -525,7 +538,7 @@
                         rttMs = r.currentRoundTripTime * 1000;
                     }
                     if (r.type === 'inbound-rtp' && !r.isRemote && (r.kind === 'audio' || r.kind === 'video')) {
-                        if (!inbound || r.kind === 'video') inbound = r; // prefer video if present
+                        if (!inbound || r.kind === 'video') inbound = r;
                     }
                 });
                 if (inbound && (inbound.packetsLost != null) && (inbound.packetsReceived != null)) {
@@ -534,9 +547,7 @@
                 }
             } catch (_) {}
 
-            // Thresholds tuned to feel like WhatsApp's indicator.
-            let tier = 'good';
-            let text = 'Good';
+            let tier = 'good', text = 'Good';
             if ((rttMs != null && rttMs > 700) || (lossPct != null && lossPct > 10)) {
                 tier = 'poor'; text = 'Poor connection';
             } else if ((rttMs != null && rttMs > 300) || (lossPct != null && lossPct > 3)) {
@@ -550,7 +561,7 @@
         }, 2000);
     }
 
-    // --- Timer ---------------------------------------------------------
+    // --- Timer --------------------------------------------------------
     function startTimer() {
         const el = document.getElementById('rtcTimer');
         if (!el) return;
@@ -561,108 +572,78 @@
         }, 500);
     }
 
-    // --- Ringback (caller side) via Web Audio ---------------------------
+    // --- Ringback (caller side) --------------------------------------
     function startRingback() {
         try {
             const ctx = window.__rtc._audio = window.__rtc._audio || new (window.AudioContext || window.webkitAudioContext)();
             const play = () => {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                osc.frequency.value = 440;
-                gain.gain.value = 0.15;
+                osc.frequency.value = 440; gain.gain.value = 0.15;
                 osc.connect(gain).connect(ctx.destination);
                 osc.start();
                 setTimeout(() => osc.stop(), 400);
-                setTimeout(() => {
-                    const osc2 = ctx.createOscillator();
-                    const g2 = ctx.createGain();
-                    osc2.frequency.value = 480;
-                    g2.gain.value = 0.15;
-                    osc2.connect(g2).connect(ctx.destination);
-                    osc2.start();
-                    setTimeout(() => osc2.stop(), 400);
-                }, 600);
             };
             play();
             S.ringInterval = setInterval(play, 3000);
-        } catch (_) { /* Web Audio blocked — silent ringback is fine */ }
+        } catch (_) {}
     }
     function stopRingback() {
         clearInterval(S.ringInterval); S.ringInterval = null;
     }
 
-    // --- UI helpers ----------------------------------------------------
-    function showIncoming(e) {
-        const el = document.getElementById('rtcIncoming');
-        if (!el) return;
-        document.getElementById('rtcIncomingName').textContent = S.peer.name;
-        document.getElementById('rtcIncomingType').textContent = S.callType === 'video' ? 'Video' : 'Voice';
-        const av = document.getElementById('rtcIncomingAvatar');
-        if (S.peer.avatar) {
-            av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
-        } else {
-            av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
-        }
-        el.classList.add('open');
-
-        // Try the <audio> element first (if a real ringtone.mp3 is present);
-        // if that fails (missing file, autoplay-blocked, etc.) fall back to a
-        // synthesized WhatsApp-style two-tone ring via Web Audio.
-        startIncomingRing();
-    }
-    function hideIncoming() {
-        document.getElementById('rtcIncoming')?.classList.remove('open');
-        stopIncomingRing();
-    }
-
-    // --- Incoming ringtone (Web Audio) ---------------------------------
-    // Ringtone disabled for now — the incoming banner still shows visually,
-    // it just doesn't play audio. Set the flag below to true to re-enable
-    // the synthesized WhatsApp-style two-tone ring.
-    const RING_ENABLED = false;
+    // --- Incoming ringtone -------------------------------------------
+    // Preferred: play the admin-uploaded ringtone file (WhatsApp-style loop)
+    // so users know a call is arriving even if the browser tab is minimized.
+    // Set from the admin panel (App Settings → Incoming Call Ringtone) and
+    // injected from Blade — see below.
+    // Fallback: synth two-note ring via Web Audio if no file is configured
+    // OR the browser blocks autoplay for the file (rare — tab has already
+    // received a user gesture by the time a call arrives).
+    const RING_ENABLED = true;
+    const RINGTONE_URL = @json($setting?->call_ringtone_path ? smart_asset($setting->call_ringtone_path) : null);
 
     function startIncomingRing() {
-        stopIncomingRing(); // ensure clean slate
-        if (!RING_ENABLED) return;   // audio disabled — banner only
-
-        // Prefer the <audio> tag if it actually resolves — someone may drop
-        // a proper ringtone.mp3 into public/assets/newtheme/ later.
-        const audio = document.getElementById('rtcRingtone');
-        if (audio && audio.currentSrc) {
-            const p = audio.play();
-            if (p && typeof p.then === 'function') {
-                p.then(() => { S.usingAudioElement = true; })
-                 .catch(() => { S.usingAudioElement = false; startSynthLoop(); });
-                return;
-            }
+        stopIncomingRing();
+        if (!RING_ENABLED) return;
+        if (RINGTONE_URL) {
+            startFileRing().catch(() => startSynthLoop());
+        } else {
+            startSynthLoop();
         }
-        startSynthLoop();
     }
-
-    // Schedule the repeating synth ring — the interval is created here,
-    // ONCE, so a single stopIncomingRing() call is enough to silence it.
-    // (Previous version set the interval inside playSynthRing itself,
-    // orphaning a new one on every tick; stopIncomingRing only cleared
-    // the newest reference so old intervals kept ringing forever.)
+    async function startFileRing() {
+        // Reuse a single HTMLAudioElement across the session so we don't
+        // leak elements on repeated calls. Looping playback continues when
+        // the tab is minimized (browsers only throttle timers, not audio).
+        let a = S.ringAudio;
+        if (!a) {
+            a = new Audio(RINGTONE_URL);
+            a.loop = true;
+            a.preload = 'auto';
+            a.volume = 0.9;
+            S.ringAudio = a;
+        }
+        // Rewind in case a previous call left it mid-track.
+        try { a.currentTime = 0; } catch (_) {}
+        // .play() returns a Promise that rejects if autoplay is blocked.
+        // Rethrow so the caller falls back to the synth ring.
+        await a.play();
+    }
     function startSynthLoop() {
         playSynthRing();
         clearInterval(S.incomingRingInterval);
         S.incomingRingInterval = setInterval(playSynthRing, 3000);
     }
-
     function playSynthRing() {
         try {
             const ctx = window.__rtc._audio = window.__rtc._audio || new (window.AudioContext || window.webkitAudioContext)();
-            // Some browsers start the context in "suspended" state until a
-            // user gesture; try to resume so the callee actually hears it.
-            if (ctx.state === 'suspended') { ctx.resume().catch(() => {}); }
-
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
             const playNote = (freq, startAt, duration) => {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
                 osc.frequency.value = freq;
-                // 100ms attack, 100ms release, ~0.22 peak — pleasant, not shrill.
                 gain.gain.setValueAtTime(0.0001, startAt);
                 gain.gain.exponentialRampToValueAtTime(0.22, startAt + 0.10);
                 gain.gain.setValueAtTime(0.22, startAt + duration - 0.10);
@@ -672,19 +653,19 @@
                 osc.stop(startAt + duration + 0.01);
                 S.ringOscillators.push(osc);
             };
-
             S.ringOscillators = [];
             const now = ctx.currentTime;
             playNote(800,  now,        0.40);
             playNote(1000, now + 0.50, 0.40);
-        } catch (err) {
-            console.warn('[rtc] synth ringtone failed', err);
-        }
+        } catch (_) {}
     }
-
     function stopIncomingRing() {
         clearInterval(S.incomingRingInterval);
         S.incomingRingInterval = null;
+        if (S.ringAudio) {
+            try { S.ringAudio.pause(); } catch (_) {}
+            try { S.ringAudio.currentTime = 0; } catch (_) {}
+        }
         if (S.ringOscillators) {
             for (const osc of S.ringOscillators) {
                 try { osc.stop(); } catch (_) {}
@@ -692,59 +673,70 @@
             }
             S.ringOscillators = [];
         }
-        const audio = document.getElementById('rtcRingtone');
-        if (audio) { try { audio.pause(); audio.currentTime = 0; } catch (_) {} }
-        S.usingAudioElement = false;
     }
 
+    // --- UI helpers ---------------------------------------------------
+    function showIncoming(e) {
+        const el = document.getElementById('rtcIncoming');
+        if (!el) return;
+        const nm = document.getElementById('rtcIncomingName');
+        if (nm) nm.textContent = S.peer.name;
+        const tp = document.getElementById('rtcIncomingType');
+        if (tp) tp.textContent = S.callType === 'video' ? 'Video' : 'Voice';
+        const av = document.getElementById('rtcIncomingAvatar');
+        if (av) {
+            if (S.peer.avatar) av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
+            else av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
+        }
+        el.classList.add('open');
+        startIncomingRing();
+    }
+    function hideIncoming() {
+        document.getElementById('rtcIncoming')?.classList.remove('open');
+        stopIncomingRing();
+    }
     function showCallUI(state) {
         document.getElementById('rtcCall')?.classList.add('open');
         maybeShowSpeakerBtn();
         setState(state);
-        document.getElementById('rtcCallName').textContent = S.peer.name;
+        const nameEl = document.getElementById('rtcCallName');
+        if (nameEl) nameEl.textContent = S.peer.name;
         const av = document.getElementById('rtcCallAvatar');
-        if (S.peer.avatar) av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
-        else av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
-
-        // Audio-only placeholder for voice calls
+        if (av) {
+            if (S.peer.avatar) av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
+            else av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
+        }
         const ao = document.getElementById('rtcAudioOnly');
         const rv = document.getElementById('rtcRemoteVideo');
         const videoBtn = document.getElementById('rtcVideoBtn');
         if (S.callType === 'audio') {
-            ao.style.display = 'block';
-            rv.style.display = 'none';
+            if (ao) ao.style.display = 'block';
+            if (rv) rv.style.display = 'none';
             if (videoBtn) videoBtn.style.display = 'none';
-            document.getElementById('rtcAudioName').textContent = S.peer.name;
+            const audioName = document.getElementById('rtcAudioName');
+            if (audioName) audioName.textContent = S.peer.name;
             const ba = document.getElementById('rtcAudioAvatar');
-            if (S.peer.avatar) ba.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
-            else ba.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
+            if (ba) {
+                if (S.peer.avatar) ba.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
+                else ba.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
+            }
         } else {
-            ao.style.display = 'none';
-            rv.style.display = 'block';
+            if (ao) ao.style.display = 'none';
+            if (rv) rv.style.display = 'block';
             if (videoBtn) videoBtn.style.display = '';
         }
     }
     function hideCallUI() {
         const call = document.getElementById('rtcCall');
-        if (call) {
-            call.classList.remove('open');
-            call.classList.remove('maximized');
-        }
+        if (call) { call.classList.remove('open'); call.classList.remove('maximized'); }
         const quality = document.getElementById('rtcQuality');
         if (quality) quality.style.display = 'none';
         const timer = document.getElementById('rtcTimer');
         if (timer) { timer.style.display = 'none'; timer.textContent = '00:00'; }
-        // Reset window/speaker button state for the next call.
         const maxBtn = document.getElementById('rtcMaximizeBtn');
-        if (maxBtn) {
-            maxBtn.title = 'Maximize';
-            maxBtn.innerHTML = '<i class="fa fa-expand"></i>';
-        }
+        if (maxBtn) { maxBtn.title = 'Maximize'; maxBtn.innerHTML = '<i class="fa fa-expand"></i>'; }
         const speakerBtn = document.getElementById('rtcSpeakerBtn');
-        if (speakerBtn) {
-            speakerBtn.style.display = 'none';
-            speakerBtn.classList.remove('speaker-on');
-        }
+        if (speakerBtn) { speakerBtn.style.display = 'none'; speakerBtn.classList.remove('speaker-on'); }
         S.currentSinkId = null;
     }
     function setState(txt) {
@@ -756,24 +748,21 @@
         if (!el) return;
         el.textContent = msg;
         el.classList.remove('open');
-        // reflow to restart animation
         void el.offsetWidth;
         el.classList.add('open');
     }
 
-    function endCall(hangupSent) {
+    function endCall() {
         rememberDismissed(S.callId);
         cleanup();
         hideIncoming();
         setTimeout(() => hideCallUI(), 200);
     }
-
     function cleanup() {
         stopRingback();
         clearTimeout(S.ringTimeout);
         clearInterval(S.statsTicker); S.statsTicker = null;
         clearInterval(S.stateTicker); S.stateTicker = null;
-
         if (S.pc) { try { S.pc.close(); } catch (_) {} S.pc = null; }
         if (S.localStream) { S.localStream.getTracks().forEach(t => t.stop()); S.localStream = null; }
         S.remoteStream = null;
@@ -782,10 +771,12 @@
         const rv = document.getElementById('rtcRemoteVideo'); if (rv) rv.srcObject = null;
         const lv = document.getElementById('rtcLocalVideo');  if (lv) lv.srcObject = null;
         const ra = document.getElementById('rtcRemoteAudio'); if (ra) ra.srcObject = null;
-        S.callId = null; S.callType = null; S.peer = null; S.role = null; S.pendingIce = []; S._pendingOffer = null;
+        S.callId = null; S.callType = null; S.peer = null; S.role = null;
+        S.pendingIce = []; S._pendingOffer = null;
+        S.startedAt = null; S.connectedAt = null;
     }
 
-    // --- Post signal via Laravel endpoint ------------------------------
+    // --- Post signal via Laravel endpoint -----------------------------
     async function postSignal(type, payload, opts = {}) {
         const target = opts.targetOverride || S.peer?.id;
         if (!target) return;
@@ -811,72 +802,157 @@
         if (!res.ok) {
             let body = '';
             try { body = await res.text(); } catch (_) {}
-            console.error('[rtc] signal', type, 'HTTP', res.status, body);
-            throw new Error('signal failed: ' + res.status + ' ' + body.slice(0, 200));
+            throw new Error('signal ' + type + ' failed: ' + res.status + ' ' + body.slice(0, 200));
         }
     }
 
-    // --- Speaker (audio output) toggle ---------------------------------
-    // Uses HTMLMediaElement.setSinkId to switch audio output devices.
-    // Chrome/Edge/Safari 17+ support this; unsupported browsers hide the
-    // button entirely so users don't see a control that does nothing.
+    // --- Speaker toggle (setSinkId) ----------------------------------
     async function toggleSpeaker(btn) {
         const el = document.getElementById('rtcRemoteVideo');
         if (!el || typeof el.setSinkId !== 'function') return;
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const outputs = devices.filter(d => d.kind === 'audiooutput');
-            if (outputs.length < 2) return; // only one option — nothing to toggle
+            if (outputs.length < 2) return;
             const currentIdx = outputs.findIndex(d => d.deviceId === (S.currentSinkId || 'default'));
             const nextIdx = (currentIdx + 1) % outputs.length;
             const next = outputs[nextIdx];
             await el.setSinkId(next.deviceId);
             S.currentSinkId = next.deviceId;
-            // Visual state — "speaker-on" class when we're NOT on the default sink.
             btn.classList.toggle('speaker-on', next.deviceId !== 'default');
         } catch (err) {
             console.warn('[rtc] setSinkId failed', err);
         }
     }
-
-    // Reveal the speaker button when a call starts (and setSinkId works).
     function maybeShowSpeakerBtn() {
         const btn = document.getElementById('rtcSpeakerBtn');
         const el = document.getElementById('rtcRemoteVideo');
         if (!btn || !el) return;
-        if (typeof el.setSinkId === 'function') {
-            btn.style.display = '';
-        }
+        if (typeof el.setSinkId === 'function') btn.style.display = '';
     }
 
-    // --- Utils ---------------------------------------------------------
+    // --- Utils --------------------------------------------------------
     function uuid() {
         return 'call-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
     }
-
-    // Normalize SDP line endings.  WebRTC's SDP parser is strict: every line
-    // must end with CRLF (\r\n), including the last one. If MySQL/JSON round-
-    // tripping through the DB queue stripped the trailing CRLF (some DB
-    // engines trim trailing whitespace on TEXT columns), the parser fails
-    // with "Failed to parse SessionDescription" — often halfway through an
-    // a=ssrc:... msid:... line, which is what we saw in the wild.
     function normalizeSdp(sdp) {
         if (!sdp) return sdp;
-        // Convert any bare \n to \r\n.
         sdp = sdp.replace(/\r?\n/g, '\r\n');
-        // Guarantee trailing CRLF.
         if (!sdp.endsWith('\r\n')) sdp += '\r\n';
         return sdp;
     }
+
+    // Public IP of our TURN relay (turn.evoory.com → 66.29.136.23). Used as
+    // the replacement value for c=/o=/rtcp addresses that would otherwise
+    // leak a private IP. Since we force relay-only ICE, all real media flows
+    // through this IP anyway — using it as the SDP "default" address avoids
+    // Firefox getting confused by 0.0.0.0 in c= (Chrome tolerates it, Firefox
+    // is stricter and sometimes fails to open the reverse path).
+    const RELAY_PUBLIC_IP = '66.29.136.23';
+
+    const isPrivateIp = (ip) => {
+        if (!ip || ip === '0.0.0.0') return false;
+        if (/^10\./.test(ip)) return true;
+        if (/^192\.168\./.test(ip)) return true;
+        if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) return true;
+        if (/^169\.254\./.test(ip)) return true;
+        if (/^127\./.test(ip)) return true;
+        if (/^fe80:/i.test(ip)) return true;
+        if (/^fc/i.test(ip) || /^fd/i.test(ip)) return true;
+        return false;
+    };
+
+    // Strip RFC1918/private-IP references from an SDP so the peer's TURN
+    // allocation doesn't try to CreatePermission for a LAN address (e.g.
+    // VirtualBox host-only 192.168.56.1). coturn denies RFC1918 targets,
+    // and the failed permission means the peer never opens the return
+    // media path → DTLS stalls → call fails.
+    //
+    // Applied to BOTH directions:
+    //   - Outgoing (offer/answer we send) — strips OUR private IPs so the
+    //     peer doesn't try to relay to us at a bogus address.
+    //   - Incoming (offer/answer we receive) — strips the PEER's private
+    //     IPs so WE don't try to relay to them at a bogus address.
+    //
+    // For `direction: 'out'` we also strip any a=candidate lines that
+    // aren't typ=relay (iceTransportPolicy='relay' should already prevent
+    // gathering them, but Chrome has been observed leaking on VirtualBox /
+    // VPN adapters).
+    //
+    // Private IPs in c=/o=/a=rtcp are rewritten to the TURN relay's public
+    // IP (66.29.136.23), not 0.0.0.0. Firefox is stricter than Chrome about
+    // 0.0.0.0 as an SDP default and can fail to open the reverse ICE path
+    // when it sees it. Using the relay IP is safe because all our media
+    // flows through it anyway under relay-only policy.
+    function sanitizeSdp(sdp, direction) {
+        if (!sdp) return sdp;
+        // No TURN in play → skip sanitize entirely. Rewriting c=/o=/rtcp
+        // to the (nonexistent) relay IP would break same-LAN calls in
+        // local dev, and stripping non-relay candidates would leave the
+        // SDP with none. Sanitize is only correct when TURN is authoritative.
+        if (!S.hasTurn) return sdp;
+        const stripNonRelay = direction === 'out';
+
+        const lines = sdp.split(/\r?\n/);
+        const out = [];
+        let changed = 0;
+        for (const line of lines) {
+            // a=candidate: — only strip on outgoing (we can't rewrite peer's list)
+            if (line.startsWith('a=candidate:')) {
+                const parts = line.split(' ');
+                const ip = parts[4];
+                const typIdx = parts.indexOf('typ');
+                const typ = typIdx >= 0 ? parts[typIdx + 1] : '';
+                if (isPrivateIp(ip) || (stripNonRelay && typ !== 'relay')) {
+                    changed++;
+                    continue;
+                }
+            }
+            // c=IN IP4/IP6 <addr>
+            if (line.startsWith('c=IN IP4 ') || line.startsWith('c=IN IP6 ')) {
+                const addr = line.split(' ')[2];
+                if (isPrivateIp(addr)) {
+                    out.push('c=IN IP4 ' + RELAY_PUBLIC_IP);
+                    changed++;
+                    continue;
+                }
+            }
+            // o=- <sess-id> <sess-ver> IN IP4 <addr>
+            if (line.startsWith('o=')) {
+                const parts = line.split(' ');
+                if (parts.length >= 6 && (parts[3] === 'IN') && isPrivateIp(parts[5])) {
+                    parts[4] = 'IP4';
+                    parts[5] = RELAY_PUBLIC_IP;
+                    out.push(parts.join(' '));
+                    changed++;
+                    continue;
+                }
+            }
+            // a=rtcp:9 IN IP4 <addr>
+            if (line.startsWith('a=rtcp:')) {
+                const parts = line.split(' ');
+                if (parts.length >= 4 && parts[1] === 'IN' && isPrivateIp(parts[3])) {
+                    parts[2] = 'IP4';
+                    parts[3] = RELAY_PUBLIC_IP;
+                    out.push(parts.join(' '));
+                    changed++;
+                    continue;
+                }
+            }
+            out.push(line);
+        }
+        if (changed) console.log('[rtc] sanitizeSdp[' + direction + '] rewrote/stripped', changed, 'lines');
+        return out.join('\r\n');
+    }
+
+    // Backwards-compat wrapper — most call sites already use the outgoing form.
+    function sanitizeOutgoingSdp(sdp) { return sanitizeSdp(sdp, 'out'); }
+    function sanitizeIncomingSdp(sdp) { return sanitizeSdp(sdp, 'in'); }
     function escapeAttr(s) {
         return String(s).replace(/["<>&]/g, c => ({ '"': '&quot;', '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
     }
 
-    // --- Polling fallback ---------------------------------------------
-    // Reverb delivery can be flaky (TLS mismatch, dropped frames, restarts).
-    // We ALSO poll the durable signals queue every 1.5s so calls work even
-    // when the WebSocket path is broken. Signals are deduped by DB id so
-    // getting them twice (once via Reverb, once via poll) is a no-op.
+    // --- Polling for signals -----------------------------------------
     async function pollPendingSignals() {
         try {
             const res = await fetch('/call/pending', {
@@ -886,37 +962,131 @@
             if (!res.ok) return;
             const data = await res.json();
             for (const sig of (data.signals || [])) {
-                // The server marked these delivered_at=now(), so subsequent
-                // polls won't return them. The Set is just extra insurance
-                // against duplicate processing inside this tab.
                 const key = `${sig.callId}:${sig.type}:${sig.from}`;
                 if (S.pollSeen.has(key)) continue;
                 S.pollSeen.add(key);
                 if (S.pollSeen.size > 500) {
-                    // Bound memory — drop the oldest half.
                     S.pollSeen = new Set(Array.from(S.pollSeen).slice(-250));
                 }
                 if (typeof window.rtcHandleSignal === 'function') {
                     window.rtcHandleSignal(sig);
                 }
             }
-        } catch (_) { /* offline, ignore */ }
+        } catch (_) {}
+    }
+    // Adaptive polling — idle at 500ms to keep incoming-ring latency low,
+    // switch to 120ms during an active handshake so ICE trickle candidates
+    // deliver near-instantly. Each candidate is a separate signal; at 500ms
+    // the receive side of a 3-4 candidate exchange was waiting 1.5-2s just
+    // for polling — ~half of the click-Accept → connected latency.
+    const POLL_IDLE_MS   = 500;
+    const POLL_ACTIVE_MS = 120;
+    function pollIntervalMs() {
+        // "Active" = any point from an incoming/outgoing call being
+        // negotiated up to the moment it's fully connected. After
+        // 'connected', slow back down — no more signaling traffic expected
+        // until hangup / ICE restart.
+        if (!S.pc) return POLL_IDLE_MS;
+        const st = S.pc.connectionState;
+        if (st === 'new' || st === 'connecting' || st === 'disconnected' || st === 'failed') return POLL_ACTIVE_MS;
+        return POLL_IDLE_MS;
     }
     function startPolling() {
         if (S.pollTimer) return;
-        S.pollTimer = setInterval(pollPendingSignals, 1500);
-        // Kick off immediately so a fresh page load doesn't wait 1.5s.
-        pollPendingSignals();
+        const tick = () => {
+            pollPendingSignals();
+            S.pollTimer = setTimeout(tick, pollIntervalMs());
+        };
+        tick();
     }
     startPolling();
 
-    // --- Bind UI buttons (delegated so they survive Livewire morphs) ---
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('#rtcAcceptBtn')) { acceptIncoming(); return; }
-        if (e.target.closest('#rtcDeclineBtn')) { declineIncoming(); return; }
-        if (e.target.closest('#rtcHangupBtn')) { hangup(); return; }
+    // --- wire:navigate resilience ------------------------------------
+    // When the user browses via `wire:navigate` mid-call, Livewire morphs
+    // the layout blade — including the WebRTC UI container. That wipes the
+    // `srcObject` bindings on the video/audio elements and any `.open`
+    // class we added at runtime, even though the RTCPeerConnection and
+    // MediaStream objects on window.__rtc keep flowing RTP throughout.
+    //
+    // On `livewire:navigated` (fires AFTER the new DOM is in place), we
+    // re-open the UI and rebind the streams. To the user this is
+    // seamless — audio may glitch for a frame but the call doesn't drop.
+    // Doesn't help against full page reloads (regular <a href> links) —
+    // those are unavoidable without a full-SPA rewrite.
+    // Diagnostic — log every navigation event so we can see what fires
+    // and in what order, and whether S state is intact by the time we
+    // try to reattach the streams.
+    document.addEventListener('livewire:navigating', () => {
+        console.log('[rtc] livewire:navigating', {
+            hasPc: !!S.pc,
+            pcState: S.pc?.connectionState,
+            callId: S.callId,
+        });
+    });
+    document.addEventListener('livewire:navigate', () => {
+        console.log('[rtc] livewire:navigate');
+    });
 
-        // Maximize / minimize the floating call window.
+    function restoreCallAfterNavigate(source) {
+        const rtcCallEl = document.getElementById('rtcCall');
+        console.log('[rtc] ' + source + ' — restore attempt', {
+            hasPc: !!S.pc,
+            pcState: S.pc?.connectionState,
+            hasPeer: !!S.peer,
+            hasRemoteAudio: !!S.remoteAudioStream,
+            hasLocalStream: !!S.localStream,
+            rtcCallExists: !!rtcCallEl,
+            rtcCallHasOpen: rtcCallEl?.classList.contains('open'),
+        });
+
+        if (!S.pc && !S._pendingOffer) return;
+
+        // Incoming banner state (ringing, not yet accepted) — re-render.
+        if (S._pendingOffer && !S.pc && S.role === 'callee' && S.peer) {
+            showIncoming({});
+            return;
+        }
+
+        if (!S.pc || !S.peer) return;
+        const st = S.pc.connectionState;
+        if (st === 'closed' || st === 'failed') return;
+
+        // Active call — re-render call card, then rebind media streams.
+        const label = (st === 'connected') ? 'In call'
+                    : (S.role === 'caller' ? 'Ringing…' : 'Connecting…');
+        showCallUI(label);
+
+        if (S.remoteAudioStream) {
+            const ra = document.getElementById('rtcRemoteAudio');
+            if (ra) { ra.srcObject = S.remoteAudioStream; ra.play().catch(() => {}); }
+        }
+        if (S.remoteVideoStream) {
+            const rv = document.getElementById('rtcRemoteVideo');
+            if (rv) { rv.srcObject = S.remoteVideoStream; rv.play().catch(() => {}); }
+        }
+        if (S.localStream && S.callType === 'video') {
+            const lv = document.getElementById('rtcLocalVideo');
+            if (lv) lv.srcObject = S.localStream;
+        }
+        if (st === 'connected' && S.connectedAt) {
+            const timer = document.getElementById('rtcTimer');
+            if (timer) timer.style.display = 'inline-block';
+        }
+        if (S.statsTicker) {
+            const q = document.getElementById('rtcQuality');
+            if (q) q.style.display = 'inline-flex';
+        }
+        console.log('[rtc] restore done');
+    }
+
+    document.addEventListener('livewire:navigated', () => restoreCallAfterNavigate('livewire:navigated'));
+
+    // --- Bind UI buttons (delegated so they survive Livewire morphs) --
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#rtcAcceptBtn'))  { acceptIncoming(); return; }
+        if (e.target.closest('#rtcDeclineBtn')) { declineIncoming(); return; }
+        if (e.target.closest('#rtcHangupBtn'))  { hangup(); return; }
+
         if (e.target.closest('#rtcMaximizeBtn')) {
             const call = document.getElementById('rtcCall');
             const btn = e.target.closest('#rtcMaximizeBtn');
@@ -938,14 +1108,9 @@
             return;
         }
 
-        // Speaker toggle — cycles through available audio output devices via
-        // setSinkId. Useful on phones with headphones/speaker/earpiece
-        // combinations; on desktop it switches between "default" and the
-        // first non-default output. Silently no-ops on browsers without
-        // setSinkId support.
         if (e.target.closest('#rtcSpeakerBtn')) {
             const btn = e.target.closest('#rtcSpeakerBtn');
-            toggleSpeaker(btn).catch((err) => console.warn('[rtc] speaker toggle failed', err));
+            toggleSpeaker(btn).catch(() => {});
             return;
         }
 
@@ -959,7 +1124,7 @@
             return;
         }
 
-        // Chat-header call buttons
+        // Chat header call buttons
         const audioBtn = e.target.closest('[data-rtc-call="audio"]');
         const videoBtn = e.target.closest('[data-rtc-call="video"]');
         if (audioBtn || videoBtn) {

@@ -3107,6 +3107,13 @@ textarea.form-control:disabled {
                                     <a href="{{ route('mobile.search', ['gender' => 'shemale']) }}"
                                         title="Shemale Escorts">Shemale escorts</a>
                                 </li>
+                                @php $mobileCitySlug = strtolower(str_replace(' ', '-', $selectedcity ?: 'dubai')); @endphp
+                                @foreach($categoryOptions ?? [] as $opt)
+                                    <li>
+                                        <a href="{{ url($opt->slug.'-in-'.$mobileCitySlug) }}"
+                                            title="{{ $opt->name }} in {{ ucfirst($selectedcity ?: 'dubai') }}">{{ $opt->name }}</a>
+                                    </li>
+                                @endforeach
                             </ul>
                         </div>
 

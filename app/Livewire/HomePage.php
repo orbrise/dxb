@@ -26,6 +26,12 @@ class HomePage extends Component
     public $city = 229;
     public $selectedcity = 'dubai';
     public $gender = 'female';
+    // Category slug when the visitor lands on a non-escort listing route
+    // (/massage-in-dubai, /phone-cam-in-dubai, …). Empty string on the
+    // legacy /{gender}-escorts-in-{city} routes.
+    public $category = '';
+    public $categoryListingId = null;
+    public $categoryName = null;
     public $sservices = [];
     public $rate = null;
     public $currency = 248;
@@ -91,10 +97,34 @@ class HomePage extends Component
         'sservices' => ['except' => [], 'as' => 'services']
     ];
 
-    public function mount($city = '', $gender = '', $page = 1, $isMobile = false, $showMobileSearch = false)
+    public function mount($city = '', $gender = '', $category = '', $page = 1, $isMobile = false, $showMobileSearch = false)
 {
-    
-    $this->gender = $gender;
+
+    // /{category}-in-{city} routes bind $category (route param name matches).
+    // Resolve it to a Listing row so getProfiles() can filter and so the view
+    // knows the display name for headings.
+    $this->category = $category ?: '';
+    if ($this->category !== '') {
+        $listing = Listing::where('slug', $this->category)
+            ->where('is_escort_category', false)
+            ->first();
+        if ($listing) {
+            $this->categoryListingId = $listing->id;
+            $this->categoryName = $listing->name;
+            // Non-escort categories don't have a gender axis. Keep $this->gender
+            // populated (default 'female') so shared header/blade references
+            // like route('mobile.search',[gender=>…]) still resolve — the
+            // getProfiles() query skips the gender filter whenever a
+            // categoryListingId is set, so this default has no effect on the
+            // actual result set.
+            $this->gender = 'female';
+        } else {
+            abort(404);
+        }
+    } else {
+        $this->gender = $gender;
+    }
+
     $this->isMobile = $isMobile;
     $this->showMobileSearch = $showMobileSearch;
     
@@ -650,10 +680,13 @@ public function checkIfFavorited($profileId)
             $genderId = $genderModel ? $genderModel->id : null;
         }
 
+        $categoryListingId = $this->categoryListingId;
+
         // Versioned cache key. Scope is city+gender so profile observers bump just the
         // affected listing; sub-key fingerprints all filters + pagination + auction winners.
         $page = $this->getPage();
         $filterFingerprint = md5(json_encode([
+            'category' => $categoryListingId,
             'rate' => $this->rate,
             'buts' => $this->buts,
             'ori' => $this->ori,
@@ -682,14 +715,17 @@ public function checkIfFavorited($profileId)
         $subkey = "p{$page}:{$filterFingerprint}";
 
         return CacheVersion::remember($scope, $subkey, CacheService::TTL_PROFILES, function () use (
-            $genderId, $auctionProfileIds, $packageOrderSql, $sortDirection, $page
+            $genderId, $categoryListingId, $auctionProfileIds, $packageOrderSql, $sortDirection, $page
         ) {
             $paginator = UsersProfile::query()
                 ->select('id', 'name', 'user_id', 'city', 'gender', 'about', 'package_id', 'slug', 'bust', 'orientation', 'ethnicity', 'nationality', 'age', 'height', 'shaved', 'haircolor', 'incall', 'incallcurr', 'incallprice', 'smoke', 'is_verified', 'created_at')
                 ->where('is_active', 1)
                 ->whereNull('archived_at')
                 ->when($this->city, fn($q) => $q->where('city', $this->city))
-                ->when($genderId, fn($q) => $q->where('gender', $genderId))
+                // Category pages ignore gender — the same physical profile can
+                // be listed under Massage regardless of who's providing it.
+                ->when($genderId && !$categoryListingId, fn($q) => $q->where('gender', $genderId))
+                ->when($categoryListingId, fn($q) => $q->where('listing', $categoryListingId))
                 ->when($this->rate, fn($q) => $q->where('incallprice', '<=', $this->rate))
                 ->when($this->buts, fn($q) => $q->where('bust', $this->buts))
                 ->when($this->ori, fn($q) => $q->where('orientation', $this->ori))
@@ -1109,6 +1145,14 @@ public function checkIfFavorited($profileId)
             || $this->outcall
             || $this->withreviews;
 
+        $categoryOptions = Cache::remember('cache:category_options', CacheService::TTL_LOOKUP, function () {
+            return Listing::select('id', 'name', 'slug', 'is_escort_category', 'sort_order')
+                ->where('is_escort_category', false)
+                ->whereNotNull('slug')
+                ->orderBy('sort_order')
+                ->get();
+        });
+
         return view('livewire.home-page', [
             'profiles' => $profiles,
             'fallback' => $fallback,
@@ -1117,6 +1161,9 @@ public function checkIfFavorited($profileId)
             'listings' => Cache::remember('cache:listings', CacheService::TTL_LOOKUP, function() {
                 return Listing::select('id', 'name')->get();
             }),
+            'categoryOptions' => $categoryOptions,
+            'category' => $this->category,
+            'categoryName' => $this->categoryName,
             'services' => CacheService::getServices(),
             'currencies' => CacheService::getCurrencies(),
             'ethnicities' => CacheService::getEthnicities(), 

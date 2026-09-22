@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class CallController extends Controller
@@ -413,9 +414,19 @@ class CallController extends Controller
      * Username: "<expiry-unix-ts>:<user-id>"
      * Credential: base64(hmac_sha1(username, shared_secret))
      *
-     * We serve UDP + TCP + TLS variants of the same TURN URL so the client
-     * picks whichever gets through its firewall. UDP is fastest; TCP/TLS are
-     * fallbacks for restrictive networks (corporate proxies, some CGNAT).
+     * We serve UDP + TCP + TLS variants so clients on restrictive networks
+     * (Opera's built-in VPN, corporate proxies, hotel wifi, some cellular)
+     * that block UDP:3478 outbound can fall back to TCP:3478 or TLS:5349
+     * (which looks like regular HTTPS to firewalls). Confirmed necessary
+     * when Opera on a friend's network gathered ZERO relay candidates with
+     * UDP-only — its `onicecandidate` never fired between gathering and
+     * complete.
+     *
+     * The earlier concern about asymmetric ICE pairs across browsers was
+     * actually caused by the SDP private-IP leak (see
+     * project_webrtc_private_ip_sdp_leak.md), not by multiple transports.
+     * Now that sanitizeSdp() handles both incoming and outgoing SDP, serving
+     * multiple transports is safe again and materially improves reachability.
      */
     public function turnCredentials(Request $request)
     {
@@ -443,17 +454,131 @@ class CallController extends Controller
 
         return response()->json([
             'iceServers' => [
-                ['urls' => [
-                    'stun:stun.l.google.com:19302',
-                    'stun:stun1.l.google.com:19302',
-                    "stun:{$host}:3478",
-                ]],
+                ['urls' => "stun:{$host}:3478"],
                 ['urls' => "turn:{$host}:3478?transport=udp",  'username' => $username, 'credential' => $credential],
                 ['urls' => "turn:{$host}:3478?transport=tcp",  'username' => $username, 'credential' => $credential],
                 ['urls' => "turns:{$host}:5349?transport=tcp", 'username' => $username, 'credential' => $credential],
             ],
             'source' => 'coturn-hmac',
         ])->header('Cache-Control', 'no-store, private, max-age=0, must-revalidate');
+    }
+
+    /**
+     * Create an ephemeral Daily.co room for a 1:1 call. Rooms auto-expire
+     * after 2 hours so orphaned URLs can't be replayed. The caller hits
+     * this endpoint at call-start time, then broadcasts the room URL to
+     * the callee via the existing /call/signal channel; both peers open
+     * the same Daily.co iframe and Daily handles all media relaying.
+     */
+    public function createRoom(Request $request)
+    {
+        abort_unless($request->user(), 401);
+        $rtc = Log::channel('rtc');
+
+        $apiKey = (string) config('services.daily.api_key', '');
+        if ($apiKey === '') {
+            $rtc->error('daily.not_configured');
+            return response()->json(['error' => 'Daily.co not configured'], 500);
+        }
+
+        $isVideo = $request->input('type') === 'video';
+
+        try {
+            $response = Http::withToken($apiKey)
+                ->acceptJson()
+                ->asJson()
+                ->timeout(6)
+                ->post('https://api.daily.co/v1/rooms', [
+                    'privacy' => 'private',
+                    'properties' => [
+                        'exp'                => time() + 7200, // 2h max lifespan
+                        'max_participants'   => 2,
+                        'enable_prejoin_ui'  => false,
+                        'enable_screenshare' => $isVideo,
+                        'enable_chat'        => false,
+                        'start_video_off'    => !$isVideo,
+                        'start_audio_off'    => false,
+                    ],
+                ]);
+
+            if (!$response->successful()) {
+                $rtc->error('daily.create_room_failed', [
+                    'status' => $response->status(),
+                    'body'   => substr($response->body(), 0, 300),
+                ]);
+                return response()->json(['error' => 'Failed to create room'], 500);
+            }
+
+            $room = $response->json();
+
+            // Mint a meeting token so the user joins as themselves (avatar/name)
+            // and can't rejoin after the room expires.
+            $tokenResp = Http::withToken($apiKey)
+                ->acceptJson()
+                ->asJson()
+                ->timeout(6)
+                ->post('https://api.daily.co/v1/meeting-tokens', [
+                    'properties' => [
+                        'room_name'   => $room['name'],
+                        'user_name'   => $request->user()->name ?: ('User ' . $request->user()->id),
+                        'user_id'     => (string) $request->user()->id,
+                        'exp'         => time() + 7200,
+                        'enable_screenshare' => $isVideo,
+                    ],
+                ]);
+
+            $token = $tokenResp->successful() ? ($tokenResp->json()['token'] ?? null) : null;
+
+            return response()->json([
+                'roomUrl'  => $room['url'],
+                'roomName' => $room['name'],
+                'token'    => $token,
+            ]);
+        } catch (\Throwable $e) {
+            $rtc->error('daily.exception', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Daily.co API error'], 500);
+        }
+    }
+
+    /**
+     * Mint a meeting token for a CALLEE joining an existing Daily.co room.
+     * The caller already has a token from createRoom(); this lets the
+     * callee join the same room with their own identity.
+     */
+    public function joinRoom(Request $request)
+    {
+        abort_unless($request->user(), 401);
+        $data = $request->validate([
+            'room_name' => 'required|string|max:80',
+        ]);
+
+        $apiKey = (string) config('services.daily.api_key', '');
+        if ($apiKey === '') {
+            return response()->json(['error' => 'Daily.co not configured'], 500);
+        }
+
+        try {
+            $tokenResp = Http::withToken($apiKey)
+                ->acceptJson()
+                ->asJson()
+                ->timeout(6)
+                ->post('https://api.daily.co/v1/meeting-tokens', [
+                    'properties' => [
+                        'room_name' => $data['room_name'],
+                        'user_name' => $request->user()->name ?: ('User ' . $request->user()->id),
+                        'user_id'   => (string) $request->user()->id,
+                        'exp'       => time() + 7200,
+                    ],
+                ]);
+
+            if (!$tokenResp->successful()) {
+                return response()->json(['error' => 'Token mint failed'], 500);
+            }
+
+            return response()->json(['token' => $tokenResp->json()['token'] ?? null]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Daily.co API error'], 500);
+        }
     }
 
     /**

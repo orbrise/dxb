@@ -231,6 +231,25 @@ Route::get("{gender}-escorts-in-{city}", HomePage::class)
     ->name("home")
     ->where('gender', 'female|male|shemale')
     ->middleware('page.cache');
+
+// Non-escort category listings — e.g. /massage-in-dubai, /phone-cam-in-dubai.
+// Category whitelist is sourced from the listings table (is_escort_category = 0).
+// Placed AFTER the gender-based routes so /female-escorts-in-dubai wins on its
+// own regex before falling through to this pattern.
+$categorySlugs = \App\Support\CategoryRoutes::nonEscortSlugsPattern();
+if ($categorySlugs !== '') {
+    Route::get("{category}-in-{city}/page/{page}", HomePage::class)
+        ->name("home.category.paginated")
+        ->where(['category' => $categorySlugs, 'page' => '[0-9]+'])
+        ->middleware('page.cache');
+    Route::get("{category}-in-{city}/{id}/{username}", ProfileDetails::class)
+        ->where(['category' => $categorySlugs, 'id' => '[0-9]+'])
+        ->middleware('page.cache');
+    Route::get("{category}-in-{city}", HomePage::class)
+        ->name("home.category")
+        ->where('category', $categorySlugs)
+        ->middleware('page.cache');
+}
 Route::get("{gender}-escorts-in-{city}/{id}/{username}", ProfileDetails::class)
     ->where('gender', 'female|male|shemale')
     ->middleware('page.cache');
@@ -330,6 +349,10 @@ Route::group(['middleware'=>'auth'], function(){
     // creating an RTCPeerConnection so relay servers use fresh, per-session
     // credentials rather than a hardcoded pair baked into the JS bundle.
     Route::get("rtc/turn", [\App\Http\Controllers\CallController::class, 'turnCredentials'])->name('rtc.turn');
+
+    // (Daily.co room lifecycle routes removed — switched to Jitsi Meet
+    // public server which doesn't require any server-side room creation.
+    // Room names are generated in the browser and shared via /call/signal.)
 
     // Dedicated voice-note upload endpoint. Livewire's programmatic upload API
     // was returning "Path cannot be empty" for MediaRecorder blobs, so we take

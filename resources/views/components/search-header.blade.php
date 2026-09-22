@@ -24,18 +24,31 @@
       </div>
         <div class="action-group hidden-xs">
           <div class="form-group dropdown primary-search-gender">
-            <button class="btn btn-dark search-bar--gender" data-toggle="dropdown" data-display="static" tabindex="2" type="button">{{ucfirst($gender)?? "Female"}} escorts <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px;vertical-align:middle;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            @php
+                $currentCategory = $category ?? '';
+                $currentCategoryName = $categoryName ?? null;
+                $categoryOptions = $categoryOptions ?? collect();
+                $primaryLabel = $currentCategory !== ''
+                    ? ($currentCategoryName ?: ucfirst(str_replace('-', ' ', $currentCategory)))
+                    : (ucfirst($gender ?: 'female') . ' escorts');
+            @endphp
+            <button class="btn btn-dark search-bar--gender" data-toggle="dropdown" data-display="static" tabindex="2" type="button">{{ $primaryLabel }} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px;vertical-align:middle;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
             <ul class="dropdown-menu nav nav-pills nav-stacked nav-dark dropdown-gender-menu">
-              <li class="@if(empty($gender) or $gender=='female') active @endif">
+              <li class="@if($currentCategory === '' && (empty($gender) or $gender=='female')) active @endif">
                 <a href="{{url('female-escorts-in-'.$selectedcity)}}" title="Escorts in Dubai">Female escorts </a>
               </li>
-              <li class="@if($gender=='male') active @endif">
+              <li class="@if($currentCategory === '' && $gender=='male') active @endif">
                 <a href="{{url('male-escorts-in-'.$selectedcity)}}" title="Gay escorts in Dubai">Male escorts </a>
               </li>
-              <li class="@if($gender=='shemale') active @endif">
+              <li class="@if($currentCategory === '' && $gender=='shemale') active @endif">
                 <a href="{{url('shemale-escorts-in-'.$selectedcity)}}" title="Escort shemales in Dubai">Shemale escorts </a>
               </li>
+              @foreach($categoryOptions as $opt)
+                <li class="@if($currentCategory === $opt->slug) active @endif">
+                  <a href="{{ url($opt->slug.'-in-'.strtolower($selectedcity ?: 'dubai')) }}" title="{{ $opt->name }} in {{ ucfirst($selectedcity ?: 'dubai') }}">{{ $opt->name }}</a>
+                </li>
+              @endforeach
             </ul>
           </div>
           <div class="form-group city required q_city_name_eq primary-search-city">

@@ -95,6 +95,17 @@ return [
         'enabled' => env('CLOUDFLARE_PURGE_ENABLED', false),
     ],
 
+    // Daily.co managed video/voice calls (WebRTC-as-a-service). Handles
+    // TURN, signaling and media relaying end-to-end; we just hit their API
+    // to create a room, then embed their prebuilt iframe. Way less brittle
+    // than self-hosted coturn for mobile/cross-network calls.
+    //
+    // Free tier: 10,000 participant-minutes/month (~= 250 hours of 1:1).
+    // Get an API key at https://dashboard.daily.co → Developers → API Keys.
+    'daily' => [
+        'api_key' => env('DAILY_API_KEY'),
+    ],
+
     // Self-hosted coturn TURN server (used by the WebRTC 1:1 call flow).
     // The coturn instance has `use-auth-secret` + `static-auth-secret=<secret>`
     // configured, so CallController::turnCredentials() mints per-user short-

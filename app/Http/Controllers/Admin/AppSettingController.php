@@ -34,6 +34,8 @@ class AppSettingController extends Controller
             'archive_warning_days' => 'nullable|integer|min:1|max:30',
             'auto_delete_archived_days' => 'nullable|integer|min:1|max:365',
             'auto_delete_inactive_days' => 'nullable|integer|min:1|max:365',
+            // Incoming-call ringtone — mp3/wav/ogg/m4a, up to 2MB (short loops only).
+            'call_ringtone' => 'nullable|file|mimetypes:audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/mp4,audio/x-m4a|max:2048',
         ]);
     
         $set = Setting::find(1);
@@ -90,17 +92,32 @@ class AppSettingController extends Controller
         if ($req->hasFile('collapse_icon')) {
             $file = $req->file('collapse_icon');
             $filename = 'collapse_logo_' . time() . '_' . $file->getClientOriginalName();
-            
+
             // Use external assets path
             $external_assets_path = env('EXTERNAL_ASSETS_PATH', 'C:\assets_storage');
             $uploads_dir = $external_assets_path . '/uploads';
-            
+
             if (!File::isDirectory($uploads_dir)) {
                 File::makeDirectory($uploads_dir, 0777, true);
             }
-            
+
             $file->move($uploads_dir, $filename);
             $set->collapse_icon = 'uploads/' . $filename;
+        }
+
+        if ($req->hasFile('call_ringtone')) {
+            $file = $req->file('call_ringtone');
+            $filename = 'ringtone_' . time() . '_' . $file->getClientOriginalName();
+
+            $external_assets_path = env('EXTERNAL_ASSETS_PATH', 'C:\assets_storage');
+            $uploads_dir = $external_assets_path . '/uploads';
+
+            if (!File::isDirectory($uploads_dir)) {
+                File::makeDirectory($uploads_dir, 0777, true);
+            }
+
+            $file->move($uploads_dir, $filename);
+            $set->call_ringtone_path = 'uploads/' . $filename;
         }
     
         $set->title = $req->title;
@@ -129,6 +146,10 @@ class AppSettingController extends Controller
         // Clear cached toggles so changes take effect immediately
         Cache::forget('geo_redirect_enabled');
         Cache::forget('hide_us_profile_pics');
+        // The globally-shared $setting object (see AppServiceProvider) is cached
+        // for 24h — bust it so ringtone / logo / other updates surface on the
+        // very next request instead of after an admin runs `cache:clear`.
+        Cache::forget('app:setting');
     
         return back()->with('success', 'Settings updated successfully.');
     }

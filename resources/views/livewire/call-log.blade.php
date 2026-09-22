@@ -59,7 +59,7 @@
 <div class="cl-wrap">
     <div class="cl-head">
         <h2><i class="fa fa-phone"></i> Call history</h2>
-        <a class="cl-back" href="{{ route('user.chat') }}"><i class="fa fa-angle-left"></i> Back to messages</a>
+        <a class="cl-back" href="{{ route('user.chat') }}" wire:navigate><i class="fa fa-angle-left"></i> Back to messages</a>
     </div>
 
     <div class="cl-filters">
@@ -111,7 +111,7 @@
                 </div>
                 <div class="cl-actions">
                     @if($c['peer_id'])
-                        <a href="{{ route('user.chat.with', $c['peer_id']) }}" title="Open chat">
+                        <a href="{{ route('user.chat.with', $c['peer_id']) }}" wire:navigate title="Open chat">
                             <button type="button"><i class="fa fa-comment"></i></button>
                         </a>
                     @endif

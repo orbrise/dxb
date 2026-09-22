@@ -138,10 +138,13 @@ class NewProfile extends Component
             }
         }
         
-        // Set default listing value
-        $firstListing = Listing::first();
-        if ($firstListing) {
-            $this->listing = $firstListing->id;
+        // Default to the "escorts" category so the profile is created under
+        // the primary /{gender}-escorts-in-{city} URL scheme unless the user
+        // explicitly picks a different category.
+        $default = Listing::where('is_escort_category', true)->first()
+            ?? Listing::orderBy('sort_order')->first();
+        if ($default) {
+            $this->listing = $default->id;
         }
         
         // Pre-populate phone number from user's account

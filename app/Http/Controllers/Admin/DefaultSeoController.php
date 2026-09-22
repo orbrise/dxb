@@ -57,6 +57,13 @@ class DefaultSeoController extends Controller
                 'example_label' => '/female-escorts-in-dubai',
             ],
             (object) [
+                'name'        => 'category-pages',
+                'label'       => 'Category Listing Pages',
+                'description' => 'Default for non-escort category listings like /massage-in-{city} or /phone-cam-in-{city}. Supports placeholders: {category}, {city}, {country}, {site_name}.',
+                'example_url' => url('/massage-in-dubai'),
+                'example_label' => '/massage-in-dubai',
+            ],
+            (object) [
                 'name'        => 'escorts',
                 'label'       => 'Gender Fallback',
                 'description' => 'Fallback for gender-only escort pages (used when city context is missing).',

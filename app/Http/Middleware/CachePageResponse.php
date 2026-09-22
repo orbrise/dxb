@@ -179,31 +179,36 @@ class CachePageResponse
 
     protected function extractCityFromUrl(Request $request): ?int
     {
-        // Match patterns like /female-escorts-in-dubai or /female-escorts-in-dubai/page/2
         $path = $request->path();
-        
+
+        // Legacy /{gender}-escorts-in-{city} + paginated + profile-detail variants
         if (preg_match('/^\w+-escorts-in-([\w-]+)(?:\/(?:page\/\d+|\d+\/[^\/]+))?$/', $path, $matches)) {
             $citySlug = $matches[1];
-            // Use CacheService for consistent city lookups
             $city = \App\Services\CacheService::getCityBySlug($citySlug);
             return $city ? $city->id : null;
         }
-        
+
+        // Non-escort category /{category}-in-{city} + paginated + profile-detail variants
+        if (preg_match('/^([\w-]+)-in-([\w-]+)(?:\/(?:page\/\d+|\d+\/[^\/]+))?$/', $path, $matches)) {
+            $city = \App\Services\CacheService::getCityBySlug($matches[2]);
+            return $city ? $city->id : null;
+        }
+
         return null;
     }
 
     protected function extractGenderFromUrl(Request $request): ?int
     {
-        // Match patterns like /female-escorts-in-dubai
+        // Only the escort route has a gender axis. Category routes don't map to
+        // a gender-based cache scope; returning null so both scopes bucket
+        // separately keeps invalidation surgical.
         $path = $request->path();
-        
+
         if (preg_match('/^(\w+)-escorts-in-/', $path, $matches)) {
-            $genderName = $matches[1];
-            // Use CacheService for consistent gender lookups
-            $gender = \App\Services\CacheService::getGenderByName($genderName);
+            $gender = \App\Services\CacheService::getGenderByName($matches[1]);
             return $gender ? $gender->id : null;
         }
-        
+
         return null;
     }
 
