@@ -275,6 +275,13 @@
             window.__authUserName = @json(auth()->user()?->name ?: (auth()->user()?->email ?? ''));
         </script>
         @include('livewire.partials.webrtc-scripts')
+        {{-- Web Push registration — asks for notification permission on the
+             first user click, then keeps a PushSubscription on file so
+             the server can wake the browser with an incoming-call
+             notification even when the tab is minimized / phone screen off.
+             Silently no-ops on browsers without Push support (iOS Safari
+             outside PWA installs, etc.). --}}
+        @include('livewire.partials.push-init')
     @endauth
 
     {{-- Footer --}}

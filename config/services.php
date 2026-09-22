@@ -129,4 +129,17 @@ return [
         'ttl' => (int) env('TURN_TTL', 86400),
     ],
 
+    // Web Push Notifications — VAPID keypair for the browser Push API.
+    // Generate once via `php artisan push:generate-vapid-keys` and paste the
+    // output into .env. Same keypair is reused forever; if you rotate it,
+    // every existing subscription becomes invalid and users must re-consent.
+    //
+    // `subject` is a mailto: URL or an https URL the push service can use
+    // to reach you if there's abuse — required by RFC 8292.
+    'push' => [
+        'vapid_public'  => env('VAPID_PUBLIC_KEY'),
+        'vapid_private' => env('VAPID_PRIVATE_KEY'),
+        'vapid_subject' => env('VAPID_SUBJECT', 'mailto:admin@evoory.com'),
+    ],
+
 ];

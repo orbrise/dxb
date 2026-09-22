@@ -147,7 +147,95 @@ class CallController extends Controller
             ]);
         }
 
+        // Web Push wake-up — only for offers (incoming call). Other signal
+        // types (ice/answer/hangup) don't need OS-level notification since
+        // by then the callee's browser is already engaged in the handshake.
+        if ($data['type'] === 'offer') {
+            try {
+                $this->sendCallPush($targetId, $user, $data['call_id'], $data['call_type']);
+            } catch (\Throwable $e) {
+                $rtc->warning('signal.push_failed', [
+                    'call_id' => $data['call_id'],
+                    'to' => $targetId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Fire a Web Push to every push subscription registered for $targetId.
+     * The service worker (public/push-sw.js) turns the payload into a
+     * native OS notification with Answer / Decline actions — this is what
+     * lets the callee's phone ring even when the browser tab is
+     * backgrounded or the screen is off.
+     *
+     * Subscriptions that come back 404/410 are cleaned out — the push
+     * service is telling us they're permanently invalid (user revoked
+     * permission, uninstalled the browser, etc.).
+     */
+    protected function sendCallPush(int $targetId, User $caller, string $callId, string $callType): void
+    {
+        $publicKey  = (string) config('services.push.vapid_public', '');
+        $privateKey = (string) config('services.push.vapid_private', '');
+        if ($publicKey === '' || $privateKey === '') {
+            // No VAPID keys — treat as not configured, silently skip.
+            return;
+        }
+
+        $subs = \App\Models\PushSubscription::where('user_id', $targetId)->get();
+        if ($subs->isEmpty()) return;
+
+        $webPush = new \Minishlink\WebPush\WebPush([
+            'VAPID' => [
+                'subject'    => (string) config('services.push.vapid_subject', 'mailto:admin@evoory.com'),
+                'publicKey'  => $publicKey,
+                'privateKey' => $privateKey,
+            ],
+        ]);
+        // Total budget per push call — most services respond in <500ms; a
+        // 3s cap is plenty and keeps the signaling POST snappy for the caller.
+        $webPush->setDefaultOptions(['TTL' => 45, 'urgency' => 'high']);
+
+        $avatar = $caller->avatar ? asset('storage/' . $caller->avatar) : null;
+        $payload = json_encode([
+            'type'     => 'call.offer',
+            'callId'   => $callId,
+            'callType' => $callType,
+            'from'     => [
+                'id'     => $caller->id,
+                'name'   => $caller->name ?: $caller->email ?: 'Someone',
+                'avatar' => $avatar,
+            ],
+            'chatUrl'  => url('/my-chat'),
+            'title'    => ($caller->name ?: 'Someone') . ' is calling',
+            'body'     => $callType === 'video' ? 'Incoming video call' : 'Incoming voice call',
+        ]);
+
+        foreach ($subs as $sub) {
+            $webPush->queueNotification(
+                \Minishlink\WebPush\Subscription::create($sub->toWebPush()),
+                $payload
+            );
+        }
+
+        foreach ($webPush->flush() as $report) {
+            $endpoint = $report->getRequest()->getUri()->__toString();
+            if ($report->isSuccess()) {
+                \App\Models\PushSubscription::where('endpoint', $endpoint)
+                    ->update(['last_used_at' => now()]);
+                continue;
+            }
+            // 404/410 = subscription is permanently dead. Drop the row so
+            // we don't keep hammering that endpoint on every call.
+            $response = $report->getResponse();
+            $status = $response ? $response->getStatusCode() : 0;
+            if (in_array($status, [404, 410], true)) {
+                \App\Models\PushSubscription::where('endpoint', $endpoint)->delete();
+            }
+        }
     }
 
     /**

@@ -350,6 +350,14 @@ Route::group(['middleware'=>'auth'], function(){
     // credentials rather than a hardcoded pair baked into the JS bundle.
     Route::get("rtc/turn", [\App\Http\Controllers\CallController::class, 'turnCredentials'])->name('rtc.turn');
 
+    // Web Push subscription lifecycle — the browser service worker sends
+    // the subscription payload here after the user grants permission, so
+    // we can wake it up with an incoming-call notification when the tab
+    // is backgrounded / phone screen off.
+    Route::get("push/vapid-public-key", [\App\Http\Controllers\PushController::class, 'vapidPublicKey'])->name('push.vapid');
+    Route::post("push/subscribe", [\App\Http\Controllers\PushController::class, 'subscribe'])->name('push.subscribe');
+    Route::post("push/unsubscribe", [\App\Http\Controllers\PushController::class, 'unsubscribe'])->name('push.unsubscribe');
+
     // (Daily.co room lifecycle routes removed — switched to Jitsi Meet
     // public server which doesn't require any server-side room creation.
     // Room names are generated in the browser and shared via /call/signal.)
