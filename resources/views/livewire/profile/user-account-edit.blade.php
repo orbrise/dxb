@@ -601,6 +601,13 @@
                     </div>
 
                     <div class="ev-form-group">
+                        <label for="my_account_username">Username</label>
+                        <input wire:model="username" class="ev-input" maxlength="60" type="text" id="my_account_username" placeholder="e.g. john.doe" />
+                        <small style="color:#8b969a; font-size:12px; display:block; margin-top:4px;">Used to find you on the chat directory. Letters, numbers, dots, underscores and hyphens only.</small>
+                        @error('username') <span class="ev-text-danger">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="ev-form-group">
                         <label for="my_account_about_me">About me</label>
                         {{-- Fully deferred (no modifier): the value syncs to
                              the server only on the next real action (form

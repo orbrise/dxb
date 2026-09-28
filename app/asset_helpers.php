@@ -89,7 +89,7 @@ function external_asset($path, $secure = null)
     
     // If it has an extension and matches our asset types, use our disk system
     if ($hasExtension) {
-        $assetExtensions = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'ttf', 'eot', 'ico', 'mp3', 'wav', 'ogg', 'm4a', 'webp'];
+        $assetExtensions = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'ttf', 'eot', 'ico', 'mp3', 'wav', 'ogg', 'm4a', 'webp', 'mp4', 'webm', 'mov', 'avi'];
         if (in_array(strtolower($pathInfo['extension']), $assetExtensions)) {
             return asset_url($path);
         }

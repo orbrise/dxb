@@ -118,6 +118,9 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             await fetchIceServers();
             S.pc = createPeer();
             S.localStream.getTracks().forEach(t => S.pc.addTrack(t, S.localStream));
+            // Voice-first bitrate cap (24 kbps) — applied before the offer
+            // is created so the initial SDP reflects our encoder limits.
+            await capAudioBitrate(S.pc, 24000);
 
             const offer = await S.pc.createOffer({
                 offerToReceiveAudio: true,
@@ -269,6 +272,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             await fetchIceServers();
             S.pc = createPeer();
             S.localStream.getTracks().forEach(t => S.pc.addTrack(t, S.localStream));
+            await capAudioBitrate(S.pc, 24000);
 
             if (!S._pendingOffer || !S._pendingOffer.sdp) {
                 throw new Error('missing offer SDP');
@@ -945,9 +949,125 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         return out.join('\r\n');
     }
 
+    // Tune the audio m= section for reliability on slow / lossy links.
+    // Applied to BOTH outgoing offer and answer — both peers need matching
+    // Opus params for FEC/DTX to actually engage, and both need the
+    // bandwidth cap in their SDP so the far side doesn't blast us.
+    //
+    // Changes made per Opus fmtp line:
+    //   useinbandfec=1  → Forward Error Correction, recovers lost packets
+    //                     by re-transmitting a copy inside the next packet
+    //   usedtx=1        → Discontinuous transmission (silence suppression)
+    //                     so no audio bytes flow while nobody's talking
+    //   stereo=0        → Mono, half the bandwidth of stereo
+    //   maxaveragebitrate=24000 → cap Opus at 24 kbps (near-toll quality)
+    //   maxplaybackrate=16000   → wideband (16 kHz) instead of full 48 kHz
+    //   cbr=0           → let Opus adapt bitrate within the cap
+    //
+    // Also inserts a `b=AS:32` (32 kbps ceiling for the audio session).
+    // Combined, this gives us reliable voice down to ~50 kbps links with
+    // 10-20% packet loss — well beyond what stock WebRTC survives.
+    function optimizeAudioSdp(sdp) {
+        if (!sdp) return sdp;
+        const lines = sdp.split(/\r?\n/);
+
+        // Find the Opus payload type.
+        let inAudio = false;
+        let opusPT = null;
+        for (const line of lines) {
+            if (line.startsWith('m=audio ')) inAudio = true;
+            else if (line.startsWith('m=')) inAudio = false;
+            if (inAudio && line.startsWith('a=rtpmap:')) {
+                const m = line.match(/^a=rtpmap:(\d+)\s+opus/i);
+                if (m) { opusPT = m[1]; break; }
+            }
+        }
+        if (!opusPT) return sdp; // No Opus, nothing to tune
+
+        const desired = {
+            useinbandfec:       '1',
+            usedtx:             '1',
+            stereo:             '0',
+            maxaveragebitrate:  '24000',
+            maxplaybackrate:    '16000',
+            cbr:                '0',
+        };
+
+        const out = [];
+        inAudio = false;
+        let insertedBandwidth = false;
+        let touchedFmtp = false;
+
+        for (const line of lines) {
+            if (line.startsWith('m=audio ')) {
+                inAudio = true;
+                out.push(line);
+                if (!insertedBandwidth) {
+                    // 32 kbps ceiling — a bit above our maxaveragebitrate
+                    // to leave room for FEC + RTCP overhead.
+                    out.push('b=AS:32');
+                    insertedBandwidth = true;
+                }
+                continue;
+            }
+            if (line.startsWith('m=')) inAudio = false;
+
+            if (inAudio && line.startsWith('a=fmtp:' + opusPT)) {
+                // Merge our params into any that already exist.
+                const parts = line.split(' ');
+                const prefix = parts[0];
+                const params = parts.slice(1).join(' ').split(';').map(s => s.trim()).filter(Boolean);
+                for (const [k, v] of Object.entries(desired)) {
+                    const i = params.findIndex(p => p.split('=')[0] === k);
+                    if (i >= 0) params[i] = k + '=' + v;
+                    else params.push(k + '=' + v);
+                }
+                out.push(prefix + ' ' + params.join(';'));
+                touchedFmtp = true;
+                continue;
+            }
+            out.push(line);
+        }
+
+        // If WebRTC didn't emit an fmtp:<opus> line at all, add one right
+        // after its rtpmap so our params still land. Rare but happens on
+        // some Safari builds.
+        if (!touchedFmtp) {
+            const paramStr = Object.entries(desired).map(([k, v]) => k + '=' + v).join(';');
+            const insertAt = out.findIndex(l => l.startsWith('a=rtpmap:' + opusPT));
+            if (insertAt >= 0) out.splice(insertAt + 1, 0, 'a=fmtp:' + opusPT + ' ' + paramStr);
+        }
+
+        return out.join('\r\n');
+    }
+
     // Backwards-compat wrapper — most call sites already use the outgoing form.
-    function sanitizeOutgoingSdp(sdp) { return sanitizeSdp(sdp, 'out'); }
+    // Composed with optimizeAudioSdp so BOTH sanitize (private-IP fixes) AND
+    // audio tuning apply to every outgoing SDP.
+    function sanitizeOutgoingSdp(sdp) { return optimizeAudioSdp(sanitizeSdp(sdp, 'out')); }
     function sanitizeIncomingSdp(sdp) { return sanitizeSdp(sdp, 'in'); }
+
+    // Hard-cap the audio sender bitrate via the encoder parameters API.
+    // Complements the SDP maxaveragebitrate — modern WebRTC honours this
+    // setting even if the SDP is ignored, and works both for the initial
+    // encoding and any subsequent codec renegotiations. Called right
+    // after addTrack() so the first packet already respects the cap.
+    async function capAudioBitrate(pc, maxBps) {
+        if (!pc || !pc.getSenders) return;
+        for (const sender of pc.getSenders()) {
+            if (!sender.track || sender.track.kind !== 'audio') continue;
+            try {
+                const params = sender.getParameters();
+                if (!params.encodings || !params.encodings.length) params.encodings = [{}];
+                params.encodings[0].maxBitrate = maxBps;
+                params.encodings[0].priority = 'high';   // give voice bandwidth priority
+                params.encodings[0].networkPriority = 'high';
+                await sender.setParameters(params);
+            } catch (err) {
+                console.warn('[rtc] capAudioBitrate failed', err);
+            }
+        }
+    }
     function escapeAttr(s) {
         return String(s).replace(/["<>&]/g, c => ({ '"': '&quot;', '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
     }

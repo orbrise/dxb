@@ -26,6 +26,7 @@ class Message extends Model
         'attachment_size',
         'attachment_duration',
         'attachment_original_name',
+        'expires_at',
     ];
 
     /**
@@ -35,9 +36,37 @@ class Message extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'replied_at' => 'datetime',
+        'expires_at' => 'datetime',
         'attachment_size' => 'integer',
         'attachment_duration' => 'integer',
     ];
+
+    /**
+     * Filter out disappearing messages that have passed their expiry.
+     * Applied everywhere we render messages so expired ones vanish from
+     * history without needing a cron.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+        });
+    }
+
+    /**
+     * Translate a WhatsApp-style TTL preset ('never'|'24h'|'1w'|'1m') to
+     * a Carbon expires_at, or null for "never".
+     */
+    public static function ttlToExpiry(?string $ttl, ?\Carbon\Carbon $from = null): ?\Carbon\Carbon
+    {
+        $from = $from ?: now();
+        return match ($ttl) {
+            '24h'   => $from->copy()->addDay(),
+            '1w'    => $from->copy()->addWeek(),
+            '1m'    => $from->copy()->addMonth(),
+            default => null, // 'never' / null / unknown
+        };
+    }
 
     /**
      * Full public URL to the attachment (for use in <img>, <a href>, <audio>).

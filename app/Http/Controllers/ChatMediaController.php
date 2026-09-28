@@ -120,6 +120,7 @@ class ChatMediaController extends Controller
                 'attachment_size' => filesize($absTargetDir . DIRECTORY_SEPARATOR . $filename) ?: null,
                 'attachment_duration' => $isVoice ? ((int) ($data['duration'] ?? 1)) : null,
                 'attachment_original_name' => $originalName,
+                'expires_at' => Message::ttlToExpiry($user->pref_disappearing_default ?? 'never'),
             ]);
 
             $conversation->update(['last_message_at' => now()]);

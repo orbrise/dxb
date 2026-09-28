@@ -16,6 +16,7 @@ class UserAccountEdit extends Component
 
     public $email;
     public $display_name;
+    public $username;
     public $about_me;
     public $account_type;
     public $avatar;
@@ -28,19 +29,29 @@ class UserAccountEdit extends Component
         $user = Auth::user();
         $this->email = $user->email;
         $this->display_name = $user->name;
+        $this->username = $user->username;
         $this->about_me = $user->about;
         $this->account_type = $user->type;
         $this->countrycode = $user->country_code ?? '';
         $this->phone = $user->phone ?? '';
     }
 
-    protected $rules = [
-        'display_name' => 'required|max:191',
-        'about_me' => 'nullable',
-        'account_type' => 'required|in:2,3',
-        'avatar' => 'nullable|image|max:4096',
-        'countrycode' => 'nullable',
-        'phone' => 'nullable|max:20'
+    protected function rules(): array
+    {
+        return [
+            'display_name' => 'required|max:191',
+            'username'     => 'nullable|string|min:3|max:60|regex:/^[a-z0-9_.-]+$/i|unique:users,username,' . Auth::id(),
+            'about_me'     => 'nullable',
+            'account_type' => 'required|in:2,3',
+            'avatar'       => 'nullable|image|max:4096',
+            'countrycode'  => 'nullable',
+            'phone'        => 'nullable|max:20',
+        ];
+    }
+
+    protected $messages = [
+        'username.regex'  => 'Username can only use letters, numbers, dots, underscores and hyphens.',
+        'username.unique' => 'That username is already taken.',
     ];
 
     /**
@@ -120,6 +131,7 @@ class UserAccountEdit extends Component
         }
 
         $user->name = $this->display_name;
+        $user->username = $this->username ?: null;
         $user->about = $this->about_me;
         $user->type = $this->account_type;
         $user->country_code = $this->countrycode;

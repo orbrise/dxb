@@ -379,6 +379,28 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get("chat/media/{messageId}", [\App\Http\Controllers\ChatMediaController::class, 'serve'])
         ->whereNumber('messageId')
         ->name('chat.media.serve');
+
+    // Status feature — WhatsApp-style ephemeral posts (photo/video/text
+    // that auto-hide 24h after posting). Photo/video upload goes through
+    // the same $upload->move() workaround as chat media.
+    Route::post("status/upload",             [\App\Http\Controllers\StatusController::class, 'uploadMedia'])->name('status.upload');
+    Route::post("status/{id}/view",          [\App\Http\Controllers\StatusController::class, 'markViewed'])->whereNumber('id')->name('status.view');
+    Route::delete("status/{id}",             [\App\Http\Controllers\StatusController::class, 'destroy'])->whereNumber('id')->name('status.destroy');
+
+    // Chat Settings — avatar upload endpoint used by the Account pane.
+    Route::post("settings/avatar", function (\Illuminate\Http\Request $request) {
+        abort_unless($request->user(), 401);
+        $request->validate(['avatar' => 'required|image|max:5120']);
+        $file = $request->file('avatar');
+        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        $name = 'av-' . \Illuminate\Support\Str::random(20) . '.' . strtolower($ext);
+        $dir = 'avatars/' . $request->user()->id;
+        $abs = storage_path('app/public/' . $dir);
+        if (!is_dir($abs)) @mkdir($abs, 0755, true);
+        $file->move($abs, $name);
+        $request->user()->update(['avatar' => "{$dir}/{$name}"]);
+        return response()->json(['ok' => true, 'path' => "{$dir}/{$name}"]);
+    })->name('settings.avatar');
     Route::get("my-questions", \App\Livewire\Questions::class)->name("user.questions");
     Route::get("my-reviews", \App\Livewire\Reviews::class)->name("user.reviews");
     Route::post('verify-photo', [App\Http\Controllers\VerifyPhotoController::class, 'store'])->name('verify.photo.store');
