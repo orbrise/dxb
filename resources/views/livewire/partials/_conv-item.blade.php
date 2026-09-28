@@ -9,8 +9,8 @@
     <div class="conversation-avatar {{ !empty($conversation['has_status']) ? 'status-ring' : '' }} {{ !empty($conversation['has_status']) && empty($conversation['status_unseen']) ? 'seen' : '' }}">
         @if(!empty($conversation['is_support']))
             <i class="fa fa-headset" aria-hidden="true"></i>
-        @elseif(!empty($conversation['other_user_avatar']))
-            <img src="{{ smart_asset('storage/' . $conversation['other_user_avatar']) }}" alt="">
+        @elseif(!empty($conversation['other_user_avatar_url']))
+            <img src="{{ $conversation['other_user_avatar_url'] }}" alt="" onerror="this.style.display='none'">
         @else
             {{ strtoupper(substr($conversation['other_user_name'] ?? '?', 0, 1)) }}
         @endif

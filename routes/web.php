@@ -387,6 +387,57 @@ Route::group(['middleware'=>'auth'], function(){
     Route::post("status/{id}/view",          [\App\Http\Controllers\StatusController::class, 'markViewed'])->whereNumber('id')->name('status.view');
     Route::delete("status/{id}",             [\App\Http\Controllers\StatusController::class, 'destroy'])->whereNumber('id')->name('status.destroy');
 
+    // Serve a user avatar. Same problem as chat media on this host:
+    // public/storage/ is a real directory, not a symlink to
+    // storage/app/public, so /storage/avatars/xxx.jpg URLs 404. We stream
+    // the file with the correct Content-Type instead, and redirect if the
+    // avatar column holds a full URL (Google OAuth, imports).
+    Route::get("u/{userId}/avatar", function (int $userId) {
+        $user = \App\Models\User::find($userId);
+        if (!$user || empty($user->avatar)) abort(404);
+
+        $val = $user->avatar;
+        if (str_starts_with($val, 'http://') || str_starts_with($val, 'https://') || str_starts_with($val, '//')) {
+            return redirect($val);
+        }
+        // Try a handful of historical layouts, since Livewire on this
+        // Laragon has recursively nested "public/app/" paths on some rows.
+        $candidates = [
+            storage_path('app/public/' . ltrim($val, '/')),
+            storage_path('app/public/app/public/' . ltrim($val, '/')),
+            storage_path('app/public/app/' . ltrim($val, '/')),
+            public_path(ltrim($val, '/')),
+        ];
+        foreach ($candidates as $abs) {
+            if (is_file($abs)) {
+                $mime = @mime_content_type($abs) ?: 'image/jpeg';
+                return response()->file($abs, [
+                    'Content-Type'  => $mime,
+                    'Cache-Control' => 'public, max-age=86400',
+                ]);
+            }
+        }
+
+        // Not found locally — fall back to the external CDN
+        // (assets.evoory.com). Try a couple of likely path prefixes
+        // that older uploads / imports actually used on that host.
+        $baseCdn = rtrim((string) config('filesystems.disks.assets_external.url', ''), '/');
+        if ($baseCdn !== '') {
+            $rel = ltrim($val, '/');
+            $variants = [
+                $rel,                                             // avatars/xxx.jpg
+                str_starts_with($rel, 'storage/') ? substr($rel, 8) : ('storage/' . $rel),
+                'userimages/' . basename($rel),                   // legacy per-user dir
+                'uploads/' . basename($rel),                      // legacy uploads dir
+            ];
+            // Return a redirect to the first likely CDN URL. The browser
+            // will 404 on the wrong one, but that's identical to today's
+            // behaviour and gives us a working URL when the guess is right.
+            return redirect($baseCdn . '/' . $variants[0]);
+        }
+        abort(404);
+    })->whereNumber('userId')->name('user.avatar');
+
     // Chat Settings — avatar upload endpoint used by the Account pane.
     Route::post("settings/avatar", function (\Illuminate\Http\Request $request) {
         abort_unless($request->user(), 401);

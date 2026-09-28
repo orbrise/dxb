@@ -2193,8 +2193,8 @@
                                             @foreach($searchResults as $user)
                                                 <div class="search-result-item" wire:click="startConversation({{ $user->id }})">
                                                     <div class="conversation-avatar">
-                                                        @if($user->profile_pic)
-                                                            <img src="{{ smart_asset('storage/' . $user->profile_pic) }}" alt="">
+                                                        @if($user->avatar)
+                                                            <img src="{{ user_avatar_url($user) }}" alt="">
                                                         @else
                                                             {{ strtoupper(substr($user->name ?? $user->email, 0, 1)) }}
                                                         @endif
@@ -2280,8 +2280,8 @@
                                          @endif>
                                         <div class="status-my-avatar {{ $statusFeed['mine']->isNotEmpty() ? 'has-status' : '' }}">
                                             @php $me = auth()->user(); @endphp
-                                            @if($me && $me->profile_pic)
-                                                <img src="{{ smart_asset('storage/' . $me->profile_pic) }}" alt="">
+                                            @if($me && $me->avatar)
+                                                <img src="{{ user_avatar_url($me) }}" alt="">
                                             @else
                                                 {{ strtoupper(substr($me->name ?? '?', 0, 1)) }}
                                             @endif
@@ -2351,7 +2351,7 @@
                                                  wire:click="viewStatus({{ $entry['latest_id'] }})">
                                                 <div class="conversation-avatar status-ring {{ $entry['unseen'] > 0 ? 'unseen' : 'seen' }}">
                                                     @if(!empty($entry['user_avatar']))
-                                                        <img src="{{ smart_asset('storage/' . $entry['user_avatar']) }}" alt="">
+                                                        <img src="{{ $entry['user_avatar_url'] }}" alt="">
                                                     @else
                                                         {{ strtoupper(substr($entry['user_name'] ?? '?', 0, 1)) }}
                                                     @endif
@@ -2377,8 +2377,8 @@
                                     @php $me = auth()->user(); @endphp
                                     <div class="settings-profile-card">
                                         <div class="settings-profile-avatar">
-                                            @if($me && $me->profile_pic)
-                                                <img src="{{ smart_asset('storage/' . $me->profile_pic) }}" alt="">
+                                            @if($me && $me->avatar)
+                                                <img src="{{ user_avatar_url($me) }}" alt="">
                                             @else
                                                 {{ strtoupper(substr($me->name ?? $me->email ?? '?', 0, 1)) }}
                                             @endif
@@ -2453,7 +2453,7 @@
                                                  @if($call['peer_id']) wire:click="openChatFromCall({{ $call['peer_id'] }})" @endif>
                                                 <div class="conversation-avatar">
                                                     @if(!empty($call['peer_avatar']))
-                                                        <img src="{{ smart_asset('storage/' . $call['peer_avatar']) }}" alt="">
+                                                        <img src="{{ $call['peer_avatar_url'] }}" alt="">
                                                     @else
                                                         {{ strtoupper(substr($call['peer_name'] ?? '?', 0, 1)) }}
                                                     @endif
@@ -2559,8 +2559,8 @@
                                                  wire:key="dir-{{ $u->id }}"
                                                  wire:click="startNewChatWith({{ $u->id }})">
                                                 <div class="new-chat-avatar">
-                                                    @if($u->profile_pic)
-                                                        <img src="{{ smart_asset('storage/' . $u->profile_pic) }}" alt="">
+                                                    @if($u->avatar)
+                                                        <img src="{{ user_avatar_url($u) }}" alt="">
                                                     @else
                                                         <i class="fa fa-user"></i>
                                                     @endif
@@ -2602,7 +2602,7 @@
                                         <div class="status-viewer-user">
                                             <div class="chat-header-avatar">
                                                 @if($selectedStatus['user_avatar'])
-                                                    <img src="{{ smart_asset('storage/' . $selectedStatus['user_avatar']) }}" alt="">
+                                                    <img src="{{ $selectedStatus['user_avatar_url'] }}" alt="">
                                                 @else
                                                     {{ strtoupper(substr($selectedStatus['user_name'] ?? '?', 0, 1)) }}
                                                 @endif
@@ -2653,8 +2653,8 @@
                                             @foreach($selectedStatus['viewers'] as $v)
                                                 <div class="status-viewer-row">
                                                     <div class="conversation-avatar" style="width:32px; height:32px; font-size:12px;">
-                                                        @if($v->viewer->profile_pic ?? false)
-                                                            <img src="{{ smart_asset('storage/' . $v->viewer->profile_pic) }}" alt="">
+                                                        @if($v->viewer->avatar ?? false)
+                                                            <img src="{{ user_avatar_url($v->viewer) }}" alt="">
                                                         @else
                                                             {{ strtoupper(substr($v->viewer->name ?? $v->viewer->email ?? '?', 0, 1)) }}
                                                         @endif
@@ -2709,7 +2709,7 @@
                                             <div class="acct-avatar-wrap">
                                                 <div class="acct-avatar">
                                                     @if(auth()->user()->avatar)
-                                                        <img src="{{ smart_asset('storage/' . auth()->user()->avatar) }}" alt="">
+                                                        <img src="{{ user_avatar_url(auth()->user()) }}" alt="">
                                                     @else
                                                         {{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}
                                                     @endif
@@ -2907,8 +2907,8 @@
                                         <div class="chat-header-avatar">
                                             @if($selectedIsSupport)
                                                 <i class="fa fa-headset" aria-hidden="true"></i>
-                                            @elseif($selectedUser && $selectedUser->profile_pic)
-                                                <img src="{{ smart_asset('storage/' . $selectedUser->profile_pic) }}" alt="">
+                                            @elseif($selectedUser && $selectedUser->avatar)
+                                                <img src="{{ user_avatar_url($selectedUser) }}" alt="">
                                             @elseif($selectedUser)
                                                 {{ strtoupper(substr($selectedUser->name ?? $selectedUser->email, 0, 1)) }}
                                             @endif
@@ -2937,7 +2937,7 @@
                                                         data-rtc-call="audio"
                                                         data-peer-id="{{ $selectedUser->id }}"
                                                         data-peer-name="{{ $selectedUser->name ?? $selectedUser->email }}"
-                                                        data-peer-avatar="{{ $selectedUser->profile_pic ? smart_asset('storage/' . $selectedUser->profile_pic) : '' }}"
+                                                        data-peer-avatar="{{ $selectedUser->avatar ? user_avatar_url($selectedUser) : '' }}"
                                                         data-conversation-id="{{ $selectedConversationId }}">
                                                     <i class="fa fa-phone"></i>
                                                 </button>
@@ -2945,7 +2945,7 @@
                                                         data-rtc-call="video"
                                                         data-peer-id="{{ $selectedUser->id }}"
                                                         data-peer-name="{{ $selectedUser->name ?? $selectedUser->email }}"
-                                                        data-peer-avatar="{{ $selectedUser->profile_pic ? smart_asset('storage/' . $selectedUser->profile_pic) : '' }}"
+                                                        data-peer-avatar="{{ $selectedUser->avatar ? user_avatar_url($selectedUser) : '' }}"
                                                         data-conversation-id="{{ $selectedConversationId }}">
                                                     <i class="fa fa-video"></i>
                                                 </button>
@@ -3032,7 +3032,7 @@
                                                                     data-rtc-call="{{ $callKind }}"
                                                                     data-peer-id="{{ $selectedUser->id }}"
                                                                     data-peer-name="{{ $selectedUser->name ?? $selectedUser->email }}"
-                                                                    data-peer-avatar="{{ $selectedUser->profile_pic ? smart_asset('storage/' . $selectedUser->profile_pic) : '' }}"
+                                                                    data-peer-avatar="{{ $selectedUser->avatar ? user_avatar_url($selectedUser) : '' }}"
                                                                     data-conversation-id="{{ $selectedConversationId }}">
                                                                 <i class="fa {{ $iconClass }}"></i>
                                                             </button>

@@ -106,6 +106,61 @@ if (!function_exists('smart_asset')) {
     }
 }
 
+if (!function_exists('user_avatar_url')) {
+    /**
+     * Resolve a user avatar into a browser-usable URL.
+     *
+     * Accepts either:
+     *   - a User model (any object with $avatar + $id properties)
+     *   - an array with 'id' + 'avatar' keys
+     *   - a raw avatar string value (falls back to smart_asset resolution;
+     *     used for pre-materialized payloads that don't carry a user id)
+     *
+     * For local files we route through GET /u/{id}/avatar so the request
+     * is served by a controller that reads from storage/app/public
+     * directly — necessary on this host because public/storage/ is a real
+     * directory rather than a symlink and would otherwise 404.
+     * Full URLs (Google OAuth, CDN imports) are returned unchanged.
+     */
+    function user_avatar_url($input): ?string
+    {
+        $userId = null;
+        $avatar = null;
+
+        if (is_string($input)) {
+            $avatar = $input;
+        } elseif (is_array($input)) {
+            $avatar = $input['avatar'] ?? null;
+            $userId = $input['id'] ?? null;
+        } elseif (is_object($input)) {
+            $avatar = $input->avatar ?? null;
+            $userId = $input->id ?? null;
+        }
+
+        if (empty($avatar)) return null;
+
+        // Absolute URL / data URL — return unchanged.
+        if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://') || str_starts_with($avatar, '//') || str_starts_with($avatar, 'data:')) {
+            return $avatar;
+        }
+
+        // If we know which user this belongs to, route through the
+        // avatar-serve endpoint. This works regardless of how the file
+        // was stored (avatars/, storage/, nested public/, etc).
+        if ($userId) {
+            try { return route('user.avatar', $userId); } catch (\Throwable $e) { /* fallthrough */ }
+        }
+
+        // Fallback for pre-materialized payloads without an id — best
+        // effort via smart_asset. This isn't ideal on hosts without a
+        // public/storage symlink, but it's the safe default.
+        if (str_starts_with($avatar, '/'))         return app('url')->asset(ltrim($avatar, '/'));
+        if (str_starts_with($avatar, 'storage/'))  return smart_asset($avatar);
+        if (!str_contains($avatar, '/'))           return smart_asset('storage/avatars/' . $avatar);
+        return smart_asset('storage/' . $avatar);
+    }
+}
+
 if (!function_exists('should_hide_us_profile_pics')) {
     /**
      * Resolve once per request: is the "hide profile pics from US visitors"

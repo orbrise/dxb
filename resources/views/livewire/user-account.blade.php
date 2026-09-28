@@ -1031,11 +1031,12 @@
         <div class="ev-am-user">
             <div class="ev-am-avatar">
                 @if(!empty($u->avatar))
-                    {{-- Storage::url() resolves to the local /storage/...
-                         path (the same one user-account-edit uses).
-                         smart_asset() was rewriting it to a CDN host that
-                         doesn't have the actual uploaded file. --}}
-                    <img src="{{ Storage::url($u->avatar) }}" alt="{{ $u->name }}">
+                    {{-- Routes through /u/{id}/avatar so the request hits our
+                         serve controller — which reads directly from
+                         storage/app/public/... and works even when public/storage
+                         isn't a symlink (this host) or the value is a full URL
+                         (Google OAuth users). --}}
+                    <img src="{{ user_avatar_url($u) }}" alt="{{ $u->name }}" onerror="this.style.display='none'">
                 @else
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 @endif

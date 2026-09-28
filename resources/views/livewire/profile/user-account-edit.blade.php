@@ -677,7 +677,14 @@
                                 @if($avatar && is_object($avatar) && method_exists($avatar, 'temporaryUrl'))
                                     <img id="my_account_avatar_preview" src="{{ $avatar->temporaryUrl() }}" alt="Profile photo">
                                 @elseif(!empty(auth()->user()->avatar))
-                                    <img id="my_account_avatar_preview" src="{{ Storage::url(auth()->user()->avatar) }}" alt="Profile photo">
+                                    {{-- user_avatar_url() routes through /u/{id}/avatar
+                                         which reads from storage/app/public/ directly.
+                                         Storage::url() was returning /storage/... which
+                                         404s on hosts without a public/storage symlink.
+                                         onerror falls back to the gravatar so a stale
+                                         path doesn't leave a broken icon. --}}
+                                    <img id="my_account_avatar_preview" src="{{ user_avatar_url(auth()->user()) }}" alt="Profile photo"
+                                         onerror="this.onerror=null;this.src='https://www.gravatar.com/avatar/{{ md5(strtolower(trim(auth()->user()->email))) }}?s=128&d=identicon'">
                                 @else
                                     <img id="my_account_avatar_preview" src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim(auth()->user()->email))) }}?s=128&d=identicon" alt="Profile photo">
                                 @endif

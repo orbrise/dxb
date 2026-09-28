@@ -276,6 +276,10 @@ class Chat extends Component
                     'has_status' => $statusUserIds->has($otherId),
                     'status_unseen' => $unseenStatusUserIds->has($otherId),
                     'other_user_avatar' => $otherUser->avatar ?? null,
+                    // Pre-computed avatar URL — routes through the
+                    // /u/{id}/avatar controller so both symlink-less hosts
+                    // and Google-OAuth full URLs render correctly.
+                    'other_user_avatar_url' => $otherUser ? user_avatar_url($otherUser) : null,
                     'last_message' => $conv->latestMessage?->message ?? '',
                     'last_message_at' => $conv->last_message_at,
                     'unread_count' => $conv->getUnreadCountFor($userId),
@@ -909,7 +913,8 @@ class Chat extends Component
                 return [
                     'user_id'    => $first->user_id,
                     'user_name'  => $first->user->name ?? $first->user->email ?? 'Unknown',
-                    'user_avatar'=> $first->user->profile_pic ?? $first->user->avatar ?? null,
+                    'user_avatar'=> $first->user->avatar ?? null,
+                    'user_avatar_url' => $first->user ? user_avatar_url($first->user) : null,
                     'latest_at'  => $first->created_at,
                     'count'      => $group->count(),
                     'unseen'     => $unseen,
@@ -944,7 +949,8 @@ class Chat extends Component
             'id'          => $status->id,
             'user_id'     => $status->user_id,
             'user_name'   => $status->user->name ?? $status->user->email ?? 'Unknown',
-            'user_avatar' => $status->user->profile_pic ?? $status->user->avatar ?? null,
+            'user_avatar' => $status->user->avatar ?? null,
+            'user_avatar_url' => $status->user ? user_avatar_url($status->user) : null,
             'type'        => $status->type,
             'media_path'  => $status->media_path,
             'content'     => $status->content,
@@ -1025,7 +1031,8 @@ class Chat extends Component
                     'status' => $call->status,
                     'peer_id' => $peer?->id,
                     'peer_name' => $peer?->name ?? $peer?->email ?? 'Unknown',
-                    'peer_avatar' => $peer?->profile_pic ?? $peer?->avatar ?? null,
+                    'peer_avatar' => $peer?->avatar ?? null,
+                    'peer_avatar_url' => $peer ? user_avatar_url($peer) : null,
                     'started_at' => $call->started_at ?? $call->created_at,
                     'duration' => $call->duration,
                 ];
