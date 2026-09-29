@@ -126,6 +126,37 @@
             pointer-events: none;
             animation: chatLoadingSlide 900ms linear infinite;
         }
+
+        /* Full-panel loading overlay shown inside chat-main while a
+           Livewire round-trip is in flight AND the right panel has just
+           been optimistically opened (sidebar hidden on mobile but the
+           server hasn't sent the thread/settings pane yet). Gives the
+           user feedback that content is loading, instead of a blank
+           dark panel. wire:loading toggles the .is-loading class on
+           chat-main via the wire:loading.class directive. */
+        .chat-main-loading {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(13,16,17,0.6);
+            color: var(--ev-text-2);
+            z-index: 50;
+            pointer-events: none;
+            gap: 10px;
+            font-size: 13px;
+        }
+        .chat-main.is-loading .chat-main-loading { display: flex; }
+        .chat-main-loading::before {
+            content: "";
+            width: 18px; height: 18px;
+            border: 2px solid var(--ev-border-strong);
+            border-top-color: var(--ev-lime);
+            border-radius: 50%;
+            animation: chatSpin 700ms linear infinite;
+        }
+        @keyframes chatSpin { to { transform: rotate(360deg); } }
         @keyframes chatLoadingSlide {
             0%   { background-position: -40% 0; }
             100% { background-position: 140% 0; }
@@ -2399,14 +2430,18 @@
                              round-trip takes a moment. --}}
                         <div wire:loading class="chat-loading-bar"></div>
                         {{-- Left Sidebar - Conversations
-                             .mobile-hidden triggers the mobile CSS that
-                             hides the sidebar and reveals chat-main. It
-                             fires whenever ANY detail view is active —
-                             an open conversation, an opened Settings
-                             sub-section, or a Status viewer — because
-                             on a phone the detail view needs the full
-                             screen and the tab list is not useful. --}}
-                        <div class="chat-sidebar {{ ($selectedConversationId || $settingsSection || $selectedStatus) ? 'mobile-hidden' : '' }} {{ $newChatOpen ? 'new-chat-open' : '' }}" id="chatSidebar">
+                             .mobile-hidden is now driven by Alpine state
+                             (selConv / section / selStatus) instead of
+                             server-rendered classes. This means tapping a
+                             conversation / settings row hides the sidebar
+                             INSTANTLY — no waiting for the Livewire
+                             round-trip — while the server catches up and
+                             fills the right-panel content. Fixes the
+                             "clicks feel slow on prod" perception where
+                             the round-trip latency was blocking the UI. --}}
+                        <div class="chat-sidebar {{ $newChatOpen ? 'new-chat-open' : '' }}"
+                             :class="{ 'mobile-hidden': selConv || section || selStatus }"
+                             id="chatSidebar">
                             <div class="chat-sidebar-header">
                                 @php
                                     // Badge counts still used by the bottom
@@ -2645,7 +2680,8 @@
                                         @foreach($statusFeed['mine'] as $s)
                                             <div class="my-status-row {{ $selectedStatusId == $s->id ? 'active' : '' }}"
                                                  wire:key="mine-{{ $s->id }}"
-                                                 wire:click="viewStatus({{ $s->id }})">
+                                                 wire:click="viewStatus({{ $s->id }})"
+                                                 @click="selStatus = {{ $s->id }}">
                                                 <div class="my-status-thumb">
                                                     @if($s->type === 'photo' && $s->media_path)
                                                         <img src="{{ smart_asset('storage/' . $s->media_path) }}" alt="">
@@ -2680,7 +2716,8 @@
                                         <div class="conv-section-header">Recent</div>
                                         @foreach($statusFeed['others'] as $entry)
                                             <div class="conversation-item status-row" wire:key="stat-{{ $entry['user_id'] }}"
-                                                 wire:click="viewStatus({{ $entry['latest_id'] }})">
+                                                 wire:click="viewStatus({{ $entry['latest_id'] }})"
+                                                 @click="selStatus = {{ $entry['latest_id'] }}">
                                                 <div class="conversation-avatar status-ring {{ $entry['unseen'] > 0 ? 'unseen' : 'seen' }}">
                                                     @if(!empty($entry['user_avatar']))
                                                         <img src="{{ $entry['user_avatar_url'] }}" alt="">
@@ -2730,7 +2767,11 @@
                                     @foreach($settingsItems as $item)
                                         <div class="settings-row {{ $settingsSection === $item['id'] ? 'active' : '' }}"
                                              wire:key="set-{{ $item['id'] }}"
-                                             wire:click="setSettingsSection('{{ $item['id'] }}')">
+                                             wire:click="setSettingsSection('{{ $item['id'] }}')"
+                                             {{-- Optimistic UI — Alpine flips section instantly
+                                                  so the sidebar hides on mobile before the
+                                                  server round-trip completes. --}}
+                                             @click="section = '{{ $item['id'] }}'">
                                             <div class="settings-row-icon"><i class="fa {{ $item['icon'] }}"></i></div>
                                             <div class="settings-row-body">
                                                 <div class="settings-row-title">{{ $item['title'] }}</div>
@@ -2916,8 +2957,21 @@
                             @endif
                         </div>
 
-                        {{-- Right Panel - Chat Messages --}}
-                        <div class="chat-main" id="chatMain">
+                        {{-- Right Panel - Chat Messages.
+                             wire:loading.class adds .is-loading while ANY
+                             Livewire request is in flight, which surfaces
+                             the chat-main-loading spinner overlay. The
+                             overlay + our optimistic sidebar-hide combine
+                             to give production the same "instant" feel as
+                             local: tap → sidebar slides away, spinner
+                             overlays the empty panel, real content fades
+                             in when the server responds. --}}
+                        <div class="chat-main" id="chatMain" wire:loading.class="is-loading">
+                            {{-- Loading overlay — shown when .is-loading is
+                                 applied. Only visually appears when the
+                                 right panel is showing (mobile: sidebar
+                                 hidden; desktop: always visible). --}}
+                            <div class="chat-main-loading">Loading…</div>
                             {{-- Drag-and-drop overlay. Toggled by JS when files are dragged
                                  over the chat area — kept OUT of the Livewire wire:if branch
                                  so its element identity is stable across re-renders. --}}
@@ -2970,7 +3024,7 @@
                                                     <i class="fa fa-trash"></i>
                                                 </button>
                                             @endif
-                                            <button type="button" class="status-viewer-close" wire:click="closeStatusViewer" title="Close">
+                                            <button type="button" class="status-viewer-close" wire:click="closeStatusViewer" @click="selStatus = null" title="Close">
                                                 <i class="fa fa-times"></i>
                                             </button>
                                         </div>
@@ -3054,7 +3108,7 @@
                                 <div class="settings-pane-wrapper">
                                     <div class="settings-pane">
                                         <div class="settings-pane-head">
-                                            <button type="button" class="settings-pane-back" wire:click="setSettingsSection(null)" title="Back">
+                                            <button type="button" class="settings-pane-back" wire:click="setSettingsSection(null)" @click="section = null" title="Back">
                                                 <i class="fa fa-arrow-left"></i>
                                             </button>
                                             @php
@@ -3273,7 +3327,7 @@
                                 {{-- Chat Header --}}
                                 <div class="chat-header">
                                     <div class="chat-header-info">
-                                        <button class="mobile-back-btn" wire:click="closeConversation">
+                                        <button class="mobile-back-btn" wire:click="closeConversation" @click="selConv = null">
                                             <i class="fa fa-angle-left"></i><span class="mobile-back-label"> Back</span>
                                         </button>
                                         <div class="chat-header-avatar">

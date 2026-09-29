@@ -4,6 +4,11 @@
 <div
     class="conversation-item {{ $selectedConversationId == $conversation['id'] ? 'active' : '' }} {{ $conversation['unread_count'] > 0 ? 'unread' : '' }} {{ !empty($conversation['is_pinned']) ? 'pinned' : '' }} {{ !empty($conversation['missed_calls']) ? 'has-missed' : '' }}"
     wire:click="selectConversation({{ $conversation['id'] }})"
+    {{-- Optimistic Alpine update — flips the sidebar into "conversation
+         open" mode client-side the instant you tap, so the transition
+         feels instant on production where the Livewire round-trip is
+         noticeable. Server response then fills in the actual thread. --}}
+    @click="selConv = {{ $conversation['id'] }}"
     wire:key="conv-{{ $conversation['id'] }}"
 >
     <div class="conversation-avatar {{ !empty($conversation['has_status']) ? 'status-ring' : '' }} {{ !empty($conversation['has_status']) && empty($conversation['status_unseen']) ? 'seen' : '' }}">
