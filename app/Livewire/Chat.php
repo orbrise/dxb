@@ -1110,13 +1110,18 @@ class Chat extends Component
 
     public function render()
     {
+        // Load data for EVERY tab on every render — not just the active
+        // one. Sidebar bodies are all in the DOM at once and toggled via
+        // x-show, so tab switches are pure client-side (zero server
+        // round-trip). One-time cost per render is a few extra bounded
+        // queries; savings per tab click is a full RTT (200-800ms on prod).
         $conversations = $this->getConversations();
         $searchResults = $this->searchUsers();
-        $callHistory = $this->activeTab === 'calls' ? $this->getCallHistory() : collect();
+        $callHistory = $this->getCallHistory();
         $directoryUsers = $this->newChatOpen ? $this->getDirectoryUsers() : collect();
-        $statusFeed = $this->activeTab === 'status' ? $this->getStatusFeed() : ['mine' => collect(), 'others' => collect()];
-        $selectedStatus = $this->activeTab === 'status' ? $this->getSelectedStatus() : null;
-        $galleryMedia = $this->activeTab === 'gallery' ? $this->getGalleryMedia() : collect();
+        $statusFeed = $this->getStatusFeed();
+        $selectedStatus = $this->getSelectedStatus();
+        $galleryMedia = $this->getGalleryMedia();
 
         // Use the already-fetched conversations collection instead of
         // firing another Conversation::forUser->count() query per render.

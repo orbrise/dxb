@@ -2,8 +2,15 @@
     @push('css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1"></script>
-    @endpush
 
+    {{-- CRITICAL: this whole <style> block MUST live inside @push('css'),
+         not inline in the component root. Livewire re-sends the entire
+         component HTML on every request (tab click, poll refresh, send),
+         so leaving ~2000 lines of CSS inline meant shipping ~80 KB of
+         identical bytes on every round-trip. Pushed content is rendered
+         to the layout <head> ONCE on the initial page load and skipped
+         on subsequent Livewire updates — cutting round-trip payload
+         dramatically. --}}
     <style>
         /* --------------------------------------------------------------
            evoory chat — dark theme design tokens
@@ -59,6 +66,15 @@
         body { background: #000 !important; }
         body > .ev-header-account { display: none !important; }
 
+        /* Hide the site's global mobile bottom nav (Home / Chats / Add
+           Profile / Favorite / Menu) on this page. The chat has its own
+           icon-strip nav (chats / calls / status / gallery / settings)
+           which is the primary navigation on the chat page — showing
+           both would double-stack navs and confuse the user.
+           Kept as a body-scoped rule so it wins over the component's
+           display: flex rule from the layout stylesheet. */
+        body .ev-mobile-bottom-nav { display: none !important; }
+
         .ev-chat-shell {
             max-width: 1240px;
             margin: 16px auto 24px;
@@ -86,6 +102,33 @@
                don't clip inside a rounder container. */
             border-radius: 5px;
             overflow: hidden;
+            position: relative;
+        }
+        /* x-cloak hides Alpine-controlled elements until Alpine has
+           booted and evaluated x-show/x-if expressions. Without this,
+           every sidebar-tab body flashes into view on initial page load
+           before Alpine catches up and hides the inactive ones. */
+        [x-cloak] { display: none !important; }
+
+        /* Thin indeterminate progress bar shown while any Livewire
+           request is in flight — instant visual feedback so users know
+           something is happening even if the actual data takes 100-800ms
+           to arrive. Sits at the very top of the chat card, floating over
+           both sidebar and main panel. */
+        .chat-loading-bar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--ev-lime), transparent);
+            background-size: 40% 100%;
+            background-repeat: no-repeat;
+            z-index: 100;
+            pointer-events: none;
+            animation: chatLoadingSlide 900ms linear infinite;
+        }
+        @keyframes chatLoadingSlide {
+            0%   { background-position: -40% 0; }
+            100% { background-position: 140% 0; }
         }
 
         /* ------------- Left sidebar (conversations) ------------------ */
@@ -131,7 +174,7 @@
             background: transparent;
             color: var(--ev-text-2);
             border: none;
-            border-radius: var(--ev-r-btn);
+            border-radius: 50%;
             cursor: pointer;
             transition: background 120ms, color 120ms;
             font-size: 13px;
@@ -1428,6 +1471,49 @@
             position: relative;
         }
 
+        /* Data-driven wrappers inside chat-main. These divs exist so that
+           Alpine's x-show can toggle whole subtrees, but they also need to
+           be proper flex containers themselves — otherwise their inner
+           flex:1 elements (chat-messages, settings-pane, etc.) collapse
+           to 0 height and the right panel appears blank. Symptom on mobile
+           was a fully-black screen when tapping into a conversation or
+           opening a settings sub-section, because chat-main filled the
+           viewport but its child wrapper had no measurable size. */
+        .chat-thread-wrapper,
+        .settings-pane-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* Right-panel visibility driven by a data-tab attribute on
+           chat-container. The attribute is set both from Blade (initial
+           render, server-authoritative) and from Alpine `:data-tab="tab"`
+           (reactive to sidebar clicks). Belt-and-suspenders: if Alpine
+           is briefly out of sync after a Livewire morph, the Blade value
+           still points at the current activeTab, so the correct panel
+           stays visible. No more black-screen from stuck x-cloak.
+
+           chat-thread-wrapper only shows on Chats/Gallery; hide otherwise.
+           settings-pane-wrapper only shows on Settings.
+           status-viewer only shows on Status. */
+        .chat-container:not([data-tab="chats"]):not([data-tab="gallery"]) .chat-thread-wrapper { display: none; }
+        .chat-container:not([data-tab="settings"]) .settings-pane-wrapper { display: none; }
+        .chat-container:not([data-tab="status"]) .status-viewer { display: none; }
+        /* Empty states — mirror the same rule. Only one empty state
+           should be visible at a time based on tab + conversation state.
+           Rendered by Blade with data-empty markers; CSS hides all that
+           don't match. */
+        .chat-container [data-empty] { display: none; }
+        .chat-container[data-tab="status"][data-has-status="0"]  [data-empty="status"]   { display: flex; }
+        .chat-container[data-tab="settings"][data-has-section="0"] [data-empty="settings"] { display: flex; }
+        .chat-container[data-tab="gallery"][data-has-conv="0"]   [data-empty="gallery"]  { display: flex; }
+        .chat-container[data-tab="chats"][data-has-conv="0"]     [data-empty="callable"] { display: flex; }
+        .chat-container[data-tab="calls"]                          [data-empty="callable"] { display: flex; }
+
         .chat-header {
             padding: 14px 18px;
             display: flex;
@@ -2052,17 +2138,204 @@
             background: rgba(255,255,255,0.16);
         }
 
-        /* --------------- Responsive --------------------------------- */
+        /* --------------- Responsive ---------------------------------
+           Mobile treatment intentionally goes further than a naive
+           column-flip: on a phone the chat replaces the whole screen
+           (edge-to-edge, no shell padding, no rounded card), the "+"
+           becomes a floating action button, and the header trims to
+           just the primary controls. Matches the app-style mockups.
+           -------------------------------------------------------------- */
         @media (max-width: 900px) {
-            .chat-container { flex-direction: column; height: calc(100vh - 140px); }
-            .chat-sidebar { width: 100%; }
+            /* Full-viewport shell: kill desktop card frame + margins so
+               the chat fills the phone screen edge-to-edge. */
+            .ev-chat-shell {
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            .ev-chat-shell > .mb-3 {
+                border-radius: 0;
+                padding: 0;
+                margin: 0 !important;
+            }
+
+            .chat-container {
+                flex-direction: column;
+                /* Full viewport on mobile — the site's global bottom
+                   nav is hidden on this page (see body rule above), so
+                   the chat's own icon-strip nav sits at the true
+                   viewport bottom like a native app. 100dvh handles
+                   the collapsing address-bar on mobile browsers;
+                   100vh is the fallback for older UAs. */
+                height: 100vh;
+                height: 100dvh;
+                min-height: 0;
+                border-radius: 0;
+            }
+            .chat-sidebar {
+                width: 100%;
+                min-width: 0;
+                /* On mobile the container is flex-column, so the sidebar
+                   needs flex:1 to fill the viewport height. Without this
+                   it collapsed to content height and the bottom nav
+                   would float up mid-screen on tabs with little content
+                   (e.g. Messages with 2 rows), while working fine on
+                   tabs with lots of content (e.g. Calls). min-height:0
+                   is required so the inner .conversation-list can
+                   actually scroll instead of blowing out the layout. */
+                flex: 1;
+                min-height: 0;
+            }
             .chat-sidebar.mobile-hidden { display: none; }
-            .chat-main { display: none; }
+            .chat-main {
+                display: none;
+                border-radius: 0;
+            }
             .chat-sidebar:not(.mobile-hidden) ~ .chat-main { display: none; }
             .chat-sidebar.mobile-hidden ~ .chat-main { display: flex; }
-            .mobile-back-btn { display: inline-flex; align-items: center; gap: 4px; }
+
+            /* Sidebar header — tighter padding on mobile. */
+            .chat-sidebar-header {
+                padding: 12px 12px 10px;
+                gap: 10px;
+            }
+
+            /* Hide desktop-only header actions on mobile — the mockup
+               keeps only the primary action ("+") as a floating button. */
+            .chat-sidebar-title-actions button[title="Expand panel"],
+            .chat-sidebar-title-actions button[title="More"] {
+                display: none;
+            }
+
+            /* Turn the "+" action into a floating action button (FAB)
+               anchored to the bottom-right of the viewport, hovering
+               above the bottom tab strip — WhatsApp-app style. */
+            .chat-sidebar-title-actions .new-chat-wrap {
+                position: fixed;
+                right: 18px;
+                /* Above the ~72px bottom tab strip + iOS safe-area,
+                   so the FAB never overlaps the nav icons. */
+                bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+                z-index: 45;
+            }
+            .chat-sidebar-title-actions button.new-chat-btn {
+                width: 56px;
+                height: 56px;
+                font-size: 22px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            }
+            .chat-sidebar-title-actions button.new-chat-btn svg {
+                width: 22px;
+                height: 22px;
+            }
+            /* Hide FAB on tabs where "+" has no meaning (calls / gallery /
+               settings) so it doesn't linger as a dead button. Alpine
+               toggles `.mobile-fab-hide` from the tab state. */
+            .new-chat-wrap.mobile-fab-hide { display: none; }
+            /* Status "+" dropdown positions above the FAB. */
+            .chat-sidebar-title-actions .new-chat-wrap .new-chat-menu {
+                bottom: calc(100% + 8px);
+                top: auto;
+            }
+
+            /* Bottom nav strip — pin to viewport bottom on mobile so it
+               doesn't get pushed off screen when the conversation list
+               is long. Icons enlarged to native-app scale so they hit
+               a proper tap target and read at arm's length. */
+            .chat-sidebar-tabs {
+                position: sticky;
+                bottom: 0;
+                padding: 12px 6px calc(12px + env(safe-area-inset-bottom, 0px));
+                background: var(--ev-panel-2);
+                border-top: 1px solid var(--ev-border);
+            }
+            .chat-sidebar-tab {
+                width: 52px;
+                height: 48px;
+                border-radius: 14px;
+            }
+            .chat-sidebar-tab svg {
+                width: 22px;
+                height: 22px;
+            }
+            .chat-sidebar-tab .tab-badge {
+                top: 2px; right: 4px;
+                min-width: 18px; height: 18px;
+                font-size: 11px;
+            }
+
+            /* --------- Chat thread (right panel on mobile) --------- */
+            .chat-header {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            .chat-header-avatar { width: 38px; height: 38px; }
+            .chat-header-name { font-size: 14px; }
+            .chat-header-email { font-size: 11px; }
+            .chat-call-buttons button,
+            .chat-header-actions > button,
+            .chat-header-menu > button {
+                width: 36px;
+                height: 36px;
+                font-size: 15px;
+            }
+
+            /* Icon-only mobile back button — the "Back" label is hidden
+               (wrapped in .mobile-back-label span) so only the caret shows. */
+            .mobile-back-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 34px;
+                height: 34px;
+                padding: 0;
+                font-size: 20px;
+                margin-right: 2px;
+            }
+            .mobile-back-label { display: none; }
+
+            /* Messages — allow bubbles to breathe on narrow screens. */
+            .chat-messages { padding: 16px 12px; }
+            .message-bubble { max-width: 82%; font-size: 14px; }
+
+            /* Composer — green circular send button matching the mockup,
+               tighter padding to keep the input area from eating too much
+               vertical space. */
+            .chat-input { padding: 8px 10px 12px; }
+            .chat-input-form { padding: 4px 6px 4px 12px; gap: 6px; }
+            .chat-input-form button[type="submit"] {
+                background: var(--ev-online);
+                width: 40px;
+                height: 40px;
+            }
+            .chat-input-form button[type="submit"]:hover {
+                background: #1ba954;
+                transform: none;
+            }
+
+            /* Empty-state cards shrink so both fit side-by-side on a
+               phone screen without wrapping. */
+            .empty-actions { gap: 20px; }
+            .empty-action-card .empty-action-icon {
+                width: 110px;
+                height: 110px;
+                border-radius: 20px;
+            }
+
+            /* Search pill margin — same as sidebar padding so it aligns. */
+            .chat-search input { padding: 10px 14px 10px 40px; font-size: 14px; }
+        }
+
+        /* Very narrow phones — extra squeeze. */
+        @media (max-width: 380px) {
+            .chat-sidebar-title-actions button.new-chat-btn {
+                width: 52px; height: 52px;
+            }
+            .empty-actions { gap: 12px; }
+            .empty-action-card .empty-action-icon { width: 96px; height: 96px; }
         }
     </style>
+    @endpush
 
     {{-- On the chat page we drop the shared communication-nav strip (that
          "Communication" title + Messages/Calls/Questions/Reviews/Favorites
@@ -2087,10 +2360,53 @@
                     @endif
 
                     {{-- WhatsApp-style Chat Container. Real-time updates come
-                         from Reverb (see initEchoListener below) so no polling. --}}
-                    <div class="chat-container">
-                        {{-- Left Sidebar - Conversations --}}
-                        <div class="chat-sidebar {{ $selectedConversationId ? 'mobile-hidden' : '' }} {{ $newChatOpen ? 'new-chat-open' : '' }}" id="chatSidebar">
+                         from Reverb (see initEchoListener below) so no polling.
+
+                         `x-data.tab` mirrors the Livewire $activeTab prop
+                         with @entangle. Bottom-nav clicks flip `tab`
+                         instantly on the client (no round-trip needed to
+                         see the sidebar switch), and Livewire syncs the
+                         backing state async in the background so refreshes
+                         land on the right tab. Combined with x-show below
+                         it gives WhatsApp-app-feel navigation. --}}
+                    {{-- data-tab / data-has-* are rendered server-side by
+                         Blade AND kept in sync client-side by Alpine
+                         :data-*. CSS attribute selectors above use these
+                         to decide which right-panel view is visible,
+                         which is more reliable than x-cloak+x-show
+                         (which can stick hidden if Alpine is out of
+                         sync after a Livewire DOM morph — that's what
+                         caused the mobile black-screen bug). --}}
+                    <div class="chat-container"
+                         data-tab="{{ $activeTab }}"
+                         data-has-conv="{{ $selectedConversationId ? '1' : '0' }}"
+                         data-has-status="{{ $selectedStatus ? '1' : '0' }}"
+                         data-has-section="{{ $settingsSection ? '1' : '0' }}"
+                         x-data="{
+                            tab: @entangle('activeTab'),
+                            selConv: @entangle('selectedConversationId'),
+                            selStatus: @entangle('selectedStatusId'),
+                            section: @entangle('settingsSection')
+                         }"
+                         :data-tab="tab"
+                         :data-has-conv="selConv ? '1' : '0'"
+                         :data-has-status="selStatus ? '1' : '0'"
+                         :data-has-section="section ? '1' : '0'">
+                        {{-- Thin progress bar across the top of the chat
+                             container while any Livewire request is in
+                             flight. Gives instant visual feedback so tab
+                             switches feel responsive even if the server
+                             round-trip takes a moment. --}}
+                        <div wire:loading class="chat-loading-bar"></div>
+                        {{-- Left Sidebar - Conversations
+                             .mobile-hidden triggers the mobile CSS that
+                             hides the sidebar and reveals chat-main. It
+                             fires whenever ANY detail view is active —
+                             an open conversation, an opened Settings
+                             sub-section, or a Status viewer — because
+                             on a phone the detail view needs the full
+                             screen and the tab list is not useful. --}}
+                        <div class="chat-sidebar {{ ($selectedConversationId || $settingsSection || $selectedStatus) ? 'mobile-hidden' : '' }} {{ $newChatOpen ? 'new-chat-open' : '' }}" id="chatSidebar">
                             <div class="chat-sidebar-header">
                                 @php
                                     // Badge counts still used by the bottom
@@ -2114,7 +2430,11 @@
                                      panel, options menu, and a lime "new
                                      message" round button. --}}
                                 <div class="chat-sidebar-title">
-                                    <span>
+                                    {{-- Client-side reactive title so it
+                                         flips the instant the tab button is
+                                         clicked, without waiting for the
+                                         Livewire response. --}}
+                                    <span x-text="({chats:'Messages',calls:'Calls',status:'Status',gallery:'Media',settings:'Settings'})[tab] || 'Messages'">
                                         @php
                                             $titleMap = ['calls' => 'Calls', 'status' => 'Status', 'gallery' => 'Media', 'settings' => 'Settings'];
                                         @endphp
@@ -2130,8 +2450,13 @@
                                         {{-- Lime round button — its behavior depends on the
                                              active tab. On Chats it opens the New-chat
                                              directory; on Status it opens the media/text
-                                             add-status dropdown. --}}
-                                        <div class="new-chat-wrap">
+                                             add-status dropdown.
+
+                                             On mobile this element is repositioned as a
+                                             floating action button by the responsive CSS,
+                                             and hidden on tabs where "+" has no meaning
+                                             (calls, gallery, settings) via mobile-fab-hide. --}}
+                                        <div class="new-chat-wrap" :class="{ 'mobile-fab-hide': tab !== 'chats' && tab !== 'status' }">
                                             <button type="button" class="new-chat-btn"
                                                     @if($activeTab === 'status')
                                                         onclick="this.closest('.new-chat-wrap').classList.toggle('open')"
@@ -2215,8 +2540,14 @@
                                  conversation list and the Calls history
                                  based on which bottom-nav tab is active.
                                  Same $activeTab drives the title above. --}}
+                            {{-- All tab bodies live in the DOM at once and
+                                 are toggled with x-show driven by the
+                                 Alpine `tab` variable. That way clicking
+                                 the bottom nav is a pure client-side
+                                 switch (zero server round-trip) — matching
+                                 WhatsApp/Telegram tab feel. --}}
                             <div class="conversation-list">
-                                @if($activeTab === 'chats')
+                                <div x-show="tab === 'chats'">
                                     @php
                                         $supportConvs = collect($conversations)->filter(fn($c) => !empty($c['is_support']));
                                         $pinnedConvs  = collect($conversations)->filter(fn($c) => empty($c['is_support']) && !empty($c['is_pinned']));
@@ -2265,7 +2596,8 @@
                                             <p>You haven't received any messages yet.</p>
                                         </div>
                                     @endif
-                                @elseif($activeTab === 'status')
+                                </div>
+                                <div x-show="tab === 'status'" x-cloak>
                                     {{-- Status tab — My status card on top,
                                          then Recent list of everyone else's
                                          active statuses (last 24 h). Clicking
@@ -2369,7 +2701,8 @@
                                             <p style="font-size:12px; color:var(--ev-text-3);">No recent statuses from other users</p>
                                         </div>
                                     @endif
-                                @elseif($activeTab === 'settings')
+                                </div>
+                                <div x-show="tab === 'settings'" x-cloak>
                                     {{-- Settings tab — user profile card
                                          at top, then a list of setting
                                          sub-sections. Each row opens its
@@ -2405,7 +2738,8 @@
                                             </div>
                                         </div>
                                     @endforeach
-                                @elseif($activeTab === 'gallery')
+                                </div>
+                                <div x-show="tab === 'gallery'" x-cloak>
                                     {{-- Gallery tab — grid of every photo /
                                          video shared or received across all
                                          conversations. Clicking a thumbnail
@@ -2433,7 +2767,8 @@
                                             <p style="font-size:13px; color:var(--ev-text-3);">No shared media yet.</p>
                                         </div>
                                     @endif
-                                @else
+                                </div>
+                                <div x-show="tab === 'calls'" x-cloak>
                                     {{-- Calls tab — Favourites (empty for now,
                                          reuses the same Add Favorite tile as Chats)
                                          plus Recent call history. --}}
@@ -2487,7 +2822,7 @@
                                             <p>Your call history will appear here.</p>
                                         </div>
                                     @endif
-                                @endif
+                                </div>
                             </div>
 
                             {{-- Icon-strip bottom nav — replaces the removed
@@ -2496,7 +2831,7 @@
                                  category page so state (open call, etc.)
                                  survives the transition. --}}
                             <div class="chat-sidebar-tabs">
-                                <button type="button" wire:click="setActiveTab('chats')" class="chat-sidebar-tab {{ $activeTab === 'chats' ? 'active' : '' }}" title="Chats">
+                                <button type="button" @click="tab = 'chats'" wire:click="setActiveTab('chats')" :class="{ 'active': tab === 'chats' }" class="chat-sidebar-tab" title="Chats">
                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path d="M1.53846 16.8005L4.26683 14.6154H16.9231C17.3311 14.6154 17.7224 14.4533 18.0109 14.1648C18.2995 13.8763 18.4615 13.485 18.4615 13.077V3.07695C18.4615 2.66893 18.2995 2.27761 18.0109 1.9891C17.7224 1.70058 17.3311 1.53849 16.9231 1.53849H3.07692C2.6689 1.53849 2.27758 1.70058 1.98907 1.9891C1.70055 2.27761 1.53846 2.66893 1.53846 3.07695V16.8005ZM4.80769 16.1539L1.25 19C1.13684 19.0906 1.00038 19.1474 0.856346 19.1638C0.712315 19.1803 0.566576 19.1556 0.435927 19.0928C0.305279 19.03 0.195037 18.9316 0.11791 18.8088C0.0407831 18.6861 -9.05108e-05 18.544 1.50494e-07 18.3991V3.07695C1.50494e-07 2.2609 0.324175 1.47828 0.90121 0.90124C1.47825 0.324205 2.26087 3.05176e-05 3.07692 3.05176e-05H16.9231C17.7391 3.05176e-05 18.5218 0.324205 19.0988 0.90124C19.6758 1.47828 20 2.2609 20 3.07695V13.077C20 13.893 19.6758 14.6756 19.0988 15.2527C18.5218 15.8297 17.7391 16.1539 16.9231 16.1539H4.80769Z" fill="currentColor"/>
                                         <path d="M6.154 9.2308H13.8463C14.3591 9.2308 14.6155 9.48721 14.6155 10C14.6155 10.5129 14.3591 10.7693 13.8463 10.7693H6.154C5.64118 10.7693 5.38477 10.5129 5.38477 10C5.38477 9.48721 5.64118 9.2308 6.154 9.2308ZM6.154 4.61542H13.8463C14.3591 4.61542 14.6155 4.87183 14.6155 5.38465C14.6155 5.89747 14.3591 6.15388 13.8463 6.15388H6.154C5.64118 6.15388 5.38477 5.89747 5.38477 5.38465C5.38477 4.87183 5.64118 4.61542 6.154 4.61542Z" fill="currentColor"/>
@@ -2505,7 +2840,7 @@
                                         <span class="tab-badge">{{ $chatUnreadCount }}</span>
                                     @endif
                                 </button>
-                                <button type="button" wire:click="setActiveTab('calls')" class="chat-sidebar-tab {{ $activeTab === 'calls' ? 'active' : '' }}" title="Calls">
+                                <button type="button" @click="tab = 'calls'" wire:click="setActiveTab('calls')" :class="{ 'active': tab === 'calls' }" class="chat-sidebar-tab" title="Calls">
                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path d="M18.1891 14.8547C17.502 14.1624 15.8378 13.1521 15.0304 12.745C13.979 12.2154 13.8924 12.1721 13.0659 12.7861C12.5147 13.1958 12.1482 13.5619 11.503 13.4243C10.8579 13.2867 9.45591 12.5109 8.22833 11.2873C7.00075 10.0637 6.17991 8.62116 6.04188 7.9782C5.90385 7.33525 6.27597 6.9731 6.68185 6.42058C7.25388 5.64177 7.21061 5.51196 6.72166 4.46057C6.34045 3.64281 5.30066 1.99433 4.60574 1.3107C3.86236 0.576455 3.86236 0.706257 3.38336 0.905287C2.99338 1.06932 2.61925 1.26875 2.26568 1.50108C1.57336 1.96101 1.18912 2.34306 0.920411 2.91722C0.651703 3.49138 0.530979 4.83743 1.91866 7.35818C3.30633 9.87894 4.27992 11.1679 6.29501 13.1772C8.31011 15.1865 9.85962 16.2669 12.1248 17.5373C14.927 19.1066 16.0018 18.8007 16.5778 18.5324C17.1537 18.2642 17.5375 17.8834 17.9983 17.1911C18.2313 16.8382 18.4312 16.4645 18.5955 16.0748C18.7949 15.5976 18.9247 15.5976 18.1891 14.8547Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10"/>
                                     </svg>
@@ -2513,17 +2848,17 @@
                                         <span class="tab-badge">{{ $missedCallCount }}</span>
                                     @endif
                                 </button>
-                                <button type="button" wire:click="setActiveTab('status')" class="chat-sidebar-tab {{ $activeTab === 'status' ? 'active' : '' }}" title="Status">
+                                <button type="button" @click="tab = 'status'" wire:click="setActiveTab('status')" :class="{ 'active': tab === 'status' }" class="chat-sidebar-tab" title="Status">
                                     <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path d="M18.5694 6.81786L18.5877 6.87039L18.6553 7.09736L18.7119 7.30107L18.7361 7.3941L18.7756 7.56252C19.2889 9.90945 18.9143 12.3661 17.7257 14.4465C16.5398 16.5334 14.6229 18.0922 12.3556 18.8135L12.1957 18.8616L11.9994 18.9129L11.7156 18.9811C11.6154 19.0042 11.5116 19.0062 11.4106 18.9868C11.3096 18.9674 11.2136 18.9272 11.1286 18.8686C11.0437 18.8099 10.9715 18.7342 10.9167 18.6461C10.862 18.5579 10.8257 18.4593 10.8102 18.3563C10.7784 18.145 10.826 17.9292 10.9437 17.7518C11.0614 17.5744 11.2406 17.4482 11.4457 17.3983L11.6741 17.3402C11.8166 17.3022 11.9391 17.2657 12.0417 17.2307C13.8626 16.6077 15.3964 15.3325 16.3549 13.6445C17.319 11.9578 17.6416 9.97224 17.2619 8.06137L17.2346 7.93586L17.1982 7.78949L17.1527 7.62187L17.0981 7.4334C17.0369 7.22781 17.0542 7.00643 17.1466 6.81316C17.239 6.6199 17.3996 6.46886 17.5967 6.38999C17.6883 6.35332 17.7861 6.33531 17.8846 6.33697C17.9831 6.33863 18.0802 6.35994 18.1706 6.39967C18.2609 6.43941 18.3426 6.49679 18.4111 6.56855C18.4795 6.6403 18.5333 6.72502 18.5694 6.81786ZM1.33976 6.38398C1.35691 6.38932 1.37379 6.39521 1.39041 6.40162C1.58708 6.47929 1.74777 6.62899 1.84064 6.82106C1.93351 7.01313 1.95177 7.23354 1.89181 7.43861C1.82058 7.68162 1.76913 7.88386 1.73748 8.04533C1.35944 9.95468 1.6824 11.9382 2.6457 13.6233C3.60507 15.3128 5.14069 16.5887 6.96361 17.2111L7.0847 17.25L7.15356 17.27L7.3079 17.3125L7.58254 17.3811C7.78887 17.4302 7.96943 17.5562 8.0884 17.7339C8.20737 17.9117 8.25607 18.1283 8.22483 18.3407C8.19551 18.5399 8.08933 18.7191 7.92962 18.839C7.76992 18.9588 7.56977 19.0095 7.3732 18.9799L7.31858 18.9699L7.09064 18.9157L6.88881 18.8636L6.71231 18.8135L6.63316 18.7894C4.37043 18.0662 2.45806 16.5086 1.27446 14.4249C0.0837235 12.3408 -0.290189 9.87928 0.226939 7.52884L0.257411 7.40052L0.296985 7.25014L0.373758 6.98348L0.403835 6.88323C0.432902 6.78814 0.48017 6.69979 0.542939 6.62322C0.605707 6.54665 0.682747 6.48335 0.769658 6.43696C0.856569 6.39056 0.951649 6.36196 1.04947 6.3528C1.14729 6.34364 1.24593 6.3545 1.33976 6.38398ZM9.5181 3.20803C13.0152 3.20803 15.8499 6.08042 15.8499 9.62408C15.8499 13.1677 13.0152 16.0401 9.5181 16.0401C6.02096 16.0401 3.18628 13.1677 3.18628 9.62408C3.18628 6.08042 6.02135 3.20803 9.5181 3.20803ZM9.5181 4.81204C6.89554 4.81204 4.76923 6.96663 4.76923 9.62408C4.76923 12.2815 6.89554 14.4361 9.5181 14.4361C12.1411 14.4361 14.267 12.2815 14.267 9.62408C14.267 6.96663 12.1411 4.81204 9.5181 4.81204ZM9.5181 7.22374e-06C11.8947 -0.00294597 14.1855 0.899685 15.9358 2.52873L16.0304 2.61976L16.1392 2.72964L16.2619 2.85876L16.3988 3.00673C16.4687 3.08311 16.5222 3.17326 16.5562 3.27155C16.5901 3.36984 16.6037 3.47417 16.5961 3.57801C16.5885 3.68186 16.5598 3.78301 16.5119 3.87514C16.464 3.96727 16.3979 4.04841 16.3177 4.1135C16.153 4.24723 15.9447 4.31337 15.7341 4.29881C15.5235 4.28426 15.326 4.19006 15.1807 4.0349C15.0947 3.94267 15.0149 3.8602 14.9413 3.78748L14.8028 3.65355L14.7395 3.5962C13.2967 2.30971 11.44 1.60129 9.5181 1.60402C7.59446 1.60119 5.73612 2.31084 4.29276 3.59941L4.24765 3.64031L4.14753 3.73655L4.03395 3.85084L3.83806 4.05736C3.5373 4.38177 3.04104 4.41826 2.69714 4.14157C2.62002 4.07953 2.55572 4.0027 2.50791 3.91546C2.4601 3.82823 2.42972 3.73231 2.41851 3.63317C2.4073 3.53404 2.41548 3.43364 2.44258 3.33771C2.46968 3.24178 2.51517 3.15221 2.57644 3.0741L2.61206 3.03159L2.77233 2.85876L2.91797 2.70718C2.98709 2.63687 3.05093 2.57471 3.1095 2.52071C4.8586 0.896831 7.14546 -0.00272003 9.51771 7.22374e-06" fill="currentColor"/>
                                     </svg>
                                 </button>
-                                <button type="button" wire:click="setActiveTab('gallery')" class="chat-sidebar-tab {{ $activeTab === 'gallery' ? 'active' : '' }}" title="Gallery">
+                                <button type="button" @click="tab = 'gallery'" wire:click="setActiveTab('gallery')" :class="{ 'active': tab === 'gallery' }" class="chat-sidebar-tab" title="Gallery">
                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path d="M12.3006 12.4248C12.9348 12.4248 13.5247 12.3081 14.0701 12.0748C14.6156 11.8415 15.1058 11.5188 15.5408 11.1068C15.905 10.7606 16.2053 10.368 16.4418 9.92906C16.6784 9.49011 16.8422 9.01713 16.9332 8.51014C16.9705 8.35759 16.9354 8.22411 16.828 8.1097C16.7213 7.99529 16.5892 7.94967 16.4318 7.97286C15.9177 8.03268 15.4341 8.17476 14.9812 8.39909C14.5283 8.62343 14.1197 8.90908 13.7556 9.25605C13.3266 9.66733 12.9863 10.144 12.7348 10.6862C12.4834 11.2283 12.3386 11.8079 12.3006 12.4248ZM12.3006 12.4248C12.2632 11.8079 12.1189 11.2283 11.8674 10.6862C11.6159 10.144 11.2753 9.66733 10.8455 9.25605C10.4814 8.90983 10.0728 8.62455 9.61991 8.40021C9.16698 8.17588 8.68383 8.03343 8.17046 7.97286C8.01227 7.94967 7.87982 7.99529 7.77312 8.1097C7.66642 8.22411 7.63172 8.35759 7.66903 8.51014C7.7623 9.01713 7.93019 9.49011 8.1727 9.92906C8.41521 10.368 8.71853 10.7606 9.08266 11.1068C9.51172 11.5181 9.99673 11.8408 10.5377 12.0748C11.0787 12.3089 11.6663 12.4255 12.3006 12.4248ZM12.3006 9.05976C12.6177 9.05976 12.8837 8.95245 13.0986 8.73784C13.3135 8.52322 13.4206 8.25664 13.4198 7.93808V7.65767L13.6996 7.76983C13.9795 7.882 14.2641 7.91004 14.5536 7.85396C14.8432 7.79787 15.0622 7.63897 15.2107 7.37725C15.3785 7.09683 15.4345 6.79772 15.3785 6.47991C15.3226 6.1621 15.136 5.93851 14.8189 5.80915L14.5391 5.69922L14.8189 5.58818C15.136 5.45881 15.3215 5.23298 15.3752 4.91069C15.4297 4.58764 15.3748 4.28816 15.2107 4.01223C15.0577 3.74602 14.8447 3.58263 14.5716 3.52205C14.2984 3.46148 14.0078 3.49401 13.6996 3.61964L13.4198 3.73181V3.45139C13.4198 3.13358 13.3127 2.86737 13.0986 2.65276C12.8844 2.43814 12.6184 2.33046 12.3006 2.32972C11.9827 2.32897 11.717 2.43665 11.5036 2.65276C11.2902 2.86887 11.1828 3.13508 11.1813 3.45139V3.73181L10.9015 3.61964C10.5933 3.49252 10.3027 3.45962 10.0296 3.52093C9.75721 3.58225 9.54455 3.74602 9.39158 4.01223C9.22742 4.28891 9.1722 4.58802 9.22593 4.90956C9.27965 5.23261 9.46508 5.45881 9.78221 5.58818L10.062 5.69922L9.78221 5.80915C9.46508 5.93851 9.27853 6.1621 9.22257 6.47991C9.16661 6.79772 9.22257 7.09683 9.39046 7.37725C9.5397 7.63897 9.75907 7.79787 10.0486 7.85396C10.3381 7.91004 10.6224 7.882 10.9015 7.76983L11.1813 7.65767V7.93808C11.1813 8.25589 11.2887 8.52248 11.5036 8.73784C11.7185 8.9532 11.9842 9.0605 12.3006 9.05976ZM12.3006 6.81641C11.9834 6.81641 11.7178 6.7091 11.5036 6.49449C11.2895 6.27988 11.182 6.01329 11.1813 5.69474C11.1805 5.37618 11.288 5.10997 11.5036 4.8961C11.7193 4.68224 11.9849 4.57456 12.3006 4.57306C12.6162 4.57157 12.8822 4.67925 13.0986 4.8961C13.315 5.11296 13.4221 5.37917 13.4198 5.69474C13.4176 6.0103 13.3105 6.27689 13.0986 6.49449C12.8867 6.71209 12.6207 6.8194 12.3006 6.81641ZM6.74115 15.1C6.22629 15.1 5.79612 14.9269 5.45064 14.5806C5.10516 14.2344 4.93279 13.8033 4.93354 13.2873V1.81262C4.93354 1.29591 5.1059 0.86481 5.45064 0.519335C5.79537 0.173859 6.22554 0.000747782 6.74115 0H18.1913C18.7069 0 19.137 0.173112 19.4818 0.519335C19.8265 0.865558 19.9993 1.29665 20 1.81262V13.2873C20 13.8033 19.8273 14.2344 19.4818 14.5806C19.1363 14.9269 18.7061 15.1 18.1913 15.1H6.74115ZM6.74115 13.9783H18.1913C18.3927 13.9783 18.558 13.9136 18.6871 13.7842C18.8162 13.6549 18.8807 13.4892 18.8807 13.2873V1.81262C18.8807 1.61072 18.8162 1.44509 18.6871 1.31572C18.558 1.18636 18.3931 1.12167 18.1924 1.12167H6.74115C6.53969 1.12167 6.37478 1.18636 6.24644 1.31572C6.11735 1.44509 6.0528 1.61072 6.0528 1.81262V13.2873C6.0528 13.4892 6.11735 13.6549 6.24644 13.7842C6.37553 13.9136 6.54043 13.9783 6.74115 13.9783ZM3.41245 19.9849C2.91102 20.0454 2.46331 19.9243 2.06933 19.6214C1.67535 19.3186 1.44851 18.917 1.38882 18.4168L0.0143553 7.52194C-0.0453389 7.02018 0.0811383 6.5659 0.393787 6.15911C0.706436 5.75157 1.1131 5.52275 1.61379 5.47265L2.10067 5.45021C2.25961 5.4375 2.40026 5.48237 2.52263 5.58481C2.64575 5.68726 2.70731 5.8241 2.70731 5.99535C2.70731 6.13892 2.65956 6.26679 2.56405 6.37896C2.46854 6.49113 2.35288 6.55357 2.21707 6.56628L1.78056 6.58759C1.57909 6.60254 1.4209 6.68517 1.30599 6.83548C1.19108 6.98653 1.14817 7.16263 1.17727 7.36379L2.51592 18.2665C2.54427 18.4676 2.63008 18.6258 2.77335 18.7409C2.91736 18.8561 3.08973 18.8991 3.29045 18.8699L16.4676 17.2211C16.6273 17.1986 16.7683 17.2341 16.8907 17.3276C17.013 17.4211 17.0839 17.5478 17.1033 17.7079C17.1257 17.8671 17.0903 18.0036 16.997 18.1173C16.9037 18.2309 16.7776 18.2971 16.6187 18.3158L3.41245 19.9849Z" fill="currentColor"/>
                                     </svg>
                                 </button>
-                                <button type="button" wire:click="setActiveTab('settings')" class="chat-sidebar-tab {{ $activeTab === 'settings' ? 'active' : '' }}" title="Settings">
+                                <button type="button" @click="tab = 'settings'" wire:click="setActiveTab('settings')" :class="{ 'active': tab === 'settings' }" class="chat-sidebar-tab" title="Settings">
                                     <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path d="M17.7623 11.9151L16.3723 10.7275C16.4381 10.3245 16.4721 9.91313 16.4721 9.50172C16.4721 9.09031 16.4381 8.67889 16.3723 8.27597L17.7623 7.08838C17.8672 6.99869 17.9422 6.87923 17.9775 6.74589C18.0127 6.61255 18.0065 6.47164 17.9597 6.3419L17.9406 6.28676C17.5579 5.21799 16.9849 4.22722 16.2492 3.36234L16.211 3.31781C16.1218 3.21294 16.0028 3.13756 15.8699 3.1016C15.7369 3.06564 15.5961 3.07078 15.4662 3.11634L13.7409 3.72922C13.1042 3.20753 12.3933 2.79612 11.6251 2.50771L11.2919 0.705127C11.2668 0.569493 11.2009 0.444712 11.1031 0.347363C11.0053 0.250014 10.8802 0.184705 10.7444 0.160112L10.6871 0.149508C9.58147 -0.049836 8.41853 -0.049836 7.3129 0.149508L7.2556 0.160112C7.11978 0.184705 6.99466 0.250014 6.89686 0.347363C6.79907 0.444712 6.73323 0.569493 6.70809 0.705127L6.37279 2.51619C5.61071 2.80468 4.90102 3.21587 4.27187 3.73346L2.53384 3.11634C2.40389 3.07041 2.26304 3.06509 2.12999 3.10107C1.99694 3.13706 1.878 3.21265 1.78897 3.31781L1.75077 3.36234C1.01596 4.22784 0.443048 5.21844 0.0594242 6.28676L0.0403249 6.3419C-0.0551714 6.60699 0.0233479 6.90388 0.237684 7.08838L1.64466 8.28869C1.57888 8.68738 1.54704 9.09455 1.54704 9.4996C1.54704 9.90677 1.57888 10.3139 1.64466 10.7105L0.237684 11.9108C0.132841 12.0005 0.0578039 12.12 0.0225499 12.2533C-0.0127041 12.3867 -0.00650436 12.5276 0.0403249 12.6573L0.0594242 12.7124C0.443532 13.7813 1.01227 14.7674 1.75077 15.6369L1.78897 15.6814C1.87821 15.7863 1.99716 15.8616 2.13013 15.8976C2.2631 15.9336 2.40385 15.9284 2.53384 15.8829L4.27187 15.2657C4.90427 15.7853 5.61094 16.1967 6.37279 16.483L6.70809 18.2941C6.73323 18.4297 6.79907 18.5545 6.89686 18.6518C6.99466 18.7492 7.11978 18.8145 7.2556 18.8391L7.3129 18.8497C8.42869 19.0501 9.57131 19.0501 10.6871 18.8497L10.7444 18.8391C10.8802 18.8145 11.0053 18.7492 11.1031 18.6518C11.2009 18.5545 11.2668 18.4297 11.2919 18.2941L11.6251 16.4915C12.393 16.2038 13.1079 15.7911 13.7409 15.27L15.4662 15.8829C15.5961 15.9288 15.737 15.9341 15.87 15.8981C16.0031 15.8621 16.122 15.7865 16.211 15.6814L16.2492 15.6369C16.9877 14.7653 17.5565 13.7813 17.9406 12.7124L17.9597 12.6573C18.0552 12.3965 17.9767 12.0996 17.7623 11.9151ZM14.8656 8.52621C14.9186 8.84643 14.9462 9.17513 14.9462 9.50384C14.9462 9.83255 14.9186 10.1613 14.8656 10.4815L14.7255 11.3319L16.3108 12.687C16.0705 13.2403 15.7671 13.764 15.4067 14.2478L13.4374 13.5501L12.771 14.0972C12.2639 14.5129 11.6994 14.8395 11.0882 15.0685L10.2797 15.3718L9.89979 17.4288C9.30043 17.4967 8.69532 17.4967 8.09597 17.4288L7.71611 15.3675L6.91394 15.06C6.30913 14.831 5.74676 14.5044 5.24381 14.0909L4.57746 13.5416L2.59538 14.2457C2.23462 13.7601 1.93327 13.2362 1.69135 12.6849L3.29357 11.317L3.15563 10.4688C3.1047 10.1528 3.07711 9.82618 3.07711 9.50384C3.07711 9.17938 3.10257 8.85491 3.15563 8.53893L3.29357 7.69066L1.69135 6.32282C1.93115 5.76932 2.23462 5.24763 2.59538 4.76199L4.57746 5.46606L5.24381 4.9168C5.74676 4.50327 6.30913 4.17668 6.91394 3.94765L7.71823 3.64439L8.09809 1.58309C8.69441 1.51523 9.30347 1.51523 9.90191 1.58309L10.2818 3.64015L11.0903 3.94341C11.6994 4.17244 12.266 4.49903 12.7732 4.91468L13.4395 5.46182L15.4089 4.76411C15.7696 5.24975 16.071 5.77356 16.3129 6.32494L14.7277 7.68005L14.8656 8.52621ZM9.00212 5.55937C6.9394 5.55937 5.26716 7.23047 5.26716 9.29177C5.26716 11.3531 6.9394 13.0242 9.00212 13.0242C11.0648 13.0242 12.7371 11.3531 12.7371 9.29177C12.7371 7.23047 11.0648 5.55937 9.00212 5.55937ZM10.6829 10.9714C10.4624 11.1923 10.2004 11.3675 9.91199 11.4868C9.62354 11.6062 9.31433 11.6674 9.00212 11.6669C8.3676 11.6669 7.77128 11.4188 7.32139 10.9714C7.10031 10.7511 6.925 10.4893 6.80554 10.201C6.68609 9.91277 6.62484 9.60376 6.62533 9.29177C6.62533 8.65769 6.87362 8.06178 7.32139 7.61219C7.77128 7.16261 8.3676 6.91661 9.00212 6.91661C9.63664 6.91661 10.233 7.16261 10.6829 7.61219C10.9039 7.83248 11.0792 8.09428 11.1987 8.38253C11.3182 8.67078 11.3794 8.97978 11.3789 9.29177C11.3789 9.92586 11.1306 10.5218 10.6829 10.9714Z" fill="currentColor"/>
                                     </svg>
@@ -2593,10 +2928,22 @@
                                     <div class="chat-dropzone-sub">Images, videos, PDFs, docs — up to 20 MB</div>
                                 </div>
                             </div>
-                            @if($activeTab === 'status' && $selectedStatus)
+                            {{-- Right-panel blocks below are structured as siblings
+                                 (not an @if/@elseif chain) so all empty states
+                                 live in the DOM at once and are toggled with
+                                 Alpine x-show. That makes the right side switch
+                                 instantly on tab click, same as the sidebar.
+                                 Data-driven views (status viewer, chat thread,
+                                 settings pane) remain server-conditional — they
+                                 only render when the underlying data is loaded. --}}
+                            @if($selectedStatus)
                                 {{-- Status viewer — full-panel view of the
                                      selected status. Delete button if it's
                                      the current user's. --}}
+                                {{-- Visibility controlled by
+                                     .chat-container[data-tab="status"]
+                                     .status-viewer in CSS. Server-gated
+                                     by @if($selectedStatus). --}}
                                 <div class="status-viewer">
                                     <div class="status-viewer-head">
                                         <div class="status-viewer-user">
@@ -2666,32 +3013,45 @@
                                         </div>
                                     @endif
                                 </div>
-                            @elseif($activeTab === 'status')
-                                {{-- Status tab empty state — "Share statuses"
-                                     WhatsApp-style pitch. --}}
-                                <div class="chat-empty">
-                                    <div class="status-empty-icon">
-                                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="4" stroke-dasharray="6 5" opacity="0.5"/>
-                                            <circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="4" opacity="0.7"/>
-                                            <circle cx="50" cy="50" r="14" fill="currentColor" opacity="0.4"/>
-                                        </svg>
-                                    </div>
-                                    <h3>Share statuses</h3>
-                                    <p>Share photos, videos and text that disappear after 24 hours.</p>
+                            @endif
+
+                            {{-- Status tab empty state — always in DOM.
+                                 CSS uses data-tab + data-has-status on
+                                 the chat-container to decide visibility. --}}
+                            <div class="chat-empty" data-empty="status">
+                                <div class="status-empty-icon">
+                                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="4" stroke-dasharray="6 5" opacity="0.5"/>
+                                        <circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="4" opacity="0.7"/>
+                                        <circle cx="50" cy="50" r="14" fill="currentColor" opacity="0.4"/>
+                                    </svg>
                                 </div>
-                            @elseif($activeTab === 'settings')
-                                {{-- Settings right panel — big gear + heading
-                                     when nothing selected, otherwise the
-                                     content of the chosen sub-section. --}}
-                                @if($settingsSection === null)
-                                    <div class="chat-empty settings-splash">
-                                        <div class="settings-splash-icon">
-                                            <i class="fa fa-cog"></i>
-                                        </div>
-                                        <h3 class="settings-splash-title">Settings</h3>
-                                    </div>
-                                @else
+                                <h3>Share statuses</h3>
+                                <p>Share photos, videos and text that disappear after 24 hours.</p>
+                            </div>
+
+                            {{-- Settings splash — always in DOM. CSS uses
+                                 data-tab + data-has-section to control
+                                 visibility. --}}
+                            <div class="chat-empty settings-splash" data-empty="settings">
+                                <div class="settings-splash-icon">
+                                    <i class="fa fa-cog"></i>
+                                </div>
+                                <h3 class="settings-splash-title">Settings</h3>
+                            </div>
+
+                            @if($settingsSection !== null)
+                                {{-- Settings pane — only rendered when a
+                                     sub-section is active; Alpine keeps it
+                                     hidden unless the Settings tab is on.
+                                     .settings-pane-wrapper gives the outer
+                                     div proper flex sizing so the inner
+                                     .settings-pane can take chat-main's
+                                     full height and scroll correctly. --}}
+                                {{-- Visibility controlled by
+                                     .chat-container[data-tab="settings"]
+                                     .settings-pane-wrapper in CSS. --}}
+                                <div class="settings-pane-wrapper">
                                     <div class="settings-pane">
                                         <div class="settings-pane-head">
                                             <button type="button" class="settings-pane-back" wire:click="setSettingsSection(null)" title="Back">
@@ -2888,21 +3248,33 @@
                                         @endif
                                         </div>
                                     </div>
-                                @endif
-                            @elseif($activeTab === 'gallery' && !$selectedConversationId)
-                                {{-- Gallery empty state — user needs to click
-                                     a thumbnail on the left to reveal a chat. --}}
-                                <div class="chat-empty">
-                                    <div class="chat-empty-icon"><i class="fa fa-image"></i></div>
-                                    <h3>Select a photo or video</h3>
-                                    <p>Click any item on the left to open the chat it was shared in.</p>
                                 </div>
-                            @elseif(($activeTab === 'chats' || $activeTab === 'gallery') && $selectedConversationId && ($selectedUser || $selectedIsSupport))
+                            @endif
+
+                            {{-- Gallery empty state — always in DOM. CSS uses
+                                 data-tab + data-has-conv to control
+                                 visibility. --}}
+                            <div class="chat-empty" data-empty="gallery">
+                                <div class="chat-empty-icon"><i class="fa fa-image"></i></div>
+                                <h3>Select a photo or video</h3>
+                                <p>Click any item on the left to open the chat it was shared in.</p>
+                            </div>
+
+                            @if($selectedConversationId && ($selectedUser || $selectedIsSupport))
+                                {{-- Chat thread (header + messages + reply) —
+                                     only rendered when a conversation is
+                                     actually selected. Alpine keeps it
+                                     hidden unless the Chats or Gallery tab
+                                     is active. --}}
+                                {{-- Visibility controlled by
+                                     .chat-container[data-tab="chats"/"gallery"]
+                                     .chat-thread-wrapper in CSS. --}}
+                                <div class="chat-thread-wrapper">
                                 {{-- Chat Header --}}
                                 <div class="chat-header">
                                     <div class="chat-header-info">
                                         <button class="mobile-back-btn" wire:click="closeConversation">
-                                            <i class="fa fa-angle-left"></i> Back
+                                            <i class="fa fa-angle-left"></i><span class="mobile-back-label"> Back</span>
                                         </button>
                                         <div class="chat-header-avatar">
                                             @if($selectedIsSupport)
@@ -3162,12 +3534,15 @@
                                         </button>
                                     </form>
                                 </div>
-                            @else
-                                {{-- Empty State — two centred action cards
-                                     ("Start Call" + "Call a number") in place
-                                     of the old "Select a conversation" prompt. --}}
-                                <div class="chat-empty">
-                                    <div class="empty-actions">
+                                </div>
+                            @endif
+
+                            {{-- Start Call / Call number empty state —
+                                 always in DOM. CSS uses data-tab +
+                                 data-has-conv to show this on Chats
+                                 with no conv, or on Calls. --}}
+                            <div class="chat-empty" data-empty="callable">
+                                <div class="empty-actions">
                                         <button type="button" class="empty-action-card" id="startCallCard">
                                             <span class="empty-action-icon">
                                                 <svg width="33" height="26" viewBox="0 0 33 26" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3186,12 +3561,17 @@
                                         </button>
                                     </div>
                                 </div>
-                            @endif
                         </div>
                     </div>
                 </div>
             </div>
 
+    @push('js')
+    {{-- Same reasoning as the CSS push above: keeping this ~1100-line
+         script inline in the component root meant re-sending it on every
+         Livewire update. Pushed to the layout, it lands in <body> once
+         on initial page load and every subsequent tab-click/poll response
+         is dramatically smaller. --}}
     <script>
         // Track state at module scope so Livewire DOM swaps don't reset it.
         window.__chatState = window.__chatState || {
@@ -3504,7 +3884,11 @@
                 } catch (err) {
                     console.warn('[chat] refreshChat threw:', err);
                 }
-            }, 3000);
+            }, 8000);  // Was 3000. Reverb WebSocket handles real-time
+                       // delivery/receipts; this poll is a safety net for
+                       // dropped broadcasts, so 8s is plenty. Cuts DB
+                       // pressure ~60% and stops the whole page feeling
+                       // sluggish from constant re-render churn.
         }
 
         // Auto-scroll to the bottom of the message list on new messages, BUT
@@ -4352,6 +4736,7 @@
             }, 2500);
         }
     </script>
+    @endpush
 
     {{-- WebRTC scripts moved to the layout (components/layouts/app-evoory
          .blade.php) so incoming calls ring from anywhere on the site,
