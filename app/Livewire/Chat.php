@@ -237,12 +237,36 @@ class Chat extends Component
             ->flip();
         $statusUserIds = $statusUserIds->flip();
 
-        $conversations = Conversation::forUser($userId)
+        // Cap the number of conversations we load — top ~100 by
+        // last_message_at is more than enough for any active user, and
+        // stops power users' sidebars from grinding the DB every 3 s.
+        $conversationRows = Conversation::forUser($userId)
             ->with(['userOne', 'userTwo', 'latestMessage'])
             ->orderByDesc('is_pinned')
             ->orderByDesc('last_message_at')
-            ->get()
-            ->map(function ($conv) use ($userId, $missedByCaller, $statusUserIds, $unseenStatusUserIds) {
+            ->limit(100)
+            ->get();
+
+        // BATCHED unread counts — a single aggregation over the messages
+        // table instead of one COUNT query per conversation (was N+1 and
+        // dominated tab-switch latency). Also filters expired
+        // disappearing messages so the badge count agrees with what the
+        // user actually sees inside the thread.
+        $convIds = $conversationRows->pluck('id');
+        $unreadCounts = $convIds->isEmpty()
+            ? collect()
+            : Message::whereIn('conversation_id', $convIds)
+                ->where('sender_id', '!=', $userId)
+                ->active() // hide expired disappearing messages
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhereIn('status', ['sent', 'delivered', 'unread']);
+                })
+                ->selectRaw('conversation_id, COUNT(*) as cnt')
+                ->groupBy('conversation_id')
+                ->pluck('cnt', 'conversation_id');
+
+        $conversations = $conversationRows
+            ->map(function ($conv) use ($userId, $missedByCaller, $statusUserIds, $unseenStatusUserIds, $unreadCounts) {
                 if ($conv->is_support) {
                     return [
                         'id' => $conv->id,
@@ -255,7 +279,7 @@ class Chat extends Component
                         'other_user_avatar' => null,
                         'last_message' => $conv->latestMessage?->message ?? '',
                         'last_message_at' => $conv->last_message_at,
-                        'unread_count' => $conv->getUnreadCountFor($userId),
+                        'unread_count' => (int) ($unreadCounts[$conv->id] ?? 0),
                         'is_mine' => $conv->latestMessage?->sender_id === $userId,
                         'missed_calls' => 0,
                         'has_status' => false,
@@ -263,8 +287,17 @@ class Chat extends Component
                     ];
                 }
 
-                $otherUser = $conv->getOtherUser($userId);
-                $otherId = $conv->getOtherUserId($userId);
+                // Reuse the userOne / userTwo eager loads instead of
+                // calling $conv->getOtherUser() — that method does a fresh
+                // User::find() and was hitting the DB once per conversation
+                // (100 extra queries per render, on top of the poll every
+                // 3 s). This picks the already-loaded relation.
+                $otherId = $conv->user_one_id === $userId
+                    ? (int) $conv->user_two_id
+                    : (int) $conv->user_one_id;
+                $otherUser = $conv->user_one_id === $userId
+                    ? $conv->userTwo
+                    : $conv->userOne;
                 return [
                     'id' => $conv->id,
                     'is_support' => false,
@@ -282,7 +315,7 @@ class Chat extends Component
                     'other_user_avatar_url' => $otherUser ? user_avatar_url($otherUser) : null,
                     'last_message' => $conv->latestMessage?->message ?? '',
                     'last_message_at' => $conv->last_message_at,
-                    'unread_count' => $conv->getUnreadCountFor($userId),
+                    'unread_count' => (int) ($unreadCounts[$conv->id] ?? 0),
                     'is_mine' => $conv->latestMessage?->sender_id === $userId,
                     'missed_calls' => (int) ($missedByCaller[$otherId] ?? 0),
                 ];
@@ -403,71 +436,95 @@ class Chat extends Component
 
         $userId = auth()->id();
 
-        $messagesToUpdate = Message::where('conversation_id', $this->selectedConversationId)
+        // Only pluck the sender_ids we need for the broadcast, not full
+        // Message models. Was fetching every unread message row into
+        // memory just to read sender_id off it.
+        $senderIds = Message::where('conversation_id', $this->selectedConversationId)
             ->where('sender_id', '!=', $userId)
             ->where(function ($q) {
                 $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
             })
-            ->get();
+            ->pluck('sender_id')
+            ->filter()
+            ->unique();
 
-        if ($messagesToUpdate->isNotEmpty()) {
-            Message::where('conversation_id', $this->selectedConversationId)
-                ->where('sender_id', '!=', $userId)
-                ->where(function ($q) {
-                    $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
-                })
-                ->update(['status' => 'read']);
+        if ($senderIds->isEmpty()) return;
 
-            try {
-                $senderIds = $messagesToUpdate->pluck('sender_id')->filter()->unique();
-                foreach ($senderIds as $senderId) {
-                    broadcast(new MessageStatusUpdated(
-                        $this->selectedConversationId,
-                        'read',
-                        $senderId
-                    ))->toOthers();
-                }
-            } catch (\Exception $e) {
-                Log::warning('Broadcast status update failed: ' . $e->getMessage());
+        Message::where('conversation_id', $this->selectedConversationId)
+            ->where('sender_id', '!=', $userId)
+            ->where(function ($q) {
+                $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
+            })
+            ->update(['status' => 'read']);
+
+        try {
+            foreach ($senderIds as $senderId) {
+                broadcast(new MessageStatusUpdated(
+                    $this->selectedConversationId,
+                    'read',
+                    (int) $senderId
+                ))->toOthers();
             }
+        } catch (\Exception $e) {
+            Log::warning('Broadcast status update failed: ' . $e->getMessage());
         }
     }
 
     /**
-     * Mark messages as delivered when user opens chat (but hasn't selected the conversation)
+     * Mark messages as delivered when user opens chat (but hasn't selected the conversation).
+     *
+     * Runs on every 3-second poll refresh — so this is a hot path. The
+     * old implementation did:
+     *   forUser->pluck(id)  → get() the messages  → update()  → group + broadcast
+     * Which meant a full conversations-of-user query + a full messages
+     * fetch even when there was nothing to update. Replaced with a
+     * cheap EXISTS probe first; the expensive path only runs when there
+     * are actually undelivered messages waiting.
      */
     public function markMessagesAsDelivered()
     {
         $userId = auth()->id();
 
+        // Fast probe — most poll ticks find nothing to do.
+        $hasUndelivered = Message::where('sender_id', '!=', $userId)
+            ->where('status', 'sent')
+            ->whereExists(function ($q) use ($userId) {
+                $q->select(\DB::raw(1))
+                  ->from('conversations')
+                  ->whereColumn('conversations.id', 'messages.conversation_id')
+                  ->where(function ($w) use ($userId) {
+                      $w->where('conversations.user_one_id', $userId)
+                        ->orWhere('conversations.user_two_id', $userId);
+                  });
+            })
+            ->exists();
+
+        if (!$hasUndelivered) return;
+
         $conversationIds = Conversation::forUser($userId)->pluck('id');
 
-        $messagesToUpdate = Message::whereIn('conversation_id', $conversationIds)
+        // Grab only sender_id/conversation_id (not full rows) for the
+        // broadcast step, then do the single-shot update.
+        $rows = Message::whereIn('conversation_id', $conversationIds)
             ->where('sender_id', '!=', $userId)
             ->where('status', 'sent')
-            ->get();
+            ->get(['conversation_id', 'sender_id']);
 
-        if ($messagesToUpdate->isNotEmpty()) {
-            Message::whereIn('conversation_id', $conversationIds)
-                ->where('sender_id', '!=', $userId)
-                ->where('status', 'sent')
-                ->update(['status' => 'delivered']);
+        if ($rows->isEmpty()) return;
 
-            try {
-                $grouped = $messagesToUpdate->groupBy('conversation_id');
-                foreach ($grouped as $convId => $messages) {
-                    $senderIds = $messages->pluck('sender_id')->filter()->unique();
-                    foreach ($senderIds as $senderId) {
-                        broadcast(new MessageStatusUpdated(
-                            $convId,
-                            'delivered',
-                            $senderId
-                        ))->toOthers();
-                    }
+        Message::whereIn('conversation_id', $conversationIds)
+            ->where('sender_id', '!=', $userId)
+            ->where('status', 'sent')
+            ->update(['status' => 'delivered']);
+
+        try {
+            foreach ($rows->groupBy('conversation_id') as $convId => $messages) {
+                foreach ($messages->pluck('sender_id')->filter()->unique() as $senderId) {
+                    broadcast(new MessageStatusUpdated((int) $convId, 'delivered', (int) $senderId))->toOthers();
                 }
-            } catch (\Exception $e) {
-                Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
             }
+        } catch (\Exception $e) {
+            Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
         }
     }
 
@@ -901,15 +958,27 @@ class Chat extends Component
             ->orderByDesc('created_at')
             ->get();
 
-        $others = Status::with('user')
+        $othersRaw = Status::with('user')
             ->where('user_id', '!=', $userId)
             ->where('created_at', '>', $cutoff)
             ->orderByDesc('created_at')
-            ->get()
+            ->get();
+
+        // BATCHED "already viewed by me" lookup — one query for the whole
+        // page's worth of statuses instead of one EXISTS per status. Was
+        // an N+1 on every render (including the 3s polling refresh).
+        $viewedIds = $othersRaw->isEmpty()
+            ? collect()
+            : StatusView::whereIn('status_id', $othersRaw->pluck('id'))
+                ->where('viewer_id', $userId)
+                ->pluck('status_id')
+                ->flip();
+
+        $others = $othersRaw
             ->groupBy('user_id')
-            ->map(function ($group) use ($userId) {
+            ->map(function ($group) use ($userId, $viewedIds) {
                 $first = $group->first();
-                $unseen = $group->filter(fn ($s) => !$s->viewedBy($userId))->count();
+                $unseen = $group->filter(fn ($s) => !$viewedIds->has($s->id))->count();
                 return [
                     'user_id'    => $first->user_id,
                     'user_name'  => $first->user->name ?? $first->user->email ?? 'Unknown',
@@ -1049,7 +1118,9 @@ class Chat extends Component
         $selectedStatus = $this->activeTab === 'status' ? $this->getSelectedStatus() : null;
         $galleryMedia = $this->activeTab === 'gallery' ? $this->getGalleryMedia() : collect();
 
-        $totalConversations = Conversation::forUser(auth()->id())->count();
+        // Use the already-fetched conversations collection instead of
+        // firing another Conversation::forUser->count() query per render.
+        $totalConversations = $conversations->count();
         $unreadCount = 0;
         foreach ($conversations as $conv) {
             $unreadCount += $conv['unread_count'];
