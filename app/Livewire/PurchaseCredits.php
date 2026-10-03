@@ -46,9 +46,37 @@ class PurchaseCredits extends Component
         $this->validateOnly($propertyName);
     }
     
+    public $historyFilter = 'all';
+
+    public function setHistoryFilter($filter)
+    {
+        $this->historyFilter = in_array($filter, ['all', 'credit', 'debit'], true) ? $filter : 'all';
+    }
+
     public function render()
     {
-        return view('livewire.purchase-credits');
+        $user = Auth::user();
+
+        // Same classification the CreditsHistory page uses — kept in both
+        // places rather than a shared helper because it's presentation-only.
+        $creditTypes = ['credit', 'credit_purchase'];
+        $debitTypes = ['debit', 'package_purchase', 'package_upgrade', 'paypal_payment', 'primary_gateway_payment'];
+
+        $recentTransactions = $user
+            ? WalletTransaction::query()
+                ->where('user_id', $user->id)
+                ->when($this->historyFilter === 'credit', fn($q) => $q->whereIn('type', $creditTypes))
+                ->when($this->historyFilter === 'debit', fn($q) => $q->whereIn('type', $debitTypes))
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get()
+            : collect();
+
+        return view('livewire.purchase-credits', [
+            'recentTransactions' => $recentTransactions,
+            'creditTypes' => $creditTypes,
+            'debitTypes' => $debitTypes,
+        ]);
     }
     
     #[On('startPrimaryPaymentAttempt')]

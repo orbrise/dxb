@@ -195,6 +195,41 @@
             syncListingCss();
         }
     })();
+
+    // my-chat is heavy on Alpine state, Echo listeners, polling, and inline
+    // scripts that don't survive Livewire's soft-swap morph. Opt the chat
+    // page out of wire:navigate ENTIRELY by intercepting any click that
+    // would take the user TO /my-chat and forcing a full page load. Also
+    // force full-load when leaving /my-chat so we don't leave stale listeners
+    // behind. Runs in capture phase so it fires before Livewire's handler.
+    (function () {
+        function isChatPath(path) {
+            return path === '/my-chat' || path.startsWith('/my-chat/');
+        }
+        document.addEventListener('click', function (e) {
+            // Only hijack plain left-clicks on <a> elements. Modifier keys
+            // (Ctrl/Cmd/Shift) and middle-click should keep their native
+            // "open in new tab" behavior.
+            if (e.defaultPrevented) return;
+            if (e.button !== 0) return;
+            if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+            const a = e.target.closest('a[href]');
+            if (!a) return;
+            // Ignore download links, mailto/tel, external hosts, etc.
+            if (a.hasAttribute('download')) return;
+            if (a.target && a.target !== '_self') return;
+            let href;
+            try { href = new URL(a.href, window.location.origin); } catch (_) { return; }
+            if (href.origin !== window.location.origin) return;
+            const goingToChat   = isChatPath(href.pathname);
+            const leavingChat   = isChatPath(window.location.pathname) && !isChatPath(href.pathname);
+            if (!goingToChat && !leavingChat) return;
+            // Hard-navigate instead of letting wire:navigate soft-swap.
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = a.href;
+        }, true); // capture-phase so we beat Livewire's own click handler
+    })();
     </script>
 
     {{-- Additional page-specific CSS --}}

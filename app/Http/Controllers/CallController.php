@@ -69,6 +69,14 @@ class CallController extends Controller
             return response()->json(['error' => 'cannot call yourself'], 422);
         }
 
+        // Block guard: silently drop signals in either direction of a block
+        // relationship. Only reject on initial offer so late ice/hangup from
+        // an in-progress call don't error out if someone blocks mid-call.
+        if ($data['type'] === 'offer' && $user->isBlockRelationWith($targetId)) {
+            $rtc->info('signal.blocked_rejected', ['auth_id' => $user->id, 'target' => $targetId]);
+            return response()->json(['error' => 'blocked'], 403);
+        }
+
         try {
             $this->recordLifecycle(
                 $data['call_id'],
@@ -525,30 +533,82 @@ class CallController extends Controller
         $ttl    = (int) config('services.turn.ttl', 86400);
         if ($ttl < 300 || $ttl > 86400) $ttl = 86400;
 
-        // If TURN isn't configured (local dev), return STUN-only so calls at
-        // least attempt over public IPs — cross-symmetric-NAT will fail
-        // cleanly rather than hang.
-        if ($host === '' || $secret === '') {
-            return response()->json([
-                'iceServers' => [
-                    ['urls' => 'stun:stun.l.google.com:19302'],
-                ],
-                'source' => 'stun-only',
-            ])->header('Cache-Control', 'no-store, private, max-age=0, must-revalidate');
+        $iceServers = [];
+        $sources    = [];
+
+        // Cloudflare Realtime TURN (primary when configured). Browsers try
+        // this entry first; if it fails they fall back to coturn below.
+        $cfTokenId = (string) config('services.cloudflare_turn.token_id', '');
+        $cfApiToken = (string) config('services.cloudflare_turn.api_token', '');
+        if ($cfTokenId !== '' && $cfApiToken !== '') {
+            $cfIce = $this->mintCloudflareIceServers($cfTokenId, $cfApiToken, (int) config('services.cloudflare_turn.ttl', 86400));
+            if ($cfIce) {
+                $iceServers = array_merge($iceServers, $cfIce);
+                $sources[]  = 'cloudflare';
+            }
         }
 
-        $username   = (time() + $ttl) . ':' . $request->user()->id;
-        $credential = base64_encode(hash_hmac('sha1', $username, $secret, true));
+        // Coturn fallback via REST/HMAC scheme.
+        if ($host !== '' && $secret !== '') {
+            $username   = (time() + $ttl) . ':' . $request->user()->id;
+            $credential = base64_encode(hash_hmac('sha1', $username, $secret, true));
+            $iceServers[] = ['urls' => "stun:{$host}:3478"];
+            $iceServers[] = ['urls' => "turn:{$host}:3478?transport=udp",  'username' => $username, 'credential' => $credential];
+            $iceServers[] = ['urls' => "turn:{$host}:3478?transport=tcp",  'username' => $username, 'credential' => $credential];
+            $iceServers[] = ['urls' => "turns:{$host}:5349?transport=tcp", 'username' => $username, 'credential' => $credential];
+            $sources[]    = 'coturn-hmac';
+        }
+
+        // Last-resort: public STUN only. Cross-symmetric-NAT will fail cleanly
+        // rather than hang. Used only when nothing else is configured.
+        if (empty($iceServers)) {
+            $iceServers[] = ['urls' => 'stun:stun.l.google.com:19302'];
+            $sources[]    = 'stun-only';
+        }
 
         return response()->json([
-            'iceServers' => [
-                ['urls' => "stun:{$host}:3478"],
-                ['urls' => "turn:{$host}:3478?transport=udp",  'username' => $username, 'credential' => $credential],
-                ['urls' => "turn:{$host}:3478?transport=tcp",  'username' => $username, 'credential' => $credential],
-                ['urls' => "turns:{$host}:5349?transport=tcp", 'username' => $username, 'credential' => $credential],
-            ],
-            'source' => 'coturn-hmac',
+            'iceServers' => $iceServers,
+            'source'     => implode('+', $sources),
         ])->header('Cache-Control', 'no-store, private, max-age=0, must-revalidate');
+    }
+
+    /**
+     * POST to Cloudflare Realtime TURN to mint short-lived credentials.
+     * Cloudflare returns iceServers with TWO entries: a STUN-only entry
+     * and a TURN entry bundling 6 URL variants (UDP/TCP/TLS on 3478/5349
+     * plus port 80/443 fallbacks for restrictive networks). Both are
+     * returned so the browser can use whichever reaches. Returns null on
+     * failure so the coturn/STUN fallback still works.
+     */
+    protected function mintCloudflareIceServers(string $tokenId, string $apiToken, int $ttl): ?array
+    {
+        if ($ttl < 300 || $ttl > 86400) $ttl = 86400;
+
+        try {
+            $url = "https://rtc.live.cloudflare.com/v1/turn/keys/{$tokenId}/credentials/generate-ice-servers";
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_POST           => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 4,
+                CURLOPT_CONNECTTIMEOUT => 3,
+                CURLOPT_HTTPHEADER     => [
+                    'Authorization: Bearer ' . $apiToken,
+                    'Content-Type: application/json',
+                ],
+                CURLOPT_POSTFIELDS => json_encode(['ttl' => $ttl]),
+            ]);
+            $body   = curl_exec($ch);
+            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($status < 200 || $status >= 300 || !$body) return null;
+            $data = json_decode($body, true);
+            if (!is_array($data) || empty($data['iceServers']) || !is_array($data['iceServers'])) return null;
+            return $data['iceServers'];
+        } catch (\Throwable $e) {
+            \Log::warning('Cloudflare TURN credential fetch failed: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

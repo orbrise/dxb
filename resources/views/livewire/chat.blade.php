@@ -181,6 +181,10 @@
             gap: 12px;
         }
 
+        /* Mobile-only top strip (back + centered logo). Hidden on desktop
+           so it doesn't double up with the sidebar title. */
+        .chat-mobile-top { display: none; }
+
         /* Title row above the search bar — kept compact to visually
            balance with the chat header on the right panel. */
         .chat-sidebar-title {
@@ -235,6 +239,21 @@
         .chat-sidebar-title-actions button.new-chat-btn svg {
             width: 14px;
             height: 14px;
+        }
+        /* Status-tab variant: outline circle "+" button instead of the lime
+           filled chat-bubble icon. Sized to match the sibling ghost buttons
+           (expand / kebab) at 30px. */
+        .chat-sidebar-title-actions button.new-chat-btn.is-plus-btn {
+            width: 30px; height: 30px;
+            background: transparent;
+            color: var(--ev-text);
+        }
+        .chat-sidebar-title-actions button.new-chat-btn.is-plus-btn:hover {
+            background: var(--ev-hover);
+            color: var(--ev-text);
+        }
+        .chat-sidebar-title-actions button.new-chat-btn.is-plus-btn svg {
+            width: 22px; height: 22px;
         }
 
         /* --------------------------------------------------------------
@@ -356,7 +375,7 @@
         .chat-search input {
             width: 100%;
             padding: 12px 16px 12px 42px;
-            background: #000;
+            background: #1D2224;
             color: var(--ev-text);
             border: 1px solid var(--ev-border);
             border-radius: var(--ev-r-pill);
@@ -367,7 +386,7 @@
         .chat-search input::placeholder { color: var(--ev-text-3); }
         .chat-search input:focus {
             border-color: rgba(255,255,255,0.18);
-            background: #000;
+            background: #1D2224;
         }
         .chat-search .search-icon {
             position: absolute;
@@ -496,6 +515,55 @@
             font-size: 14px;
             font-weight: 500;
         }
+
+        /* Chat sidebar filter tabs (All / Unread / Active / Archived) */
+        .chat-filter-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 10px 8px 6px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            flex-wrap: nowrap;
+        }
+        .chat-filter-tabs::-webkit-scrollbar { display: none; }
+        .cf-tab {
+            flex: 0 0 auto;
+            background: transparent;
+            border: none;
+            color: var(--ev-text-2);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 120ms, color 120ms;
+        }
+        .cf-tab:hover { color: var(--ev-text); background: var(--ev-hover); }
+        .cf-tab.active {
+            background: var(--ev-text);
+            color: var(--ev-bg);
+        }
+        .cf-tab .cf-badge {
+            background: var(--ev-danger);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cf-tab.active .cf-badge { background: var(--ev-bg); color: var(--ev-text); }
         .conversation-item {
             display: flex;
             align-items: center;
@@ -507,6 +575,66 @@
             position: relative;
         }
         .conversation-item:hover { background: var(--ev-hover); }
+
+        /* Per-row kebab menu (⋮) — appears on hover (desktop) or always on
+           touch devices; dropdown shows Archive/Unarchive. */
+        .conv-kebab {
+            position: relative;
+            margin-left: 4px;
+            opacity: 0;
+            transition: opacity 120ms;
+        }
+        .conversation-item:hover .conv-kebab,
+        .conv-kebab [x-show="open"]:not([style*="display: none"]) ~ *,
+        .conv-kebab:focus-within { opacity: 1; }
+        @media (hover: none) { .conv-kebab { opacity: 1; } }
+        .conv-kebab-btn {
+            background: transparent;
+            border: none;
+            color: var(--ev-text-3);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .conv-kebab-btn:hover { background: var(--ev-panel-3); color: var(--ev-text); }
+        .conv-kebab-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: var(--ev-panel-2);
+            border: 1px solid var(--ev-border);
+            border-radius: 10px;
+            padding: 6px;
+            min-width: 150px;
+            z-index: 30;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .conv-kebab-menu button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 8px;
+            color: var(--ev-text);
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: left;
+        }
+        .conv-kebab-menu button:hover { background: var(--ev-hover); }
+        .conv-kebab-menu button i { width: 14px; color: var(--ev-text-2); }
+        .conv-kebab-menu button.danger { color: var(--ev-danger); }
+        .conv-kebab-menu button.danger:hover { background: rgba(239,68,68,0.12); }
+        .conv-kebab-menu button.danger i { color: var(--ev-danger); }
         .conversation-item.active {
             background: var(--ev-panel-3);
         }
@@ -611,24 +739,29 @@
             color: var(--ev-text-2);
             display: inline-flex; align-items: center; justify-content: center;
             font-weight: 600;
-            overflow: hidden;
             flex-shrink: 0;
+            /* overflow:visible so the + badge can render past the circle;
+               the inner <img> is clipped by its own border-radius. */
         }
-        .status-my-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .status-my-avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
         .status-my-avatar.has-status {
             box-shadow: 0 0 0 2px var(--ev-panel-2), 0 0 0 4px var(--ev-lime);
         }
         .status-my-plus {
             position: absolute;
-            right: -2px; bottom: -2px;
+            right: -3px; bottom: -3px;
             width: 20px; height: 20px;
             border-radius: 50%;
-            background: var(--ev-online);
+            background: #2b3a4a;
             color: #fff;
             display: inline-flex; align-items: center; justify-content: center;
-            font-size: 10px;
-            border: 2px solid var(--ev-panel-2);
+            border: 1px solid #fff;
         }
+        .status-my-plus svg { width: 12px; height: 12px; display: block; }
 
         /* "My statuses" per-post list — appears under the summary card
            when the user clicks it to drill in. Each row = one status,
@@ -1089,9 +1222,14 @@
             color: var(--ev-text-2);
             display: inline-flex; align-items: center; justify-content: center;
             font-size: 46px; font-weight: 700;
-            overflow: hidden;
+            /* overflow:visible so the camera button can render past the
+               circle; inner <img> clips itself via its own border-radius. */
         }
-        .acct-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .acct-avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
         .acct-avatar-btn {
             position: absolute;
             bottom: 4px; right: 4px;
@@ -1518,6 +1656,7 @@
             min-height: 0;
             min-width: 0;
             overflow: hidden;
+            position: relative;
         }
 
         /* Right-panel visibility driven by a data-tab attribute on
@@ -1682,6 +1821,298 @@
         .chat-header-dropdown button:hover { background: var(--ev-hover); }
         .chat-header-dropdown button.danger { color: var(--ev-danger); }
         .chat-header-dropdown button.danger:hover { background: rgba(239,68,68,0.15); }
+        .chat-header-dropdown .dropdown-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 9px 10px;
+            border-radius: 8px;
+            color: var(--ev-text);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 120ms;
+        }
+        .chat-header-dropdown .dropdown-link:hover { background: var(--ev-hover); color: var(--ev-text); }
+        .chat-header-dropdown .dropdown-divider {
+            height: 1px;
+            background: var(--ev-border);
+            margin: 6px 2px;
+        }
+        .chat-header-dropdown .dropdown-info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 10px;
+            color: var(--ev-text);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .chat-header-dropdown .dropdown-info-row > span:first-child { display: inline-flex; align-items: center; gap: 10px; }
+        .chat-header-dropdown .dropdown-info-value { color: var(--ev-text-3); font-size: 12px; font-weight: 500; }
+
+        /* Contact Info overlay panel — covers the chat-thread-wrapper when
+           opened from the kebab → "View profile". */
+        .contact-info-panel {
+            position: absolute;
+            inset: 0;
+            background: var(--ev-bg);
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+        }
+        .ci-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--ev-border);
+            flex: 0 0 auto;
+        }
+        .ci-header h3 { margin: 0; font-size: 17px; font-weight: 600; color: var(--ev-text); }
+        .ci-back {
+            background: transparent;
+            border: none;
+            color: var(--ev-text);
+            cursor: pointer;
+            font-size: 22px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ci-back:hover { background: var(--ev-hover); }
+        .ci-body { flex: 1 1 auto; overflow-y: auto; }
+
+        .ci-identity {
+            text-align: center;
+            padding: 28px 20px 18px;
+        }
+        .ci-avatar {
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            background: var(--ev-panel-3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ev-text);
+            font-size: 48px;
+            font-weight: 600;
+            overflow: hidden;
+        }
+        .ci-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .ci-name { font-size: 22px; font-weight: 600; color: var(--ev-text); margin-bottom: 2px; }
+        .ci-handle { color: var(--ev-text-2); font-size: 14px; }
+        .ci-last-seen { color: var(--ev-text-3); font-size: 13px; margin-top: 4px; }
+
+        .ci-actions {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            padding: 18px 20px 22px;
+            border-bottom: 8px solid var(--ev-panel-2);
+        }
+        .ci-action {
+            background: transparent;
+            border: none;
+            color: var(--ev-text);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            font-size: 12px;
+            text-decoration: none;
+        }
+        .ci-action-icon {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            border: 1px solid var(--ev-border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ev-text);
+            font-size: 18px;
+            transition: background 120ms;
+        }
+        .ci-action:hover .ci-action-icon { background: var(--ev-hover); }
+        .ci-action-label { color: var(--ev-text-2); }
+
+        .ci-list { padding: 4px 0; }
+        .ci-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 14px 20px;
+            cursor: pointer;
+            color: var(--ev-text);
+            font-size: 15px;
+            font-family: inherit;
+            text-align: left;
+            border-bottom: 1px solid var(--ev-border);
+            transition: background 120ms;
+        }
+        .ci-row:hover { background: var(--ev-hover); }
+        .ci-row-icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--ev-panel-3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ev-text-2);
+            font-size: 16px;
+            flex: 0 0 auto;
+        }
+        .ci-row-label { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; }
+        .ci-row-sub { color: var(--ev-text-3); font-size: 12px; }
+        .ci-row-value { color: var(--ev-text-3); font-size: 14px; }
+        .ci-row-chev { color: var(--ev-text-3); }
+        .ci-row.danger { color: var(--ev-danger); }
+        .ci-row.danger .ci-row-icon { color: var(--ev-danger); background: rgba(239,68,68,0.1); }
+
+        /* Per-conversation media grid */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 4px;
+            padding: 4px;
+        }
+        .media-tile {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            background: var(--ev-panel-3);
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            overflow: hidden;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ev-text-2);
+            text-decoration: none;
+        }
+        .media-tile img,
+        .media-tile video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .media-tile:hover { opacity: 0.9; }
+        .media-tile-badge {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 20px;
+        }
+        .media-tile.audio {
+            flex-direction: column;
+            gap: 6px;
+            font-size: 22px;
+        }
+        .media-tile.audio .media-tile-dur {
+            font-size: 11px;
+            color: var(--ev-text-3);
+        }
+        .media-empty {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--ev-text-3);
+        }
+        .media-empty i { font-size: 42px; margin-bottom: 12px; opacity: 0.6; }
+        .media-empty p { margin: 0; font-size: 14px; }
+        .media-empty small { color: var(--ev-text-3); font-size: 12px; opacity: 0.75; }
+
+        /* Starred-message bubble indicator (small star next to the time) */
+        .message-star {
+            color: var(--ev-text-3);
+            font-size: 10px;
+            margin-left: 4px;
+        }
+        .message-wrapper.sent .message-star { color: rgba(10,10,10,0.55); }
+
+        /* Starred-messages list panel */
+        .starred-list { padding: 4px 0; }
+        .starred-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            color: var(--ev-text);
+            font-family: inherit;
+            border-bottom: 1px solid var(--ev-border);
+            transition: background 120ms;
+        }
+        .starred-item:hover { background: var(--ev-hover); }
+        .starred-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--ev-text-3);
+            margin-bottom: 4px;
+        }
+        .starred-sender { color: var(--ev-text); font-weight: 600; }
+        .starred-arrow { color: var(--ev-text-3); }
+        .starred-peer { color: var(--ev-text-2); }
+        .starred-date { margin-left: auto; }
+        .starred-body { font-size: 14px; color: var(--ev-text); line-height: 1.3; }
+        .starred-body i { color: var(--ev-text-3); margin-right: 6px; }
+
+        /* In-thread search bar — appears between chat header and messages. */
+        .chat-search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: var(--ev-panel-2);
+            border-bottom: 1px solid var(--ev-border);
+            position: relative;
+        }
+        .chat-search-bar .search-icon { color: var(--ev-text-3); flex: 0 0 auto; }
+        .chat-search-bar input {
+            flex: 1 1 auto;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--ev-text);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .chat-search-bar input::placeholder { color: var(--ev-text-3); }
+        .chat-search-close {
+            background: transparent;
+            border: none;
+            color: var(--ev-text-3);
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+        .chat-search-close:hover { background: var(--ev-hover); color: var(--ev-text); }
 
         /* --------------- Messages thread ----------------------------- */
         .chat-messages {
@@ -1702,7 +2133,8 @@
             margin: 12px 0 6px;
         }
         .chat-date-sep span {
-            background: var(--ev-panel-3);
+            background: #14141A;
+            border: 1px solid #272A2B;
             color: var(--ev-text-2);
             padding: 4px 12px;
             border-radius: var(--ev-r-pill);
@@ -1732,18 +2164,216 @@
         .message-wrapper.received .message-bubble {
             background: var(--ev-panel-3);
             color: var(--ev-text);
-            border-top-left-radius: 6px;
+            border-top-left-radius: 0;
         }
         .message-wrapper.sent .message-bubble {
             /* WhatsApp-style pale mint for outgoing bubbles. Dark text
                against light bg for good contrast. */
             background: #D9FDD3;
             color: #0a0a0a;
-            border-top-right-radius: 6px;
+            border-bottom-right-radius: 0;
         }
         .message-bubble.media-only {
             padding: 4px;
             background: transparent !important;
+        }
+
+        /* Per-message dropdown (Reply / Forward / Delete).
+           Trigger is a chevron pinned to the top-right of the bubble, shown
+           on hover for desktop and always-visible on touch devices. */
+        .msg-menu {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 120ms;
+        }
+        .message-bubble:hover .msg-menu,
+        .msg-menu:focus-within { opacity: 1; }
+        @media (hover: none) { .msg-menu { opacity: 1; } }
+        .msg-menu-btn {
+            background: rgba(0,0,0,0.08);
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+            padding: 0;
+        }
+        .msg-menu-btn:hover { background: rgba(0,0,0,0.18); }
+        .message-wrapper.received .msg-menu-btn { background: rgba(255,255,255,0.08); color: var(--ev-text-2); }
+        .message-wrapper.received .msg-menu-btn:hover { background: rgba(255,255,255,0.18); }
+        .msg-menu-list {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 6px;
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 6px;
+            min-width: 170px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+        }
+        .message-wrapper.sent .msg-menu-list { right: 0; }
+        .message-wrapper.received .msg-menu-list { left: 0; right: auto; }
+        .msg-menu-list button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #111;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: left;
+        }
+        .msg-menu-list button:hover { background: #f3f4f6; }
+        .msg-menu-list button.danger { color: #e11d48; }
+        .msg-menu-list button.danger:hover { background: #fef2f2; }
+        .msg-menu-list button svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
+        /* Reply quote block pinned to the top of a bubble (shows the parent
+           sender name + excerpt of the message being replied to). */
+        .msg-quote {
+            display: block;
+            border-left: 3px solid rgba(0,0,0,0.25);
+            background: rgba(0,0,0,0.06);
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        .message-wrapper.received .msg-quote {
+            border-left-color: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.05);
+        }
+        .msg-quote-name {
+            font-weight: 600;
+            color: #0a5e2b;
+            margin-bottom: 2px;
+        }
+        .message-wrapper.received .msg-quote-name { color: #7FD98B; }
+        .msg-quote-text {
+            color: rgba(0,0,0,0.65);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .message-wrapper.received .msg-quote-text { color: var(--ev-text-2); }
+
+        /* Replying-to strip above the composer input. */
+        .reply-strip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--ev-panel-3);
+            border-left: 3px solid #22c55e;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .reply-strip-body { flex: 1 1 auto; min-width: 0; }
+        .reply-strip-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #22c55e;
+            margin-bottom: 2px;
+        }
+        .reply-strip-text {
+            font-size: 12px;
+            color: var(--ev-text-2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .reply-strip-close {
+            background: transparent;
+            border: none;
+            color: var(--ev-text-3);
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+        .reply-strip-close:hover { background: var(--ev-hover); color: var(--ev-text); }
+
+        /* Forward picker modal. */
+        .fwd-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .fwd-modal {
+            background: var(--ev-panel-2);
+            border: 1px solid var(--ev-border);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 420px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .fwd-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--ev-border);
+        }
+        .fwd-header h3 { margin: 0; font-size: 16px; color: var(--ev-text); font-weight: 600; }
+        .fwd-close {
+            background: transparent; border: none; color: var(--ev-text-3); cursor: pointer;
+            width: 32px; height: 32px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .fwd-close:hover { background: var(--ev-hover); color: var(--ev-text); }
+        .fwd-list { overflow-y: auto; padding: 8px; flex: 1 1 auto; }
+        .fwd-item {
+            display: flex; align-items: center; gap: 12px;
+            width: 100%;
+            background: transparent; border: none;
+            padding: 10px 12px; border-radius: 10px;
+            cursor: pointer;
+            color: var(--ev-text);
+            font-family: inherit; font-size: 14px; text-align: left;
+        }
+        .fwd-item:hover { background: var(--ev-hover); }
+        .fwd-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--ev-panel-3);
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--ev-text); font-weight: 600;
+            overflow: hidden; flex: 0 0 auto;
+        }
+        .fwd-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .fwd-name { font-weight: 500; }
+        .fwd-empty {
+            padding: 30px 20px;
+            text-align: center;
+            color: var(--ev-text-3);
+            font-size: 14px;
         }
         .message-text {
             margin: 0;
@@ -1803,6 +2433,99 @@
             color: var(--ev-text-3);
         }
         .message-wrapper.sent .audio-duration { color: rgba(10,10,10,0.55); }
+
+        /* WhatsApp-style custom voice player */
+        .msg-voice {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: transparent;
+            padding: 0;
+            min-width: 240px;
+            max-width: 320px;
+            box-sizing: border-box;
+        }
+        .msg-voice audio { display: none; }
+        .msg-voice .vp-play {
+            flex: 0 0 auto;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #7FD98B;
+            color: #0b3b17;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: background 0.15s ease;
+        }
+        .msg-voice .vp-play:hover { background: #6ccb79; }
+        .msg-voice .vp-play svg { width: 14px; height: 14px; display: block; }
+        .msg-voice .vp-track {
+            flex: 1 1 auto;
+            position: relative;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            min-height: 30px;
+        }
+        .msg-voice .vp-track-bar {
+            position: relative;
+            flex: 1 1 auto;
+            height: 4px;
+            background: rgba(10, 60, 25, 0.18);
+            border-radius: 999px;
+            cursor: pointer;
+        }
+        .msg-voice .vp-track-fill {
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 0%;
+            background: #4a9d57;
+            border-radius: 999px;
+            pointer-events: none;
+        }
+        .msg-voice .vp-track-thumb {
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: #4a9d57;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        .msg-voice .vp-time {
+            position: absolute;
+            top: calc(50% + 8px);
+            left: 0;
+            font-size: 11px;
+            color: #2d5a37;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+        .msg-voice .vp-speed {
+            flex: 0 0 auto;
+            background: #7FD98B;
+            color: #0b3b17;
+            border: none;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            transition: background 0.15s ease;
+            line-height: 1;
+        }
+        .msg-voice .vp-speed:hover { background: #6ccb79; }
+        .msg-voice .vp-speed svg { width: 10px; height: 10px; }
         .msg-file {
             display: flex;
             align-items: center;
@@ -2038,8 +2761,8 @@
         .voice-recording-bar {
             display: none;
             align-items: center;
-            gap: 12px;
-            padding: 6px 14px;
+            gap: 10px;
+            padding: 8px 14px;
             background: var(--ev-panel-3);
             border-radius: var(--ev-r-pill);
             color: var(--ev-text);
@@ -2052,8 +2775,90 @@
             border-radius: 50%;
             background: var(--ev-danger);
             animation: recPulse 1s ease-in-out infinite;
+            flex: 0 0 auto;
+        }
+        .voice-recording-bar.paused .rec-dot { animation: none; opacity: 0.4; }
+        .voice-recording-bar .rec-time {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            min-width: 40px;
+        }
+        .voice-recording-bar .rec-spacer { flex: 1 1 auto; }
+        .voice-recording-bar .rec-btn {
+            width: 34px; height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            color: var(--ev-text-2);
+            cursor: pointer;
+            padding: 0;
+            transition: background 0.15s ease, color 0.15s ease;
+            flex: 0 0 auto;
+        }
+        .voice-recording-bar .rec-btn:hover { background: var(--ev-hover); color: var(--ev-text); }
+        .voice-recording-bar .rec-btn svg { width: 18px; height: 18px; display: block; }
+        .voice-recording-bar .rec-btn.delete { color: var(--ev-danger); }
+        .voice-recording-bar .rec-btn.delete:hover { background: rgba(239,68,68,0.12); color: var(--ev-danger); }
+        .voice-recording-bar .rec-btn.send {
+            background: #22c55e;
+            color: #fff;
+            width: 38px; height: 38px;
+        }
+        .voice-recording-bar .rec-btn.send:hover { background: #16a34a; color: #fff; }
+        .voice-recording-bar .rec-btn.view-once {
+            border: 1.5px dashed var(--ev-text-3);
+            font-size: 11px;
+            font-weight: 700;
+            font-family: inherit;
+        }
+        .voice-recording-bar .rec-btn.view-once.on {
+            border-style: solid;
+            border-color: #22c55e;
+            color: #22c55e;
+            background: rgba(34,197,94,0.1);
         }
         @keyframes recPulse { 50% { opacity: 0.3; } }
+
+        /* While recording, hide the normal input affordances so only the
+           recording bar is interactive inside the form. */
+        /* Block strip — shown above the composer when either side has
+           blocked the other. */
+        .block-strip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 8px;
+            color: var(--ev-danger);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        .block-strip-link {
+            background: transparent;
+            border: none;
+            color: var(--ev-danger);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 0;
+            font-family: inherit;
+            font-size: 13px;
+        }
+        .chat-input-form.is-blocked {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .chat-input-form.is-recording #chatReplyInput,
+        .chat-input-form.is-recording #emojiToggleBtn,
+        .chat-input-form.is-recording #attachBtn,
+        .chat-input-form.is-recording #micBtn,
+        .chat-input-form.is-recording > button[type="submit"] { display: none !important; }
 
         /* --------------- Empty states -------------------------------- */
         .chat-empty {
@@ -2177,17 +2982,36 @@
            just the primary controls. Matches the app-style mockups.
            -------------------------------------------------------------- */
         @media (max-width: 900px) {
+            /* App-like fixed viewport — lock the whole page so the user
+               can never scroll past the chat container and reveal the
+               body background as black rubber-band. Only the inner
+               scrollable panes (conversation list, message thread)
+               scroll; the outer shell is pinned. overscroll-behavior
+               also prevents the "pull-to-refresh" browser gesture from
+               reloading the page mid-chat. */
+            html, body {
+                overflow: hidden !important;
+                overscroll-behavior: none;
+                height: 100vh;
+                height: 100dvh;
+                position: fixed;
+                width: 100%;
+            }
+
             /* Full-viewport shell: kill desktop card frame + margins so
                the chat fills the phone screen edge-to-edge. */
             .ev-chat-shell {
                 max-width: 100%;
                 margin: 0;
                 padding: 0;
+                position: fixed;
+                inset: 0;
             }
             .ev-chat-shell > .mb-3 {
                 border-radius: 0;
                 padding: 0;
                 margin: 0 !important;
+                height: 100%;
             }
 
             .chat-container {
@@ -2230,6 +3054,39 @@
                 padding: 12px 12px 10px;
                 gap: 10px;
             }
+
+            /* Mobile-only top strip: back arrow left, evoory logo centered. */
+            .chat-mobile-top {
+                position: relative;
+                display: flex;
+                align-items: center;
+                padding: 10px 12px;
+                margin: 0 -12px 4px;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+            .chat-mobile-top-back {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                color: var(--ev-lime);
+                text-decoration: none;
+                font-size: 15px;
+                font-weight: 500;
+                flex: 1 1 0;
+            }
+            .chat-mobile-top-logo {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                display: inline-flex;
+                align-items: center;
+                text-decoration: none;
+                color: var(--ev-lime);
+                font-weight: 700;
+            }
+            .chat-mobile-top-logo img { height: 24px; width: auto; display: block; }
+            .chat-mobile-top-spacer { flex: 1 1 0; }
 
             /* Hide desktop-only header actions on mobile — the mockup
                keeps only the primary action ("+") as a floating button. */
@@ -2278,17 +3135,20 @@
                 bottom: 0;
                 padding: 12px 6px calc(12px + env(safe-area-inset-bottom, 0px));
                 background: var(--ev-panel-2);
-                border-top: 1px solid var(--ev-border);
+                border-top: 1px solid rgb(255 255 255 / 72%);
             }
             .chat-sidebar-tab {
                 width: 52px;
                 height: 48px;
                 border-radius: 14px;
+                color: #fff;
             }
             .chat-sidebar-tab svg {
                 width: 22px;
                 height: 22px;
             }
+            .chat-sidebar-tab svg [stroke] { stroke: #fff; }
+            .chat-sidebar-tab svg [fill]:not([fill="none"]) { fill: #fff; }
             .chat-sidebar-tab .tab-badge {
                 top: 2px; right: 4px;
                 min-width: 18px; height: 18px;
@@ -2417,18 +3277,13 @@
                             tab: @entangle('activeTab'),
                             selConv: @entangle('selectedConversationId'),
                             selStatus: @entangle('selectedStatusId'),
-                            section: @entangle('settingsSection')
+                            section: @entangle('settingsSection'),
+                            chatFilter: 'all'
                          }"
                          :data-tab="tab"
                          :data-has-conv="selConv ? '1' : '0'"
                          :data-has-status="selStatus ? '1' : '0'"
                          :data-has-section="section ? '1' : '0'">
-                        {{-- Thin progress bar across the top of the chat
-                             container while any Livewire request is in
-                             flight. Gives instant visual feedback so tab
-                             switches feel responsive even if the server
-                             round-trip takes a moment. --}}
-                        <div wire:loading class="chat-loading-bar"></div>
                         {{-- Left Sidebar - Conversations
                              .mobile-hidden is now driven by Alpine state
                              (selConv / section / selStatus) instead of
@@ -2459,6 +3314,26 @@
                                         ? \App\Models\Call::unseenMissedFor(auth()->id())->count()
                                         : 0;
                                 @endphp
+
+                                {{-- Mobile-only mini top strip: back arrow (returns
+                                     to listings via history.back) + centered evoory
+                                     logo, matching the reference design. Hidden on
+                                     desktop via CSS. --}}
+                                <div class="chat-mobile-top">
+                                    <a href="javascript:history.back()" class="chat-mobile-top-back" aria-label="Back">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                        <span>Back</span>
+                                    </a>
+                                    <a href="/" class="chat-mobile-top-logo">
+                                        @php $set = \App\Models\Setting::first(); @endphp
+                                        @if($set && $set->app_logo)
+                                            <img src="{{ smart_asset($set->app_logo) }}" alt="{{ $set->app_name ?? 'evoory' }}">
+                                        @else
+                                            <span>{{ $set->app_name ?? 'evoory' }}</span>
+                                        @endif
+                                    </a>
+                                    <span class="chat-mobile-top-spacer"></span>
+                                </div>
 
                                 {{-- Sidebar title bar: "Messages" + action icons.
                                      The three icons mirror the mockup: expand
@@ -2493,26 +3368,22 @@
                                              (calls, gallery, settings) via mobile-fab-hide. --}}
                                         <div class="new-chat-wrap" :class="{ 'mobile-fab-hide': tab !== 'chats' && tab !== 'status' }">
                                             <button type="button" class="new-chat-btn"
-                                                    @if($activeTab === 'status')
-                                                        onclick="this.closest('.new-chat-wrap').classList.toggle('open')"
-                                                    @else
-                                                        wire:click="openNewChat"
-                                                    @endif
-                                                    title="{{ $activeTab === 'status' ? 'Add status' : 'New chat' }}">
-                                                <svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                    :class="{ 'is-plus-btn': tab === 'status' }"
+                                                    @click="if (tab === 'status') { $event.currentTarget.closest('.new-chat-wrap').classList.toggle('open'); } else { $wire.openNewChat(); }"
+                                                    :title="tab === 'status' ? 'Add status' : 'New chat'">
+                                                <svg x-show="tab === 'status'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                                                <svg x-show="tab !== 'status'" width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                     <path fill-rule="evenodd" clip-rule="evenodd" d="M1.37611 11.21C-0.803888 5.857 3.13411 0 8.91411 0H9.23511C13.5531 0 17.0531 3.5 17.0531 7.818C17.0534 8.96478 16.8277 10.1004 16.389 11.1599C15.9502 12.2194 15.307 13.1821 14.4962 13.993C13.6853 14.8039 12.7225 15.4471 11.663 15.8859C10.6035 16.3246 9.46789 16.5503 8.32111 16.55H0.501112C0.397469 16.5502 0.296315 16.5182 0.211644 16.4585C0.126972 16.3987 0.0629685 16.3141 0.0284854 16.2164C-0.0059978 16.1186 -0.00925578 16.0126 0.0191622 15.9129C0.0475802 15.8132 0.10627 15.7249 0.187112 15.66L2.15911 14.077C2.24318 14.0095 2.3032 13.9167 2.33023 13.8124C2.35726 13.7081 2.34986 13.5978 2.30911 13.498L1.37611 11.21ZM9.65311 5.45C9.65311 5.25109 9.57409 5.06032 9.43344 4.91967C9.29279 4.77902 9.10203 4.7 8.90311 4.7C8.7042 4.7 8.51343 4.77902 8.37278 4.91967C8.23213 5.06032 8.15311 5.25109 8.15311 5.45V7.45H6.15311C5.9542 7.45 5.76343 7.52902 5.62278 7.66967C5.48213 7.81032 5.40311 8.00109 5.40311 8.2C5.40311 8.39891 5.48213 8.58968 5.62278 8.73033C5.76343 8.87098 5.9542 8.95 6.15311 8.95H8.15311V10.95C8.15311 11.1489 8.23213 11.3397 8.37278 11.4803C8.51343 11.621 8.7042 11.7 8.90311 11.7C9.10203 11.7 9.29279 11.621 9.43344 11.4803C9.57409 11.3397 9.65311 11.1489 9.65311 10.95V8.95H11.6531C11.852 8.95 12.0428 8.87098 12.1834 8.73033C12.3241 8.58968 12.4031 8.39891 12.4031 8.2C12.4031 8.00109 12.3241 7.81032 12.1834 7.66967C12.0428 7.52902 11.852 7.45 11.6531 7.45H9.65311V5.45Z" fill="currentColor"/>
                                                 </svg>
                                             </button>
-                                            @if($activeTab === 'status')
-                                                <div class="new-chat-menu">
-                                                    <button type="button" onclick="document.getElementById('statusMediaInput')?.click(); this.closest('.new-chat-wrap').classList.remove('open');">
-                                                        <i class="fa fa-image"></i> Photos &amp; Videos
-                                                    </button>
-                                                    <button type="button" wire:click="openTextStatus" onclick="this.closest('.new-chat-wrap').classList.remove('open')">
-                                                        <i class="fa fa-pen"></i> Text
-                                                    </button>
-                                                </div>
-                                            @endif
+                                            <div class="new-chat-menu" x-show="tab === 'status'" x-cloak>
+                                                <button type="button" onclick="document.getElementById('statusMediaInput')?.click(); this.closest('.new-chat-wrap').classList.remove('open');">
+                                                    <i class="fa fa-image"></i> Photos &amp; Videos
+                                                </button>
+                                                <button type="button" wire:click="openTextStatus" onclick="this.closest('.new-chat-wrap').classList.remove('open')">
+                                                    <i class="fa fa-pen"></i> Text
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2541,12 +3412,15 @@
                                     </div>
                                 @endif
 
-                                {{-- WhatsApp-style search: rounded pill with a search icon inside --}}
-                                <div class="chat-search">
+                                {{-- WhatsApp-style search: rounded pill with a search icon inside.
+                                     Only shown on Chats + Calls tabs — Status/Gallery/Settings
+                                     don't need conversation search. x-show binds to Alpine's
+                                     client-side `tab` so tab-swap is instant. --}}
+                                <div class="chat-search" x-show="tab === 'chats' || tab === 'calls'" x-cloak>
                                     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                                     <input
                                         type="text"
-                                        placeholder="{{ $activeTab === 'settings' ? 'Search Settings' : 'Search conversations...' }}"
+                                        placeholder="Search conversations..."
                                         wire:model.live.debounce.300ms="searchTerm">
                                     @if($searchResults && $searchResults->count() > 0)
                                         <div class="search-results">
@@ -2585,37 +3459,47 @@
                                 <div x-show="tab === 'chats'">
                                     @php
                                         $supportConvs = collect($conversations)->filter(fn($c) => !empty($c['is_support']));
-                                        $pinnedConvs  = collect($conversations)->filter(fn($c) => empty($c['is_support']) && !empty($c['is_pinned']));
-                                        $recentConvs  = collect($conversations)->filter(fn($c) => empty($c['is_support']) && empty($c['is_pinned']));
+                                        $nonSupportConvs = collect($conversations)->filter(fn($c) => empty($c['is_support']));
+                                        $unreadCount = $nonSupportConvs->filter(fn($c) => ($c['unread_count'] ?? 0) > 0)->count();
                                     @endphp
 
-                                    @if($supportConvs->isNotEmpty())
-                                        <div class="conv-section-header">Support</div>
-                                        @foreach($supportConvs as $conversation)
-                                            @include('livewire.partials._conv-item', ['conversation' => $conversation])
-                                        @endforeach
-                                    @endif
-
-                                    {{-- Favourites always shown so the "Add Favorite"
-                                         tile is always available even when nothing
-                                         is pinned yet. --}}
-                                    <div class="conv-section-header">Favourites</div>
-                                    <div class="add-favorite-row" wire:click="/* wire when favourites API lands */">
-                                        <span class="add-favorite-btn" title="Add favorite">
-                                            <i class="fa fa-user-plus"></i>
-                                        </span>
-                                        <span class="add-favorite-label">Add Favorite</span>
+                                    {{-- Filter pills: All / Unread / Active / Archived.
+                                         Client-side only — Alpine `chatFilter` controls
+                                         which conv items render below via x-show on
+                                         each item's data-tags attribute. --}}
+                                    <div class="chat-filter-tabs">
+                                        <button type="button" class="cf-tab" :class="chatFilter === 'all'      ? 'active' : ''" @click="chatFilter = 'all'">All</button>
+                                        <button type="button" class="cf-tab" :class="chatFilter === 'unread'   ? 'active' : ''" @click="chatFilter = 'unread'">
+                                            Unread @if($unreadCount > 0)<span class="cf-badge">{{ $unreadCount }}</span>@endif
+                                        </button>
+                                        <button type="button" class="cf-tab" :class="chatFilter === 'favorites' ? 'active' : ''" @click="chatFilter = 'favorites'">Favorites</button>
+                                        <button type="button" class="cf-tab" :class="chatFilter === 'active'   ? 'active' : ''" @click="chatFilter = 'active'">Active</button>
+                                        <button type="button" class="cf-tab" :class="chatFilter === 'archived' ? 'active' : ''" @click="chatFilter = 'archived'">Archived</button>
                                     </div>
-                                    @foreach($pinnedConvs as $conversation)
-                                        @include('livewire.partials._conv-item', ['conversation' => $conversation])
-                                    @endforeach
 
-                                    @if($recentConvs->isNotEmpty())
-                                        <div class="conv-section-header">Recent</div>
-                                        @foreach($recentConvs as $conversation)
-                                            @include('livewire.partials._conv-item', ['conversation' => $conversation])
+                                    @if($supportConvs->isNotEmpty())
+                                        <div class="conv-section-header" x-show="chatFilter === 'all'">Support</div>
+                                        @foreach($supportConvs as $conversation)
+                                            <div x-show="chatFilter === 'all'">
+                                                @include('livewire.partials._conv-item', ['conversation' => $conversation])
+                                            </div>
                                         @endforeach
                                     @endif
+
+                                    @foreach($nonSupportConvs as $conversation)
+                                        @php
+                                            $tags = ['all'];
+                                            if (($conversation['unread_count'] ?? 0) > 0) $tags[] = 'unread';
+                                            $lastAt = $conversation['last_message_at'] ?? null;
+                                            if ($lastAt && \Carbon\Carbon::parse($lastAt)->greaterThan(now()->subHours(24))) $tags[] = 'active';
+                                            if (!empty($conversation['is_archived'])) $tags[] = 'archived';
+                                            if (!empty($conversation['is_pinned']))   $tags[] = 'favorites';
+                                            $tagsStr = implode(' ', $tags);
+                                        @endphp
+                                        <div x-show="'{{ $tagsStr }}'.split(' ').includes(chatFilter)">
+                                            @include('livewire.partials._conv-item', ['conversation' => $conversation])
+                                        </div>
+                                    @endforeach
 
                                     @if(count($conversations) === 0)
                                         <div class="chat-empty" style="padding: 40px 20px;">
@@ -2652,7 +3536,9 @@
                                             @else
                                                 {{ strtoupper(substr($me->name ?? '?', 0, 1)) }}
                                             @endif
-                                            <span class="status-my-plus"><i class="fa fa-plus"></i></span>
+                                            <span class="status-my-plus" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                            </span>
                                         </div>
                                         <div class="conversation-info">
                                             <div class="conversation-name">My status</div>
@@ -2957,21 +3843,7 @@
                             @endif
                         </div>
 
-                        {{-- Right Panel - Chat Messages.
-                             wire:loading.class adds .is-loading while ANY
-                             Livewire request is in flight, which surfaces
-                             the chat-main-loading spinner overlay. The
-                             overlay + our optimistic sidebar-hide combine
-                             to give production the same "instant" feel as
-                             local: tap → sidebar slides away, spinner
-                             overlays the empty panel, real content fades
-                             in when the server responds. --}}
-                        <div class="chat-main" id="chatMain" wire:loading.class="is-loading">
-                            {{-- Loading overlay — shown when .is-loading is
-                                 applied. Only visually appears when the
-                                 right panel is showing (mobile: sidebar
-                                 hidden; desktop: always visible). --}}
-                            <div class="chat-main-loading">Loading…</div>
+                        <div class="chat-main" id="chatMain">
                             {{-- Drag-and-drop overlay. Toggled by JS when files are dragged
                                  over the chat area — kept OUT of the Livewire wire:if branch
                                  so its element identity is stable across re-renders. --}}
@@ -3074,11 +3946,10 @@
                                  the chat-container to decide visibility. --}}
                             <div class="chat-empty" data-empty="status">
                                 <div class="status-empty-icon">
-                                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="4" stroke-dasharray="6 5" opacity="0.5"/>
-                                        <circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="4" opacity="0.7"/>
-                                        <circle cx="50" cy="50" r="14" fill="currentColor" opacity="0.4"/>
-                                    </svg>
+                                    <svg width="97" height="97" viewBox="0 0 97 97" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M94.8019 34.807L94.8949 35.0752L95.2403 36.2339L95.5293 37.2739L95.6525 37.7488L95.8545 38.6087C98.4752 50.5904 96.5624 63.1323 90.4945 73.7534C84.4402 84.4074 74.654 92.3653 63.0783 96.0477L62.2621 96.2934L61.26 96.5554L59.8114 96.9035C59.2997 97.0215 58.7695 97.0314 58.2539 96.9326C57.7383 96.8337 57.2483 96.6282 56.8145 96.3289C56.3808 96.0296 56.0125 95.643 55.7328 95.193C55.4531 94.7431 55.268 94.2396 55.1889 93.7139C55.0264 92.6349 55.2697 91.5335 55.8707 90.6278C56.4716 89.722 57.3862 89.0779 58.4336 88.8231L59.5993 88.5262C60.3266 88.3324 60.9523 88.1461 61.4762 87.9673C70.7724 84.7869 78.6026 78.2764 83.496 69.659C88.4182 61.0479 90.0651 50.9109 88.1267 41.1554L87.9873 40.5146L87.8014 39.7674L87.5691 38.9117L87.2903 37.9495C86.978 36.8999 87.0664 35.7697 87.5379 34.783C88.0094 33.7963 88.8296 33.0252 89.8359 32.6226C90.3035 32.4354 90.8029 32.3434 91.3056 32.3519C91.8083 32.3604 92.3044 32.4692 92.7656 32.672C93.2268 32.8749 93.644 33.1678 93.9934 33.5342C94.3428 33.9005 94.6176 34.333 94.8019 34.807ZM6.83982 32.5919C6.92736 32.6192 7.01357 32.6492 7.09842 32.682C8.10245 33.0785 8.92283 33.8428 9.39694 34.8233C9.87106 35.8039 9.96431 36.9291 9.65821 37.9761C9.29454 39.2167 9.0319 40.2492 8.87027 41.0735C6.94031 50.8212 8.58912 60.9476 13.507 69.5505C18.4048 78.1756 26.2446 84.6897 35.551 87.867L36.1693 88.0656L36.5208 88.1679L37.3087 88.3849L38.7109 88.735C39.7642 88.986 40.686 89.629 41.2934 90.5364C41.9008 91.4439 42.1494 92.5495 41.9899 93.634C41.8402 94.6509 41.2981 95.5659 40.4828 96.1779C39.6675 96.7898 38.6457 97.0486 37.6421 96.8973L37.3633 96.8461L36.1996 96.5698L35.1692 96.3036L34.2681 96.0477L33.864 95.9249C22.3122 92.2325 12.549 84.2806 6.50646 73.6429C0.427431 63.0032 -1.48149 50.4363 1.15858 38.4367L1.31415 37.7816L1.51619 37.0139L1.90813 35.6525L2.06168 35.1407C2.21008 34.6552 2.45139 34.2042 2.77184 33.8133C3.09229 33.4224 3.4856 33.0992 3.92931 32.8624C4.37301 32.6255 4.85842 32.4795 5.35781 32.4327C5.8572 32.386 6.36079 32.4414 6.83982 32.5919ZM48.5924 16.3778C66.4463 16.3778 80.9181 31.0421 80.9181 49.1335C80.9181 67.2248 66.4463 81.8891 48.5924 81.8891C30.7386 81.8891 16.2668 67.2248 16.2668 49.1335C16.2668 31.0421 30.7406 16.3778 48.5924 16.3778ZM48.5924 24.5668C35.2035 24.5668 24.3482 35.5665 24.3482 49.1335C24.3482 62.7004 35.2035 73.7002 48.5924 73.7002C61.9833 73.7002 72.8366 62.7004 72.8366 49.1335C72.8366 35.5665 61.9833 24.5668 48.5924 24.5668ZM48.5924 3.68791e-05C60.7255 -0.0150399 72.4207 4.59313 81.3565 12.9098L81.8393 13.3746L82.3949 13.9355L83.0212 14.5947L83.7203 15.3501C84.0769 15.7401 84.3504 16.2003 84.5237 16.7021C84.697 17.2039 84.7663 17.7365 84.7275 18.2667C84.6886 18.7969 84.5423 19.3133 84.2978 19.7836C84.0532 20.254 83.7157 20.6682 83.3061 21.0005C82.4652 21.6832 81.4018 22.0209 80.3267 21.9466C79.2516 21.8723 78.2433 21.3914 77.5016 20.5992C77.0626 20.1284 76.6551 19.7073 76.2793 19.3361L75.5722 18.6523L75.2489 18.3596C67.8831 11.7917 58.404 8.17498 48.5924 8.18894C38.7717 8.17452 29.2844 11.7974 21.9157 18.3759L21.6854 18.5848L21.1742 19.0761L20.5944 19.6596L19.5943 20.7139C18.0588 22.3701 15.5253 22.5564 13.7696 21.1438C13.3759 20.8271 13.0476 20.4348 12.8035 19.9895C12.5594 19.5441 12.4044 19.0544 12.3471 18.5483C12.2899 18.0422 12.3317 17.5296 12.47 17.0399C12.6084 16.5502 12.8406 16.0928 13.1534 15.6941L13.3352 15.4771L14.1535 14.5947L14.897 13.8209C15.2499 13.4619 15.5758 13.1446 15.8748 12.8689C24.8044 4.57856 36.4795 -0.0138865 48.5904 3.68791e-05" fill="#C0C4CC"/>
+</svg>
+
                                 </div>
                                 <h3>Share statuses</h3>
                                 <p>Share photos, videos and text that disappear after 24 hours.</p>
@@ -3323,7 +4194,7 @@
                                 {{-- Visibility controlled by
                                      .chat-container[data-tab="chats"/"gallery"]
                                      .chat-thread-wrapper in CSS. --}}
-                                <div class="chat-thread-wrapper">
+                                <div class="chat-thread-wrapper" x-data="{ contactInfoOpen: false, mediaViewOpen: false, starredViewOpen: false }">
                                 {{-- Chat Header --}}
                                 <div class="chat-header">
                                     <div class="chat-header-info">
@@ -3382,17 +4253,65 @@
                                                     <i class="fa fa-ellipsis-v"></i>
                                                 </button>
                                                 <div class="chat-header-dropdown">
+                                                    @php
+                                                        $curConv = collect($conversations)->firstWhere('id', $selectedConversationId);
+                                                        $isPinned = $curConv['is_pinned'] ?? false;
+                                                        $isArchived = $curConv['is_archived'] ?? false;
+                                                        $disappearingLabel = ['never'=>'Never','24h'=>'24 hours','1w'=>'1 week','1m'=>'1 month'][$prefDisappearingDefault ?? 'never'] ?? 'Never';
+                                                    @endphp
+                                                    <button type="button" onclick="openChatSearchBar(); this.closest('.chat-header-menu').classList.remove('open');">
+                                                        <i class="fa fa-search"></i> Search
+                                                    </button>
+                                                    <button type="button" wire:click="togglePin({{ $selectedConversationId }})"
+                                                            onclick="this.closest('.chat-header-menu').classList.remove('open')">
+                                                        <i class="fa fa-star"></i> {{ $isPinned ? 'Unmark favorite' : 'Mark favorite' }}
+                                                    </button>
+                                                    <button type="button" wire:click="toggleArchive({{ $selectedConversationId }})"
+                                                            onclick="this.closest('.chat-header-menu').classList.remove('open')">
+                                                        <i class="fa {{ $isArchived ? 'fa-box-open' : 'fa-archive' }}"></i> {{ $isArchived ? 'Unarchive' : 'Archive' }}
+                                                    </button>
+                                                    <button type="button"
+                                                            @click="mediaViewOpen = true"
+                                                            onclick="this.closest('.chat-header-menu').classList.remove('open')">
+                                                        <i class="fa fa-images"></i> Media
+                                                    </button>
+                                                    <div class="dropdown-divider"></div>
+                                                    @if($selectedUser)
+                                                        <button type="button"
+                                                                @click="contactInfoOpen = true"
+                                                                onclick="this.closest('.chat-header-menu').classList.remove('open')">
+                                                            <i class="fa fa-user"></i> View profile
+                                                        </button>
+                                                    @endif
+                                                    <div class="dropdown-divider"></div>
+                                                    @if($selectedUser)
+                                                        @php $isBlocked = $curConv['is_blocked_by_me'] ?? false; @endphp
+                                                        <button type="button" class="danger"
+                                                                wire:click="toggleBlock({{ $selectedUser->id }})"
+                                                                onclick="return confirm('{{ $isBlocked ? 'Unblock' : 'Block' }} this user?')">
+                                                            <i class="fa fa-ban"></i> {{ $isBlocked ? 'Unblock' : 'Block' }}
+                                                        </button>
+                                                    @endif
                                                     <button type="button" class="danger"
                                                             wire:click="deleteConversation"
-                                                            onclick="return confirm('Delete this conversation?')">
-                                                        <i class="fa fa-trash"></i> Delete conversation
+                                                            onclick="return confirm('Move this conversation to trash?')">
+                                                        <i class="fa fa-trash"></i> Move to trash
                                                     </button>
                                                 </div>
                                             </div>
                                         @endif
                                     </div>
                                 </div>
- 
+
+                                {{-- In-thread search bar (hidden until the kebab → "Search"
+                                     item is clicked). Pure client-side: filters .message-wrapper
+                                     visibility by matching the input against message text. --}}
+                                <div class="chat-search-bar" id="chatSearchBar" style="display:none;">
+                                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    <input type="text" id="chatSearchInput" placeholder="Search messages..." oninput="filterChatMessages(this.value)">
+                                    <button type="button" class="chat-search-close" onclick="closeChatSearchBar()" aria-label="Close search"><i class="fa fa-times"></i></button>
+                                </div>
+
                                 {{-- Chat Messages --}}
                                 <div class="chat-messages" id="chatMessages">
                                     @php
@@ -3426,8 +4345,46 @@
                                         <div class="message-wrapper {{ $message['is_mine'] ? 'sent' : 'received' }} {{ !empty($message['expires_at']) ? 'disappearing' : '' }}"
                                              wire:key="msg-{{ $message['id'] }}-{{ $message['status'] }}"
                                              data-message-id="{{ $message['id'] }}"
+                                             x-data="{ menuOpen: false }"
                                              @if(!empty($message['expires_at'])) data-expires-at="{{ $message['expires_at'] }}" @endif>
                                             <div class="message-bubble {{ $attType === 'call' ? 'call-bubble' : '' }} {{ $isMediaOnly ? 'media-only' : '' }}">
+                                                {{-- Per-message action menu: Reply / Forward / Delete.
+                                                     Chevron trigger shown on hover (desktop) or always on
+                                                     touch devices. Alpine-scoped to each message. --}}
+                                                <div class="msg-menu" @click.outside="menuOpen = false">
+                                                    <button type="button" class="msg-menu-btn" @click.stop="menuOpen = !menuOpen" aria-label="Message actions">
+                                                        <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M5 7l5 6 5-6z"/></svg>
+                                                    </button>
+                                                    <div class="msg-menu-list" x-show="menuOpen" x-transition.opacity.duration.100ms x-cloak @click.stop>
+                                                        <button type="button" @click="menuOpen = false; $wire.startReply({{ $message['id'] }})">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+                                                            Reply
+                                                        </button>
+                                                        <button type="button" @click="menuOpen = false; $wire.toggleStar({{ $message['id'] }})">
+                                                            <svg viewBox="0 0 24 24" fill="{{ !empty($message['is_starred']) ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                                            {{ !empty($message['is_starred']) ? 'Unstar' : 'Star' }}
+                                                        </button>
+                                                        <button type="button" @click="menuOpen = false; $wire.startForward({{ $message['id'] }})">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>
+                                                            Forward
+                                                        </button>
+                                                        @if($message['is_mine'])
+                                                            <button type="button" class="danger"
+                                                                    @click="menuOpen = false; if (confirm('Delete this message?')) $wire.deleteMessage({{ $message['id'] }})">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                                                Delete
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                @if(!empty($message['reply_to']))
+                                                    {{-- Quoted parent snapshot: name + excerpt. Shown above the
+                                                         bubble content. Click-to-scroll could be added later. --}}
+                                                    <div class="msg-quote">
+                                                        <div class="msg-quote-name">{{ $message['reply_to']['sender_name'] }}</div>
+                                                        <div class="msg-quote-text">{{ $message['reply_to']['excerpt'] }}</div>
+                                                    </div>
+                                                @endif
                                                 @if(($message['attachment_type'] ?? '') === 'call')
                                                     @php
                                                         $callKind   = $message['attachment_mime'] ?? 'audio';       // 'audio' | 'video'
@@ -3471,16 +4428,24 @@
                                                              class="msg-image"
                                                              onclick="openLightbox('{{ $message['attachment_url'] }}')">
                                                     @elseif($message['attachment_type'] === 'audio')
-                                                        <div class="msg-audio">
+                                                        <div class="msg-voice" data-vp-duration="{{ $message['attachment_duration'] ?? 0 }}">
                                                             {{-- WebM blobs from MediaRecorder ship without a duration header,
                                                                  so Chrome reports duration=Infinity on load. onloadedmetadata
                                                                  seeks to +∞ which forces the browser to scan the file, then
                                                                  rewinds. --}}
-                                                            <audio controls preload="metadata" src="{{ $message['attachment_url'] }}"
-                                                                   onloadedmetadata="fixAudioDuration(this)"></audio>
-                                                            @if(!empty($message['attachment_duration']))
-                                                                <span class="audio-duration">{{ gmdate('i:s', $message['attachment_duration']) }}</span>
-                                                            @endif
+                                                            <audio preload="metadata" src="{{ $message['attachment_url'] }}"
+                                                                   onloadedmetadata="initVoicePlayer(this)"></audio>
+                                                            <button type="button" class="vp-play" data-vp="play" aria-label="Play">
+                                                                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+                                                            </button>
+                                                            <div class="vp-track">
+                                                                <div class="vp-track-bar" data-vp="seek">
+                                                                    <div class="vp-track-fill"></div>
+                                                                    <div class="vp-track-thumb"></div>
+                                                                </div>
+                                                                <div class="vp-time">{{ !empty($message['attachment_duration']) ? gmdate('i:s', $message['attachment_duration']) : '0:00' }}</div>
+                                                            </div>
+                                                            <button type="button" class="vp-speed" data-vp="speed" data-speed="1">1x <svg viewBox="0 0 12 12" fill="currentColor"><path d="M3 4.5l3 3 3-3H3z"/></svg></button>
                                                         </div>
                                                     @elseif($message['attachment_type'] === 'video')
                                                         <video controls preload="metadata" src="{{ $message['attachment_url'] }}" style="max-width:280px; border-radius:10px;"></video>
@@ -3507,6 +4472,11 @@
                                                  the bubble stacks on top and this row underneath. --}}
                                             <div class="message-time">
                                                 <span>{{ \Carbon\Carbon::parse($message['created_at'])->format('h:i A') }}</span>
+                                                @if(!empty($message['is_starred']))
+                                                    <span class="message-star" title="Starred">
+                                                        <i class="fa fa-star"></i>
+                                                    </span>
+                                                @endif
                                                 @if(!empty($message['expires_at']))
                                                     <span class="message-expires" title="Disappearing message">
                                                         <i class="fa fa-clock"></i>
@@ -3543,10 +4513,37 @@
 
                                 {{-- Chat Input --}}
                                 <div class="chat-input" style="position: relative;">
+                                    @php
+                                        $blockMe   = $curConv['is_blocked_by_me']   ?? false;
+                                        $blockThem = $curConv['is_blocked_by_them'] ?? false;
+                                    @endphp
+                                    @if($blockMe || $blockThem)
+                                        <div class="block-strip">
+                                            <i class="fa fa-ban"></i>
+                                            @if($blockMe)
+                                                You blocked this user. <button type="button" class="block-strip-link" wire:click="toggleBlock({{ $selectedUser->id }})">Unblock</button>
+                                            @else
+                                                You can't message this user.
+                                            @endif
+                                        </div>
+                                    @endif
+                                    @if($replyingToPreview)
+                                        {{-- Replying-to strip: name + excerpt, X to cancel.
+                                             The reply_to_id is persisted on submit via sendReply(). --}}
+                                        <div class="reply-strip">
+                                            <div class="reply-strip-body">
+                                                <div class="reply-strip-name">Replying to {{ $replyingToPreview['sender_name'] }}</div>
+                                                <div class="reply-strip-text">{{ $replyingToPreview['excerpt'] }}</div>
+                                            </div>
+                                            <button type="button" class="reply-strip-close" wire:click="cancelReply" aria-label="Cancel reply">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    @endif
                                     <div class="emoji-picker-wrapper" id="emojiPickerWrapper">
                                         <emoji-picker id="emojiPicker"></emoji-picker>
                                     </div>
-                                    <form wire:submit.prevent="sendReply" class="chat-input-form">
+                                    <form wire:submit.prevent="sendReply" class="chat-input-form {{ ($blockMe || $blockThem) ? 'is-blocked' : '' }}">
                                         <button type="button" class="emoji-btn" id="emojiToggleBtn" title="Emoji" aria-label="Emoji picker">
                                             <i class="far fa-smile"></i>
                                         </button>
@@ -3563,9 +4560,22 @@
 
                                         {{-- Recording indicator (replaces input while recording) --}}
                                         <div class="voice-recording-bar" id="voiceRecordingBar">
+                                            <button type="button" class="rec-btn delete" id="voiceDeleteBtn" title="Discard recording" aria-label="Discard">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                            </button>
                                             <span class="rec-dot"></span>
-                                            Recording <span id="voiceRecTime">0:00</span>
-                                            <button type="button" class="rec-cancel" id="voiceCancelBtn">Cancel</button>
+                                            <span class="rec-time" id="voiceRecTime">0:00</span>
+                                            <span class="rec-spacer"></span>
+                                            <button type="button" class="rec-btn" id="voicePauseBtn" title="Pause / Resume" aria-label="Pause recording">
+                                                <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                                            </button>
+                                            <button type="button" class="rec-btn" id="voiceRestartBtn" title="Restart" aria-label="Restart recording">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                            </button>
+                                            <button type="button" class="rec-btn view-once" id="voiceOnceBtn" data-vo="0" title="Play once" aria-label="Play once">1</button>
+                                            <button type="button" class="rec-btn send" id="voiceSendBtn" title="Send" aria-label="Send">
+                                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                            </button>
                                         </div>
 
                                         <input
@@ -3588,6 +4598,203 @@
                                         </button>
                                     </form>
                                 </div>
+
+                                {{-- Contact Info overlay — covers the chat area when the
+                                     chat-header kebab → "View profile" is clicked. Pure
+                                     client-side (Alpine), no round-trip. --}}
+                                @if($selectedUser && !$selectedIsSupport)
+                                    <div class="contact-info-panel" x-show="contactInfoOpen" x-cloak style="display:none">
+                                        <div class="ci-header">
+                                            <button type="button" class="ci-back" @click="contactInfoOpen = false" aria-label="Back">
+                                                <i class="fa fa-angle-left"></i>
+                                            </button>
+                                            <h3>Contact info</h3>
+                                        </div>
+                                        <div class="ci-body">
+                                            <div class="ci-identity">
+                                                <div class="ci-avatar">
+                                                    @if($selectedUser->avatar)
+                                                        <img src="{{ user_avatar_url($selectedUser) }}" alt="">
+                                                    @else
+                                                        {{ strtoupper(substr($selectedUser->name ?? $selectedUser->email ?? '?', 0, 1)) }}
+                                                    @endif
+                                                </div>
+                                                <div class="ci-name">{{ $selectedUser->name ?? $selectedUser->email }}</div>
+                                                @if(!empty($selectedUser->username))
+                                                    <div class="ci-handle">&#64;{{ $selectedUser->username }}</div>
+                                                @endif
+                                                <div class="ci-last-seen">
+                                                    @if($selectedUser->last_seen_at ?? null)
+                                                        Last seen {{ \Carbon\Carbon::parse($selectedUser->last_seen_at)->diffForHumans() }}
+                                                    @else
+                                                        Online
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div class="ci-actions">
+                                                <button type="button" class="ci-action"
+                                                        data-rtc-call="audio"
+                                                        data-peer-id="{{ $selectedUser->id }}"
+                                                        data-peer-name="{{ $selectedUser->name ?? $selectedUser->email }}"
+                                                        data-peer-avatar="{{ $selectedUser->avatar ? user_avatar_url($selectedUser) : '' }}"
+                                                        data-conversation-id="{{ $selectedConversationId }}">
+                                                    <span class="ci-action-icon"><i class="fa fa-phone"></i></span>
+                                                    <span class="ci-action-label">Voice</span>
+                                                </button>
+                                                <button type="button" class="ci-action"
+                                                        data-rtc-call="video"
+                                                        data-peer-id="{{ $selectedUser->id }}"
+                                                        data-peer-name="{{ $selectedUser->name ?? $selectedUser->email }}"
+                                                        data-peer-avatar="{{ $selectedUser->avatar ? user_avatar_url($selectedUser) : '' }}"
+                                                        data-conversation-id="{{ $selectedConversationId }}">
+                                                    <span class="ci-action-icon"><i class="fa fa-video"></i></span>
+                                                    <span class="ci-action-label">Video</span>
+                                                </button>
+                                                <button type="button" class="ci-action"
+                                                        @click="contactInfoOpen = false; openChatSearchBar()">
+                                                    <span class="ci-action-icon"><i class="fa fa-search"></i></span>
+                                                    <span class="ci-action-label">Search</span>
+                                                </button>
+                                                <a href="/profile/{{ $selectedUser->id }}" target="_blank" class="ci-action">
+                                                    <span class="ci-action-icon"><i class="fa fa-store"></i></span>
+                                                    <span class="ci-action-label">Seller</span>
+                                                </a>
+                                            </div>
+                                            @php
+                                                $curConv2 = collect($conversations)->firstWhere('id', $selectedConversationId);
+                                                $isArchived2 = $curConv2['is_archived'] ?? false;
+                                                $disappearingLabel2 = ['never'=>'Never','24h'=>'24 hours','1w'=>'1 week','1m'=>'1 month'][$prefDisappearingDefault ?? 'never'] ?? 'Never';
+                                                $convMedia = collect($this->conversationMessages ?? [])
+                                                    ->filter(fn($m) => !empty($m['attachment_url']) && in_array($m['attachment_type'] ?? '', ['image','video','audio']))
+                                                    ->values();
+                                            @endphp
+                                            <div class="ci-list">
+                                                <button type="button" class="ci-row" @click="contactInfoOpen = false; mediaViewOpen = true">
+                                                    <span class="ci-row-icon"><i class="fa fa-image"></i></span>
+                                                    <span class="ci-row-label">Media, links and docs</span>
+                                                    <span class="ci-row-value">{{ $convMedia->count() }}</span>
+                                                    <i class="fa fa-angle-right ci-row-chev"></i>
+                                                </button>
+                                                <button type="button" class="ci-row" @click="contactInfoOpen = false; starredViewOpen = true">
+                                                    <span class="ci-row-icon"><i class="fa fa-star"></i></span>
+                                                    <span class="ci-row-label">Starred messages</span>
+                                                </button>
+                                                <button type="button" class="ci-row" onclick="alert('Disappearing messages — change in Settings')">
+                                                    <span class="ci-row-icon"><i class="fa fa-clock"></i></span>
+                                                    <span class="ci-row-label">
+                                                        Disappearing messages
+                                                        <span class="ci-row-sub">{{ $disappearingLabel2 }}</span>
+                                                    </span>
+                                                </button>
+                                                <button type="button" class="ci-row" wire:click="toggleArchive({{ $selectedConversationId }})">
+                                                    <span class="ci-row-icon"><i class="fa {{ $isArchived2 ? 'fa-box-open' : 'fa-archive' }}"></i></span>
+                                                    <span class="ci-row-label">{{ $isArchived2 ? 'Unarchive chat' : 'Archive chat' }}</span>
+                                                </button>
+                                                @php $isBlocked2 = $curConv2['is_blocked_by_me'] ?? false; @endphp
+                                                <button type="button" class="ci-row danger"
+                                                        wire:click="toggleBlock({{ $selectedUser->id }})"
+                                                        onclick="return confirm('{{ $isBlocked2 ? 'Unblock' : 'Block' }} this user?')">
+                                                    <span class="ci-row-icon"><i class="fa fa-ban"></i></span>
+                                                    <span class="ci-row-label">{{ $isBlocked2 ? 'Unblock' : 'Block' }}</span>
+                                                </button>
+                                                <button type="button" class="ci-row danger" wire:click="deleteConversation" onclick="return confirm('Delete this conversation?')">
+                                                    <span class="ci-row-icon"><i class="fa fa-trash"></i></span>
+                                                    <span class="ci-row-label">Delete chat</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Per-conversation Media panel. Grid of only this
+                                         thread's image/video/audio attachments. Click image
+                                         opens the existing lightbox. --}}
+                                    <div class="contact-info-panel" x-show="mediaViewOpen" x-cloak>
+                                        <div class="ci-header">
+                                            <button type="button" class="ci-back" @click="mediaViewOpen = false" aria-label="Back">
+                                                <i class="fa fa-angle-left"></i>
+                                            </button>
+                                            <h3>Media</h3>
+                                        </div>
+                                        <div class="ci-body">
+                                            @if($convMedia->isEmpty())
+                                                <div class="media-empty">
+                                                    <i class="fa fa-image"></i>
+                                                    <p>No media shared in this chat yet.</p>
+                                                </div>
+                                            @else
+                                                <div class="media-grid">
+                                                    @foreach($convMedia as $m)
+                                                        @if($m['attachment_type'] === 'image')
+                                                            <button type="button" class="media-tile" onclick="openLightbox('{{ $m['attachment_url'] }}')">
+                                                                <img src="{{ $m['attachment_url'] }}" alt="" loading="lazy">
+                                                            </button>
+                                                        @elseif($m['attachment_type'] === 'video')
+                                                            <button type="button" class="media-tile" onclick="window.open('{{ $m['attachment_url'] }}', '_blank')">
+                                                                <video src="{{ $m['attachment_url'] }}" preload="metadata" muted></video>
+                                                                <span class="media-tile-badge"><i class="fa fa-play"></i></span>
+                                                            </button>
+                                                        @else
+                                                            <a href="{{ $m['attachment_url'] }}" target="_blank" class="media-tile audio">
+                                                                <i class="fa fa-microphone"></i>
+                                                                <span class="media-tile-dur">{{ !empty($m['attachment_duration']) ? gmdate('i:s', $m['attachment_duration']) : '' }}</span>
+                                                            </a>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    {{-- Starred messages overlay — lists every message THIS
+                                         user has starred across all conversations. Shows a
+                                         compact preview per row; click to jump to that
+                                         conversation. --}}
+                                    <div class="contact-info-panel" x-show="starredViewOpen" x-cloak style="display:none">
+                                        <div class="ci-header">
+                                            <button type="button" class="ci-back" @click="starredViewOpen = false" aria-label="Back">
+                                                <i class="fa fa-angle-left"></i>
+                                            </button>
+                                            <h3>Starred messages</h3>
+                                        </div>
+                                        <div class="ci-body">
+                                            @php $starred = $this->getStarredMessages(); @endphp
+                                            @if($starred->isEmpty())
+                                                <div class="media-empty">
+                                                    <i class="fa fa-star"></i>
+                                                    <p>No starred messages yet.<br><small>Tap &amp; hold any message to star it.</small></p>
+                                                </div>
+                                            @else
+                                                <div class="starred-list">
+                                                    @foreach($starred as $s)
+                                                        <button type="button" class="starred-item"
+                                                                wire:click="selectConversation({{ $s['conversation_id'] }})"
+                                                                @click="starredViewOpen = false">
+                                                            <div class="starred-meta">
+                                                                <span class="starred-sender">{{ $s['is_mine'] ? 'You' : $s['sender_name'] }}</span>
+                                                                <span class="starred-arrow">&rsaquo;</span>
+                                                                <span class="starred-peer">{{ $s['peer_name'] }}</span>
+                                                                <span class="starred-date">{{ \Carbon\Carbon::parse($s['created_at'])->diffForHumans() }}</span>
+                                                            </div>
+                                                            <div class="starred-body">
+                                                                @if($s['attachment_type'] === 'image')
+                                                                    <i class="fa fa-image"></i> Photo
+                                                                @elseif($s['attachment_type'] === 'audio')
+                                                                    <i class="fa fa-microphone"></i> Voice message
+                                                                @elseif($s['attachment_type'] === 'video')
+                                                                    <i class="fa fa-video"></i> Video
+                                                                @elseif(!empty($s['message']))
+                                                                    {{ Str::limit($s['message'], 120) }}
+                                                                @else
+                                                                    <i class="fa fa-paperclip"></i> Attachment
+                                                                @endif
+                                                            </div>
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
                                 </div>
                             @endif
 
@@ -3620,6 +4827,43 @@
                 </div>
             </div>
 
+            @if($forwardPickerOpen)
+                {{-- Forward picker modal: lists the user's other conversations.
+                     Click a row → forwardTo($convId) duplicates the message there. --}}
+                <div class="fwd-overlay" wire:click="cancelForward">
+                    <div class="fwd-modal" wire:click.stop>
+                        <div class="fwd-header">
+                            <h3>Forward to…</h3>
+                            <button type="button" class="fwd-close" wire:click="cancelForward" aria-label="Close">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="fwd-list">
+                            @foreach($conversations as $conv)
+                                @if(empty($conv['is_support']) && (int)$conv['id'] !== (int)$selectedConversationId)
+                                    <button type="button" class="fwd-item" wire:click="forwardTo({{ $conv['id'] }})">
+                                        <div class="fwd-avatar">
+                                            @if(!empty($conv['other_user_avatar_url']))
+                                                <img src="{{ $conv['other_user_avatar_url'] }}" alt="" onerror="this.style.display='none'">
+                                            @else
+                                                {{ strtoupper(substr($conv['other_user_name'] ?? '?', 0, 1)) }}
+                                            @endif
+                                        </div>
+                                        <div class="fwd-name">{{ $conv['other_user_name'] ?? 'Unknown' }}</div>
+                                    </button>
+                                @endif
+                            @endforeach
+                            @php
+                                $forwardable = collect($conversations)->filter(fn($c) => empty($c['is_support']) && (int)$c['id'] !== (int)$selectedConversationId);
+                            @endphp
+                            @if($forwardable->isEmpty())
+                                <div class="fwd-empty">No other conversations to forward to.</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
+
     @push('js')
     {{-- Same reasoning as the CSS push above: keeping this ~1100-line
          script inline in the component root meant re-sending it on every
@@ -3627,6 +4871,42 @@
          on initial page load and every subsequent tab-click/poll response
          is dramatically smaller. --}}
     <script>
+        // Defensive: when Livewire's wire:navigate soft-swaps us back to
+        // /my-chat and Alpine/Livewire fail to re-wire the entangled `tab`
+        // state, the sidebar renders as an empty shell (title + search +
+        // list all hidden by x-show). Detect that condition and hard-reload
+        // once so the page boots cleanly. sessionStorage flag prevents
+        // reload loops in the degenerate case where even the fresh load
+        // produces an empty sidebar.
+        (function () {
+            const key = '__chatSidebarReloaded';
+            function check() {
+                const sidebar = document.getElementById('chatSidebar');
+                if (!sidebar) return;
+                // Sidebar is "broken" if the search bar isn't actually
+                // visible on-screen (Alpine's `tab` state wasn't rehydrated
+                // after wire:navigate, so all x-show branches are hidden).
+                // Use offsetParent to detect display:none ancestors.
+                const search = sidebar.querySelector('.chat-search');
+                const title  = sidebar.querySelector('.chat-sidebar-title');
+                const searchVisible = search && search.offsetParent !== null;
+                const titleVisible  = title  && title.offsetParent  !== null;
+                if (searchVisible || titleVisible) {
+                    sessionStorage.removeItem(key);
+                    return;
+                }
+                if (sessionStorage.getItem(key)) return; // already tried
+                sessionStorage.setItem(key, '1');
+                console.warn('[chat] broken sidebar detected after navigation — hard-reloading');
+                window.location.replace(window.location.href);
+            }
+            // Give Alpine + Livewire ~600ms to finish booting before checking.
+            setTimeout(check, 600);
+            document.addEventListener('livewire:navigated', function () {
+                setTimeout(check, 600);
+            });
+        })();
+
         // Track state at module scope so Livewire DOM swaps don't reset it.
         window.__chatState = window.__chatState || {
             typingTimeout: null,
@@ -3879,6 +5159,17 @@
                 scrollToBottom();
             });
 
+            // Opening a conversation should always land you at the newest
+            // message. Force-scroll (ignore the "near-bottom" guard) and
+            // retry a few times because the thread markup is rendered in
+            // the same Livewire round-trip — images/voice bubbles can
+            // grow after their media loads, pushing the real bottom down.
+            Livewire.on('conversation-opened', () => {
+                scrollToBottom(true);
+                setTimeout(() => scrollToBottom(true), 150);
+                setTimeout(() => scrollToBottom(true), 400);
+            });
+
             // Gallery → scroll to a specific message in the opened thread.
             // The event fires from Chat.php right after the conversation
             // is selected; we retry for ~1.5s because the message DOM is
@@ -3923,6 +5214,14 @@
                 // MediaRecorder pipeline to abort partway through, sending
                 // an incomplete blob.
                 if (window.__chatState.recorder) return;
+                // Skip while any dropdown / overlay is open. The Livewire
+                // morph wipes vanilla .open classes and Alpine x-show state
+                // on these menus, so the UI would snap shut mid-interaction.
+                if (document.querySelector('.chat-header-menu.open')) return;
+                if (document.querySelector('.new-chat-wrap.open')) return;
+                if (document.querySelector('.conv-kebab .conv-kebab-menu:not([style*="display: none"])')) return;
+                if (document.querySelector('.fwd-overlay')) return;
+                if (document.querySelector('#chatSearchBar') && document.getElementById('chatSearchBar').style.display !== 'none') return;
                 // Chat sidebar only exists on /my-chat, so use it as the
                 // "am I still on the chat page?" sentinel.
                 const anchor = document.getElementById('chatSidebar');
@@ -3950,6 +5249,46 @@
         // up to read older history we leave them alone — the 3-second
         // background refreshChat would otherwise keep yanking them back
         // to the newest message, making it impossible to read history.
+        // Chat-header "Search" affordance: toggles the in-thread search bar
+        // and filters .message-wrapper visibility client-side (no round-trip).
+        window.openChatSearchBar = function () {
+            const bar = document.getElementById('chatSearchBar');
+            const input = document.getElementById('chatSearchInput');
+            if (!bar) return;
+            bar.style.display = 'flex';
+            setTimeout(() => input?.focus(), 50);
+        };
+        window.closeChatSearchBar = function () {
+            const bar = document.getElementById('chatSearchBar');
+            const input = document.getElementById('chatSearchInput');
+            if (!bar) return;
+            bar.style.display = 'none';
+            if (input) input.value = '';
+            filterChatMessages('');
+        };
+        window.filterChatMessages = function (q) {
+            const needle = (q || '').trim().toLowerCase();
+            document.querySelectorAll('#chatMessages .message-wrapper').forEach(w => {
+                if (!needle) { w.style.display = ''; return; }
+                const txt = (w.innerText || '').toLowerCase();
+                w.style.display = txt.includes(needle) ? '' : 'none';
+            });
+        };
+
+        // Translate vertical mouse-wheel into horizontal scroll on the
+        // conversation filter tabs so users on narrow sidebars can still
+        // reach Archived without a visible scrollbar.
+        if (!window.__cfTabsWheel) {
+            window.__cfTabsWheel = true;
+            document.addEventListener('wheel', (e) => {
+                const bar = e.target.closest('.chat-filter-tabs');
+                if (!bar || !bar.scrollWidth || bar.scrollWidth <= bar.clientWidth) return;
+                if (e.deltaY === 0) return;
+                bar.scrollLeft += e.deltaY;
+                e.preventDefault();
+            }, { passive: false });
+        }
+
         function scrollToBottom(force = false) {
             setTimeout(() => {
                 const chatMessages = document.getElementById('chatMessages');
@@ -4053,9 +5392,32 @@
                     document.getElementById('attachInput')?.click();
                     return;
                 }
-                if (e.target.closest('#voiceCancelBtn')) {
+                if (e.target.closest('#voiceDeleteBtn') || e.target.closest('#voiceCancelBtn')) {
                     e.preventDefault();
                     cancelRecording();
+                    return;
+                }
+                if (e.target.closest('#voicePauseBtn')) {
+                    e.preventDefault();
+                    togglePauseRecording();
+                    return;
+                }
+                if (e.target.closest('#voiceRestartBtn')) {
+                    e.preventDefault();
+                    restartRecording();
+                    return;
+                }
+                if (e.target.closest('#voiceOnceBtn')) {
+                    e.preventDefault();
+                    const btn = e.target.closest('#voiceOnceBtn');
+                    const on = btn.getAttribute('data-vo') === '1';
+                    btn.setAttribute('data-vo', on ? '0' : '1');
+                    btn.classList.toggle('on', !on);
+                    return;
+                }
+                if (e.target.closest('#voiceSendBtn')) {
+                    e.preventDefault();
+                    stopRecording(); // onstop handler uploads the blob
                     return;
                 }
                 if (e.target.closest('#micBtn')) {
@@ -4117,23 +5479,29 @@
                     // Guard against 0-byte / trivially-short recordings — they
                     // upload as empty files and Livewire rejects with
                     // "Path cannot be empty".
-                    const duration = Math.round((Date.now() - window.__chatState.recStartedAt) / 1000);
+                    const duration = Math.max(1, currentRecordingSeconds());
                     if (blob.size < 1024 || duration < 1) {
                         console.warn('voice recording too short, skipping upload', { size: blob.size, duration });
                         alert('Recording too short. Hold or tap to record for at least a second.');
                         return;
                     }
-                    uploadVoiceNote(blob, duration);
+                    const vo = document.getElementById('voiceOnceBtn')?.getAttribute('data-vo') === '1';
+                    uploadVoiceNote(blob, duration, { viewOnce: vo });
                 };
                 rec.start();
                 window.__chatState.recorder = rec;
                 window.__chatState.recStartedAt = Date.now();
+                window.__chatState.recPausedElapsed = 0;
+                window.__chatState.recPausedAt = 0;
                 micBtn?.classList.add('recording');
-                document.getElementById('voiceRecordingBar')?.classList.add('active');
+                const bar = document.getElementById('voiceRecordingBar');
+                bar?.classList.add('active');
+                bar?.classList.remove('paused');
+                document.querySelector('.chat-input-form')?.classList.add('is-recording');
                 document.getElementById('chatReplyInput')?.setAttribute('disabled', 'disabled');
 
                 window.__chatState.recTicker = setInterval(() => {
-                    const s = Math.floor((Date.now() - window.__chatState.recStartedAt) / 1000);
+                    const s = currentRecordingSeconds();
                     const el = document.getElementById('voiceRecTime');
                     if (el) el.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
                     if (s >= 300) stopRecording();
@@ -4144,6 +5512,45 @@
             }
         }
 
+        function currentRecordingSeconds() {
+            const st = window.__chatState;
+            if (!st.recStartedAt) return 0;
+            const now = st.recPausedAt || Date.now();
+            return Math.floor((now - st.recStartedAt - (st.recPausedElapsed || 0)) / 1000);
+        }
+
+        function togglePauseRecording() {
+            const rec = window.__chatState.recorder;
+            if (!rec) return;
+            const bar = document.getElementById('voiceRecordingBar');
+            const btn = document.getElementById('voicePauseBtn');
+            if (rec.state === 'recording') {
+                try { rec.pause(); } catch (_) { return; }
+                window.__chatState.recPausedAt = Date.now();
+                bar?.classList.add('paused');
+                if (btn) {
+                    btn.title = 'Resume';
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+                }
+            } else if (rec.state === 'paused') {
+                try { rec.resume(); } catch (_) { return; }
+                window.__chatState.recPausedElapsed += (Date.now() - window.__chatState.recPausedAt);
+                window.__chatState.recPausedAt = 0;
+                bar?.classList.remove('paused');
+                if (btn) {
+                    btn.title = 'Pause';
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+                }
+            }
+        }
+
+        function restartRecording() {
+            if (!window.__chatState.recorder) return;
+            cancelRecording();
+            // Small defer so the mic stream fully releases before re-requesting.
+            setTimeout(() => startRecording(), 60);
+        }
+
         function stopRecording() {
             const rec = window.__chatState.recorder;
             if (!rec) return;
@@ -4152,8 +5559,11 @@
             try { rec.stop(); } catch (_) {}
             window.__chatState.recorder = null;
             document.getElementById('micBtn')?.classList.remove('recording');
-            document.getElementById('voiceRecordingBar')?.classList.remove('active');
+            const bar = document.getElementById('voiceRecordingBar');
+            bar?.classList.remove('active', 'paused');
+            document.querySelector('.chat-input-form')?.classList.remove('is-recording');
             document.getElementById('chatReplyInput')?.removeAttribute('disabled');
+            resetVoiceBarUI();
         }
 
         function cancelRecording() {
@@ -4168,8 +5578,26 @@
             try { rec.stop(); } catch (_) {}
             window.__chatState.recorder = null;
             document.getElementById('micBtn')?.classList.remove('recording');
-            document.getElementById('voiceRecordingBar')?.classList.remove('active');
+            const bar = document.getElementById('voiceRecordingBar');
+            bar?.classList.remove('active', 'paused');
+            document.querySelector('.chat-input-form')?.classList.remove('is-recording');
             document.getElementById('chatReplyInput')?.removeAttribute('disabled');
+            resetVoiceBarUI();
+        }
+
+        function resetVoiceBarUI() {
+            const btn = document.getElementById('voicePauseBtn');
+            if (btn) {
+                btn.title = 'Pause';
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+            }
+            const once = document.getElementById('voiceOnceBtn');
+            if (once) {
+                once.setAttribute('data-vo', '0');
+                once.classList.remove('on');
+            }
+            const t = document.getElementById('voiceRecTime');
+            if (t) t.textContent = '0:00';
         }
 
         async function uploadAttachmentFile(file) {
@@ -4215,7 +5643,7 @@
             }
         }
 
-        async function uploadVoiceNote(blob, durationSec) {
+        async function uploadVoiceNote(blob, durationSec, opts) {
             const input = document.getElementById('chatReplyInput');
             const conversationId = input?.getAttribute('data-conversation-id');
             if (!conversationId) {
@@ -4231,6 +5659,7 @@
             fd.append('conversation_id', conversationId);
             fd.append('voice_note', file);
             fd.append('duration', String(Math.max(1, durationSec)));
+            if (opts && opts.viewOnce) fd.append('view_once', '1');
 
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
@@ -4285,6 +5714,130 @@
                 try { audio.currentTime = 1e101; } catch (_) {}
             }
         };
+
+        // Custom voice-player wiring. Called via inline onloadedmetadata on
+        // each <audio> inside .msg-voice. All UI interactions go through the
+        // delegated document-level click/pointer handlers below so Livewire
+        // DOM swaps don't orphan listeners.
+        const PLAY_ICON  = '<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
+        const PAUSE_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+        const SPEED_CYCLE = [1, 1.5, 2];
+
+        function fmtTime(sec) {
+            if (!isFinite(sec) || sec < 0) sec = 0;
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return m + ':' + (s < 10 ? '0' + s : s);
+        }
+
+        function voiceDuration(audio, wrap) {
+            if (isFinite(audio.duration) && audio.duration > 0) return audio.duration;
+            const fallback = parseFloat(wrap.getAttribute('data-vp-duration') || '0');
+            return isFinite(fallback) && fallback > 0 ? fallback : 0;
+        }
+
+        function updateVoiceUI(wrap) {
+            const audio = wrap.querySelector('audio');
+            if (!audio) return;
+            const dur  = voiceDuration(audio, wrap);
+            const pct  = dur > 0 ? Math.min(100, (audio.currentTime / dur) * 100) : 0;
+            const fill = wrap.querySelector('.vp-track-fill');
+            const thm  = wrap.querySelector('.vp-track-thumb');
+            const time = wrap.querySelector('.vp-time');
+            if (fill) fill.style.width = pct + '%';
+            if (thm)  thm.style.left   = pct + '%';
+            if (time) time.textContent = fmtTime(audio.paused && audio.currentTime === 0 ? dur : audio.currentTime);
+        }
+
+        window.initVoicePlayer = function (audio) {
+            if (!audio || audio.__vpInit) return;
+            audio.__vpInit = true;
+            window.fixAudioDuration(audio);
+            const wrap = audio.closest('.msg-voice');
+            if (!wrap) return;
+            audio.addEventListener('timeupdate',    () => updateVoiceUI(wrap));
+            audio.addEventListener('durationchange',() => updateVoiceUI(wrap));
+            audio.addEventListener('loadedmetadata',() => updateVoiceUI(wrap));
+            audio.addEventListener('ended', () => {
+                audio.currentTime = 0;
+                const btn = wrap.querySelector('.vp-play');
+                if (btn) { btn.innerHTML = PLAY_ICON; btn.setAttribute('aria-label', 'Play'); }
+                updateVoiceUI(wrap);
+            });
+            updateVoiceUI(wrap);
+        };
+
+        // Delegated: play/pause, seek, and speed cycling for every .msg-voice.
+        // Attached once at script load; survives Livewire morphs because it
+        // lives on document, not on individual message nodes.
+        if (!window.__vpWired) {
+            window.__vpWired = true;
+
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-vp]');
+                if (!btn) return;
+                const wrap  = btn.closest('.msg-voice');
+                if (!wrap) return;
+                const audio = wrap.querySelector('audio');
+                if (!audio) return;
+                const kind  = btn.getAttribute('data-vp');
+
+                if (kind === 'play') {
+                    if (audio.paused) {
+                        // Pause every other player so only one plays at a time.
+                        document.querySelectorAll('.msg-voice audio').forEach(a => {
+                            if (a !== audio && !a.paused) {
+                                a.pause();
+                                const w = a.closest('.msg-voice');
+                                const b = w && w.querySelector('.vp-play');
+                                if (b) { b.innerHTML = PLAY_ICON; b.setAttribute('aria-label', 'Play'); }
+                            }
+                        });
+                        audio.play().then(() => {
+                            btn.innerHTML = PAUSE_ICON;
+                            btn.setAttribute('aria-label', 'Pause');
+                        }).catch(() => {});
+                    } else {
+                        audio.pause();
+                        btn.innerHTML = PLAY_ICON;
+                        btn.setAttribute('aria-label', 'Play');
+                    }
+                } else if (kind === 'speed') {
+                    const cur = parseFloat(btn.getAttribute('data-speed') || '1');
+                    const idx = SPEED_CYCLE.indexOf(cur);
+                    const next = SPEED_CYCLE[(idx + 1) % SPEED_CYCLE.length];
+                    audio.playbackRate = next;
+                    btn.setAttribute('data-speed', String(next));
+                    btn.firstChild.nodeValue = (next === 1 ? '1x ' : next + 'x ');
+                }
+            });
+
+            // Seek by click OR drag on the track bar.
+            function seekFromEvent(bar, clientX) {
+                const wrap  = bar.closest('.msg-voice');
+                const audio = wrap && wrap.querySelector('audio');
+                if (!audio) return;
+                const rect = bar.getBoundingClientRect();
+                const pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                const dur  = voiceDuration(audio, wrap);
+                if (dur > 0) {
+                    audio.currentTime = pct * dur;
+                    updateVoiceUI(wrap);
+                }
+            }
+            document.addEventListener('pointerdown', function (e) {
+                const bar = e.target.closest('.vp-track-bar');
+                if (!bar) return;
+                seekFromEvent(bar, e.clientX);
+                const move = (ev) => seekFromEvent(bar, ev.clientX);
+                const up   = () => {
+                    document.removeEventListener('pointermove', move);
+                    document.removeEventListener('pointerup', up);
+                };
+                document.addEventListener('pointermove', move);
+                document.addEventListener('pointerup', up);
+            });
+        }
 
         // Simple lightbox for message images.
         function openLightbox(url) {

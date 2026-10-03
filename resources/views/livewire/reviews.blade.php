@@ -689,6 +689,182 @@
             .review-empty h3 { font-size: 16px !important; }
             .review-empty p { font-size: 13px !important; }
         }
+        /* ================================================================
+           Mobile-only redesigned Reviews list. Hidden on desktop.
+           ================================================================ */
+        .r-mobile-page { display: none; }
+
+        @media (max-width: 768px) {
+            .r-mobile-page {
+                display: block;
+                padding: 14px 16px 24px;
+                background: #000;
+                min-height: calc(100vh - 60px);
+            }
+            /* Suppress legacy sidebar/detail on mobile. */
+            .r-mobile-page ~ .reviews-container { display: none !important; }
+
+            .r-mobile-title {
+                color: #fff;
+                font-size: 24px;
+                font-weight: 700;
+                margin: 0 0 6px;
+                line-height: 1.2;
+            }
+            .r-mobile-sub {
+                color: #c7cdd1;
+                font-size: 14px;
+                margin: 0 0 18px;
+                line-height: 1.4;
+            }
+
+            .r-mobile-summary {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                background: #131616;
+                border: 1px solid #242B2D;
+                border-radius: 14px;
+                padding: 18px 18px;
+                margin-bottom: 18px;
+            }
+            .r-mobile-summary-star {
+                color: #FFC72C;
+                font-size: 32px;
+            }
+            .r-mobile-summary-score {
+                color: #fff;
+                font-size: 32px;
+                font-weight: 700;
+                line-height: 1;
+            }
+            .r-mobile-summary-text { flex: 1 1 auto; min-width: 0; }
+            .r-mobile-summary-total {
+                color: #fff;
+                font-size: 20px;
+                font-weight: 400;
+                margin-bottom: 4px;
+            }
+            .r-mobile-summary-verified {
+                color: #c7cdd1;
+                font-size: 15px;
+            }
+
+            .r-mobile-card {
+                background: #131616;
+                border: 1px solid #242B2D;
+                border-radius: 14px;
+                padding: 14px 16px;
+                margin-bottom: 14px;
+            }
+            .r-mobile-card-top {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 10px;
+            }
+            .r-mobile-avatar {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #2a2d30, #16181a);
+                color: #fff;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 16px;
+                flex-shrink: 0;
+                overflow: hidden;
+            }
+            .r-mobile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+            .r-mobile-head { flex: 1 1 auto; min-width: 0; }
+            .r-mobile-name {
+                color: #fff;
+                font-weight: 600;
+                font-size: 15px;
+                line-height: 1.2;
+                margin-bottom: 2px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .r-mobile-time {
+                color: #8a9099;
+                font-size: 12px;
+            }
+            .r-mobile-hearts {
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+                background: #1D2222;
+                border: 1px solid #242B2D;
+                padding: 6px 12px;
+                border-radius: 999px;
+                flex-shrink: 0;
+            }
+            .r-mobile-hearts .fa-heart { font-size: 13px; }
+            .r-mobile-hearts .on  { color: #C1F11D; }
+            .r-mobile-hearts .off { color: #2a2d30; }
+
+            .r-mobile-divider {
+                border: none;
+                border-top: 1px solid #242B2D;
+                margin: 12px 0;
+            }
+            .r-mobile-quote {
+                color: #fff;
+                font-size: 14px;
+                line-height: 1.5;
+                margin: 0;
+            }
+
+            .r-mobile-footer {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+            }
+            .r-mobile-profile {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                min-width: 0;
+            }
+            .r-mobile-profile-label { color: #c7cdd1; }
+            .r-mobile-profile-avatar {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+            .r-mobile-profile-name {
+                color: #fff;
+                font-weight: 500;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .r-mobile-verified {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                color: #1CF3A0;
+                font-size: 13px;
+                font-weight: 500;
+                flex-shrink: 0;
+            }
+
+            .r-mobile-empty {
+                text-align: center;
+                padding: 60px 20px;
+                color: #8a9099;
+            }
+            .r-mobile-empty i { font-size: 48px; margin-bottom: 14px; opacity: 0.5; }
+            .r-mobile-empty h3 { color: #fff; margin: 0 0 6px; font-size: 16px; }
+            .r-mobile-empty p { margin: 0; font-size: 14px; }
+        }
     </style>
 
     @push('css')
@@ -743,6 +919,79 @@
                             <p>Replied</p>
                         </div>
                     </div> --}}
+
+                    {{-- Mobile-only redesigned reviews list. Hidden on desktop
+                         via CSS. The legacy sidebar/detail layout below is
+                         suppressed on mobile when this is visible. --}}
+                    <div class="r-mobile-page">
+                        <h1 class="r-mobile-title">Reviews &amp; Ratings</h1>
+                        <p class="r-mobile-sub">Feedback and verified ratings from completed luxury escort bookings.</p>
+
+                        <div class="r-mobile-summary">
+                            <i class="fa fa-star r-mobile-summary-star"></i>
+                            <span class="r-mobile-summary-score">{{ number_format((float) $avgRating ?? 0, 1) }}</span>
+                            <div class="r-mobile-summary-text">
+                                <div class="r-mobile-summary-total">{{ $totalReviews }} Total Ratings</div>
+                                <div class="r-mobile-summary-verified">100% Verified Feedback</div>
+                            </div>
+                        </div>
+
+                        @forelse($reviews as $review)
+                            @php
+                                $rUser = $review->user ? ($review->user->name ?? $review->user->email) : 'Anonymous';
+                                $rInitial = strtoupper(substr($rUser, 0, 1));
+                                $rTime = $review->created_at->diffForHumans(null, true) . ' ago';
+                                $rStar = (int) ($review->star ?? 5);
+                                $rProfile = $review->profile?->name ?? 'Unknown';
+                                $rAvatar = $review->user?->avatar ?? null;
+                            @endphp
+                            <div class="r-mobile-card">
+                                <div class="r-mobile-card-top">
+                                    <div class="r-mobile-avatar">
+                                        @if($rAvatar)
+                                            <img src="{{ user_avatar_url($review->user) }}" alt="" onerror="this.style.display='none'">
+                                        @else
+                                            {{ $rInitial }}
+                                        @endif
+                                    </div>
+                                    <div class="r-mobile-head">
+                                        <div class="r-mobile-name">{{ $rUser }}</div>
+                                        <div class="r-mobile-time">{{ $rTime }}</div>
+                                    </div>
+                                    <div class="r-mobile-hearts">
+                                        @for($i = 0; $i < 5; $i++)
+                                            <i class="fa fa-heart {{ $i < $rStar ? 'on' : 'off' }}"></i>
+                                        @endfor
+                                    </div>
+                                </div>
+                                <hr class="r-mobile-divider">
+                                <div class="r-mobile-quote">&ldquo;{{ $review->review }}&rdquo;</div>
+                                <hr class="r-mobile-divider">
+                                <div class="r-mobile-footer">
+                                    <div class="r-mobile-profile">
+                                        <span class="r-mobile-profile-label">Reviewed Profile:</span>
+                                        @if($review->profile?->image)
+                                            <img src="{{ asset('storage/' . $review->profile->image) }}" alt="" class="r-mobile-profile-avatar" onerror="this.style.display='none'">
+                                        @endif
+                                        <span class="r-mobile-profile-name">{{ $rProfile }}</span>
+                                    </div>
+                                    <span class="r-mobile-verified">
+                                        <svg width="14" height="14" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M5 9.375C3.83968 9.375 2.72688 8.91406 1.90641 8.09359C1.08594 7.27312 0.625 6.16032 0.625 5C0.625 3.83968 1.08594 2.72688 1.90641 1.90641C2.72688 1.08594 3.83968 0.625 5 0.625C6.16032 0.625 7.27312 1.08594 8.09359 1.90641C8.91406 2.72688 9.375 3.83968 9.375 5C9.375 6.16032 8.91406 7.27312 8.09359 8.09359C7.27312 8.91406 6.16032 9.375 5 9.375ZM5 10C6.32608 10 7.59785 9.47322 8.53553 8.53553C9.47322 7.59785 10 6.32608 10 5C10 3.67392 9.47322 2.40215 8.53553 1.46447C7.59785 0.526784 6.32608 0 5 0C3.67392 0 2.40215 0.526784 1.46447 1.46447C0.526784 2.40215 0 3.67392 0 5C0 6.32608 0.526784 7.59785 1.46447 8.53553C2.40215 9.47322 3.67392 10 5 10Z" fill="#1CF3A0"/>
+                                            <path d="M6.85573 3.10606L6.84323 3.11981L4.6726 5.88543L3.36448 4.57668C3.27562 4.49388 3.15809 4.44881 3.03665 4.45095C2.91521 4.45309 2.79935 4.50229 2.71347 4.58817C2.62758 4.67405 2.57839 4.78992 2.57624 4.91136C2.5741 5.0328 2.61918 5.15033 2.70198 5.23918L4.35573 6.89356C4.40028 6.93803 4.45333 6.97307 4.51172 6.99659C4.57011 7.02012 4.63263 7.03164 4.69557 7.03047C4.75851 7.0293 4.82056 7.01547 4.87804 6.9898C4.93551 6.96413 4.98723 6.92715 5.0301 6.88106L7.5251 3.76231C7.61006 3.67314 7.65651 3.55412 7.65441 3.43098C7.65231 3.30783 7.60183 3.19046 7.51389 3.10424C7.42594 3.01802 7.3076 2.96988 7.18444 2.97022C7.06128 2.97056 6.9432 3.01935 6.85573 3.10606Z" fill="#1CF3A0"/>
+                                        </svg>
+                                        Verified
+                                    </span>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="r-mobile-empty">
+                                <i class="fa fa-star"></i>
+                                <h3>No reviews yet</h3>
+                                <p>Verified ratings from completed bookings will appear here.</p>
+                            </div>
+                        @endforelse
+                    </div>
 
                     {{-- WhatsApp-style Reviews Container --}}
                     <div class="reviews-container" style="position: relative;">

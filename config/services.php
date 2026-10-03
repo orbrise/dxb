@@ -129,6 +129,16 @@ return [
         'ttl' => (int) env('TURN_TTL', 86400),
     ],
 
+    // Cloudflare Realtime TURN. When both token id + api token are present,
+    // the ICE endpoint will prepend Cloudflare's iceServers entry to the
+    // response — browsers try it first and fall back to coturn if it fails.
+    // https://developers.cloudflare.com/realtime/turn/
+    'cloudflare_turn' => [
+        'token_id'  => env('CLOUDFLARE_TURN_TOKEN_ID'),
+        'api_token' => env('CLOUDFLARE_TURN_API_TOKEN'),
+        'ttl'       => (int) env('CLOUDFLARE_TURN_TTL', 86400),
+    ],
+
     // Web Push Notifications — VAPID keypair for the browser Push API.
     // Generate once via `php artisan push:generate-vapid-keys` and paste the
     // output into .env. Same keypair is reused forever; if you rotate it,

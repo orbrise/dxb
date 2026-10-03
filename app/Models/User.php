@@ -117,5 +117,33 @@ public function newsletterGenders()
     return $this->hasMany(NewsletterGender::class);
 }
 
+/**
+ * True if this user has blocked the given user (one-way).
+ */
+public function hasBlocked($userId): bool
+{
+    if (!$userId) return false;
+    return \Illuminate\Support\Facades\DB::table('user_blocks')
+        ->where('blocker_id', $this->id)
+        ->where('blocked_id', $userId)
+        ->exists();
+}
+
+/**
+ * True if either side has blocked the other. Use this for guards that
+ * should fire regardless of who initiated the block (send, call, etc.).
+ */
+public function isBlockRelationWith($userId): bool
+{
+    if (!$userId) return false;
+    return \Illuminate\Support\Facades\DB::table('user_blocks')
+        ->where(function ($q) use ($userId) {
+            $q->where('blocker_id', $this->id)->where('blocked_id', $userId);
+        })
+        ->orWhere(function ($q) use ($userId) {
+            $q->where('blocker_id', $userId)->where('blocked_id', $this->id);
+        })
+        ->exists();
+}
 
 }

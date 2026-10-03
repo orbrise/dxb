@@ -18,6 +18,7 @@ class Message extends Model
         'code',
         'phone',
         'reply',
+        'reply_to_id',
         'status',
         'replied_at',
         'attachment_path',
@@ -106,6 +107,11 @@ class Message extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function replyTo()
+    {
+        return $this->belongsTo(self::class, 'reply_to_id');
     }
 
     /**

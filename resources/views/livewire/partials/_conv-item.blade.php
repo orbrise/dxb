@@ -51,4 +51,36 @@
             <span class="unread-badge">{{ $conversation['unread_count'] }}</span>
         @endif
     </div>
+
+    @if(empty($conversation['is_support']))
+        {{-- Per-row kebab menu: Mark favorite / Archive / Delete. Alpine-scoped
+             so each row owns its open state. click.stop on the trigger stops
+             the parent conversation-item click (which would open the thread). --}}
+        <div class="conv-kebab" x-data="{ open: false }" @click.outside="open = false" @click.stop>
+            <button type="button" class="conv-kebab-btn" @click="open = !open" aria-label="More">
+                <i class="fa fa-ellipsis-v"></i>
+            </button>
+            <div class="conv-kebab-menu" x-show="open" x-transition.opacity.duration.100ms x-cloak>
+                <button type="button"
+                        wire:click="togglePin({{ $conversation['id'] }})"
+                        @click="open = false">
+                    <i class="fa fa-star"></i>
+                    {{ !empty($conversation['is_pinned']) ? 'Unmark favorite' : 'Mark as favorite' }}
+                </button>
+                <button type="button"
+                        wire:click="toggleArchive({{ $conversation['id'] }})"
+                        @click="open = false">
+                    <i class="fa {{ !empty($conversation['is_archived']) ? 'fa-box-open' : 'fa-archive' }}"></i>
+                    {{ !empty($conversation['is_archived']) ? 'Unarchive' : 'Archive' }}
+                </button>
+                <button type="button" class="danger"
+                        wire:click="deleteConversation({{ $conversation['id'] }})"
+                        @click="open = false"
+                        onclick="return confirm('Delete this conversation?')">
+                    <i class="fa fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    @endif
 </div>

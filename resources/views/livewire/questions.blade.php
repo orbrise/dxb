@@ -663,6 +663,263 @@
             background: #444;
             border-radius: 3px;
         }
+        /* ================================================================
+           Mobile-only redesigned Questions list.
+           Hidden on desktop; visible on mobile. When shown, the legacy
+           sidebar list in `.questions-container` is suppressed via a
+           sibling @media rule below.
+           ================================================================ */
+        .q-mobile-page { display: none; }
+
+        @media (max-width: 768px) {
+            .q-mobile-page {
+                display: block;
+                padding: 14px 16px 24px;
+                background: #000;
+                min-height: calc(100vh - 60px);
+            }
+            /* Hide the legacy sidebar on mobile (we use the new cards). */
+            .q-mobile-page ~ .questions-container .questions-sidebar { display: none !important; }
+            .q-mobile-page ~ .questions-container { display: none !important; }
+
+            .q-mobile-title {
+                color: #fff;
+                font-size: 24px;
+                font-weight: 700;
+                margin: 0 0 6px;
+                line-height: 1.2;
+            }
+            .q-mobile-sub {
+                color: #c7cdd1;
+                font-size: 14px;
+                margin: 0 0 18px;
+                line-height: 1.4;
+            }
+
+            .q-mobile-card {
+                position: relative;
+                background: #121417;
+                border: 1px solid #1f2429;
+                border-radius: 14px;
+                padding: 14px 16px;
+                margin-bottom: 14px;
+            }
+            .q-mobile-card-top {
+                display: flex;
+                gap: 12px;
+                align-items: flex-start;
+                margin-bottom: 14px;
+            }
+            .q-mobile-avatar {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #2a2d30, #16181a);
+                color: #fff;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 16px;
+                flex-shrink: 0;
+                overflow: hidden;
+            }
+            .q-mobile-body { flex: 1 1 auto; min-width: 0; }
+            .q-mobile-meta-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 6px;
+                padding-right: 60px; /* room for the absolute status badge */
+            }
+            .q-mobile-name {
+                color: #fff;
+                font-weight: 600;
+                font-size: 15px;
+                line-height: 1.2;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .q-mobile-time {
+                color: #8a9099;
+                font-size: 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
+            .q-mobile-status {
+                position: absolute;
+                top: 14px;
+                right: 16px;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            .q-mobile-status--new      { color: #C1F11D; }
+            .q-mobile-status--answered { color: #17F09C; }
+            .q-mobile-status--pending  { color: #F59E0B; }
+
+            .q-mobile-quote {
+                color: #c7cdd1;
+                font-size: 14px;
+                line-height: 1.5;
+                margin: 0;
+            }
+
+            .q-mobile-answer {
+                background: #1D2222;
+                border: 1px solid #242B2D;
+                border-radius: 10px;
+                padding: 10px 12px;
+                color: #c7cdd1;
+                font-size: 13px;
+                line-height: 1.45;
+                margin-bottom: 14px;
+            }
+            .q-mobile-answer-label { color: #17F09C; font-weight: 600; margin-right: 4px; }
+
+            .q-mobile-btn-wrap {
+                display: flex;
+                justify-content: center;
+            }
+            .q-mobile-btn {
+                border: none;
+                border-radius: 999px;
+                padding: 9px 28px;
+                font-weight: 400;
+                font-size: 14px;
+                font-family: inherit;
+                cursor: pointer;
+                transition: filter 120ms;
+            }
+            .q-mobile-btn:hover { filter: brightness(0.95); }
+            .q-mobile-btn--answer { background: #C1F11D; color: #0a0a0a; }
+            .q-mobile-btn--edit   { background: #2a2d30; color: #fff; }
+
+            .q-mobile-empty {
+                text-align: center;
+                padding: 60px 20px;
+                color: #8a9099;
+            }
+            .q-mobile-empty i { font-size: 48px; margin-bottom: 14px; opacity: 0.5; }
+            .q-mobile-empty h3 { color: #fff; margin: 0 0 6px; font-size: 16px; }
+            .q-mobile-empty p { margin: 0; font-size: 14px; }
+
+            /* Reply modal — overlays the mobile page when Answer/Edit is tapped. */
+            .q-modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 16px;
+            }
+            .q-modal {
+                background: #131616;
+                border: 1px solid #242B2D;
+                border-radius: 16px;
+                width: 100%;
+                max-width: 500px;
+                padding: 20px 20px 18px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            .q-modal-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .q-modal-title {
+                color: #fff;
+                margin: 0;
+                font-size: 20px;
+                font-weight: 700;
+            }
+            .q-modal-close {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: transparent;
+                border: 1px solid #555555;
+                color: #c7cdd1;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+            .q-modal-close:hover { background: #1a1d20; color: #fff; }
+            .q-modal-divider {
+                border: none;
+                border-top: 1px solid #272A2B;
+                margin: 14px 0 16px;
+            }
+            .q-modal-question {
+                background: #1D2222;
+                border: 1px solid #242B2D;
+                border-radius: 10px;
+                padding: 14px 16px;
+                margin-bottom: 18px;
+            }
+            .q-modal-question-label {
+                color: #c7cdd1;
+                font-size: 14px;
+                margin-bottom: 6px;
+            }
+            .q-modal-question-text {
+                color: #fff;
+                font-size: 15px;
+                line-height: 1.4;
+            }
+            .q-modal-field-label {
+                display: block;
+                color: #fff;
+                font-size: 15px;
+                margin-bottom: 8px;
+            }
+            .q-modal-textarea {
+                width: 100%;
+                background: #1D2222;
+                border: 1px solid #242B2D;
+                border-radius: 10px;
+                padding: 12px 14px;
+                color: #fff;
+                font-size: 14px;
+                line-height: 1.5;
+                font-family: inherit;
+                resize: vertical;
+                min-height: 110px;
+                outline: none;
+            }
+            .q-modal-textarea::placeholder { color: #6a7280; }
+            .q-modal-textarea:focus { border-color: #3a4249; }
+
+            .q-modal-actions {
+                display: flex;
+                gap: 12px;
+                margin-top: 18px;
+            }
+            .q-modal-btn {
+                flex: 1 1 0;
+                border: none;
+                border-radius: 999px;
+                padding: 13px 20px;
+                font-size: 15px;
+                font-weight: 600;
+                font-family: inherit;
+                cursor: pointer;
+                transition: filter 120ms;
+            }
+            .q-modal-btn:hover { filter: brightness(0.95); }
+            .q-modal-btn--cancel { background: #2a2d30; color: #fff; }
+            .q-modal-btn--submit { background: #C1F11D; color: #0a0a0a; }
+            .q-modal-btn[disabled] { opacity: 0.6; cursor: wait; }
+        }
     </style>
 
     <div class="ev-container {{ $selectedQuestion ? 'hide-nav-mobile' : '' }}" style="padding-top: 8px; padding-bottom: 40px;">
@@ -699,6 +956,117 @@
                             <p>Answered</p>
                         </div>
                     </div> --}}
+
+                    {{-- Mobile-only redesigned list. Hidden on desktop via CSS.
+                         When a question is selected, the existing full-screen
+                         detail panel (below) takes over — same selectQuestion()
+                         wire call drives both. --}}
+                    <div class="q-mobile-page" x-data="{ qModal: @entangle('showReplyModal') }">
+                            <h1 class="q-mobile-title">Questions &amp; Inquiries</h1>
+                            <p class="q-mobile-sub">Review and reply to inquiries received from VIP members and profiles.</p>
+
+                            @forelse($questions as $question)
+                                @php
+                                    $qAsker = $question->askedBy ? ($question->askedBy->name ?? $question->askedBy->email) : 'Guest';
+                                    $qInitial = strtoupper(substr($qAsker, 0, 1));
+                                    $qTime = $question->created_at->diffForHumans(null, true) . ' ago';
+                                    if ($question->answer) {
+                                        $qStatus = 'answered';
+                                        $qLabel = 'Answered';
+                                    } elseif ($question->created_at->lt(now()->subHours(24))) {
+                                        $qStatus = 'pending';
+                                        $qLabel = 'Pending';
+                                    } else {
+                                        $qStatus = 'new';
+                                        $qLabel = 'New';
+                                    }
+                                @endphp
+                                <div class="q-mobile-card">
+                                    <span class="q-mobile-status q-mobile-status--{{ $qStatus }}">{{ $qLabel }}</span>
+                                    <div class="q-mobile-card-top">
+                                        <div class="q-mobile-avatar">{{ $qInitial }}</div>
+                                        <div class="q-mobile-body">
+                                            <div class="q-mobile-meta-row">
+                                                <span class="q-mobile-name">{{ $qAsker }}</span>
+                                                <span class="q-mobile-time"><i class="far fa-clock"></i> {{ $qTime }}</span>
+                                            </div>
+                                            <div class="q-mobile-quote">&ldquo;{{ $question->question }}&rdquo;</div>
+                                        </div>
+                                    </div>
+                                    @if($question->answer)
+                                        <div class="q-mobile-answer">
+                                            <span class="q-mobile-answer-label">Your Answer:</span>
+                                            {{ Str::limit($question->answer, 140) }}
+                                        </div>
+                                    @endif
+                                    <div class="q-mobile-btn-wrap">
+                                        @if($question->answer)
+                                            <button type="button" class="q-mobile-btn q-mobile-btn--edit"
+                                                    wire:click="selectQuestion({{ $question->id }})">
+                                                Edit Answer
+                                            </button>
+                                        @else
+                                            <button type="button" class="q-mobile-btn q-mobile-btn--answer"
+                                                    wire:click="selectQuestion({{ $question->id }})">
+                                                Answer Inquiry
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="q-mobile-empty">
+                                    <i class="fa fa-question-circle"></i>
+                                    <h3>No questions yet</h3>
+                                    <p>Inquiries from VIP members will appear here.</p>
+                                </div>
+                            @endforelse
+
+                        {{-- Reply modal — opened from Answer/Edit button via
+                             qModal Alpine flag. Textarea bound to the component's
+                             $answer property so sendAnswer() picks it up. --}}
+                        <div class="q-modal-overlay" x-show="qModal" x-cloak @click.self="qModal = false; $wire.closeModal()" style="display:none">
+                            <div class="q-modal">
+                                <div class="q-modal-head">
+                                    <h3 class="q-modal-title">
+                                        @if($selectedQuestion)
+                                            Reply to {{ $selectedQuestion->askedBy ? ($selectedQuestion->askedBy->name ?? $selectedQuestion->askedBy->email) : 'Guest' }}
+                                        @else
+                                            Reply
+                                        @endif
+                                    </h3>
+                                    <button type="button" class="q-modal-close" @click="qModal = false; $wire.closeModal()" aria-label="Close">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </div>
+                                <hr class="q-modal-divider">
+                                <div class="q-modal-body">
+                                    <div class="q-modal-question">
+                                        <div class="q-modal-question-label">Received Question:</div>
+                                        <div class="q-modal-question-text">
+                                            {{ $selectedQuestion ? $selectedQuestion->question : '' }}
+                                        </div>
+                                    </div>
+                                    <label class="q-modal-field-label">Your Professional Response</label>
+                                    <textarea
+                                        class="q-modal-textarea"
+                                        wire:model="answer"
+                                        rows="5"
+                                        placeholder="Type your polite and comprehensive response here..."
+                                    ></textarea>
+                                </div>
+                                <div class="q-modal-actions">
+                                    <button type="button" class="q-modal-btn q-modal-btn--cancel" @click="qModal = false; $wire.closeModal()">
+                                        Cancel
+                                    </button>
+                                    <button type="button" class="q-modal-btn q-modal-btn--submit"
+                                            wire:click="sendAnswer"
+                                            wire:loading.attr="disabled">
+                                        Submit Response
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     {{-- WhatsApp-style Questions Container --}}
                     <div class="questions-container">

@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Events\NewChatMessage;
 use App\Events\MessageStatusUpdated;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -27,6 +28,21 @@ class Chat extends Component
     public $reply = '';
     public $searchTerm = '';
     public $conversationMessages = [];
+
+    /**
+     * Reply-to state. Set via startReply() from the per-message menu; cleared
+     * after send or on cancel. Persisted to messages.reply_to_id so the quote
+     * block renders on load.
+     */
+    public $replyingToMessageId = null;
+    public $replyingToPreview = null; // ['sender_name' => ..., 'excerpt' => ...]
+
+    /**
+     * Forward state. Opens a modal picker that lists the user's other
+     * conversations; selecting one calls forwardTo() to clone the message.
+     */
+    public $forwardingMessageId = null;
+    public $forwardPickerOpen = false;
 
     /**
      * Which sidebar view is active — 'chats' shows the conversation list,
@@ -193,10 +209,315 @@ class Chat extends Component
     }
 
     /**
+     * Begin a reply. Snapshots the parent's sender name + text excerpt into
+     * $replyingToPreview so the input bar can render a quote strip without
+     * re-querying.
+     */
+    public function startReply(int $messageId): void
+    {
+        $parent = Message::with('sender')->find($messageId);
+        if (!$parent || $parent->conversation_id !== (int) $this->selectedConversationId) return;
+
+        $isMine = $parent->sender_id === auth()->id();
+        $name = $isMine ? 'You' : ($parent->sender?->name ?? $parent->sender?->email ?? 'Unknown');
+
+        $excerpt = trim((string) $parent->message);
+        if ($excerpt === '') {
+            $excerpt = match ($parent->attachment_type) {
+                'image' => 'Photo',
+                'audio' => 'Voice message',
+                'video' => 'Video',
+                null    => '',
+                default => 'Attachment',
+            };
+        }
+        $excerpt = \Illuminate\Support\Str::limit($excerpt, 80);
+
+        $this->replyingToMessageId = $parent->id;
+        $this->replyingToPreview = ['sender_name' => $name, 'excerpt' => $excerpt];
+    }
+
+    public function cancelReply(): void
+    {
+        $this->replyingToMessageId = null;
+        $this->replyingToPreview = null;
+    }
+
+    /**
+     * Open the forward picker for a given message. The picker lists the
+     * user's other conversations; forwardTo() finishes the clone.
+     */
+    public function startForward(int $messageId): void
+    {
+        $msg = Message::find($messageId);
+        if (!$msg) return;
+        // Must be a participant in the source conv.
+        $conv = Conversation::find($msg->conversation_id);
+        if (!$conv || !$conv->hasUser(auth()->id())) return;
+
+        $this->forwardingMessageId = $messageId;
+        $this->forwardPickerOpen = true;
+    }
+
+    public function cancelForward(): void
+    {
+        $this->forwardingMessageId = null;
+        $this->forwardPickerOpen = false;
+    }
+
+    /**
+     * Forward the currently-selected message into $targetConvId. Creates a
+     * fresh Message row with the same body/attachment metadata (attachment
+     * file is referenced, not copied — safe because messages are
+     * append-only). Clears forward state afterwards.
+     */
+    public function forwardTo(int $targetConvId): void
+    {
+        $userId = auth()->id();
+        if (!$userId || !$this->forwardingMessageId) return;
+
+        $target = Conversation::find($targetConvId);
+        if (!$target || !$target->hasUser($userId)) return;
+
+        // Block guard: refuse to forward into a conv where the peer is blocked.
+        if (!$target->is_support) {
+            $peerId = $target->getOtherUserId($userId);
+            if ($peerId && auth()->user()->isBlockRelationWith($peerId)) {
+                session()->flash('error', "Can't forward — this user is blocked.");
+                $this->cancelForward();
+                return;
+            }
+        }
+
+        $src = Message::find($this->forwardingMessageId);
+        if (!$src) { $this->cancelForward(); return; }
+
+        $new = Message::create([
+            'conversation_id'          => $target->id,
+            'sender_id'                => $userId,
+            'message'                  => $src->message ?: '',
+            'status'                   => 'sent',
+            'attachment_path'          => $src->attachment_path,
+            'attachment_type'          => $src->attachment_type,
+            'attachment_mime'          => $src->attachment_mime,
+            'attachment_size'          => $src->attachment_size,
+            'attachment_duration'      => $src->attachment_duration,
+            'attachment_original_name' => $src->attachment_original_name,
+            'expires_at'               => Message::ttlToExpiry(auth()->user()->pref_disappearing_default ?? 'never'),
+        ]);
+
+        $target->update(['last_message_at' => now()]);
+
+        try {
+            if ($target->is_support) {
+                broadcast(new NewChatMessage($new, 0))->toOthers();
+            } else {
+                $peerId = $target->getOtherUserId($userId);
+                if ($peerId) broadcast(new NewChatMessage($new, $peerId))->toOthers();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Forward broadcast failed: ' . $e->getMessage());
+        }
+
+        $peerId = $target->is_support ? null : $target->getOtherUserId($userId);
+        $this->invalidateChatCache($peerId);
+
+        $this->cancelForward();
+
+        // If the user is viewing the target conv, refresh immediately.
+        if ((int) $this->selectedConversationId === $target->id) {
+            $this->loadConversationMessages();
+        }
+    }
+
+    /**
+     * Delete a single message. Only the sender can delete their own.
+     * Also wipes any attachment file from disk so storage doesn't leak.
+     */
+    /**
+     * Toggle whether the current user has starred a message. Per-user: each
+     * user maintains their own starred list. Stored in message_stars pivot.
+     * Guard: only lets you star messages in a conversation you're part of.
+     */
+    public function toggleStar(int $messageId): void
+    {
+        $userId = auth()->id();
+        if (!$userId) return;
+
+        // Ensure caller participates in the message's conversation.
+        $msg = Message::where('id', $messageId)
+            ->whereHas('conversation', function ($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })->first();
+        if (!$msg) return;
+
+        $existing = DB::table('message_stars')
+            ->where('user_id', $userId)
+            ->where('message_id', $messageId)
+            ->first();
+
+        if ($existing) {
+            DB::table('message_stars')->where('id', $existing->id)->delete();
+        } else {
+            DB::table('message_stars')->insert([
+                'user_id'    => $userId,
+                'message_id' => $messageId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Refresh thread so bubble star indicator updates immediately.
+        if ((int) $this->selectedConversationId === (int) $msg->conversation_id) {
+            $this->loadConversationMessages();
+        }
+    }
+
+    public function deleteMessage(int $messageId): void
+    {
+        $userId = auth()->id();
+        if (!$userId) return;
+
+        $msg = Message::where('id', $messageId)
+            ->where('sender_id', $userId)
+            ->first();
+        if (!$msg) return;
+
+        if ($msg->attachment_path) {
+            try { Storage::disk('public')->delete($msg->attachment_path); } catch (\Throwable $e) {}
+        }
+
+        $convId = $msg->conversation_id;
+        $msg->delete();
+
+        // Reload the thread so the deleted message disappears locally.
+        if ($this->selectedConversationId === $convId) {
+            $this->loadConversationMessages();
+        }
+    }
+
+    /**
+     * Toggle a one-way block on another user. Only this user's view is
+     * affected — the other side can still see us (standard WhatsApp
+     * behavior). Guards elsewhere (sendReply, startConversation, status,
+     * incoming message filter) honor both directions of the relationship.
+     */
+    public function toggleBlock(int $otherUserId): void
+    {
+        $userId = auth()->id();
+        if (!$userId || $otherUserId === $userId) return;
+
+        $existing = DB::table('user_blocks')
+            ->where('blocker_id', $userId)
+            ->where('blocked_id', $otherUserId)
+            ->first();
+
+        if ($existing) {
+            DB::table('user_blocks')->where('id', $existing->id)->delete();
+        } else {
+            DB::table('user_blocks')->insert([
+                'blocker_id' => $userId,
+                'blocked_id' => $otherUserId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Invalidate conversation cache so the sidebar reflects the change
+        // and any `is_blocked_*` flags refresh on next render.
+        Cache::forget(sprintf(
+            'chat.convs.%d.%s.%d',
+            $userId,
+            md5((string) $this->searchTerm),
+            $this->prefShowUnanswered ? 1 : 0
+        ));
+    }
+
+    /**
+     * Toggle the pinned (favorite) state of a conversation. Shared flag on
+     * conversations.is_pinned — pinning affects both participants, which
+     * matches "mark favorite" semantics the UI shows in the chat header.
+     */
+    public function togglePin(int $conversationId): void
+    {
+        $userId = auth()->id();
+        if (!$userId) return;
+
+        $conv = Conversation::where('id', $conversationId)
+            ->where(function ($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })->first();
+        if (!$conv) return;
+
+        $conv->is_pinned = !$conv->is_pinned;
+        $conv->save();
+
+        Cache::forget(sprintf(
+            'chat.convs.%d.%s.%d',
+            $userId,
+            md5((string) $this->searchTerm),
+            $this->prefShowUnanswered ? 1 : 0
+        ));
+    }
+
+    /**
+     * Toggle the per-user archived state for a conversation. Per-user, not
+     * shared: each participant archives their own copy. Uses the
+     * conversation_user_states pivot (one row per user per conv).
+     */
+    public function toggleArchive(int $conversationId): void
+    {
+        $userId = auth()->id();
+        if (!$userId) return;
+
+        // Guard: only participants can archive their own conversation.
+        $isMember = Conversation::where('id', $conversationId)
+            ->where(function ($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })->exists();
+        if (!$isMember) return;
+
+        $existing = DB::table('conversation_user_states')
+            ->where('conversation_id', $conversationId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$existing) {
+            DB::table('conversation_user_states')->insert([
+                'conversation_id' => $conversationId,
+                'user_id'         => $userId,
+                'archived_at'     => now(),
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
+        } else {
+            DB::table('conversation_user_states')
+                ->where('id', $existing->id)
+                ->update([
+                    'archived_at' => $existing->archived_at ? null : now(),
+                    'updated_at'  => now(),
+                ]);
+        }
+
+        // Blow the 5s conversation cache for this user so the sidebar
+        // reflects the new archive state immediately.
+        Cache::forget(sprintf(
+            'chat.convs.%d.%s.%d',
+            $userId,
+            md5((string) $this->searchTerm),
+            $this->prefShowUnanswered ? 1 : 0
+        ));
+    }
+
+    /**
      * Start or open a conversation with a user
      */
     public function startConversation($userId)
     {
+        if (auth()->user()->isBlockRelationWith($userId)) {
+            session()->flash('error', "Can't start a chat — this user is blocked.");
+            return;
+        }
         $conversation = Conversation::getOrCreate(auth()->id(), $userId);
         $this->selectConversation($conversation->id);
     }
@@ -331,13 +652,33 @@ class Chat extends Component
                 ->groupBy('conversation_id')
                 ->pluck('cnt', 'conversation_id');
 
+        // Per-user archive flags. One query over the pivot table, keyed by
+        // conversation_id, non-null archived_at = archived for THIS user.
+        $archivedConvIds = $convIds->isEmpty()
+            ? collect()
+            : DB::table('conversation_user_states')
+                ->whereIn('conversation_id', $convIds)
+                ->where('user_id', $userId)
+                ->whereNotNull('archived_at')
+                ->pluck('conversation_id')
+                ->flip();
+
+        // Block relationships keyed by the OTHER user id. Separate lookups
+        // for "I blocked them" vs "they blocked me" so the UI can show the
+        // right affordance (Unblock vs Blocked-by-them hint).
+        $blockedByMe   = DB::table('user_blocks')->where('blocker_id', $userId)->pluck('blocked_id')->flip();
+        $blockedByThem = DB::table('user_blocks')->where('blocked_id', $userId)->pluck('blocker_id')->flip();
+
         $conversations = $conversationRows
-            ->map(function ($conv) use ($userId, $missedByCaller, $statusUserIds, $unseenStatusUserIds, $unreadCounts) {
+            ->map(function ($conv) use ($userId, $missedByCaller, $statusUserIds, $unseenStatusUserIds, $unreadCounts, $archivedConvIds, $blockedByMe, $blockedByThem) {
                 if ($conv->is_support) {
                     return [
                         'id' => $conv->id,
                         'is_support' => true,
                         'is_pinned' => true,
+                        'is_archived' => false,
+                        'is_blocked_by_me' => false,
+                        'is_blocked_by_them' => false,
                         'other_user' => null,
                         'other_user_id' => null,
                         'other_user_name' => 'Support',
@@ -368,6 +709,9 @@ class Chat extends Component
                     'id' => $conv->id,
                     'is_support' => false,
                     'is_pinned' => (bool) $conv->is_pinned,
+                    'is_archived' => $archivedConvIds->has($conv->id),
+                    'is_blocked_by_me' => $blockedByMe->has($otherId),
+                    'is_blocked_by_them' => $blockedByThem->has($otherId),
                     'other_user' => $otherUser,
                     'other_user_id' => $otherId,
                     'other_user_name' => $otherUser->name ?? $otherUser->email ?? 'Unknown',
@@ -415,7 +759,17 @@ class Chat extends Component
             return collect();
         }
 
-        return User::where('id', '!=', auth()->id())
+        $userId = auth()->id();
+        // Hide anyone involved in a block relationship with me (either
+        // direction) so blocked users don't surface in New-chat search.
+        $blockedIds = DB::table('user_blocks')
+            ->where('blocker_id', $userId)->pluck('blocked_id')
+            ->merge(DB::table('user_blocks')->where('blocked_id', $userId)->pluck('blocker_id'))
+            ->unique()
+            ->all();
+
+        return User::where('id', '!=', $userId)
+            ->whereNotIn('id', $blockedIds)
             ->where(function($q) {
                 $q->where('email', 'like', '%' . $this->searchTerm . '%')
                   ->orWhere('name', 'like', '%' . $this->searchTerm . '%');
@@ -438,6 +792,9 @@ class Chat extends Component
         $this->loadConversationMessages();
         $this->markConversationAsRead();
         $this->markMissedCallsSeen();
+        // Tell the view to jump to the newest message so opening a thread
+        // lands you at the latest, not the oldest, message.
+        $this->dispatch('conversation-opened');
     }
 
     /**
@@ -464,18 +821,53 @@ class Chat extends Component
 
         $messages = Message::where('conversation_id', $this->selectedConversationId)
             ->active() // skip messages whose expires_at has passed
-            ->with('sender')
+            ->with(['sender', 'replyTo.sender'])
             ->orderBy('created_at', 'asc')
             ->get();
 
         $userId = auth()->id();
         $isSupport = $this->selectedIsSupport;
 
-        $this->conversationMessages = $messages->map(function ($msg) use ($userId, $isSupport) {
+        // Batched star lookup — one query for the whole thread instead of
+        // per-row EXISTS.
+        $starredIds = $messages->isEmpty()
+            ? collect()
+            : DB::table('message_stars')
+                ->whereIn('message_id', $messages->pluck('id'))
+                ->where('user_id', $userId)
+                ->pluck('message_id')
+                ->flip();
+
+        $this->conversationMessages = $messages->map(function ($msg) use ($userId, $isSupport, $starredIds) {
             $isMine = $msg->sender_id === $userId;
             $senderName = $isSupport && !$isMine
                 ? 'Support'
                 : ($msg->sender?->name ?? $msg->sender?->email ?? 'Unknown');
+
+            // Snapshot of the message this one replies to, if any.
+            $replyTo = null;
+            if ($msg->replyTo) {
+                $r = $msg->replyTo;
+                $rIsMine = $r->sender_id === $userId;
+                $rName = $isSupport && !$rIsMine
+                    ? 'Support'
+                    : ($rIsMine ? 'You' : ($r->sender?->name ?? $r->sender?->email ?? 'Unknown'));
+                $rText = trim((string) $r->message);
+                if ($rText === '') {
+                    $rText = match ($r->attachment_type) {
+                        'image' => 'Photo',
+                        'audio' => 'Voice message',
+                        'video' => 'Video',
+                        null    => '',
+                        default => 'Attachment',
+                    };
+                }
+                $replyTo = [
+                    'id'          => $r->id,
+                    'sender_name' => $rName,
+                    'excerpt'     => \Illuminate\Support\Str::limit($rText, 80),
+                ];
+            }
 
             return [
                 'id' => $msg->id,
@@ -492,8 +884,49 @@ class Chat extends Component
                 'attachment_size' => $msg->attachment_size,
                 'attachment_duration' => $msg->attachment_duration,
                 'attachment_original_name' => $msg->attachment_original_name,
+                'reply_to' => $replyTo,
+                'is_starred' => $starredIds->has($msg->id),
             ];
         })->toArray();
+    }
+
+    /**
+     * Fetch all messages the current user has starred, across every
+     * conversation they're part of. Used by the "Starred messages" overlay
+     * from the Contact Info panel.
+     */
+    public function getStarredMessages()
+    {
+        $userId = auth()->id();
+        if (!$userId) return collect();
+
+        $msgIds = DB::table('message_stars')
+            ->where('user_id', $userId)
+            ->orderByDesc('created_at')
+            ->limit(200)
+            ->pluck('message_id');
+
+        if ($msgIds->isEmpty()) return collect();
+
+        return Message::whereIn('id', $msgIds)
+            ->with(['sender', 'conversation'])
+            ->active()
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($m) use ($userId) {
+                $peer = $m->conversation?->getOtherUser($userId);
+                return [
+                    'id'               => $m->id,
+                    'conversation_id'  => $m->conversation_id,
+                    'message'          => $m->message,
+                    'sender_name'      => $m->sender?->name ?? $m->sender?->email ?? 'Unknown',
+                    'is_mine'          => $m->sender_id === $userId,
+                    'created_at'       => $m->created_at->toISOString(),
+                    'attachment_type'  => $m->attachment_type,
+                    'attachment_url'   => $m->attachment_url,
+                    'peer_name'        => $peer?->name ?? $peer?->email ?? '',
+                ];
+            });
     }
 
     public function markConversationAsRead()
@@ -618,6 +1051,15 @@ class Chat extends Component
             return;
         }
 
+        // Block guard: refuse to send if either side has blocked the other.
+        if (!$conversation->is_support) {
+            $peerId = $conversation->getOtherUserId(auth()->id());
+            if ($peerId && auth()->user()->isBlockRelationWith($peerId)) {
+                session()->flash('error', "Can't send — this user is blocked.");
+                return;
+            }
+        }
+
         $data = [
             'conversation_id' => $this->selectedConversationId,
             'sender_id' => auth()->id(),
@@ -625,6 +1067,7 @@ class Chat extends Component
             // attachment-only rows so the insert doesn't fail.
             'message' => $this->reply ?: '',
             'status' => 'sent',
+            'reply_to_id' => $this->replyingToMessageId ?: null,
             // Disappearing messages: honor the sender's own default TTL.
             // Null when 'never' — those messages stick around indefinitely.
             'expires_at' => Message::ttlToExpiry(auth()->user()->pref_disappearing_default ?? 'never'),
@@ -663,6 +1106,8 @@ class Chat extends Component
         $this->attachment = null;
         $this->voiceNote = null;
         $this->voiceDuration = 0;
+        $this->replyingToMessageId = null;
+        $this->replyingToPreview = null;
         $this->loadConversationMessages();
 
         // Bust sidebar caches so the last-message preview + unread count
@@ -724,11 +1169,12 @@ class Chat extends Component
         $this->skipRender();
     }
 
-    public function deleteConversation()
+    public function deleteConversation(?int $conversationId = null)
     {
-        if (!$this->selectedConversationId) return;
+        $convId = $conversationId ?: $this->selectedConversationId;
+        if (!$convId) return;
 
-        $conversation = Conversation::find($this->selectedConversationId);
+        $conversation = Conversation::find($convId);
         if ($conversation && $conversation->hasUser(auth()->id())) {
             // Never let a user delete their own pinned Support conversation
             // — it's a system-owned thread and must always be present.
@@ -736,13 +1182,17 @@ class Chat extends Component
                 session()->flash('error', 'The Support conversation cannot be deleted.');
                 return;
             }
-            Message::where('conversation_id', $this->selectedConversationId)->delete();
+            Message::where('conversation_id', $convId)->delete();
             $peerId = $conversation->is_support ? null : $conversation->getOtherUserId(auth()->id());
             $conversation->delete();
             $this->invalidateChatCache($peerId);
         }
 
-        $this->closeConversation();
+        // If we just deleted the open thread, close it. If deleted from the
+        // sidebar kebab for a non-open conv, leave current thread alone.
+        if ((int) $convId === (int) $this->selectedConversationId) {
+            $this->closeConversation();
+        }
         session()->flash('success', 'Conversation deleted.');
     }
 
@@ -1063,12 +1513,21 @@ class Chat extends Component
             ->orderByDesc('created_at')
             ->get();
 
+        // Hide statuses from users we're in a block relationship with
+        // (either direction).
+        $blockedIds = DB::table('user_blocks')
+            ->where('blocker_id', $userId)->pluck('blocked_id')
+            ->merge(DB::table('user_blocks')->where('blocked_id', $userId)->pluck('blocker_id'))
+            ->unique()
+            ->all();
+
         // Cap at 200 recent statuses — plenty for a 24 h window and
         // stops the query from scanning the whole table on a busy
         // instance. Without a bound, prod DBs with thousands of daily
         // status posts were spending a full second here on every render.
         $othersRaw = Status::with('user')
             ->where('user_id', '!=', $userId)
+            ->whereNotIn('user_id', $blockedIds)
             ->where('created_at', '>', $cutoff)
             ->orderByDesc('created_at')
             ->limit(200)

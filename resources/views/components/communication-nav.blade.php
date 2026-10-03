@@ -156,7 +156,7 @@
             <i class="fa fa-comments"></i>
             Communication
         </h2>
-        <a href="{{ route('user.dashboard') }}" wire:navigate class="communication-nav-back">
+        <a href="{{ route('user.dashboard') }}"class="communication-nav-back">
             <span aria-hidden="true" style="font-size:16px;line-height:1;">&lsaquo;</span>
             Back to dashboard
         </a>
@@ -164,7 +164,7 @@
     
     <ul class="communication-nav-menu">
         <li class="communication-nav-item">
-            <a href="{{ route('user.chat') }}" wire:navigate class="communication-nav-link {{ $isMessagesActive ? 'active' : '' }}">
+            <a href="{{ route('user.chat') }}"class="communication-nav-link {{ $isMessagesActive ? 'active' : '' }}">
                 <i class="fa fa-comments"></i>
                 <span>Messages</span>
                 @php
@@ -184,7 +184,7 @@
             </a>
         </li>
         <li class="communication-nav-item">
-            <a href="{{ route('user.calls') }}" wire:navigate class="communication-nav-link {{ $isCallsActive ? 'active' : '' }}">
+            <a href="{{ route('user.calls') }}"class="communication-nav-link {{ $isCallsActive ? 'active' : '' }}">
                 <i class="fa fa-phone"></i>
                 <span>Calls</span>
                 @if($missedCallCount > 0)
@@ -193,19 +193,19 @@
             </a>
         </li>
         <li class="communication-nav-item">
-            <a href="{{ route('user.questions') }}" wire:navigate class="communication-nav-link {{ $isQuestionsActive ? 'active' : '' }}">
+            <a href="{{ route('user.questions') }}"class="communication-nav-link {{ $isQuestionsActive ? 'active' : '' }}">
                 <i class="fa fa-question-circle"></i>
                 <span>Questions</span>
             </a>
         </li>
         <li class="communication-nav-item">
-            <a href="{{ route('user.reviews') }}" wire:navigate class="communication-nav-link {{ $isReviewsActive ? 'active' : '' }}">
+            <a href="{{ route('user.reviews') }}"class="communication-nav-link {{ $isReviewsActive ? 'active' : '' }}">
                 <i class="fa fa-image"></i>
                 <span>Reviews</span>
             </a>
         </li>
         <li class="communication-nav-item">
-            <a href="{{ route('favorites.dashboard') }}" wire:navigate class="communication-nav-link {{ $isFavoritesActive ? 'active' : '' }}">
+            <a href="{{ route('favorites.dashboard') }}"class="communication-nav-link {{ $isFavoritesActive ? 'active' : '' }}">
                 <i class="fa fa-heart"></i>
                 <span>My Favorite</span>
             </a>

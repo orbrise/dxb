@@ -16,6 +16,8 @@ class Questions extends Component
     public $searchTerm = '';
     public $filterStatus = 'all';
     public $questionsList = [];
+    // Drives the mobile reply modal via Alpine @entangle.
+    public $showReplyModal = false;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -119,9 +121,9 @@ class Questions extends Component
     {
         $this->selectedQuestion = Question::with(['profile', 'askedBy'])->find($questionId);
         $this->answer = $this->selectedQuestion->answer ?? '';
-        
-        // Reset validation when selecting a new question
         $this->resetValidation();
+        // Mobile: open the reply modal via @entangle-bound Alpine state.
+        $this->showReplyModal = true;
     }
 
     public function sendAnswer()
@@ -137,13 +139,16 @@ class Questions extends Component
             'answer' => $this->answer,
             'answered_at' => now()
         ]);
-        
+
         $this->selectedQuestion->refresh();
-        
+
         // Keep the question selected to show the answer
         $this->answer = $this->selectedQuestion->answer;
 
         session()->flash('success', 'Answer posted successfully!');
+
+        // Close the mobile reply modal.
+        $this->showReplyModal = false;
     }
 
     public function deleteQuestion($questionId)
@@ -164,6 +169,7 @@ class Questions extends Component
     {
         $this->selectedQuestion = null;
         $this->answer = '';
+        $this->showReplyModal = false;
         $this->resetValidation();
     }
 
