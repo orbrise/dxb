@@ -26,6 +26,25 @@ class GeoRedirectMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Hard bypass for API/XHR endpoints — fires BEFORE config lookup so
+        // it works even if OPcache is holding a stale config/geo_domains.php.
+        // These paths are polled aggressively (chat/call pollers) and must
+        // never pay the 5-second ip-api.com timeout.
+        $path = $request->path();
+        if (
+            str_starts_with($path, 'call/') ||
+            str_starts_with($path, 'rtc/') ||
+            str_starts_with($path, 'chat/') ||
+            str_starts_with($path, 'push/') ||
+            str_starts_with($path, 'status/') ||
+            str_starts_with($path, 'livewire/') ||
+            str_starts_with($path, 'api/') ||
+            str_starts_with($path, 'admin/') ||
+            str_starts_with($path, 'u/')
+        ) {
+            return $next($request);
+        }
+
         // Check if geo redirection is enabled (database setting takes priority)
         if (!$this->isGeoRedirectEnabled()) {
             return $next($request);

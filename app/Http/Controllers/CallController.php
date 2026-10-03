@@ -33,6 +33,15 @@ class CallController extends Controller
     {
         $rtc = Log::channel('rtc');
         $user = $request->user();
+
+        // Release the session file lock immediately so concurrent requests
+        // from the same browser session (polls, livewire updates) don't
+        // serialize behind this one. We only read $request->user() here;
+        // nothing writes to session.
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+
         $rtc->info('signal.entered', [
             'auth_id' => $user?->id,
             'ip' => $request->ip(),
@@ -256,14 +265,41 @@ class CallController extends Controller
      */
     public function pending(Request $request)
     {
+        $t0 = microtime(true);
         $user = $request->user();
         if (!$user) return response()->json(['error' => 'unauth'], 401);
         $rtc = Log::channel('rtc');
 
-        try {
-            CallSignalRow::where('created_at', '<', now()->subMinutes(5))->delete();
-        } catch (\Throwable $e) {
-            $rtc->warning('pending.prune_failed', ['error' => $e->getMessage()]);
+        // TEMP: log total controller time so we can distinguish controller
+        // slowness from middleware slowness. If controller time is <50ms
+        // but response takes seconds, the delay is in middleware (geo,
+        // minify, session) or in the response write.
+        register_shutdown_function(function () use ($t0) {
+            $ms = (int) ((microtime(true) - $t0) * 1000);
+            if ($ms > 100) {
+                Log::warning("PENDING-CTRL took {$ms}ms");
+            }
+        });
+
+        // PROD PERF (part 1): release the session file lock IMMEDIATELY.
+        // Laravel's file session driver flock()s the session file for the
+        // entire request lifetime, serializing all requests from the same
+        // user. This endpoint polls every 500ms AND the chat page fires
+        // /livewire/update on every click — without this save(), each poll
+        // tick blocks the next chat click for its full duration, piling up
+        // 1-2s of waiting per user action.
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+
+        // PROD PERF (part 2): don't prune on every request. Table scan on
+        // large call_signals tables was expensive. ~1% sample is plenty.
+        if (mt_rand(1, 100) === 1) {
+            try {
+                CallSignalRow::where('created_at', '<', now()->subMinutes(5))->delete();
+            } catch (\Throwable $e) {
+                $rtc->warning('pending.prune_failed', ['error' => $e->getMessage()]);
+            }
         }
 
         try {

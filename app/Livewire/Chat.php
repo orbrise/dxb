@@ -308,16 +308,20 @@ class Chat extends Component
 
         $target->update(['last_message_at' => now()]);
 
-        try {
-            if ($target->is_support) {
-                broadcast(new NewChatMessage($new, 0))->toOthers();
-            } else {
-                $peerId = $target->getOtherUserId($userId);
-                if ($peerId) broadcast(new NewChatMessage($new, $peerId))->toOthers();
+        // Defer broadcast (see note on sendReply above).
+        $isSupport = (bool) $target->is_support;
+        $peerId = $isSupport ? null : $target->getOtherUserId($userId);
+        app()->terminating(function () use ($new, $isSupport, $peerId) {
+            try {
+                if ($isSupport) {
+                    broadcast(new NewChatMessage($new, 0))->toOthers();
+                } elseif ($peerId) {
+                    broadcast(new NewChatMessage($new, $peerId))->toOthers();
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Forward broadcast failed: ' . $e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::warning('Forward broadcast failed: ' . $e->getMessage());
-        }
+        });
 
         $peerId = $target->is_support ? null : $target->getOtherUserId($userId);
         $this->invalidateChatCache($peerId);
@@ -780,7 +784,18 @@ class Chat extends Component
 
     public function selectConversation($conversationId)
     {
+        // TEMP timing: writes to storage/logs/laravel.log so we can see
+        // exactly which step is slow on prod. Remove once bottleneck is
+        // identified. Grep the log for "SELECT-CONV".
+        $t0 = microtime(true);
+        $log = function (string $step) use (&$t0) {
+            $ms = (int) ((microtime(true) - $t0) * 1000);
+            Log::warning("SELECT-CONV {$step}: {$ms}ms");
+            $t0 = microtime(true);
+        };
+
         $conversation = Conversation::find($conversationId);
+        $log('find-conversation');
 
         if (!$conversation || !$conversation->hasUser(auth()->id())) {
             return;
@@ -789,11 +804,17 @@ class Chat extends Component
         $this->selectedConversationId = $conversationId;
         $this->selectedIsSupport = (bool) $conversation->is_support;
         $this->selectedUser = $this->selectedIsSupport ? null : $conversation->getOtherUser(auth()->id());
+        $log('getOtherUser');
+
         $this->loadConversationMessages();
+        $log('loadConversationMessages');
+
         $this->markConversationAsRead();
+        $log('markConversationAsRead');
+
         $this->markMissedCallsSeen();
-        // Tell the view to jump to the newest message so opening a thread
-        // lands you at the latest, not the oldest, message.
+        $log('markMissedCallsSeen');
+
         $this->dispatch('conversation-opened');
     }
 
@@ -819,11 +840,18 @@ class Chat extends Component
             return;
         }
 
+        // Load only the latest 100 messages (DESC + limit uses the composite
+        // index efficiently), then reverse to ASC for display. Long threads
+        // with thousands of rows used to ship the entire history on every
+        // tap — this caps initial load at ~100 rows regardless of thread age.
         $messages = Message::where('conversation_id', $this->selectedConversationId)
             ->active() // skip messages whose expires_at has passed
             ->with(['sender', 'replyTo.sender'])
-            ->orderBy('created_at', 'asc')
-            ->get();
+            ->orderByDesc('created_at')
+            ->limit(100)
+            ->get()
+            ->reverse()
+            ->values();
 
         $userId = auth()->id();
         $isSupport = $this->selectedIsSupport;
@@ -956,17 +984,21 @@ class Chat extends Component
             })
             ->update(['status' => 'read']);
 
-        try {
-            foreach ($senderIds as $senderId) {
-                broadcast(new MessageStatusUpdated(
-                    $this->selectedConversationId,
-                    'read',
-                    (int) $senderId
-                ))->toOthers();
+        // Defer the broadcasts until AFTER the Livewire response is sent to
+        // the browser. Each broadcast() is a blocking HTTP POST to Reverb;
+        // doing N of them synchronously was adding ~1-2s per unique sender
+        // to every chat click in prod. The receipts arrive a beat later but
+        // the user's chat opens instantly.
+        $convId = (int) $this->selectedConversationId;
+        app()->terminating(function () use ($senderIds, $convId) {
+            try {
+                foreach ($senderIds as $senderId) {
+                    broadcast(new MessageStatusUpdated($convId, 'read', (int) $senderId))->toOthers();
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Broadcast status update failed: ' . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            Log::warning('Broadcast status update failed: ' . $e->getMessage());
-        }
+        });
     }
 
     /**
@@ -1016,15 +1048,21 @@ class Chat extends Component
             ->where('status', 'sent')
             ->update(['status' => 'delivered']);
 
-        try {
-            foreach ($rows->groupBy('conversation_id') as $convId => $messages) {
-                foreach ($messages->pluck('sender_id')->filter()->unique() as $senderId) {
-                    broadcast(new MessageStatusUpdated((int) $convId, 'delivered', (int) $senderId))->toOthers();
+        // Defer broadcasts: this runs on every poll tick (every ~8 seconds)
+        // AND on mount(), so synchronous blocking per sender here was adding
+        // multiple seconds to initial page load + every subsequent action.
+        $grouped = $rows->groupBy('conversation_id');
+        app()->terminating(function () use ($grouped) {
+            try {
+                foreach ($grouped as $convId => $messages) {
+                    foreach ($messages->pluck('sender_id')->filter()->unique() as $senderId) {
+                        broadcast(new MessageStatusUpdated((int) $convId, 'delivered', (int) $senderId))->toOthers();
+                    }
                 }
+            } catch (\Throwable $e) {
+                Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
-        }
+        });
     }
 
     public function sendReply()
@@ -1089,18 +1127,20 @@ class Chat extends Component
 
         $conversation->update(['last_message_at' => now()]);
 
-        try {
-            if ($conversation->is_support) {
-                broadcast(new NewChatMessage($message, 0))->toOthers();
-            } else {
-                $otherUserId = $conversation->getOtherUserId(auth()->id());
-                if ($otherUserId) {
+        // Defer broadcast to after-response so sendReply returns instantly.
+        $isSupport = (bool) $conversation->is_support;
+        $otherUserId = $isSupport ? null : $conversation->getOtherUserId(auth()->id());
+        app()->terminating(function () use ($message, $isSupport, $otherUserId) {
+            try {
+                if ($isSupport) {
+                    broadcast(new NewChatMessage($message, 0))->toOthers();
+                } elseif ($otherUserId) {
                     broadcast(new NewChatMessage($message, $otherUserId))->toOthers();
                 }
+            } catch (\Throwable $e) {
+                Log::warning('Broadcast failed: ' . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            Log::warning('Broadcast failed: ' . $e->getMessage());
-        }
+        });
 
         $this->reply = '';
         $this->attachment = null;
@@ -1699,18 +1739,21 @@ class Chat extends Component
 
     public function render()
     {
-        // Load data for EVERY tab on every render — not just the active
-        // one. Sidebar bodies are all in the DOM at once and toggled via
-        // x-show, so tab switches are pure client-side (zero server
-        // round-trip). One-time cost per render is a few extra bounded
-        // queries; savings per tab click is a full RTT (200-800ms on prod).
-        $conversations = $this->getConversations();
-        $searchResults = $this->searchUsers();
-        $callHistory = $this->getCallHistory();
-        $directoryUsers = $this->newChatOpen ? $this->getDirectoryUsers() : collect();
-        $statusFeed = $this->getStatusFeed();
-        $selectedStatus = $this->getSelectedStatus();
-        $galleryMedia = $this->getGalleryMedia();
+        // TEMP timing — grep for "RENDER" in storage/logs/laravel.log
+        $t0 = microtime(true);
+        $log = function (string $step) use (&$t0) {
+            $ms = (int) ((microtime(true) - $t0) * 1000);
+            Log::warning("RENDER {$step}: {$ms}ms");
+            $t0 = microtime(true);
+        };
+
+        $conversations = $this->getConversations();          $log('getConversations');
+        $searchResults = $this->searchUsers();                $log('searchUsers');
+        $callHistory = $this->getCallHistory();               $log('getCallHistory');
+        $directoryUsers = $this->newChatOpen ? $this->getDirectoryUsers() : collect(); $log('getDirectoryUsers');
+        $statusFeed = $this->getStatusFeed();                 $log('getStatusFeed');
+        $selectedStatus = $this->getSelectedStatus();         $log('getSelectedStatus');
+        $galleryMedia = $this->getGalleryMedia();             $log('getGalleryMedia');
 
         // Use the already-fetched conversations collection instead of
         // firing another Conversation::forUser->count() query per render.

@@ -36,6 +36,15 @@ return [
         '_debugbar/*',
         'storage/*',
         'sanctum/*',
+        // API/XHR endpoints — MUST be excluded. The geo check hits
+        // ip-api.com with a 5s timeout. Chat/call polls fire every 500ms;
+        // without exclusion, every poll was paying the geo-lookup cost.
+        'call/*',       // /call/pending, /call/signal, /call/ice-servers
+        'rtc/*',        // /rtc/turn
+        'chat/*',       // /chat/attachment-upload, /chat/voice-upload, /chat/media/*
+        'push/*',       // /push/subscribe, /push/vapid-public-key
+        'status/*',     // /status/upload
+        'u/*',          // user avatar endpoint
     ],
 
     // Skip redirection for these user agents (bots, crawlers)

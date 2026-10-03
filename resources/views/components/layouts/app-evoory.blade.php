@@ -6,6 +6,34 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="google-site-verification" content="NHKPt4-TOMI7fTCn2xKG6Mkeray0v9b-B7Bk9EEKHok" />
+
+    {{-- Service-worker purge. A legacy /serviceworker.js was installed on
+         older deployments and intercepts fetches at its line 36, causing
+         /call/pending and /livewire/update to pile up as "pending" in the
+         browser's Network tab and slow the chat page to a crawl.
+         This runs on EVERY page load and nukes any registered worker that
+         isn't our push-sw.js. Browsers invalidate the old SW the moment
+         .unregister() resolves; next navigation hits the network directly.
+         Safe to leave in place indefinitely — push-sw.js is explicitly
+         preserved and this is a no-op once no stale workers remain. --}}
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (reg) {
+                var url = (reg.active && reg.active.scriptURL) || '';
+                if (url.indexOf('/push-sw.js') === -1) {
+                    reg.unregister();
+                }
+            });
+            if ('caches' in window) {
+                caches.keys().then(function (keys) {
+                    keys.forEach(function (k) { caches.delete(k); });
+                });
+            }
+        }).catch(function () {});
+    }
+    </script>
+
     {{-- Edge-cache CSRF workaround.
          Cloudflare caches listing HTML, so the inline meta csrf-token above may
          be a stale token from another visitor's session. Fetch a fresh token

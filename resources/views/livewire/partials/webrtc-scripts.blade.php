@@ -1111,10 +1111,18 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (st === 'new' || st === 'connecting' || st === 'disconnected' || st === 'failed') return POLL_ACTIVE_MS;
         return POLL_IDLE_MS;
     }
+    // PROD PERF: await the fetch BEFORE scheduling the next tick. The old
+    // version called pollPendingSignals() without awaiting then immediately
+    // scheduled setTimeout 500ms later — so if the server was slow (even
+    // 1s), requests piled up unbounded, hammered PHP-FPM workers, and the
+    // whole chat page ground to a halt in a feedback loop. Serialized
+    // polling self-throttles: slow server = slower polling, instead of
+    // concurrent polls DDoSing the server. If the previous poll is still
+    // in flight, we skip rather than queue.
     function startPolling() {
         if (S.pollTimer) return;
-        const tick = () => {
-            pollPendingSignals();
+        const tick = async () => {
+            try { await pollPendingSignals(); } catch (_) {}
             S.pollTimer = setTimeout(tick, pollIntervalMs());
         };
         tick();

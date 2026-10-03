@@ -2127,6 +2127,41 @@
             background: #0D1011;
         }
 
+        /* Skeleton shown while selectConversation is in flight.
+           Alternates sent/received rows so the shape mirrors a real thread. */
+        .chat-messages-skel {
+            flex: 1;
+            overflow: hidden;
+            padding: 22px 28px;
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            background: #0D1011;
+        }
+        .chat-messages-skel .skel-row {
+            display: flex;
+        }
+        .chat-messages-skel .skel-row.right { justify-content: flex-end; }
+        .chat-messages-skel .skel-bubble {
+            height: 36px;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #15191B 0%, #1E2426 50%, #15191B 100%);
+            background-size: 200% 100%;
+            animation: skel-shimmer 1.2s ease-in-out infinite;
+        }
+        .chat-messages-skel .skel-row.right .skel-bubble {
+            background: linear-gradient(90deg, #152321 0%, #1C3330 50%, #152321 100%);
+            background-size: 200% 100%;
+        }
+        .chat-messages-skel .skel-bubble.w-xs { width: 90px; }
+        .chat-messages-skel .skel-bubble.w-sm { width: 140px; }
+        .chat-messages-skel .skel-bubble.w-md { width: 220px; }
+        .chat-messages-skel .skel-bubble.w-lg { width: 300px; height: 54px; }
+        @keyframes skel-shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
         .chat-date-sep {
             display: flex;
             justify-content: center;
@@ -2154,7 +2189,11 @@
 
         .message-bubble {
             max-width: 68%;
-            padding: 10px 14px;
+            /* Extra right-padding reserves space for the chevron (.msg-menu)
+               so text content ends BEFORE the chevron and never overlaps
+               under it. Match top padding too so short bubbles like "Hi"
+               keep the chevron out of the first line. */
+            padding: 10px 38px 10px 14px;
             border-radius: var(--ev-r-bubble);
             position: relative;
             word-wrap: break-word;
@@ -2179,8 +2218,9 @@
         }
 
         /* Per-message dropdown (Reply / Forward / Delete).
-           Trigger is a chevron pinned to the top-right of the bubble, shown
-           on hover for desktop and always-visible on touch devices. */
+           Chevron sits at the top-right of the bubble. The bubble reserves
+           right-padding (see .message-bubble below) so content ends BEFORE
+           the chevron zone — the chevron never overlaps text or media. */
         .msg-menu {
             position: absolute;
             top: 4px;
@@ -2193,10 +2233,10 @@
         .msg-menu:focus-within { opacity: 1; }
         @media (hover: none) { .msg-menu { opacity: 1; } }
         .msg-menu-btn {
-            background: rgba(0,0,0,0.08);
+            background: transparent;
             border: none;
-            width: 22px;
-            height: 22px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
             display: inline-flex;
@@ -2204,10 +2244,13 @@
             justify-content: center;
             color: inherit;
             padding: 0;
+            opacity: 0.65;
+            transition: opacity 120ms;
         }
-        .msg-menu-btn:hover { background: rgba(0,0,0,0.18); }
-        .message-wrapper.received .msg-menu-btn { background: rgba(255,255,255,0.08); color: var(--ev-text-2); }
-        .message-wrapper.received .msg-menu-btn:hover { background: rgba(255,255,255,0.18); }
+        .msg-menu-btn svg { width: 18px; height: 18px; }
+        .msg-menu-btn:hover { opacity: 1; }
+        .message-wrapper.received .msg-menu-btn { color: var(--ev-text-2); }
+        .message-bubble.media-only .msg-menu-btn { color: #fff; }
         .msg-menu-list {
             position: absolute;
             top: 100%;
@@ -4312,8 +4355,21 @@
                                     <button type="button" class="chat-search-close" onclick="closeChatSearchBar()" aria-label="Close search"><i class="fa fa-times"></i></button>
                                 </div>
 
+                                {{-- Skeleton shown while a new conversation is being fetched. --}}
+                                <div class="chat-messages-skel" wire:loading.flex wire:target="selectConversation">
+                                    <div class="skel-row"><div class="skel-bubble w-sm"></div></div>
+                                    <div class="skel-row"><div class="skel-bubble w-md"></div></div>
+                                    <div class="skel-row right"><div class="skel-bubble w-sm"></div></div>
+                                    <div class="skel-row right"><div class="skel-bubble w-lg"></div></div>
+                                    <div class="skel-row"><div class="skel-bubble w-xs"></div></div>
+                                    <div class="skel-row"><div class="skel-bubble w-md"></div></div>
+                                    <div class="skel-row right"><div class="skel-bubble w-md"></div></div>
+                                    <div class="skel-row"><div class="skel-bubble w-sm"></div></div>
+                                    <div class="skel-row right"><div class="skel-bubble w-xs"></div></div>
+                                </div>
+
                                 {{-- Chat Messages --}}
-                                <div class="chat-messages" id="chatMessages">
+                                <div class="chat-messages" id="chatMessages" wire:loading.remove wire:target="selectConversation">
                                     @php
                                         // Track the last-rendered date so we can inject WhatsApp-style
                                         // day separators ("Today", "Yesterday", "Monday", or full date).

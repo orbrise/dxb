@@ -49,8 +49,13 @@ return [
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
                 'verify' => false,
-                'timeout' => 5, // Reduce timeout to fail faster
-                'connect_timeout' => 3,
+                // Keep tight — broadcasts run in app()->terminating() AFTER
+                // the response is sent, but PHP-FPM workers still hold open
+                // until these complete. Long timeouts = worker starvation
+                // when Reverb is unhealthy, which cascades into slow responses
+                // for user-facing requests waiting for a free worker.
+                'timeout' => 2,
+                'connect_timeout' => 1,
             ],
         ],
 
