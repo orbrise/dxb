@@ -986,6 +986,569 @@
         .ev-dropdown-results { border-radius: 5px; }
         .ev-modal-close { border-radius: 5px; }
     }
+
+    /* ============================================================
+       NEW DESKTOP MY-ACCOUNT DESIGN (desktop only; mobile section
+       `.ev-account-mobile` above handles small screens unchanged).
+       All classes scoped under `.acct-*` so they can't collide
+       with the legacy `.ev-*` rules.
+       ============================================================ */
+    .acct-page-desktop {
+        background: #000;
+        min-height: 100vh;
+        padding-bottom: 60px;
+        color: #fff;
+    }
+    .acct-container {
+        max-width: 1337px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+    .acct-back-wrap {
+        background: #131616;
+        padding: 14px 0;
+        margin-bottom: 20px;
+    }
+    .acct-back-inner {
+        max-width: 1337px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+    .acct-back-link {
+        color: #C1F11D;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+    }
+    .acct-back-link:hover { color: #d9ff4a; }
+
+    .acct-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #fff;
+        margin: 14px 0 4px;
+    }
+    .acct-subtitle {
+        color: rgba(255,255,255,0.5);
+        font-size: 14px;
+        margin: 0 0 22px;
+    }
+
+    /* -------- Hero premium banner -------- */
+    .acct-hero {
+        position: relative;
+        border-radius: 5px;
+        padding: 26px 30px;
+        margin-bottom: 22px;
+        overflow: hidden;
+        background: #0d131a url('https://assets.evoory.com/assets/images/banner.png') right center / auto 100% no-repeat;
+        border: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        min-height: 130px;
+    }
+    .acct-hero-content { flex: 1 1 auto; min-width: 0; z-index: 1; }
+    .acct-hero-label {
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        color: #22d3ee;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .acct-hero-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #fff;
+        margin: 6px 0 8px;
+        line-height: 1.2;
+    }
+    .acct-hero-desc {
+        color: rgba(255,255,255,0.62);
+        font-size: 13px;
+        max-width: 520px;
+        line-height: 1.55;
+        margin: 0;
+    }
+    .acct-hero-btn {
+        flex: 0 0 auto;
+        background: #C1F11D;
+        color: #0a0a0a;
+        border: none;
+        padding: 12px 22px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        white-space: nowrap;
+        z-index: 1;
+    }
+    .acct-hero-btn:hover { background: #d1ff2d; color: #0a0a0a; }
+
+    /* -------- Tabs -------- */
+    .acct-tabs {
+        display: flex;
+        gap: 10px;
+    }
+    .acct-tabs a {
+        flex: 1 1 0;
+        padding: 10px 16px;
+        background: #131616;
+        color: #fff;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 42px;
+        border: 1px solid transparent;
+        transition: background 120ms, color 120ms;
+    }
+    .acct-tabs a:hover { color: #fff; background: #1a1f1f; }
+    .acct-tabs a.active {
+        background: rgba(193,241,29,0.08);
+        color: #C1F11D;
+        border-color: rgba(193,241,29,0.3);
+    }
+
+    .acct-flash {
+        background: rgba(34,197,94,0.1);
+        color: #22c55e;
+        border: 1px solid rgba(34,197,94,0.25);
+        padding: 10px 14px;
+        border-radius: 5px;
+        margin-bottom: 16px;
+        font-size: 13px;
+    }
+
+    /* -------- Grid layout -------- */
+    .acct-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .acct-col { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Card base */
+    .acct-card {
+        background: #1D2224;
+        border: 1px solid #252525;
+        border-radius: 5px;
+        padding: 20px;
+    }
+
+    /* Profile card */
+    .acct-profile-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+    }
+    .acct-profile-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .acct-profile-info { flex: 1; min-width: 0; }
+    .acct-profile-info h3 {
+        color: #C1F11D;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 6px;
+    }
+    .acct-profile-info p {
+        color: rgba(255,255,255,0.55);
+        font-size: 13px;
+        margin: 2px 0;
+    }
+    .acct-profile-info p strong { color: #fff; font-weight: 600; margin-right: 4px; }
+    .acct-profile-edit {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #fff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 13px;
+    }
+    .acct-profile-edit:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* Account info section */
+    .acct-info-card { padding: 0; overflow: hidden; background: #1D2224; }
+    .acct-info-card .acct-card-title {
+        background: #262C2F;
+        padding: 9px 20px;
+        margin: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .acct-info-card .acct-info-grid { padding: 18px 20px 20px; }
+    .acct-card-title {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .acct-card-title i { color: rgba(255,255,255,0.6); font-size: 13px; }
+    .acct-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 20px;
+    }
+    .acct-info-item { display: flex; align-items: flex-start; gap: 10px; }
+    .acct-info-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.04);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255,255,255,0.55);
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+    .acct-info-label {
+        color: rgba(255,255,255,0.45);
+        font-size: 11px;
+        font-weight: 500;
+        margin: 0 0 2px;
+    }
+    .acct-info-value {
+        color: #fff;
+        font-size: 13px;
+        font-weight: 500;
+        margin: 0;
+        word-break: break-word;
+    }
+
+    /* Premium / plan card */
+    .acct-premium-card { padding: 0; overflow: hidden; background: #131616; }
+    .acct-premium-card .acct-premium-head {
+        background: #1D2224;
+        padding: 14px 20px;
+        margin: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .acct-premium-card .acct-quota-row,
+    .acct-premium-card .acct-progress,
+    .acct-premium-card .acct-premium-desc { margin-left: 20px; margin-right: 20px; }
+    .acct-premium-card .acct-quota-row { margin-top: 18px; }
+    .acct-premium-card .acct-premium-desc { margin-bottom: 20px; }
+    .acct-premium-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .acct-premium-head-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 400;
+    }
+    .acct-premium-head-title svg { display: block; }
+    .acct-free-badge {
+        color: #C1F11D;
+        background: transparent;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1.5px solid #C1F11D;
+    }
+    .acct-quota-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        color: rgba(255,255,255,0.65);
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    .acct-quota-row b { color: #fff; font-weight: 600; }
+    .acct-progress {
+        height: 6px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+    .acct-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ec4899, #a855f7);
+        border-radius: 999px;
+        transition: width 300ms ease;
+    }
+    .acct-premium-desc {
+        color: rgba(255,255,255,0.5);
+        font-size: 12px;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Stay Connected card */
+    .acct-connect-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 180px;
+        padding: 22px;
+        background: linear-gradient(269.67deg, #1D2224 0.25%, rgba(111, 130, 138, 0) 99.69%);
+    }
+    .acct-connect-content {
+        position: relative;
+        z-index: 1;
+        max-width: 60%;
+    }
+    .acct-connect-head {
+        color: #fff;
+        font-size: 17px;
+        font-weight: 600;
+        margin: 0 0 2px;
+    }
+    .acct-connect-head b { color: #C1F11D; font-weight: 700; }
+    .acct-connect-divider {
+        height: 2px;
+        width: 32px;
+        background: #a855f7;
+        border-radius: 2px;
+        margin: 6px 0 6px;
+    }
+    .acct-connect-nl {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0px;
+        margin: -8px 0 0;
+        line-height: 2.8;
+    }
+    .acct-connect-nl svg {
+        display: block;
+        flex-shrink: 0;
+        width: 56px;
+        height: 56px;
+        margin: -18px -6px -18px -14px;
+    }
+    .acct-connect-desc {
+        color: rgba(255,255,255,0.55);
+        font-size: 12px;
+        margin: 0 0 12px;
+        line-height: 1.5;
+        margin-top: 0;
+    }
+    .acct-connect-edit {
+        color: #C1F11D;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        font-family: inherit;
+    }
+    .acct-connect-edit:hover { color: #d1ff2d; }
+    .acct-connect-image {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 55%;
+        background: url('https://assets.evoory.com/assets/images/single.png') right center / cover no-repeat;
+        pointer-events: none;
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 35%);
+                mask-image: linear-gradient(to right, transparent 0%, #000 35%);
+    }
+
+    /* Delete button */
+    .acct-delete-wrap {
+        margin: 50px 0 0;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+    }
+    .acct-delete-wrap form {
+        display: block;
+        width: 50%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .acct-delete-btn {
+        background: #131616;
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #F24E1E;
+        padding: 12px 28px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+        font-family: inherit;
+        transition: background 120ms, border-color 120ms;
+    }
+    .acct-delete-btn svg { display: block; }
+    .acct-delete-btn svg path { fill: #F24E1E; }
+    .acct-delete-btn:hover { background: #1a1d1d; border-color: rgba(242,78,30,0.4); }
+
+    /* Centered title inside the back-wrap strip, mobile detail view only. */
+    .acct-back-title { display: none; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        /* By default the "desktop" new design is hidden on mobile — the
+           .ev-account-mobile dashboard above handles that viewport.
+           EXCEPTION: when the user has drilled into /my-account/info (via
+           dashboard "My Account" row), show the detail view on mobile too
+           with a mobile-optimized layout. */
+        .acct-page-desktop:not(.acct-page-info) { display: none !important; }
+
+        /* Compact top nav: "< Home" on left, "My Account" centered. */
+        .acct-page-info .acct-back-wrap { margin-bottom: 14px; }
+        .acct-page-info .acct-back-inner {
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            min-height: 24px;
+        }
+
+        /* Tabs on mobile: dark pill card with border + bigger radius. */
+        .acct-page-info .acct-tabs a {
+            background: #1A1A1A;
+            border: 1px solid #364153;
+            border-radius: 12px;
+        }
+        .acct-page-info .acct-tabs a.active {
+            background: rgba(193,241,29,0.08);
+            border-color: rgba(193,241,29,0.5);
+        }
+        .acct-page-info .acct-back-title {
+            display: block;
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+        .acct-page-info .acct-container { padding: 0 14px; }
+        /* Hide the large H1 + subtitle on mobile — the centered back-wrap
+           title already serves as the page heading. */
+        .acct-page-info .acct-title,
+        .acct-page-info .acct-subtitle { display: none; }
+
+        /* Reorder: nav → tabs → hero → profile → info → newsletter → delete.
+           Done with flex order after flattening .acct-grid/.acct-col via
+           display:contents so inner cards become siblings and can be
+           ordered individually. */
+        .acct-page-info .acct-container { display: flex; flex-direction: column; }
+        .acct-page-info .acct-grid { display: contents; }
+        .acct-page-info .acct-col { display: contents; }
+
+        .acct-page-info .acct-flash { order: 1; }
+        .acct-page-info .acct-tabs { order: 2; margin-bottom: 4px; }
+        .acct-page-info .acct-hero { order: 3; }
+        .acct-page-info .acct-profile-card { display: none; }
+        .acct-page-info .acct-info-card { order: 5; }
+        .acct-page-info .acct-connect-card { order: 6; }
+        .acct-page-info .acct-premium-card { order: 7; }
+        .acct-page-info .acct-delete-wrap { order: 8; margin-top: 20px; }
+
+        /* Hero — stack and shrink on mobile. Keep button visible to the right
+           of text if it fits, otherwise it wraps naturally via flex-wrap. */
+        .acct-page-info .acct-hero {
+            padding: 16px 16px;
+            min-height: 110px;
+            flex-wrap: wrap;
+            gap: 12px;
+            background-position: right -40px center;
+        }
+        .acct-page-info .acct-hero-title { font-size: 18px; }
+        .acct-page-info .acct-hero-desc { font-size: 11px; line-height: 1.4; }
+        .acct-page-info .acct-hero-btn { padding: 9px 16px; font-size: 12px; }
+
+        /* Tabs — compact row of 3 on mobile. */
+        .acct-page-info .acct-tabs a {
+            padding: 8px 10px;
+            height: 38px;
+            font-size: 12px;
+        }
+        .acct-page-info .acct-tabs a svg { width: 15px; height: 15px; }
+
+        /* Stack grid columns on mobile. */
+        .acct-page-info .acct-grid { grid-template-columns: 1fr; gap: 12px; }
+
+        /* Profile card — tighter spacing. */
+        .acct-page-info .acct-profile-card { padding: 14px; }
+        .acct-page-info .acct-profile-avatar { width: 48px; height: 48px; }
+        .acct-page-info .acct-profile-info h3 { font-size: 15px; }
+        .acct-page-info .acct-profile-info p { font-size: 12px; }
+        .acct-page-info .acct-profile-edit { top: 12px; right: 12px; width: 28px; height: 28px; }
+
+        /* Account Information — keep 2 columns on mobile but tighter. */
+        .acct-page-info .acct-info-card .acct-card-title { padding: 12px 14px; font-size: 13px; }
+        .acct-page-info .acct-info-card .acct-info-grid { padding: 14px; gap: 14px 12px; }
+        .acct-page-info .acct-info-icon { width: 26px; height: 26px; }
+        .acct-page-info .acct-info-label { font-size: 10px; }
+        .acct-page-info .acct-info-value { font-size: 12px; }
+
+        /* Premium / Upgrade card — hide on mobile (the design doesn't show it). */
+        .acct-page-info .acct-premium-card { display: none; }
+
+        /* Stay Connected card — shorter on mobile. */
+        .acct-page-info .acct-connect-card { min-height: 160px; padding: 16px; }
+        .acct-page-info .acct-connect-head { font-size: 16px; }
+        .acct-page-info .acct-connect-desc { font-size: 11px; max-width: 65%; }
+        .acct-page-info .acct-connect-nl { font-size: 13px; }
+
+        /* Delete button — full width on mobile. */
+        .acct-page-info .acct-delete-wrap form { width: 100%; }
+        .acct-page-info .acct-delete-btn { padding: 13px 20px; font-size: 13px; }
+    }
+    @media (max-width: 1024px) and (min-width: 901px) {
+        .acct-grid { grid-template-columns: 1fr; }
+        .acct-hero { flex-direction: column; align-items: flex-start; }
+    }
 </style>
 @endpush
 
@@ -1002,7 +1565,7 @@
             ? route('user.dashboard')
             : url('/archived-profiles');
     @endphp
-    @if($u)
+    @if($u && !request()->is('my-account/info'))
     <div class="ev-account-mobile">
         {{-- Header: Back link + centered logo --}}
         <div class="ev-am-header">
@@ -1047,7 +1610,7 @@
 
         {{-- Menu list --}}
         <nav class="ev-am-menu">
-            <a href="/my-account/edit" wire:navigate class="ev-am-item">
+            <a href="/my-account/info" wire:navigate class="ev-am-item">
                 <span class="ev-am-item__icon">
 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M0.75 14.75C0.75 13.6891 1.17143 12.6717 1.92157 11.9216C2.67172 11.1714 3.68913 10.75 4.75 10.75H12.75C13.8109 10.75 14.8283 11.1714 15.5784 11.9216C16.3286 12.6717 16.75 13.6891 16.75 14.75C16.75 15.2804 16.5393 15.7891 16.1642 16.1642C15.7891 16.5393 15.2804 16.75 14.75 16.75H2.75C2.21957 16.75 1.71086 16.5393 1.33579 16.1642C0.960714 15.7891 0.75 15.2804 0.75 14.75Z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
@@ -1177,328 +1740,309 @@
     @endif
 
     {{-- Main content --}}
-    <div class="ev-container" style="padding-top: 8px; padding-bottom: 40px;">
-        
-        {{-- Account tabs --}}
-        <div class="ev-account-tabs">
-            <a href="/my-account" wire:navigate class="{{ request()->is('my-account') && !request()->is('my-account/*') ? 'active' : '' }}">
-                <i class="fa fa-user"></i> Account
-            </a>
-            <a href="/my-account/edit" wire:navigate class="{{ request()->is('my-account/edit') ? 'active' : '' }}">
-                <i class="fa fa-pencil-alt"></i> Edit
-            </a>
-            <a href="/my-password/edit" wire:navigate class="{{ request()->is('my-password/edit') ? 'active' : '' }}">
-                <i class="fa fa-key"></i> Password
-            </a>
+    {{-- =====================================================
+         NEW DESKTOP MY-ACCOUNT (hidden on mobile; the
+         .ev-account-mobile block above handles mobile).
+         ===================================================== --}}
+    @php $isAcctInfoPage = request()->is('my-account/info'); @endphp
+    <div class="acct-page-desktop {{ $isAcctInfoPage ? 'acct-page-info' : '' }}" x-data="{ newsletterOpen: false }">
+        <div class="acct-back-wrap">
+            <div class="acct-back-inner">
+                <a href="{{ $isAcctInfoPage ? url('/my-account') : url('/') }}" wire:navigate class="acct-back-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    {{ $isAcctInfoPage ? 'Home' : 'Back' }}
+                </a>
+                {{-- Centered page title shown only on mobile detail view. --}}
+                <span class="acct-back-title">My Account</span>
+            </div>
         </div>
+        <div class="acct-container">
+            <h1 class="acct-title">My Account</h1>
+            <p class="acct-subtitle">Manage your profile, credits and account settings.</p>
 
-        @if(session('success'))
-            <div class="ev-alert-success ev-account-desktop-alert">{{ session('success') }}</div>
-        @endif
+            {{-- Hero / Premium banner --}}
+            <div class="acct-hero">
+                <div class="acct-hero-content">
+                    <div class="acct-hero-label">EXCLUSIVE ACCESS</div>
+                    <h2 class="acct-hero-title">Your Connection Matters</h2>
+                    <p class="acct-hero-desc">Upgrade to Premium to unlock unlimited messaging and connect without boundaries.</p>
+                </div>
+                <a href="{{ url('/premium-account') }}" wire:navigate class="acct-hero-btn">
+                    <i class="fa fa-crown"></i> Upgrade to Premium
+                </a>
+            </div>
 
-        {{-- Cards grid --}}
-        <div class="ev-account-cards">
-            
-            {{-- User info card --}}
+            @if(session('success'))
+                <div class="acct-flash">{{ session('success') }}</div>
+            @endif
+
+            {{-- Two-column grid: tabs + profile + info on left, premium + newsletter on right --}}
             @php
-                // Mirror the avatar resolution used on the edit page: prefer the
-                // user's uploaded/Google-fetched avatar on the public disk; fall
-                // back to a Gravatar identicon when they don't have one yet.
                 $authUser = auth()->user();
                 $accountAvatarUrl = !empty($authUser->avatar) && \Illuminate\Support\Facades\Storage::disk('public')->exists($authUser->avatar)
                     ? \Illuminate\Support\Facades\Storage::disk('public')->url($authUser->avatar)
                     : 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($authUser->email))) . '?s=128&d=identicon';
+                $accountTypeLabel = ['1' => 'Standard', '2' => 'Individual', '3' => 'Agency'][$authUser->type] ?? 'Standard';
+                $memberSince = $authUser->created_at ? $authUser->created_at->format('m/d/Y') : '—';
+                $usernameDisplay = $authUser->username ? '@' . $authUser->username : '—';
+                $phoneDisplay = $authUser->phone ?: '—';
+                $quotaMax = 5;
+                $quotaUsed = min($chatsCount ?? 0, $quotaMax);
+                $quotaPct = ($quotaUsed / $quotaMax) * 100;
+                $quotaRemaining = max(0, $quotaMax - $quotaUsed);
             @endphp
-            <div class="ev-account-card">
-                <div class="ev-user-card">
-                    <img alt="{{ $authUser->name }}'s avatar" class="ev-avatar" src="{{ $accountAvatarUrl }}" />
-                    <div>
-                        <h2 class="ev-user-name">{{ auth()->user()->name }}</h2>
-                        <ul class="ev-user-info">
-                            <li>
-                                <strong>Account type</strong> @if(auth()->user()->type == 1) Standard @elseif(auth()->user()->type == 2) Individual @elseif(auth()->user()->type == 3) Agency @endif
-                            </li>
-                            <li>
-                                <strong>Email</strong> {{ auth()->user()->email }}
-                            </li>
-                        </ul>
+
+            <div class="acct-grid">
+                {{-- Left column --}}
+                <div class="acct-col">
+                    {{-- Tabs sit inside left column so they align horizontally with
+                         the Upgrade to Premium card header on the right. --}}
+                    <div class="acct-tabs">
+                        <a href="/my-account" wire:navigate class="{{ request()->is('my-account') && !request()->is('my-account/*') ? 'active' : '' }}">
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M1 15C1 13.9391 1.42143 12.9217 2.17157 12.1716C2.92172 11.4214 3.93913 11 5 11H13C14.0609 11 15.0783 11.4214 15.8284 12.1716C16.5786 12.9217 17 13.9391 17 15C17 15.5304 16.7893 16.0391 16.4142 16.4142C16.0391 16.7893 15.5304 17 15 17H3C2.46957 17 1.96086 16.7893 1.58579 16.4142C1.21071 16.0391 1 15.5304 1 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                <path d="M9 7C10.6569 7 12 5.65685 12 4C12 2.34315 10.6569 1 9 1C7.34315 1 6 2.34315 6 4C6 5.65685 7.34315 7 9 7Z" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            Account
+                        </a>
+                        <a href="/my-account/edit" wire:navigate class="{{ request()->is('my-account/edit') ? 'active' : '' }}">
+                            <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M4 5H3C2.46957 5 1.96086 5.21071 1.58579 5.58579C1.21071 5.96086 1 6.46957 1 7V16C1 16.5304 1.21071 17.0391 1.58579 17.4142C1.96086 17.7893 2.46957 18 3 18H12C12.5304 18 13.0391 17.7893 13.4142 17.4142C13.7893 17.0391 14 16.5304 14 16V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M13 3.00011L16 6.00011M17.385 4.58511C17.7788 4.19126 18.0001 3.65709 18.0001 3.10011C18.0001 2.54312 17.7788 2.00895 17.385 1.61511C16.9912 1.22126 16.457 1 15.9 1C15.343 1 14.8088 1.22126 14.415 1.61511L6 10.0001V13.0001H9L17.385 4.58511Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Edit
+                        </a>
+                        <a href="/my-password/edit" wire:navigate class="{{ request()->is('my-password/edit') ? 'active' : '' }}">
+                            <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M1.49715 14.1093C1.17892 14.4275 1.0001 14.859 1 15.3089V17.1516C1 17.3766 1.08938 17.5924 1.24848 17.7515C1.40759 17.9106 1.62337 18 1.84838 18H4.39351C4.61851 18 4.8343 17.9106 4.9934 17.7515C5.15251 17.5924 5.24189 17.3766 5.24189 17.1516V16.3032C5.24189 16.0782 5.33127 15.8625 5.49037 15.7034C5.64947 15.5442 5.86526 15.4549 6.09027 15.4549H6.93864C7.16365 15.4549 7.37944 15.3655 7.53854 15.2064C7.69764 15.0473 7.78702 14.8315 7.78702 14.6065V13.7581C7.78702 13.5331 7.8764 13.3173 8.03551 13.1582C8.19461 12.9991 8.4104 12.9097 8.6354 12.9097H8.78132C9.23129 12.9096 9.6628 12.7308 9.98093 12.4126L10.6715 11.722C11.8506 12.1327 13.1342 12.1312 14.3123 11.7176C15.4904 11.3039 16.4933 10.5027 17.1568 9.44507C17.8204 8.38738 18.1053 7.13582 17.9651 5.89513C17.8249 4.65443 17.2677 3.49805 16.3848 2.61516C15.502 1.73226 14.3456 1.17513 13.1049 1.0349C11.8642 0.894666 10.6126 1.17964 9.55493 1.84319C8.49725 2.50675 7.69607 3.5096 7.28245 4.6877C6.86883 5.8658 6.86726 7.14939 7.27799 8.3285L1.49715 14.1093Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M13.3031 6.12279C13.5374 6.12279 13.7273 5.93288 13.7273 5.6986C13.7273 5.46433 13.5374 5.27441 13.3031 5.27441C13.0688 5.27441 12.8789 5.46433 12.8789 5.6986C12.8789 5.93288 13.0688 6.12279 13.3031 6.12279Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Password
+                        </a>
+                    </div>
+
+                    {{-- Profile card --}}
+                    <div class="acct-card acct-profile-card">
+                        <img src="{{ $accountAvatarUrl }}" alt="{{ $authUser->name }}" class="acct-profile-avatar">
+                        <div class="acct-profile-info">
+                            <h3>{{ $authUser->name }}</h3>
+                            <p><strong>Account</strong> type {{ $accountTypeLabel }}</p>
+                            <p><strong>Email</strong> {{ $authUser->email }}</p>
+                        </div>
+                        <a href="/my-account/edit" wire:navigate class="acct-profile-edit" title="Edit profile">
+                            <svg width="16" height="16" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M4 5H3C2.46957 5 1.96086 5.21071 1.58579 5.58579C1.21071 5.96086 1 6.46957 1 7V16C1 16.5304 1.21071 17.0391 1.58579 17.4142C1.96086 17.7893 2.46957 18 3 18H12C12.5304 18 13.0391 17.7893 13.4142 17.4142C13.7893 17.0391 14 16.5304 14 16V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M13 3.00011L16 6.00011M17.385 4.58511C17.7788 4.19126 18.0001 3.65709 18.0001 3.10011C18.0001 2.54312 17.7788 2.00895 17.385 1.61511C16.9912 1.22126 16.457 1 15.9 1C15.343 1 14.8088 1.22126 14.415 1.61511L6 10.0001V13.0001H9L17.385 4.58511Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    {{-- Account Information card --}}
+                    <div class="acct-card acct-info-card">
+                        <h4 class="acct-card-title"><i class="fa fa-user-circle"></i> Account Information</h4>
+                        <div class="acct-info-grid">
+                            <div class="acct-info-item">
+                                <span class="acct-info-icon">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path d="M0.75 14.75C0.75 13.6891 1.17143 12.6717 1.92157 11.9216C2.67172 11.1714 3.68913 10.75 4.75 10.75H12.75C13.8109 10.75 14.8283 11.1714 15.5784 11.9216C16.3286 12.6717 16.75 13.6891 16.75 14.75C16.75 15.2804 16.5393 15.7891 16.1642 16.1642C15.7891 16.5393 15.2804 16.75 14.75 16.75H2.75C2.21957 16.75 1.71086 16.5393 1.33579 16.1642C0.960714 15.7891 0.75 15.2804 0.75 14.75Z" stroke="#A6B4B8" stroke-width="1.5" stroke-linejoin="round"/>
+                                        <path d="M8.75 6.75C10.4069 6.75 11.75 5.40685 11.75 3.75C11.75 2.09315 10.4069 0.75 8.75 0.75C7.09315 0.75 5.75 2.09315 5.75 3.75C5.75 5.40685 7.09315 6.75 8.75 6.75Z" stroke="#A6B4B8" stroke-width="1.5"/>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <div class="acct-info-label">Username</div>
+                                    <div class="acct-info-value">{{ $usernameDisplay }}</div>
+                                </div>
+                            </div>
+                            <div class="acct-info-item">
+                                <span class="acct-info-icon">
+                                    <svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path d="M15.2115 0.75H2.28846C1.43879 0.75 0.75 1.43879 0.75 2.28846V11.5192C0.75 12.3689 1.43879 13.0577 2.28846 13.0577H15.2115C16.0612 13.0577 16.75 12.3689 16.75 11.5192V2.28846C16.75 1.43879 16.0612 0.75 15.2115 0.75Z" stroke="#A6B4B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M3.21094 3.21143L8.7494 7.51912L14.2879 3.21143" stroke="#A6B4B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <div class="acct-info-label">Phone number</div>
+                                    <div class="acct-info-value">{{ $phoneDisplay }}</div>
+                                </div>
+                            </div>
+                            <div class="acct-info-item">
+                                <span class="acct-info-icon">
+                                    <svg width="19" height="16" viewBox="0 0 19 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path d="M0.75 7.55C0.75 4.34465 0.75 2.74155 1.69605 1.7462C2.6421 0.75085 4.16445 0.75 7.21 0.75H11.29C14.3356 0.75 15.8579 0.75 16.8039 1.7462C17.75 2.7424 17.75 4.34465 17.75 7.55C17.75 10.7554 17.75 12.3584 16.8039 13.3538C15.8579 14.3491 14.3356 14.35 11.29 14.35H7.21C4.16445 14.35 2.6421 14.35 1.69605 13.3538C0.75 12.3576 0.75 10.7554 0.75 7.55Z" stroke="#A6B4B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M9.67461 11.3751C9.56836 10.0151 8.45911 8.93985 7.07021 8.8489L6.69961 8.8251C6.56814 8.82906 6.44433 8.8336 6.32816 8.8387C4.95201 8.905 3.83086 10.0287 3.72461 11.3751M11.3746 5.0001H14.7746M11.3746 7.9751H14.7746M8.18711 5.2126C8.18711 5.60711 8.03039 5.98546 7.75143 6.26442C7.47247 6.54338 7.09412 6.7001 6.69961 6.7001C6.3051 6.7001 5.92675 6.54338 5.64779 6.26442C5.36883 5.98546 5.21211 5.60711 5.21211 5.2126C5.21211 4.81809 5.36883 4.43974 5.64779 4.16078C5.92675 3.88182 6.3051 3.7251 6.69961 3.7251C7.09412 3.7251 7.47247 3.88182 7.75143 4.16078C8.03039 4.43974 8.18711 4.81809 8.18711 5.2126Z" stroke="#A6B4B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <div class="acct-info-label">Account type</div>
+                                    <div class="acct-info-value">{{ $accountTypeLabel }}</div>
+                                </div>
+                            </div>
+                            <div class="acct-info-item">
+                                <span class="acct-info-icon">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path d="M13.55 2.3501H3.95C2.18269 2.3501 0.75 3.78279 0.75 5.5501V13.5501C0.75 15.3174 2.18269 16.7501 3.95 16.7501H13.55C15.3173 16.7501 16.75 15.3174 16.75 13.5501V5.5501C16.75 3.78279 15.3173 2.3501 13.55 2.3501Z" stroke="#A6B4B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M5.55 0.75V3.95M11.95 0.75V3.95M0.75 7.15H16.75" stroke="#A6B4B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <div class="acct-info-label">Member Since</div>
+                                    <div class="acct-info-value">{{ $memberSince }}</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <a class="ev-edit-btn" href="/my-account/edit">
-                    <i class="fa fa-pencil-alt"></i>
-                    <span>Edit</span>
-                </a>
+
+                {{-- Right column --}}
+                <div class="acct-col">
+                    {{-- Premium / plan card --}}
+                    <div class="acct-card acct-premium-card">
+                        <div class="acct-premium-head">
+                            <span class="acct-premium-head-title">
+                                <svg width="18" height="16" viewBox="0 0 18 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M17.4345 4.56809L14.9666 12.1636H3.0304L0.5625 4.56809L5.43146 7.31324L8.99849 0.564453L12.5655 7.31324L17.4345 4.56809Z" fill="url(#acctCrownFill)"/>
+                                    <path d="M17.436 4.56774L17.9724 4.74204C18.0075 4.63403 18.0091 4.51794 17.9772 4.40898C17.9452 4.30001 17.881 4.20324 17.7931 4.13132C17.7053 4.0594 17.5977 4.01568 17.4846 4.00588C17.3714 3.99609 17.258 4.02067 17.159 4.07641L17.436 4.56774ZM14.9681 12.1632V12.7273C15.0872 12.7273 15.2033 12.6896 15.2996 12.6196C15.396 12.5496 15.4677 12.4508 15.5045 12.3375L14.9681 12.1632ZM3.03191 12.1632L2.49546 12.3375C2.53227 12.4508 2.604 12.5496 2.70037 12.6196C2.79673 12.6896 2.91279 12.7273 3.03191 12.7273V12.1632ZM0.564013 4.56774L0.840982 4.07641C0.74204 4.02067 0.628576 3.99609 0.515435 4.00588C0.402293 4.01568 0.294743 4.0594 0.206855 4.13132C0.118966 4.20324 0.0548315 4.30001 0.022842 4.40898C-0.00914753 4.51794 -0.00750268 4.63403 0.0275617 4.74204L0.564013 4.56774ZM5.43297 7.31289L5.156 7.80421C5.22163 7.84121 5.29402 7.86469 5.36888 7.87325C5.44373 7.88182 5.51955 7.8753 5.59185 7.85409C5.66414 7.83287 5.73146 7.79739 5.78981 7.74973C5.84817 7.70207 5.89639 7.6432 5.93162 7.5766L5.43297 7.31289ZM9 0.564099L9.49866 0.300386C9.45071 0.20971 9.37894 0.133826 9.29107 0.0808973C9.20321 0.0279688 9.10258 0 9 0C8.89743 0 8.79679 0.0279688 8.70893 0.0808973C8.62107 0.133826 8.5493 0.20971 8.50134 0.300386L9 0.564099ZM12.567 7.31289L12.0684 7.5766C12.1036 7.6432 12.1518 7.70207 12.2102 7.74973C12.2685 7.79739 12.3359 7.83287 12.4082 7.85409C12.4805 7.8753 12.5563 7.88182 12.6311 7.87325C12.706 7.86469 12.7784 7.84121 12.844 7.80421L12.567 7.31289ZM16.8995 4.39372L14.4316 11.9889L15.5045 12.3375L17.9724 4.74204L16.8995 4.39372ZM14.9681 11.5989H3.03191V12.7273H14.9681V11.5989ZM3.56836 11.9886L1.10046 4.39315L0.0275617 4.74204L2.49546 12.3375L3.56836 11.9886ZM0.287044 5.05906L5.156 7.80421L5.70965 6.82157L0.8407 4.07641L0.287044 5.05906ZM5.93162 7.5766L9.49866 0.827812L8.50134 0.300386L4.93431 7.04946L5.93162 7.5766ZM8.50106 0.827812L12.0684 7.5766L13.066 7.04918L9.49866 0.300386L8.50106 0.827812ZM12.844 7.80421L17.7135 5.05906L17.159 4.07641L12.2903 6.82157L12.844 7.80421Z" fill="url(#acctCrownStroke)"/>
+                                    <path d="M14.6412 14.6665H3.35938" stroke="url(#acctCrownBar)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <defs>
+                                        <linearGradient id="acctCrownFill" x1="9" y1="0.564453" x2="9" y2="12.1636" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="#C1F11D"/></linearGradient>
+                                        <linearGradient id="acctCrownStroke" x1="9" y1="0" x2="9" y2="12.7273" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="#C1F11D"/></linearGradient>
+                                        <linearGradient id="acctCrownBar" x1="9" y1="14.6665" x2="9" y2="15.6665" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="#C1F11D"/></linearGradient>
+                                    </defs>
+                                </svg>
+                                Upgrade to Premium
+                            </span>
+                            <span class="acct-free-badge">Free Plan</span>
+                        </div>
+                        <div class="acct-quota-row">
+                            <span>Conversation Quota</span>
+                            <b>{{ $quotaUsed }} / {{ $quotaMax }} People</b>
+                        </div>
+                        <div class="acct-progress">
+                            <div class="acct-progress-fill" style="width: {{ $quotaPct }}%;"></div>
+                        </div>
+                        <p class="acct-premium-desc">You can chat with {{ $quotaRemaining }} more unique people on your Free plan.</p>
+                    </div>
+
+                    {{-- Stay Connected / Newsletter card --}}
+                    <div class="acct-card acct-connect-card">
+                        <div class="acct-connect-image"></div>
+                        <div class="acct-connect-content">
+                            <h3 class="acct-connect-head">Stay Connected with <b>Evoory!</b></h3>
+                            <div class="acct-connect-divider"></div>
+                            <div class="acct-connect-nl">
+                                <svg width="50" height="50" viewBox="0 0 74 74" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <g filter="url(#acctNlGlow)">
+                                        <circle cx="36.8008" cy="36.7998" r="13" fill="#9227FE"/>
+                                    </g>
+                                    <path d="M46.8008 32.3453V41.2543C46.8008 41.6057 46.7357 41.9338 46.6055 42.2387C46.4753 42.5436 46.2962 42.8121 46.0684 43.0441C45.8405 43.2761 45.5736 43.4584 45.2676 43.591C44.9616 43.7236 44.6393 43.7932 44.3008 43.7998H29.2324C28.9004 43.7998 28.5879 43.7335 28.2949 43.6009C28.002 43.4684 27.7448 43.2927 27.5234 43.074C27.3021 42.8552 27.1263 42.5934 26.9961 42.2884C26.8659 41.9835 26.8008 41.662 26.8008 41.324V29.7998H44.3008V32.3453H46.8008ZM45.5508 33.618H44.3008V40.618C44.3008 40.7903 44.2389 40.9395 44.1152 41.0654C43.9915 41.1914 43.8451 41.2543 43.6758 41.2543C43.5065 41.2543 43.36 41.1914 43.2363 41.0654C43.1126 40.9395 43.0508 40.7903 43.0508 40.618V31.0725H28.0508V41.324C28.0508 41.4897 28.0801 41.6454 28.1387 41.7913C28.1973 41.9371 28.2819 42.0631 28.3926 42.1691C28.5033 42.2752 28.6302 42.3614 28.7734 42.4276C28.9167 42.4939 29.0697 42.5271 29.2324 42.5271H44.3008C44.4766 42.5271 44.6393 42.4939 44.7891 42.4276C44.9388 42.3614 45.069 42.2719 45.1797 42.1592C45.2904 42.0465 45.3815 41.9106 45.4531 41.7515C45.5247 41.5924 45.5573 41.4267 45.5508 41.2543V33.618ZM41.8008 33.618H29.3008V32.3453H41.8008V33.618ZM41.8008 41.2543H36.8008V39.9816H41.8008V41.2543ZM41.8008 38.7089H36.8008V37.4362H41.8008V38.7089ZM41.8008 36.1634H36.8008V34.8907H41.8008V36.1634ZM35.5508 41.2543H29.3008V34.8609H35.5508V41.2543ZM30.5508 39.9816H34.3008V36.1336H30.5508V39.9816Z" fill="white"/>
+                                    <defs>
+                                        <filter id="acctNlGlow" x="0.000782013" y="-0.00019455" width="73.6" height="73.6" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                                            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                                            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+                                            <feGaussianBlur stdDeviation="11.9" result="effect1_foregroundBlur_2116_97"/>
+                                        </filter>
+                                    </defs>
+                                </svg>
+                                Newsletter
+                            </div>
+                            <p class="acct-connect-desc">Get the latest updates, exclusive offers and more, straight to your inbox.</p>
+                            <button type="button" class="acct-connect-edit" @click="newsletterOpen = true">
+                                <svg width="16" height="16" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M4 5H3C2.46957 5 1.96086 5.21071 1.58579 5.58579C1.21071 5.96086 1 6.46957 1 7V16C1 16.5304 1.21071 17.0391 1.58579 17.4142C1.96086 17.7893 2.46957 18 3 18H12C12.5304 18 13.0391 17.7893 13.4142 17.4142C13.7893 17.0391 14 16.5304 14 16V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M13 3.00011L16 6.00011M17.385 4.58511C17.7788 4.19126 18.0001 3.65709 18.0001 3.10011C18.0001 2.54312 17.7788 2.00895 17.385 1.61511C16.9912 1.22126 16.457 1 15.9 1C15.343 1 14.8088 1.22126 14.415 1.61511L6 10.0001V13.0001H9L17.385 4.58511Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Edit Subscription
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {{-- Credits card --}}
-            <div class="ev-account-card ev-credits-card">
-                <a href="{{ route('user.credits.history') }}" class="ev-credits-history-link" title="View transaction history">
-                    <i class="fa fa-history"></i>
-                    <span>History</span>
-                </a>
-                <div class="ev-credits-mobile-row" style="display:none;">
-                    <div class="ev-credits-icon" style="display:none;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>
-                    </div>
-                    <div>
-                        <p class="ev-credits-label">Credits</p>
-                        <h2 class="ev-credits-amount">${{ number_format(auth()->user()->wallet->balance ?? 0, 2) }}</h2>
-                    </div>
-                </div>
-                <h2 class="ev-credits-amount ev-desktop-credits">Credits ${{ auth()->user()->wallet->balance ?? 0 }}</h2>
-                <div style="margin-bottom: 16px;">
-                    <a class="ev-buy-btn" href="/purchase-credits" onclick="window.location.href='/purchase-credits'; return false;">
-                        <i class="fa fa-coins"></i>
-                        <span>Buy more</span>
-                    </a>
-                </div>
-                <div class="ev-payments">
-                    <p class="ev-payments-label" style="margin: 0; width: 100%;">We accept:</p>
-                    <img alt="Mastercard logo" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/mc_logo-1fee638879a55506111eef88a8369601147f17d09fa23d940350fee69fb9fc79.svg" width="36" />
-                    <img alt="Visa logo" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/visa_logo-5f6bf07538a0b32cedb6babb58d8c28c7a917c26d4d7df3edd61be4980ddef6c.svg" width="36" />
-                    <img alt="Bitcoin icon" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/btc-b522654df0046f6af0e8ac9f67078a87d26069445a01866c1c337bde91bbcd5f.svg" width="24" />
-                    <img alt="Lightning network icon" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/btc_lightning-fa0277781a99cded862007ac4d2e5f5fa8fbafec4d9c2b59dbd3b2fc354e91a0.svg" width="42" />
-                    <img alt="Neosurf voucher logo" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/layout/neosurf-bd53910fca644afad7f8660597f25b84b5c97418652d1c2794ab5f1462e2faf7.svg" width="50" />
-                    <img alt="Payprocc Payments Promptpay logo" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/pay_promptpay_logo-6b70d10f79bdff9dc1efde97f390f89f91019db1b14c81389d20be94fd270275.svg" style="filter: brightness(2)" width="72" />
-                    <img alt="Payprocc Payments Momo logo" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/pay_momo_logo-41d3eadebd629ec10dd28d7c13683b8c5cf564e37eae34ae478de6d89a72b26c.svg" width="24" />
-                    <img alt="Payprocc Payments Viettelpay logo" height="24" src="https://d257pz9kz95xf4.cloudfront.net/assets/pay_viettelpay_logo-f99d7823ad8c66b5da8a2248c1877215a648cb16703f63c641584d684f73019b.svg" width="26" />
-                </div>
+            {{-- Delete account --}}
+            <div class="acct-delete-wrap">
+                <form action="{{ route('user.account.delete') }}" method="POST" onsubmit="return confirm('Are you sure you want to DELETE your account? This will deactivate your account and all your profiles. This action cannot be reversed.')">
+                    @csrf
+                    <button type="submit" class="acct-delete-btn">
+                        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M6.8 2.90244H10.2C10.2 2.46257 10.0209 2.04071 9.70208 1.72968C9.38327 1.41864 8.95087 1.2439 8.5 1.2439C8.04913 1.2439 7.61673 1.41864 7.29792 1.72968C6.97911 2.04071 6.8 2.46257 6.8 2.90244ZM5.525 2.90244C5.525 2.52129 5.60195 2.14386 5.75146 1.79172C5.90097 1.43958 6.1201 1.11962 6.39636 0.850105C6.67261 0.580588 7.00057 0.366796 7.36152 0.220935C7.72246 0.0750738 8.10932 0 8.5 0C8.89068 0 9.27754 0.0750738 9.63848 0.220935C9.99943 0.366796 10.3274 0.580588 10.6036 0.850105C10.8799 1.11962 11.099 1.43958 11.2485 1.79172C11.3981 2.14386 11.475 2.52129 11.475 2.90244H16.3625C16.5316 2.90244 16.6937 2.96797 16.8133 3.0846C16.9328 3.20124 17 3.35944 17 3.52439C17 3.68934 16.9328 3.84754 16.8133 3.96418C16.6937 4.08081 16.5316 4.14634 16.3625 4.14634H15.2405L14.246 14.1896C14.1697 14.9592 13.8023 15.6734 13.2155 16.193C12.6287 16.7126 11.8646 17.0003 11.0721 17H5.9279C5.13558 17.0001 4.37164 16.7123 3.78501 16.1927C3.19838 15.6731 2.83112 14.959 2.75485 14.1896L1.7595 4.14634H0.6375C0.468424 4.14634 0.306274 4.08081 0.186719 3.96418C0.0671649 3.84754 0 3.68934 0 3.52439C0 3.35944 0.0671649 3.20124 0.186719 3.0846C0.306274 2.96797 0.468424 2.90244 0.6375 2.90244H5.525ZM7.225 6.84146C7.225 6.67651 7.15784 6.51832 7.03828 6.40168C6.91873 6.28504 6.75658 6.21951 6.5875 6.21951C6.41842 6.21951 6.25627 6.28504 6.13672 6.40168C6.01717 6.51832 5.95 6.67651 5.95 6.84146V13.061C5.95 13.2259 6.01717 13.3841 6.13672 13.5008C6.25627 13.6174 6.41842 13.6829 6.5875 13.6829C6.75658 13.6829 6.91873 13.6174 7.03828 13.5008C7.15784 13.3841 7.225 13.2259 7.225 13.061V6.84146ZM10.4125 6.21951C10.5816 6.21951 10.7437 6.28504 10.8633 6.40168C10.9828 6.51832 11.05 6.67651 11.05 6.84146V13.061C11.05 13.2259 10.9828 13.3841 10.8633 13.5008C10.7437 13.6174 10.5816 13.6829 10.4125 13.6829C10.2434 13.6829 10.0813 13.6174 9.96172 13.5008C9.84217 13.3841 9.775 13.2259 9.775 13.061V6.84146C9.775 6.67651 9.84217 6.51832 9.96172 6.40168C10.0813 6.28504 10.2434 6.21951 10.4125 6.21951ZM4.0239 14.0702C4.06975 14.5318 4.29016 14.9602 4.64216 15.2719C4.99417 15.5836 5.45253 15.7562 5.9279 15.7561H11.0721C11.5475 15.7562 12.0058 15.5836 12.3578 15.2719C12.7098 14.9602 12.9303 14.5318 12.9761 14.0702L13.9604 4.14634H3.0396L4.0239 14.0702Z" fill="#C1F11D"/>
+                        </svg>
+                        Delete account
+                    </button>
+                </form>
             </div>
+        </div>
 
-            {{-- Communication card --}}
-            @php
-                // Mirror the chat page's unread logic exactly: count unread messages
-                // in conversations the user participates in, EXCLUDING messages the
-                // user themselves sent. Previously this counted messages by
-                // messages.profile_id (legacy pre-conversation schema), which
-                // surfaced a badge count that /my-chat couldn't show.
-                $uid = auth()->id();
-                $convoIds = \App\Models\Conversation::query()
-                    ->where(function($q) use ($uid) {
-                        $q->where('user_one_id', $uid)->orWhere('user_two_id', $uid);
-                    })
-                    ->pluck('id');
-                // Match Chat::markAsRead's definition of "unread": a message is
-                // unread until the recipient opens the conversation and it gets
-                // stamped 'read'. Statuses along the way: NULL → sent → delivered.
-                $unreadMsgCount = \App\Models\Message::whereIn('conversation_id', $convoIds)
-                    ->where('sender_id', '!=', $uid)
-                    ->where(function($q) {
-                        $q->whereNull('status')->orWhereIn('status', ['sent', 'delivered', 'unread']);
-                    })
-                    ->count();
-            @endphp
-            <div class="ev-account-card">
-                <h2>
-                    <i class="fa fa-comments ev-card-icon"></i> Communication
-                    @if($unreadMsgCount > 0)
-                        <span class="ev-badge" style="background:#dc3545;color:#fff;font-size:11px;padding:1px 8px;border-radius:50%;">{{ $unreadMsgCount }}</span>
+        {{-- Newsletter modal (triggered by "Edit Subscription" on the Stay Connected card) --}}
+        <div x-show="newsletterOpen" x-cloak class="ev-modal-overlay" @click.self="newsletterOpen = false">
+            <div class="ev-modal">
+                <div class="ev-modal-header">
+                    <h2>
+                        <i class="fa fa-newspaper"></i>
+                        <span>Newsletter</span>
+                    </h2>
+                    <button type="button" class="ev-modal-close" @click="newsletterOpen = false">&times;</button>
+                </div>
+                <div class="ev-modal-body">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 1rem;">
+                            <input type="checkbox" wire:model.live="receiveNewsletter" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
+                            <span style="margin-left: 0.75rem; font-weight: 500;">Send me newsletter for:</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 1rem; position: relative;">
+                        <div class="ev-search-input">
+                            <span><i class="fa fa-map-marker-alt"></i></span>
+                            <input type="text" placeholder="Find city..." wire:model.live="citySearch" autocomplete="off">
+                            @if($citySearch)
+                                <button type="button" wire:click="$set('citySearch', '')"><i class="fa fa-times"></i></button>
+                            @endif
+                        </div>
+                        @if(count($searchResults) > 0)
+                            <div class="ev-dropdown-results">
+                                @foreach($searchResults as $city)
+                                    <button type="button" wire:click="addCity({{ $city['id'] }})">
+                                        {{ $city['name'] }}@if($city['country']) <span style="color:#666;">({{ $city['country'] }})</span>@endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                    @if(count($selectedCities) > 0)
+                        <div style="margin-bottom: 1rem; max-height: 150px; overflow-y: auto;">
+                            @foreach($selectedCities as $index => $city)
+                                <div class="ev-city-tag">
+                                    <span><i class="fa fa-map-marker-alt" style="margin-right:0.5rem;"></i>{{ $city['name'] }}@if($city['country']) <span style="color:#666;">({{ $city['country'] }})</span>@endif</span>
+                                    <button type="button" style="background:none;border:none;cursor:pointer;font-size:1.2rem;padding:0;" wire:click="removeCity({{ $index }})"><i class="fa fa-times"></i></button>
+                                </div>
+                            @endforeach
+                        </div>
                     @endif
-                </h2>
-                <ul class="ev-comm-list">
-                    <li>
-                        <a href="{{ route('user.chat') }}">
-                            <i class="fa fa-envelope" style="width: 16px;"></i> Messages
-                            @if($unreadMsgCount > 0)<span class="ev-badge">{{ $unreadMsgCount }}</span>@endif
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('user.questions') }}">
-                            <i class="fa fa-question-circle" style="width: 16px;"></i> Questions
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('user.reviews') }}">
-                            <i class="fa fa-star" style="width: 16px;"></i> Reviews
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('favorites.dashboard') }}">
-                            <i class="fa fa-heart" style="width: 16px;"></i> My Favorites
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            {{-- Newsletter card --}}
-            <div class="ev-account-card" x-data="{ show: false }">
-                <h2>
-                    <i class="fa fa-newspaper ev-card-icon"></i> Newsletter
-                </h2>
-                <p class="ev-newsletter-text">
-                    Receiving monthly updates in {{ auth()->user()->newsletterSubscriptions()->count() }} cities.<br>
-                    <a href="#" @click.prevent="show = true">
-                        <i class="fa fa-pencil-alt"></i> Edit Subscription
-                    </a>
-                </p>
-
-                {{-- Newsletter Modal --}}
-                <div x-show="show" x-cloak class="ev-modal-overlay" @click.self="show = false">
-                    <div class="ev-modal">
-                        <div class="ev-modal-header">
-                            <h2>
-                                <i class="fa fa-newspaper" ></i>
-                                <span>Newsletter</span>
-                            </h2>
-                            <button type="button" class="ev-modal-close" @click="show = false">&times;</button>
-                        </div>
-                        
-                        <div class="ev-modal-body">
-                            {{-- Checkbox --}}
-                            <div style="margin-bottom: 1.5rem;">
-                                <label style="display: flex; align-items: center; cursor: pointer; font-size: 1rem;">
-                                    <input type="checkbox" id="receiveNewsletter" wire:model.live="receiveNewsletter" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--accent, #C1F11D);">
-                                    <span style="margin-left: 0.75rem; font-weight: 500;">Send me newsletter for:</span>
-                                </label>
-                            </div>
-
-                            {{-- City Search --}}
-                            <div style="margin-bottom: 1rem; position: relative;">
-                                <div class="ev-search-input">
-                                    <span><i class="fa fa-map-marker-alt"></i></span>
-                                    <input type="text" placeholder="Find city..." wire:model.live="citySearch" autocomplete="off">
-                                    @if($citySearch)
-                                        <button type="button" wire:click="$set('citySearch', '')">
-                                            <i class="fa fa-times"></i>
-                                        </button>
-                                    @endif
-                                </div>
-                                
-                                @if(count($searchResults) > 0)
-                                    <div class="ev-dropdown-results">
-                                        @foreach($searchResults as $city)
-                                            <button type="button" wire:click="addCity({{ $city['id'] }})">
-                                                {{ $city['name'] }}@if($city['country']) <span style="color: var(--text-muted, #666);">({{ $city['country'] }})</span>@endif
-                                            </button>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-
-                            {{-- Selected Cities --}}
-                            @if(count($selectedCities) > 0)
-                                <div style="margin-bottom: 1rem; max-height: 150px; overflow-y: auto;">
-                                    @foreach($selectedCities as $index => $city)
-                                        <div class="ev-city-tag">
-                                            <span>
-                                                <i class="fa fa-map-marker-alt" style="margin-right: 0.5rem;"></i>
-                                                {{ $city['name'] }}@if($city['country']) <span style="color: var(--text-muted, #666);">({{ $city['country'] }})</span>@endif
-                                            </span>
-                                            <button type="button" style="background: none; border: none;  cursor: pointer; font-size: 1.2rem; padding: 0;" wire:click="removeCity({{ $index }})">
-                                                <i class="fa fa-times"></i>
-                                            </button>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
-
-                            {{-- Add City Button --}}
-                            <button type="button" class="ev-btn-outline-sm" style="padding: 0.6rem 1rem; margin-bottom: 1.5rem; background: var(--bg-secondary, #111);  border: 1px solid var(--border-color, #2a2a2a); border-radius: var(--radius, 5px); cursor: pointer; font-weight: 600; font-family: inherit; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;" wire:click="$set('citySearch', '')">
-                                <i class="fa fa-plus"></i>
-                                <span>Add city</span>
-                            </button>
-
-                            {{-- Include Genders --}}
-                            <div>
-                                <label style="display: block; margin-bottom: 1rem; font-weight: 600; font-size: 1rem;">Include</label>
-                                <div style="display: flex; flex-wrap: wrap; gap: 1.5rem;">
-                                    <label style="display: flex; align-items: center; cursor: pointer;">
-                                        <input type="checkbox" id="gender_female" value="female" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--accent, #C1F11D);">
-                                        <span style="margin-left: 0.5rem;">Escorts</span>
-                                    </label>
-                                    <label style="display: flex; align-items: center; cursor: pointer;">
-                                        <input type="checkbox" id="gender_male" value="male" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--accent, #C1F11D);">
-                                        <span style="margin-left: 0.5rem;">Male Escorts</span>
-                                    </label>
-                                    <label style="display: flex; align-items: center; cursor: pointer;">
-                                        <input type="checkbox" id="gender_shemale" value="shemale" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--accent, #C1F11D);">
-                                        <span style="margin-left: 0.5rem;">Shemale Escorts</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="ev-modal-footer">
-                            <button type="button" class="ev-buy-btn" wire:click="saveNewsletter" @click="show = false">
-                                <span>Save</span>
-                                <i class="fa fa-chevron-right"></i>
-                            </button>
+                    <div>
+                        <label style="display: block; margin-bottom: 1rem; font-weight: 600; font-size: 1rem;">Include</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem;">
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" value="female" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
+                                <span style="margin-left: 0.5rem;">Escorts</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" value="male" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
+                                <span style="margin-left: 0.5rem;">Male Escorts</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" value="shemale" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
+                                <span style="margin-left: 0.5rem;">Shemale Escorts</span>
+                            </label>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {{-- Mobile Newsletter Row --}}
-            <div class="ev-newsletter-mobile" style="display:none;" x-data="{ show: false }">
-                <div class="ev-newsletter-mobile-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                </div>
-                <div class="ev-newsletter-mobile-info" @click="show = true">
-                    <p class="ev-nl-title">Newsletter</p>
-                    <p class="ev-nl-sub">Subscribed</p>
-                </div>
-                <span class="ev-newsletter-mobile-arrow" @click="show = true">›</span>
-
-                {{-- Reuse newsletter modal --}}
-                <div x-show="show" x-cloak class="ev-modal-overlay" @click.self="show = false">
-                    <div class="ev-modal">
-                        <div class="ev-modal-header">
-                            <h2><i class="fa fa-newspaper"></i> <span>Newsletter</span></h2>
-                            <button type="button" class="ev-modal-close" @click="show = false">&times;</button>
-                        </div>
-                        <div class="ev-modal-body">
-                            <div style="margin-bottom: 1.5rem;">
-                                <label style="display: flex; align-items: center; cursor: pointer; font-size: 1rem;">
-                                    <input type="checkbox" wire:model.live="receiveNewsletter" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
-                                    <span style="margin-left: 0.75rem; font-weight: 500;">Send me newsletter for:</span>
-                                </label>
-                            </div>
-                            <div style="margin-bottom: 1rem; position: relative;">
-                                <div class="ev-search-input">
-                                    <span><i class="fa fa-map-marker-alt"></i></span>
-                                    <input type="text" placeholder="Find city..." wire:model.live="citySearch" autocomplete="off">
-                                    @if($citySearch)
-                                        <button type="button" wire:click="$set('citySearch', '')"><i class="fa fa-times"></i></button>
-                                    @endif
-                                </div>
-                                @if(count($searchResults) > 0)
-                                    <div class="ev-dropdown-results">
-                                        @foreach($searchResults as $city)
-                                            <button type="button" wire:click="addCity({{ $city['id'] }})">{{ $city['name'] }}@if($city['country']) <span style="color:#666;">({{ $city['country'] }})</span>@endif</button>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                            @if(count($selectedCities) > 0)
-                                <div style="margin-bottom: 1rem; max-height: 150px; overflow-y: auto;">
-                                    @foreach($selectedCities as $index => $city)
-                                        <div class="ev-city-tag">
-                                            <span><i class="fa fa-map-marker-alt" style="margin-right:0.5rem;"></i>{{ $city['name'] }}@if($city['country']) <span style="color:#666;">({{ $city['country'] }})</span>@endif</span>
-                                            <button type="button" style="background:none;border:none;cursor:pointer;font-size:1.2rem;padding:0;" wire:click="removeCity({{ $index }})"><i class="fa fa-times"></i></button>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
-                        <div class="ev-modal-footer">
-                            <button type="button" class="ev-buy-btn" wire:click="saveNewsletter" @click="show = false"><span>Save</span> <i class="fa fa-chevron-right"></i></button>
-                        </div>
-                    </div>
+                <div class="ev-modal-footer">
+                    <button type="button" class="ev-buy-btn" wire:click="saveNewsletter" @click="newsletterOpen = false">
+                        <span>Save</span> <i class="fa fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
-
         </div>
-
-        {{-- Delete account --}}
-        <div class="ev-account-delete-wrap" style="text-align: right; margin-top: 8px;">
-            <form action="{{ route('user.account.delete') }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to DELETE your account? This will deactivate your account and all your profiles. This action cannot be reversed.')">
-                @csrf
-                <button type="submit" class="ev-delete-link">
-                    <i class="fa fa-times"></i> Delete account
-                </button>
-            </form>
-        </div>
-
     </div>
+
 
 </div>

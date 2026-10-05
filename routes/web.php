@@ -325,6 +325,27 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get('rejected-verifications', RejectedVerifications::class)->name('rejected.verifications');
     Route::get('archived-profiles', \App\Livewire\Profile\Users\ArchivedProfiles::class)->name('profile.archived');
     Route::get("my-account", \App\Livewire\UserAccount::class)->name("user.account");
+    // Dedicated "details" view of the account page — on mobile the parent
+    // /my-account URL shows the dashboard; this URL always shows the full
+    // My Account details card (new design) on both desktop and mobile.
+    Route::get("my-account/info", \App\Livewire\UserAccount::class)->name("user.account.info");
+    // Premium account upgrade — plan picker (Free / 1 Month / 6 Months).
+    Route::get("premium-account", \App\Livewire\PremiumAccount::class)->name("user.account.premium");
+    // Checkout for the selected Premium plan. {plan} is a PremiumPlan.slug
+    // (seed values: `1m`, `6m` — but admins can create more via /admin/premium-plans).
+    Route::get("premium-account/checkout/{plan}", \App\Livewire\PremiumCheckout::class)
+        ->where('plan', '[a-z0-9-]+')
+        ->name("user.account.premium.checkout");
+    Route::get("premium-account/payment/{plan}", \App\Livewire\PremiumPayment::class)
+        ->where('plan', '[a-z0-9-]+')
+        ->name("user.account.premium.payment");
+    Route::get("premium-account/card/{plan}/{gateway}", \App\Livewire\PremiumCardPayment::class)
+        ->where('plan', '[a-z0-9-]+')
+        ->whereIn('gateway', ['primary', 'secondary'])
+        ->name("user.account.premium.card");
+    Route::get("premium-account/success/{plan}", \App\Livewire\PremiumSuccess::class)
+        ->where('plan', '[a-z0-9-]+')
+        ->name("user.account.premium.success");
     Route::get("my-account/edit", \App\Livewire\Profile\UserAccountEdit::class)->name("user.account.edit");
     Route::get("my-password/edit", \App\Livewire\Profile\UserAccountPassword::class)->name("user.account.password");
     Route::get("my-account/newsletter/edit", \App\Livewire\NewsletterSettings::class)->name("user.account.newsletter");
@@ -654,6 +675,12 @@ Route::get('/packages/by-country/{countryId}', [PackageController::class, 'getPa
 Route::post('/package/update', [PackageController::class, 'update'])->name('admin.updatepackage');
 Route::post('/package/delete', [PackageController::class, 'delete'])->name('admin.delpackage');
 Route::get('packages/all', [PackageController::class, 'getAllPackages'])->name('admin.getallpackages');
+
+// Premium account plans (new admin area)
+Route::get('premium-plans',           [\App\Http\Controllers\Admin\PremiumPlanController::class, 'index'])  ->name('admin.premium-plans');
+Route::post('premium-plans',          [\App\Http\Controllers\Admin\PremiumPlanController::class, 'store'])  ->name('admin.premium-plans.store');
+Route::put('premium-plans/{plan}',    [\App\Http\Controllers\Admin\PremiumPlanController::class, 'update']) ->name('admin.premium-plans.update');
+Route::delete('premium-plans/{plan}', [\App\Http\Controllers\Admin\PremiumPlanController::class, 'destroy'])->name('admin.premium-plans.destroy');
 
 Route::get('/wallet', [PackageController::class, 'wallet'])->name('admin.wallet');
 Route::post('/wallet/topup', [PackageController::class, 'topup'])->name('admin.wallet.topup');

@@ -2127,16 +2127,21 @@
             background: #0D1011;
         }
 
-        /* Skeleton shown while selectConversation is in flight.
+        /* Skeleton shown while a conversation is being fetched.
+           Absolutely positioned over chat-main so it covers whichever
+           state is currently shown (empty "Start Call" cards on the very
+           first click, or the previous conversation on subsequent clicks).
            Alternates sent/received rows so the shape mirrors a real thread. */
         .chat-messages-skel {
-            flex: 1;
+            position: absolute;
+            inset: 0;
             overflow: hidden;
             padding: 22px 28px;
             display: none;
             flex-direction: column;
             gap: 14px;
             background: #0D1011;
+            z-index: 40;
         }
         .chat-messages-skel .skel-row {
             display: flex;
@@ -3887,6 +3892,25 @@
                         </div>
 
                         <div class="chat-main" id="chatMain">
+                            {{-- Skeleton overlay shown while ANY method that loads a
+                                 conversation is in flight — including the very first
+                                 click (when the chat-thread-wrapper doesn't exist yet).
+                                 Lives at chat-main level so wire:loading finds it on
+                                 initial state too. --}}
+                            <div class="chat-messages-skel"
+                                 wire:loading.flex
+                                 wire:target="selectConversation,startConversation,startNewChatWith,openChatFromGallery,openChatFromCall">
+                                <div class="skel-row"><div class="skel-bubble w-sm"></div></div>
+                                <div class="skel-row"><div class="skel-bubble w-md"></div></div>
+                                <div class="skel-row right"><div class="skel-bubble w-sm"></div></div>
+                                <div class="skel-row right"><div class="skel-bubble w-lg"></div></div>
+                                <div class="skel-row"><div class="skel-bubble w-xs"></div></div>
+                                <div class="skel-row"><div class="skel-bubble w-md"></div></div>
+                                <div class="skel-row right"><div class="skel-bubble w-md"></div></div>
+                                <div class="skel-row"><div class="skel-bubble w-sm"></div></div>
+                                <div class="skel-row right"><div class="skel-bubble w-xs"></div></div>
+                            </div>
+
                             {{-- Drag-and-drop overlay. Toggled by JS when files are dragged
                                  over the chat area — kept OUT of the Livewire wire:if branch
                                  so its element identity is stable across re-renders. --}}
@@ -4355,21 +4379,8 @@
                                     <button type="button" class="chat-search-close" onclick="closeChatSearchBar()" aria-label="Close search"><i class="fa fa-times"></i></button>
                                 </div>
 
-                                {{-- Skeleton shown while a new conversation is being fetched. --}}
-                                <div class="chat-messages-skel" wire:loading.flex wire:target="selectConversation">
-                                    <div class="skel-row"><div class="skel-bubble w-sm"></div></div>
-                                    <div class="skel-row"><div class="skel-bubble w-md"></div></div>
-                                    <div class="skel-row right"><div class="skel-bubble w-sm"></div></div>
-                                    <div class="skel-row right"><div class="skel-bubble w-lg"></div></div>
-                                    <div class="skel-row"><div class="skel-bubble w-xs"></div></div>
-                                    <div class="skel-row"><div class="skel-bubble w-md"></div></div>
-                                    <div class="skel-row right"><div class="skel-bubble w-md"></div></div>
-                                    <div class="skel-row"><div class="skel-bubble w-sm"></div></div>
-                                    <div class="skel-row right"><div class="skel-bubble w-xs"></div></div>
-                                </div>
-
                                 {{-- Chat Messages --}}
-                                <div class="chat-messages" id="chatMessages" wire:loading.remove wire:target="selectConversation">
+                                <div class="chat-messages" id="chatMessages" wire:loading.remove wire:target="selectConversation,startConversation,startNewChatWith,openChatFromGallery,openChatFromCall">
                                     @php
                                         // Track the last-rendered date so we can inject WhatsApp-style
                                         // day separators ("Today", "Yesterday", "Monday", or full date).

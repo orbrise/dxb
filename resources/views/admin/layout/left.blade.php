@@ -129,7 +129,7 @@
                     </li>
 
                      @php
-                        $packageRoutes = ['admin.packages', 'admin.global.packages'];
+                        $packageRoutes = ['admin.packages', 'admin.global.packages', 'admin.premium-plans'];
                         $isPackageSectionOpen = in_array(Route::currentRouteName(), $packageRoutes);
                     @endphp
                     <li class="menu-item-has-children {{ $isPackageSectionOpen ? 'current-page' : '' }}">
@@ -146,6 +146,11 @@
                             <li class="{{ Route::currentRouteName() == 'admin.global.packages' ? 'active' : '' }}">
                                 <a class="ripple" href="{{route('admin.global.packages')}}">
                                     <span class="hide-menu">Global Packages</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::currentRouteName() == 'admin.premium-plans' ? 'active' : '' }}">
+                                <a class="ripple" href="{{route('admin.premium-plans')}}">
+                                    <span class="hide-menu">Premium Plans</span>
                                 </a>
                             </li>
                         </ul>
