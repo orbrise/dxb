@@ -139,6 +139,14 @@ return [
         'ttl'       => (int) env('CLOUDFLARE_TURN_TTL', 86400),
     ],
 
+    // myads project — hosts /external-payment/checkout which iframes into
+    // this app for Premium checkout and wallet credits. Stripe lives there,
+    // not here; this project just loads the iframe and listens for
+    // postMessage events (payment_success / payment_failed / payment_started).
+    'myads' => [
+        'base_url' => env('MYADS_BASE_URL', 'https://myadsnetwork.com'),
+    ],
+
     // Web Push Notifications — VAPID keypair for the browser Push API.
     // Generate once via `php artisan push:generate-vapid-keys` and paste the
     // output into .env. Same keypair is reused forever; if you rotate it,

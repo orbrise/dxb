@@ -2,13 +2,21 @@
      sections in the sidebar. Kept in a partial so we don't duplicate the
      40-line markup three times. --}}
 <div
-    class="conversation-item {{ $selectedConversationId == $conversation['id'] ? 'active' : '' }} {{ $conversation['unread_count'] > 0 ? 'unread' : '' }} {{ !empty($conversation['is_pinned']) ? 'pinned' : '' }} {{ !empty($conversation['missed_calls']) ? 'has-missed' : '' }}"
+    class="conversation-item {{ $conversation['unread_count'] > 0 ? 'unread' : '' }} {{ !empty($conversation['is_pinned']) ? 'pinned' : '' }} {{ !empty($conversation['missed_calls']) ? 'has-missed' : '' }}"
+    :class="selConv == {{ $conversation['id'] }} ? 'active' : ''"
     wire:click="selectConversation({{ $conversation['id'] }})"
-    {{-- Optimistic Alpine update — flips the sidebar into "conversation
-         open" mode client-side the instant you tap, so the transition
-         feels instant on production where the Livewire round-trip is
-         noticeable. Server response then fills in the actual thread. --}}
-    @click="selConv = {{ $conversation['id'] }}"
+    {{-- Optimistic Alpine update — flips the row into "active" state and
+         hides the sidebar on mobile the instant you tap, before the
+         Livewire round-trip returns. Prevents the 7–8s "frozen UI" feel
+         on prod. The skeleton overlay in chat-main handles the message
+         area until the server returns. --}}
+    @click="selConv = {{ $conversation['id'] }}; selConvMeta = {{ \Illuminate\Support\Js::from([
+        'id'        => $conversation['id'],
+        'name'      => $conversation['other_user_name'] ?? 'Unknown',
+        'email'     => $conversation['other_user_email'] ?? '',
+        'avatarUrl' => $conversation['other_user_avatar_url'] ?? null,
+        'isSupport' => !empty($conversation['is_support']),
+    ]) }}"
     wire:key="conv-{{ $conversation['id'] }}"
 >
     <div class="conversation-avatar {{ !empty($conversation['has_status']) ? 'status-ring' : '' }} {{ !empty($conversation['has_status']) && empty($conversation['status_unseen']) ? 'seen' : '' }}">

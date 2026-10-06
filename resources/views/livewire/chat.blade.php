@@ -2134,7 +2134,7 @@
            Alternates sent/received rows so the shape mirrors a real thread. */
         .chat-messages-skel {
             position: absolute;
-            inset: 0;
+            top: 70px; left: 0; right: 0; bottom: 0;
             overflow: hidden;
             padding: 22px 28px;
             display: none;
@@ -2142,6 +2142,21 @@
             gap: 14px;
             background: #0D1011;
             z-index: 40;
+        }
+
+        /* Optimistic chat header shown instantly on click (from selConvMeta)
+           while the Livewire round-trip loads the real conversation. Sits
+           at the top of chat-main above the skeleton. */
+        .chat-header-optimistic {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 14px 18px;
+            background: var(--ev-panel-2);
+            z-index: 41; /* just above the skeleton */
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
         .chat-messages-skel .skel-row {
             display: flex;
@@ -3326,7 +3341,11 @@
                             selConv: @entangle('selectedConversationId'),
                             selStatus: @entangle('selectedStatusId'),
                             section: @entangle('settingsSection'),
-                            chatFilter: 'all'
+                            chatFilter: 'all',
+                            /* selConvMeta — populated from the clicked conv-item so
+                               the chat header (name/avatar/email) renders instantly
+                               while the Livewire round-trip loads the messages. */
+                            selConvMeta: null
                          }"
                          :data-tab="tab"
                          :data-has-conv="selConv ? '1' : '0'"
@@ -3897,6 +3916,47 @@
                                  click (when the chat-thread-wrapper doesn't exist yet).
                                  Lives at chat-main level so wire:loading finds it on
                                  initial state too. --}}
+                            {{-- Optimistic chat header — renders instantly from
+                                 the clicked conv-item's metadata (selConvMeta)
+                                 while the Livewire round-trip is in flight.
+                                 The real header appears underneath as soon as
+                                 the server returns, replacing this stub. --}}
+                            <div class="chat-header-optimistic"
+                                 wire:loading.flex
+                                 wire:target="selectConversation,startConversation,startNewChatWith,openChatFromGallery,openChatFromCall"
+                                 x-show="selConvMeta"
+                                 x-cloak>
+                                <div class="chat-header-info">
+                                    <button type="button" class="mobile-back-btn" @click="selConv = null; selConvMeta = null">
+                                        <i class="fa fa-angle-left"></i><span class="mobile-back-label"> Back</span>
+                                    </button>
+                                    <div class="chat-header-avatar">
+                                        <template x-if="selConvMeta && selConvMeta.isSupport">
+                                            <i class="fa fa-headset" aria-hidden="true"></i>
+                                        </template>
+                                        <template x-if="selConvMeta && !selConvMeta.isSupport && selConvMeta.avatarUrl">
+                                            <img :src="selConvMeta.avatarUrl" alt="" x-on:error="selConvMeta.avatarUrl = null">
+                                        </template>
+                                        <template x-if="selConvMeta && !selConvMeta.isSupport && !selConvMeta.avatarUrl">
+                                            <span x-text="(selConvMeta.name || '?').charAt(0).toUpperCase()"></span>
+                                        </template>
+                                    </div>
+                                    <div>
+                                        <div class="chat-header-name">
+                                            <template x-if="selConvMeta && selConvMeta.isSupport">
+                                                <span>Support <span class="support-badge">HELP</span></span>
+                                            </template>
+                                            <template x-if="selConvMeta && !selConvMeta.isSupport">
+                                                <span x-text="selConvMeta.name"></span>
+                                            </template>
+                                        </div>
+                                        <div class="chat-header-email"
+                                             x-text="selConvMeta ? (selConvMeta.isSupport ? 'We usually reply within an hour' : (selConvMeta.email || '')) : ''">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="chat-messages-skel"
                                  wire:loading.flex
                                  wire:target="selectConversation,startConversation,startNewChatWith,openChatFromGallery,openChatFromCall">

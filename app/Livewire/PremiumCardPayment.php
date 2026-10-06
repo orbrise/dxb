@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\PremiumPlan;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('components.layouts.app-evoory')]
@@ -13,22 +14,21 @@ class PremiumCardPayment extends Component
     public string $plan = '1m';
     public string $gateway = 'secondary';
 
-    public string $cardName = '';
-    public string $cardNumber = '';
-    public string $expiry = '';
-    public string $cvc = '';
-
     public function mount(string $plan = '1m', string $gateway = 'secondary'): void
     {
         $this->plan = $plan;
         $this->gateway = in_array($gateway, ['primary', 'secondary'], true) ? $gateway : 'secondary';
-        $this->cardName = Auth::user()?->name ?? '';
     }
 
-    public function pay()
+    /**
+     * Called from the iframe postMessage listener once myads reports
+     * payment_success. Reference prefix (PREMIUM_) distinguishes this from
+     * the credits / profile-upgrade flows that share the same relay page.
+     * TODO: record transaction + mark user Premium with expiry.
+     */
+    #[On('processPremiumPayment')]
+    public function processPremiumPayment($referenceId = null)
     {
-        // TODO: run actual gateway charge via Stripe / chosen processor,
-        // activate the subscription on the user, record transaction, etc.
         return redirect()->route('user.account.premium.success', ['plan' => $this->plan]);
     }
 
@@ -40,11 +40,12 @@ class PremiumCardPayment extends Component
         }
 
         return view('livewire.premium-card-payment', [
-            'price'    => (float) $planModel->price,
-            'duration' => $planModel->duration_days > 0
-                            ? 'Evoory ' . $planModel->name . ' Membership'
-                            : $planModel->name,
-            'period'   => $planModel->period_label,
+            'price'       => (float) $planModel->price,
+            'planName'    => $planModel->name,
+            'duration'    => $planModel->duration_days > 0
+                                ? 'Evoory ' . $planModel->name . ' Premium Membership'
+                                : $planModel->name,
+            'period'      => $planModel->period_label,
         ]);
     }
 }
