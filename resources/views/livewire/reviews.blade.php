@@ -865,11 +865,289 @@
             .r-mobile-empty h3 { color: #fff; margin: 0 0 6px; font-size: 16px; }
             .r-mobile-empty p { margin: 0; font-size: 14px; }
         }
+
+        /* ================================================================
+           Desktop redesign — hero + rating summary + 2-column card grid.
+           Hidden on mobile where the existing .r-mobile-page design wins.
+           ================================================================ */
+        .rd-page { display: none; }
+
+        @media (min-width: 769px) {
+            [x-cloak] { display: none !important; }
+            .rd-page {
+                display: block;
+                background: #000;
+                min-height: calc(100vh - 60px);
+                color: #fff;
+                padding-bottom: 60px;
+            }
+            .rd-page ~ .ev-container { display: none !important; }
+
+            .rd-back-wrap { background: #131616; padding: 14px 0; margin-bottom: 32px; }
+            .rd-back-wrap .ev-container {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .rd-back-link {
+                color: #C1F11D; font-size: 14px; text-decoration: none;
+                display: inline-flex; align-items: center; gap: 6px; font-weight: 500;
+            }
+            .rd-back-link:hover { color: #d9ff4a; }
+            .rd-crumb { color: #fff; font-size: 14px; font-weight: 500; margin: 0; }
+            .rd-crumb-spacer { width: 60px; }
+
+            .rd-container { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+
+            /* Hero: title/subtitle (left) + rating summary pill (right). */
+            .rd-hero {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 20px;
+                margin-bottom: 22px;
+            }
+            .rd-hero h2 {
+                color: #fff; font-size: 24px; font-weight: 600;
+                margin: 0 0 4px; line-height: 1.2;
+            }
+            .rd-hero p { color: #A6B4B8; font-size: 14px; margin: 0; }
+
+            .rd-rating-card {
+                background: #131616;
+                border: 1px solid #242B2D;
+                border-radius: 5px;
+                padding: 14px 18px 14px 10px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .rd-rating-star {
+                color: #FFC107;
+                font-size: 28px;
+                line-height: 1;
+            }
+            .rd-rating-num {
+                color: #fff;
+                font-size: 26px;
+                font-weight: 700;
+                line-height: 1;
+                margin-right: 4px;
+            }
+            .rd-rating-text { line-height: 1.3; }
+            .rd-rating-total { color: #fff; font-weight: 400; font-size: 12px; }
+            .rd-rating-sub   { color: #AAAEB5; font-size: 11px; margin-top: 4px; }
+
+            /* Two-column grid for the review cards. */
+            .rd-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+            @media (max-width: 1024px) { .rd-grid { grid-template-columns: 1fr; } }
+
+            .rd-card {
+                background: #131616;
+                border: 1px solid #242B2D;
+                border-radius: 6px;
+                padding: 14px 20px;
+            }
+            .rd-card-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                padding-bottom: 14px;
+                margin-bottom: 14px;
+                border-bottom: 1px solid #242B2D;
+            }
+            .rd-user {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 0;
+                flex: 1 1 auto;
+            }
+            .rd-avatar {
+                width: 44px; height: 44px; border-radius: 50%;
+                background: linear-gradient(135deg, #2a2d30, #16181a);
+                color: #fff; display: inline-flex; align-items: center;
+                justify-content: center; font-weight: 700; font-size: 16px;
+                flex-shrink: 0; overflow: hidden;
+            }
+            .rd-avatar img { width: 100%; height: 100%; object-fit: cover; }
+            .rd-user-text { min-width: 0; }
+            .rd-user-name { color: #fff; font-weight: 600; font-size: 15px; }
+            .rd-user-date { color: #AAAEB5; font-size: 12.5px; margin-top: 2px;         font-weight: 500;}
+
+            /* Heart rating pill — filled lime for score, muted for the rest. */
+            .rd-hearts {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                background: #1A1A21;
+                border-radius: 999px;
+                padding: 6px 12px;
+                flex-shrink: 0;
+            }
+            .rd-heart        { color: #C1F11D; font-size: 14px; }
+            .rd-heart.is-off { color: #3b4247; }
+
+            .rd-divider { border-top: 1px solid #242B2D; margin: 0 -20px 14px; }
+
+            .rd-text {
+                color: white;
+                font-size: 14px;
+                line-height: 1.55;
+                margin: 0 0 40px;
+            }
+
+            .rd-card-foot {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                padding-top: 12px;
+                border-top: 1px solid #242B2D;
+            }
+            .rd-reviewed {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                color: #AAAEB5;
+                font-size: 11px;
+                min-width: 0;
+            }
+            .rd-reviewed-avatar {
+                width: 24px; height: 24px; border-radius: 50%;
+                background: linear-gradient(135deg, #2a2d30, #16181a);
+                color: #fff; display: inline-flex; align-items: center;
+                justify-content: center; font-weight: 700; font-size: 11px;
+                flex-shrink: 0; overflow: hidden;
+            }
+            .rd-reviewed-avatar img { width: 100%; height: 100%; object-fit: cover; }
+            .rd-reviewed-name { color: #fff; font-weight: 500; }
+
+            .rd-verified {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                color: #17F09C;
+                font-size: 11px;
+                font-weight: 400;
+            }
+
+            .rd-empty {
+                background: #131616;
+                border: 1px solid #242B2D;
+                border-radius: 12px;
+                padding: 60px 20px;
+                text-align: center;
+                color: #8a9398;
+                grid-column: 1 / -1;
+            }
+            .rd-empty i { font-size: 36px; opacity: 0.5; display: block; margin-bottom: 12px; }
+            .rd-empty h3 { color: #fff; font-size: 18px; margin: 0 0 6px; }
+            .rd-empty p { margin: 0; font-size: 14px; }
+        }
     </style>
 
     @push('css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     @endpush
+
+    {{-- Desktop redesign — sits OUTSIDE .ev-container so the full-width
+         back bar stretches edge-to-edge AND the sibling CSS rule
+         (.rd-page ~ .ev-container { display:none }) can hide the legacy
+         communication-nav + sidebar/detail panel on desktop. Mobile keeps
+         the legacy wrapper so the .r-mobile-page design still works. --}}
+    <div class="rd-page">
+        <div class="rd-back-wrap">
+            <div class="ev-container">
+                <a href="{{ url('/') }}" wire:navigate class="rd-back-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back
+                </a>
+                <h1 class="rd-crumb">Reviews</h1>
+                <div class="rd-crumb-spacer"></div>
+            </div>
+        </div>
+
+        <div class="rd-container">
+            <div class="rd-hero">
+                <div>
+                    <h2>Reviews &amp; Ratings</h2>
+                    <p>Feedback and verified ratings from completed luxury escort bookings.</p>
+                </div>
+                @if($totalReviews > 0)
+                    <div class="rd-rating-card">
+                        <span class="rd-rating-star">&#9733;</span>
+                        <span class="rd-rating-num">{{ number_format((float) $avgRating, 1) }}</span>
+                        <div class="rd-rating-text">
+                            <div class="rd-rating-total">{{ $totalReviews }} Total {{ $totalReviews === 1 ? 'Rating' : 'Ratings' }}</div>
+                            <div class="rd-rating-sub">100% Verified Feedback</div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <div class="rd-grid">
+                @forelse($reviews as $review)
+                    @php
+                        $rdReviewer = $review->user ? ($review->user->name ?? $review->user->email) : 'Guest';
+                        $rdInitial  = strtoupper(substr($rdReviewer, 0, 1));
+                        $rdProfileName = $review->profile ? $review->profile->name : 'Profile';
+                        $rdProfileInitial = strtoupper(substr($rdProfileName, 0, 1));
+                        $rdStars = (int) $review->star;
+                    @endphp
+                    <div class="rd-card" wire:key="rd-card-{{ $review->id }}">
+                        <div class="rd-card-head">
+                            <div class="rd-user">
+                                <div class="rd-avatar">{{ $rdInitial }}</div>
+                                <div class="rd-user-text">
+                                    <div class="rd-user-name">{{ $rdReviewer }}</div>
+                                    <div class="rd-user-date">{{ \Carbon\Carbon::parse($review->created_at)->format('F d, Y') }}</div>
+                                </div>
+                            </div>
+                            <div class="rd-hearts" aria-label="{{ $rdStars }} out of 5">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <i class="fa fa-heart rd-heart {{ $i > $rdStars ? 'is-off' : '' }}"></i>
+                                @endfor
+                            </div>
+                        </div>
+
+                        <p class="rd-text">&ldquo;{{ $review->review }}&rdquo;</p>
+
+                        <div class="rd-card-foot">
+                            <div class="rd-reviewed">
+                                <span>Reviewed Profile:</span>
+                                <span class="rd-reviewed-avatar">{{ $rdProfileInitial }}</span>
+                                <span class="rd-reviewed-name">{{ $rdProfileName }}</span>
+                            </div>
+                            <span class="rd-verified">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M6 11.25C4.60761 11.25 3.27226 10.6969 2.28769 9.71231C1.30312 8.72774 0.75 7.39239 0.75 6C0.75 4.60761 1.30312 3.27226 2.28769 2.28769C3.27226 1.30312 4.60761 0.75 6 0.75C7.39239 0.75 8.72774 1.30312 9.71231 2.28769C10.6969 3.27226 11.25 4.60761 11.25 6C11.25 7.39239 10.6969 8.72774 9.71231 9.71231C8.72774 10.6969 7.39239 11.25 6 11.25ZM6 12C7.5913 12 9.11742 11.3679 10.2426 10.2426C11.3679 9.11742 12 7.5913 12 6C12 4.4087 11.3679 2.88258 10.2426 1.75736C9.11742 0.632141 7.5913 0 6 0C4.4087 0 2.88258 0.632141 1.75736 1.75736C0.632141 2.88258 0 4.4087 0 6C0 7.5913 0.632141 9.11742 1.75736 10.2426C2.88258 11.3679 4.4087 12 6 12Z" fill="#1CF3A0"/>
+                                    <path d="M8.22727 3.72747L8.21227 3.74397L5.60752 7.06272L4.03777 5.49222C3.93113 5.39286 3.7901 5.33876 3.64437 5.34134C3.49865 5.34391 3.35961 5.40294 3.25655 5.506C3.15349 5.60906 3.09446 5.7481 3.09188 5.89382C3.08931 6.03955 3.14341 6.18059 3.24277 6.28722L5.22727 8.27247C5.28073 8.32583 5.34439 8.36788 5.41445 8.39611C5.48452 8.42433 5.55955 8.43816 5.63508 8.43676C5.7106 8.43536 5.78507 8.41876 5.85404 8.38796C5.92301 8.35716 5.98507 8.31278 6.03652 8.25747L9.03052 4.51497C9.13246 4.40796 9.1882 4.26514 9.18568 4.11737C9.18317 3.9696 9.12259 3.82875 9.01706 3.72529C8.91152 3.62182 8.76951 3.56405 8.62171 3.56446C8.47392 3.56486 8.33223 3.62342 8.22727 3.72747Z" fill="#1CF3A0"/>
+                                </svg>
+                                Verified
+                            </span>
+                        </div>
+                    </div>
+                @empty
+                    <div class="rd-empty">
+                        <i class="fa fa-star"></i>
+                        <h3>No reviews yet</h3>
+                        <p>Verified reviews from completed bookings will appear here.</p>
+                    </div>
+                @endforelse
+            </div>
+
+            @if($reviews->hasPages())
+                <div class="mt-3">{{ $reviews->links() }}</div>
+            @endif
+        </div>
+    </div>
 
     <div class="ev-container {{ $selectedReview ? 'hide-nav-mobile' : '' }}" style="padding-top: 8px; padding-bottom: 40px;">
                 @include('components.communication-nav')

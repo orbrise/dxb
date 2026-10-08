@@ -920,7 +920,400 @@
             .q-modal-btn--submit { background: #C1F11D; color: #0a0a0a; }
             .q-modal-btn[disabled] { opacity: 0.6; cursor: wait; }
         }
+
+        /* ================================================================
+           Desktop redesign — card list matching the mobile v2 pattern but
+           sized for wide viewports. Hidden on mobile (<=768px), where the
+           existing .q-mobile-page design takes over.
+           ================================================================ */
+        .qd-page { display: none; }
+
+        @media (min-width: 769px) {
+            [x-cloak] { display: none !important; }
+            .qd-page {
+                display: block;
+                background: #000;
+                min-height: calc(100vh - 60px);
+                color: #fff;
+                padding-bottom: 60px;
+            }
+            /* Hide the entire legacy wrapper on desktop (communication nav,
+               flash messages, legacy sidebar/detail panel) — the new .qd-page
+               provides its own full-width back bar + hero + card list. */
+            .qd-page ~ .ev-container { display: none !important; }
+
+            .qd-back-wrap { background: #131616; padding: 14px 0; margin-bottom: 32px; }
+            .qd-back-wrap .ev-container {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .qd-back-link {
+                color: #C1F11D;
+                font-size: 14px;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-weight: 500;
+            }
+            .qd-back-link:hover { color: #d9ff4a; }
+            .qd-crumb { color: #fff; font-size: 14px; font-weight: 500; margin: 0; }
+            .qd-crumb-spacer { width: 60px; }
+
+            .qd-container {
+                max-width: 1240px;
+                margin: 0 auto;
+                padding: 0 16px;
+            }
+
+            .qd-hero {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 20px;
+                margin-bottom:10px;
+            }
+            .qd-hero h2 {
+                color: #fff;
+                font-size: 24px;
+                font-weight: 600;
+                margin: 0 0 4px;
+                line-height: 1.2;
+            }
+            .qd-hero p {
+                color: #A6B4B8;
+                font-size: 14px;
+                margin: 0;
+            }
+            .qd-counter {
+                color: white;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            .qd-counter strong { color: #C1F11D; font-weight: 700; margin-right: 4px; }
+
+            .qd-card {
+                background: #131616;
+                border: 1px solid #242B2D;
+                border-radius: 5px;
+                padding: 18px 26px;
+                margin-bottom: 14px;
+                display: flex;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            .qd-avatar {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #2a2d30, #16181a);
+                color: #fff;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 18px;
+                flex-shrink: 0;
+                overflow: hidden;
+            }
+            .qd-avatar img { width: 100%; height: 100%; object-fit: cover; }
+            .qd-body { flex: 1 1 auto; min-width: 0; }
+            .qd-meta-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 6px;
+                flex-wrap: wrap;
+            }
+            .qd-name { color: #fff; font-weight: 600; font-size: 15px; }
+            .qd-time {
+                color: #AAAEB5;
+                font-size: 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .qd-time i { font-size: 11px; }
+
+            /* Status pill — matches .q-mobile-status--* color palette for consistency. */
+            .qd-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 3px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 600;
+                border: 1px solid transparent;
+            }
+            .qd-badge--new       { color: #C1F11D; border-color: #C1F11D; background: rgba(193,241,29,0.08); }
+            .qd-badge--answered  { color: #17F09C; border-color: #17F09C; background: rgba(23,240,156,0.08); }
+            .qd-badge--pending   { color: #FFB020; border-color: #FFB020; background: rgba(255,176,32,0.08); }
+
+            .qd-quote {
+                color: #AAAEB5;
+                font-size: 14px;
+                line-height: 1.5;
+                margin: 2px 0 0;
+            }
+
+            .qd-answer-box {
+                display: inline-block;
+                width: fit-content;
+                max-width: 100%;
+                margin-top: 10px;
+                background: #1D2222;
+                border: 1px solid #242B2D;
+                border-radius: 8px;
+                padding: 10px 14px;
+                color: #AAAEB5;
+                font-size: 13.5px;
+                line-height: 1.5;
+            }
+            .qd-answer-box-label { color: #17F09C; font-weight: 600; margin-right: 4px; }
+
+            .qd-action { flex: 0 0 auto; align-self: center; }
+            .qd-btn {
+                padding: 8px 22px;
+                border-radius: 999px;
+                border: none;
+                font-size: 13.5px;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: inherit;
+                white-space: nowrap;
+                transition: filter 120ms, transform 120ms;
+            }
+            .qd-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+            .qd-btn--answer { background: #C1F11D; color: #0a0a0a; }
+            .qd-btn--edit   { background: #343B3E; color: #fff; }
+
+            .qd-empty {
+                background: #131616;
+                border: 1px solid #242B2D;
+                border-radius: 10px;
+                padding: 60px 20px;
+                text-align: center;
+                color: #8a9398;
+            }
+            .qd-empty i { font-size: 36px; opacity: 0.5; display: block; margin-bottom: 12px; }
+            .qd-empty h3 { color: #fff; font-size: 18px; margin: 0 0 6px; }
+            .qd-empty p { margin: 0; font-size: 14px; }
+
+            /* Desktop reply modal — mirrors the mobile one and shares the
+               same showReplyModal state so sendAnswer() works unchanged. */
+            .qd-modal-overlay {
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.72);
+                z-index: 9998;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 40px 16px;
+                overflow-y: auto;
+            }
+            .qd-modal {
+                background: #14141A;
+                border: 1px solid #5E6365;
+                border-radius: 5px;
+                max-width: 560px;
+                width: 100%;
+                padding: 24px 26px 22px;
+            }
+            .qd-modal-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding-bottom: 18px;
+                border-bottom: 1px solid #242B2D;
+                margin-bottom: 20px;
+            }
+            .qd-modal-title { color: #fff; font-size: 20px; font-weight: 600; margin: 0; }
+            .qd-modal-close {
+                background: transparent;
+                border: 1px solid #3a4147;
+                color: #fff;
+                width: 30px; height: 30px; border-radius: 50%;
+                font-size: 23px; line-height: 1; cursor: pointer;
+                display: inline-flex; align-items: center; justify-content: center;
+                transition: background 120ms, border-color 120ms;
+            }
+            .qd-modal-close:hover { background: #1a2124; border-color: #4a5157; }
+
+            /* Field group: small label on top, control below. */
+            .qd-modal-field { margin-bottom: 18px; }
+            .qd-modal-label {
+                color: #AAAEB5;
+                font-size: 13.5px;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+
+            .qd-modal-q {
+                background: #1A1A21;
+                border: 1px solid #242B2D;
+                border-radius: 10px;
+                padding: 14px 16px;
+                color: #fff;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+            .qd-modal-textarea {
+                width: 100%;
+                background: #1A1A21;
+                border: 1px solid #242B2D;
+                border-radius: 10px;
+                padding: 14px 16px;
+                color: #fff;
+                font-family: inherit;
+                font-size: 14px;
+                resize: vertical;
+                min-height: 120px;
+                outline: none;
+                transition: border-color 120ms;
+            }
+            .qd-modal-textarea::placeholder { color: #6c7278; }
+            .qd-modal-textarea:focus { border-color: #C1F11D; }
+
+            /* Buttons right-aligned, hug content. */
+            .qd-modal-actions {
+                display: flex;
+                gap: 12px;
+                justify-content: flex-end;
+                margin-top: 20px;
+            }
+            .qd-modal-btn {
+                border: none;
+                border-radius: 999px;
+                padding: 7px 26px;
+                font-size: 14px;
+                font-weight: 600;
+                font-family: inherit;
+                cursor: pointer;
+                transition: filter 120ms, transform 120ms;
+            }
+            .qd-modal-btn:hover:not([disabled]) { filter: brightness(1.08); transform: translateY(-1px); }
+            .qd-modal-btn--cancel { background: #2a2d30; color: #fff; }
+            .qd-modal-btn--submit { background: #C1F11D; color: #0a0a0a; }
+            .qd-modal-btn[disabled] { opacity: 0.6; cursor: wait; }
+        }
     </style>
+
+    {{-- Desktop redesign — sits OUTSIDE the ev-container wrapper so the
+         back bar can stretch full width and so the sibling-selector rule
+         (`.qd-page ~ .ev-container { display:none }`) can hide the legacy
+         communication-nav + flash messages + sidebar/detail panel on desktop.
+         Mobile users still get the legacy wrapper (which contains the
+         .q-mobile-page design). --}}
+    <div class="qd-page" x-data="{ qModal: @entangle('showReplyModal') }">
+        <div class="qd-back-wrap">
+            <div class="ev-container">
+                <a href="{{ url('/') }}" wire:navigate class="qd-back-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back
+                </a>
+                <h1 class="qd-crumb">Questions</h1>
+                <div class="qd-crumb-spacer"></div>
+            </div>
+        </div>
+
+        <div class="qd-container">
+            <div class="qd-hero">
+                <div>
+                    <h2>Questions &amp; Inquiries</h2>
+                    <p>Review and reply to inquiries received from VIP members and profiles.</p>
+                </div>
+                @if($unansweredCount > 0)
+                    <div class="qd-counter"><strong>{{ $unansweredCount }}</strong> New Inquiries</div>
+                @endif
+            </div>
+
+            @forelse($questions as $question)
+                @php
+                    $qdAsker = $question->askedBy ? ($question->askedBy->name ?? $question->askedBy->email) : 'Guest';
+                    $qdInitial = strtoupper(substr($qdAsker, 0, 1));
+                    $qdTime = $question->created_at->diffForHumans(null, true) . ' ago';
+                    if ($question->answer) {
+                        $qdStatus = 'answered'; $qdLabel = 'Answered';
+                    } elseif ($question->created_at->lt(now()->subHours(24))) {
+                        $qdStatus = 'pending';  $qdLabel = 'Pending';
+                    } else {
+                        $qdStatus = 'new';      $qdLabel = 'New';
+                    }
+                @endphp
+                <div class="qd-card" wire:key="qd-card-{{ $question->id }}">
+                    <div class="qd-avatar">{{ $qdInitial }}</div>
+                    <div class="qd-body">
+                        <div class="qd-meta-row">
+                            <span class="qd-name">{{ $qdAsker }}</span>
+                            <span class="qd-badge qd-badge--{{ $qdStatus }}">{{ $qdLabel }}</span>
+                            <span class="qd-time"><i class="far fa-clock"></i> {{ $qdTime }}</span>
+                        </div>
+                        <div class="qd-quote">&ldquo;{{ $question->question }}&rdquo;</div>
+                        @if($question->answer)
+                            <div class="qd-answer-box">
+                                <span class="qd-answer-box-label">Your Answer:</span>{{ Str::limit($question->answer, 200) }}
+                            </div>
+                        @endif
+                    </div>
+                    <div class="qd-action">
+                        @if($question->answer)
+                            <button type="button" class="qd-btn qd-btn--edit"
+                                    wire:click="selectQuestion({{ $question->id }})">Edit Answer</button>
+                        @else
+                            <button type="button" class="qd-btn qd-btn--answer"
+                                    wire:click="selectQuestion({{ $question->id }})">Answer Inquiry</button>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="qd-empty">
+                    <i class="fa fa-question-circle"></i>
+                    <h3>No questions yet</h3>
+                    <p>Inquiries from VIP members will appear here.</p>
+                </div>
+            @endforelse
+
+            @if($questions->hasPages())
+                <div class="mt-3">{{ $questions->links() }}</div>
+            @endif
+        </div>
+
+        {{-- Desktop reply modal (same state as mobile). --}}
+        <div class="qd-modal-overlay" x-show="qModal" x-cloak @click.self="qModal = false; $wire.closeModal()" style="display:none">
+            <div class="qd-modal">
+                <div class="qd-modal-head">
+                    <h3 class="qd-modal-title">
+                        @if($selectedQuestion)
+                            Reply to {{ $selectedQuestion->askedBy ? ($selectedQuestion->askedBy->name ?? $selectedQuestion->askedBy->email) : 'Guest' }}
+                        @else
+                            Reply
+                        @endif
+                    </h3>
+                    <button type="button" class="qd-modal-close" @click="qModal = false; $wire.closeModal()" aria-label="Close">&times;</button>
+                </div>
+                @if($selectedQuestion)
+                    <div class="qd-modal-field">
+                        <div class="qd-modal-label">Received Question:</div>
+                        <div class="qd-modal-q">{{ $selectedQuestion->question }}</div>
+                    </div>
+                @endif
+                <div class="qd-modal-field">
+                    <div class="qd-modal-label">Your Professional Response</div>
+                    <textarea class="qd-modal-textarea" wire:model="answer" rows="5"
+                              placeholder="Type your polite and comprehensive response here..."></textarea>
+                    @error('answer')
+                        <div style="color:#ff6b6b; font-size:12px; margin-top:6px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="qd-modal-actions">
+                    <button type="button" class="qd-modal-btn qd-modal-btn--cancel" @click="qModal = false; $wire.closeModal()">Cancel</button>
+                    <button type="button" class="qd-modal-btn qd-modal-btn--submit" wire:click="sendAnswer" wire:loading.attr="disabled">Submit Response</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="ev-container {{ $selectedQuestion ? 'hide-nav-mobile' : '' }}" style="padding-top: 8px; padding-bottom: 40px;">
                 @include('components.communication-nav')
@@ -1067,6 +1460,10 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Legacy desktop view below — hidden on desktop by the
+                         .qd-page ~ .ev-container CSS rule. Still rendered on
+                         mobile so the existing .q-mobile-page design works. --}}
 
                     {{-- WhatsApp-style Questions Container --}}
                     <div class="questions-container">

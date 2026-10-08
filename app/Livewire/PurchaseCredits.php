@@ -14,6 +14,15 @@ class PurchaseCredits extends Component
     public $amount = 10;
 
     /**
+     * Set to true when this component is embedded in the Wallet modal
+     * (`<livewire:purchase-credits :in-modal="true" />`). The view branches
+     * on this to hide the full-page chrome (header, hero, legacy wrapper)
+     * and render only the amount input + gateway cards + iframe/PayPal
+     * sections — the pieces that live inside the modal.
+     */
+    public bool $inModal = false;
+
+    /**
      * Users who signed in via Google (or any other flow that skipped wallet
      * creation) reach this page without a `wallets` row, and the Blade view
      * dereferences `wallet->balance`, which fatals on null. Create one up

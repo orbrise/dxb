@@ -127,7 +127,7 @@
     }
     .pa-name {
         font-size: 18px;
-        font-weight: 700;
+        font-weight: 500;
         color: #fff;
     }
     .pa-cur-badge {
@@ -152,11 +152,11 @@
         color: #fff;
         line-height: 1;
     }
-    .pa-period { color: rgba(255,255,255,0.5); font-size: 14px; }
+    .pa-period { color: #A6B4B8; font-size: 15px; }
 
     .pa-desc {
-        color: rgba(255,255,255,0.55);
-        font-size: 13px;
+        color: #A6B4B8;
+        font-size: 15px;
         line-height: 1.55;
         margin: 0 0 22px;
     }
@@ -176,7 +176,7 @@
         align-items: center;
         gap: 10px;
         color: #fff;
-        font-size: 13.5px;
+        font-size: 14.5px;
     }
     .pa-feature-icon {
         width: 16px;
@@ -192,11 +192,11 @@
     /* CTA button */
     .pa-cta {
         width: 100%;
-        padding: 14px 20px;
+        padding: 10px 20px;
         border-radius: 999px;
         border: none;
-        font-size: 14px;
-        font-weight: 700;
+        font-size: 16px;
+        font-weight: 500;
         font-family: inherit;
         cursor: pointer;
         transition: transform 120ms, filter 120ms;

@@ -810,6 +810,19 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
 }
 </style>
 
+<div>
+@if($inModal)
+    {{-- Modal-embedded mode: show only the amount + payment-method + iframe
+         form (no page chrome, no mobile v2 hero, no legacy page wrapper).
+         Still inside <div class="purchase-credits-page"> so the existing
+         CSS selectors (.payment-method-option, .amount-input-group, etc.)
+         style the form the same way as the standalone page. --}}
+    <div class="purchase-credits-page" style="padding: 0; background: transparent; min-height: 0;">
+        <div id="content">
+            @include('livewire.partials._purchase-credits-form')
+        </div>
+    </div>
+@else
 <div class="pc-v2-active" x-data="{ showBuy: false, txFilter: 'all' }" x-cloak>
 
 {{-- ═══════════════════════════════════════════
@@ -1120,93 +1133,14 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
               <p style="color: #999; font-size: 15px;">Once you have credits in your account, Account Balance will be available as a payment method for upgrading your profiles.</p>
             </div>
 
-            <div>
-              <div id="credits_purchase_form">
-                <!-- Amount Input -->
-                <div class="d-flex align-items-center">
-                  <div class="amount-input-group">
-                    <span class="dollar-sign">$</span>
-                    <input type="number" wire:model.live="amount" min="5" step="1" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" value="10" id="amount" />
-                  </div>
-                  <span class="choose-amount-label">Choose amount</span>
-                </div>
-                @error('amount')
-                <div class="mt-2" style="color: #ff4d4d; font-size: 14px;">{{ $message }}</div>
-                @enderror
-
-                <!-- Payment Method -->
-                <div class="payment-methods-card">
-                  <h2>Payment Method</h2>
-                  <div class="payment-method-selector">
-                    <!-- Primary Gateway Option -->
-                    <div class="payment-method-option" data-payment-method="primary">
-                      <label for="payment_method_primary" class="mb-0">
-                        <input type="radio" name="payment_method" id="payment_method_primary" value="primary">
-                        <span>Primary Gateway</span>
-                        <span class="ev-card-logos">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard">
-                          <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa">
-                        </span>
-                      </label>
-                    </div>
-
-                    <!-- Secondary Gateway Option -->
-                    <div class="payment-method-option" data-payment-method="paypal">
-                      <label for="payment_method_paypal" class="mb-0">
-                        <input type="radio" name="payment_method" id="payment_method_paypal" value="paypal">
-                        <span>Secondary Gateway</span>
-                        <span class="ev-card-logos">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="Mastercard">
-                          <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa">
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Primary Gateway Payment Section -->
-                <div id="primary-payment-section" class="payment-section">
-                  <div class="payment-section-card">
-                    <p>You will be charged <strong>$<span class="payment-amount">{{ $amount }}</span></strong> via credit/debit card.</p>
-
-                    <div class="package-display">
-                      <div class="package-label">Package</div>
-                      <div class="package-amount">$<span class="payment-amount">{{ $amount }}</span>.00 <span class="package-currency">USD</span></div>
-                    </div>
-
-                    <div id="primary-gateway-container">
-                      <div id="primary-gateway-loading" style="display: none;">
-                        <i class="fa fa-spinner fa-spin fa-2x"></i>
-                        <p class="mt-2">Loading secure payment form...</p>
-                      </div>
-                      <iframe id="primary-gateway-iframe" style="display: none;"></iframe>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- PayPal Payment Section -->
-                <div id="paypal-payment-section" class="payment-section">
-                  <div class="payment-section-card">
-                    <p>You will be charged <strong>$<span class="payment-amount">{{ $amount }}</span></strong> via PayPal.</p>
-
-                    <div class="package-display">
-                      <div class="package-label">Package</div>
-                      <div class="package-amount">$<span class="payment-amount">{{ $amount }}</span>.00 <span class="package-currency">USD</span></div>
-                    </div>
-
-                    <div id="paypal-button-container" class="mt-3"></div>
-                    <p class="small text-center mt-3" style="color: #666;">
-                      Secure payment processing by PayPal. You can use your credit/debit card or PayPal balance.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            @include('livewire.partials._purchase-credits-form')
         </div>
   </div>
   </div>{{-- /ev-container --}}
 </div>
 </div>
+@endif
+</div>{{-- /modal-branch root --}}
 
 @push('js')
 <script>
@@ -1227,64 +1161,61 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             selectedAmount = parseFloat(amountInput.value) || {{ $amount }};
         }
         
-        // Payment method selection
-        document.querySelectorAll('.payment-method-option').forEach(function(option) {
-            option.addEventListener('click', function(e) {
-                var method = this.getAttribute('data-payment-method');
-                
-                // Update selection UI
-                document.querySelectorAll('.payment-method-option').forEach(function(opt) {
-                    opt.classList.remove('selected');
-                });
-                this.classList.add('selected');
-                this.querySelector('input[type="radio"]').checked = true;
-                
-                // Hide all payment sections
-                document.querySelectorAll('.payment-section').forEach(function(section) {
-                    section.style.display = 'none';
-                });
-                
-                // Show selected payment section
-                selectedPaymentMethod = method;
-                var section = document.getElementById(method + '-payment-section');
-                if (section) {
-                    section.style.display = 'block';
-                    
-                    // Scroll to payment section on mobile
-                    if (window.innerWidth <= 768) {
-                        setTimeout(function() {
-                            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 100);
-                    }
-                }
-                
-                // Initialize the appropriate payment method
-                if (method === 'primary') {
-                    initPrimaryGatewayIframe();
-                } else if (method === 'paypal') {
-                    initPayPalButtons();
-                }
+        // Payment method selection — document-level delegation so the
+        // handler survives Alpine re-mounts of the Wallet "+ Buy Credits"
+        // modal (the .payment-method-option nodes are fresh each time the
+        // modal opens; element-bound listeners would be lost).
+        document.addEventListener('click', function (e) {
+            var option = e.target.closest ? e.target.closest('.payment-method-option') : null;
+            if (!option) return;
+
+            var method = option.getAttribute('data-payment-method');
+
+            document.querySelectorAll('.payment-method-option').forEach(function(opt) {
+                opt.classList.remove('selected');
             });
+            option.classList.add('selected');
+            var radio = option.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+
+            document.querySelectorAll('.payment-section').forEach(function(section) {
+                section.style.display = 'none';
+            });
+
+            selectedPaymentMethod = method;
+            var section = document.getElementById(method + '-payment-section');
+            if (section) {
+                section.style.display = 'block';
+                if (window.innerWidth <= 768) {
+                    setTimeout(function() {
+                        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                }
+            }
+
+            if (method === 'primary') {
+                initPrimaryGatewayIframe();
+            } else if (method === 'paypal') {
+                initPayPalButtons();
+            }
         });
-        
-        // Amount input change handler
-        if (amountInput) {
-            amountInput.addEventListener('input', function() {
-                selectedAmount = parseFloat(this.value) || 0;
-                updateAmountDisplay(selectedAmount);
-                
-                // Reinitialize payment method if valid amount
-                if (selectedAmount >= 5) {
-                    if (selectedPaymentMethod === 'primary') {
-                        clearTimeout(window.primaryInitTimeout);
-                        window.primaryInitTimeout = setTimeout(initPrimaryGatewayIframe, 500);
-                    } else if (selectedPaymentMethod === 'paypal') {
-                        clearTimeout(window.paypalInitTimeout);
-                        window.paypalInitTimeout = setTimeout(initPayPalButtons, 500);
-                    }
+
+        // Amount input change — delegated for the same reason as above.
+        document.addEventListener('input', function (e) {
+            if (!e.target || e.target.id !== 'amount') return;
+            selectedAmount = parseFloat(e.target.value) || 0;
+            updateAmountDisplay(selectedAmount);
+
+            if (selectedAmount >= 5) {
+                if (selectedPaymentMethod === 'primary') {
+                    clearTimeout(window.primaryInitTimeout);
+                    window.primaryInitTimeout = setTimeout(initPrimaryGatewayIframe, 500);
+                } else if (selectedPaymentMethod === 'paypal') {
+                    clearTimeout(window.paypalInitTimeout);
+                    window.paypalInitTimeout = setTimeout(initPayPalButtons, 500);
                 }
-            });
-        }
+            }
+        });
         
         // Listen for message from iframe (payment success, failure, or started)
         window.addEventListener('message', function(event) {
@@ -1388,13 +1319,14 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             amount: selectedAmount
         };
 
-        var callbackUrl = encodeURIComponent(window.location.origin + '/payment/credits-callback?reference_id=' + referenceId);
-
+        // No more callback_url: myads resolves `client_id` → webhook URL
+        // via its own config/payment_clients.php, so the evoory domain never
+        // reaches Stripe's dashboard metadata.
         var externalPaymentUrl = 'https://myadsnetwork.com/external-payment/checkout' +
             '?price=' + selectedAmount +
             '&name=' + encodeURIComponent('Purchase ' + selectedAmount + ' Credits') +
             '&currency=USD' +
-            '&callback_url=' + callbackUrl +
+            '&client_id=evoory' +
             '&reference_id=' + referenceId +
             '&customer_email=' + encodeURIComponent('{{ auth()->user()->email }}');
 

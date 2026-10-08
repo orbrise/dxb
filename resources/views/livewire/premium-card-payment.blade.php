@@ -10,7 +10,7 @@
 
     .cc-page { background: #000; min-height: 100vh; color: #fff; padding-bottom: 60px; }
 
-    .cc-back-wrap { background: #131616; padding: 14px 0; margin-bottom: 24px; }
+    .cc-back-wrap { background: #131616; padding: 14px 0; margin-bottom: 60px; }
     .cc-back-link {
         color: #C1F11D;
         font-size: 14px;
@@ -103,17 +103,15 @@
         const referenceId = 'PREMIUM_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         window.premiumPaymentReference = { referenceId, amount: price, plan: planSlug };
 
-        const callbackUrl = encodeURIComponent(
-            window.location.origin + '/payment/primary-callback?reference_id=' + referenceId
-        );
-
+        // No callback_url — myads resolves client_id=evoory → webhook URL
+        // from its own registry so the evoory domain never reaches Stripe.
         const url = myadsBase + '/external-payment/premium-checkout' +
             '?price=' + encodeURIComponent(price) +
             '&package_id=' + encodeURIComponent('premium_' + planSlug) +
             '&package_name=' + encodeURIComponent(planLabel) +
             '&period_label=' + encodeURIComponent(period || '/ month') +
             '&currency=USD' +
-            '&callback_url=' + callbackUrl +
+            '&client_id=evoory' +
             '&reference_id=' + referenceId +
             '&customer_email=' + encodeURIComponent(customerEmail) +
             '&customer_name=' + encodeURIComponent(customerName);

@@ -350,6 +350,11 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get("my-password/edit", \App\Livewire\Profile\UserAccountPassword::class)->name("user.account.password");
     Route::get("my-account/newsletter/edit", \App\Livewire\NewsletterSettings::class)->name("user.account.newsletter");
     Route::get("my-account/credits/history", \App\Livewire\CreditsHistory::class)->name("user.credits.history");
+    // New Wallet page — hero + available credits + transaction history. The
+    // "+ Buy Credits" button opens a modal that embeds <livewire:purchase-credits>
+    // in modal mode, reusing the existing payment flow (gateway iframe, PayPal,
+    // wallet crediting, transaction creation).
+    Route::get("my-wallet", \App\Livewire\Wallet::class)->name("user.wallet");
     Route::post("my-account/delete", [App\Http\Controllers\UserAccountController::class, 'deleteAccount'])->name("user.account.delete");
     Route::get("my-messages", \App\Livewire\Messages::class)->name("user.messages");
     Route::get("my-chat", \App\Livewire\Chat::class)->name("user.chat");

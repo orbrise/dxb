@@ -44,7 +44,7 @@
         align-items: flex-start;
         gap: 16px;
         padding-bottom: 22px;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
+        border-bottom: 1px solid  #303638;
         margin-bottom: 24px;
     }
     .pc-title {
@@ -128,6 +128,15 @@
     }
     .pc-method .pc-method-icon i { font-size: 16px; }
 
+    /* Wallet balance badge pushed to the far right of the method button. */
+    .pc-wallet-balance {
+        margin-left: auto;
+        color: #C1F11D;
+        font-weight: 600;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
     /* Wallet breakdown table */
     .pc-breakdown {
         background: #14141A2E;
@@ -157,7 +166,7 @@
         background: #C1F11D;
         color: #0a0a0a;
         font-weight: 700;
-        font-size: 15px;
+        font-size: 16px;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -168,7 +177,7 @@
     }
     .pc-pay-btn:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
     .pc-pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .pc-pay-btn svg { width: 15px; height: 15px; }
+    .pc-pay-btn svg { width: 17px; height: 17px; }
 
     .pc-insufficient {
         color: #FF4A4A;
@@ -242,6 +251,7 @@
                             </svg>
                         </span>
                         <span>Evoory Wallet</span>
+                        <span class="pc-wallet-balance">${{ number_format($walletBalance, 2) }}</span>
                     </button>
 
                     {{-- Wallet breakdown — Alpine x-show so toggling is instant. --}}
@@ -263,7 +273,7 @@
                     <button type="button" class="pc-pay-btn"
                             @click="$wire.proceed(method)"
                             :disabled="method === 'wallet' && !canUseWallet">
-                        <svg width="14" height="17" viewBox="0 0 14 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M7 0C8.23768 0 9.42466 0.511733 10.2998 1.42262C11.175 2.33352 11.6667 3.56895 11.6667 4.85714V7.28571L11.9047 7.29786C12.4794 7.35919 13.0118 7.64025 13.3989 8.08663C13.7859 8.53302 14.0001 9.11299 14 9.71429V14.5714C14 15.2155 13.7542 15.8332 13.3166 16.2887C12.879 16.7441 12.2855 17 11.6667 17H2.33333C1.71449 17 1.121 16.7441 0.683417 16.2887C0.245833 15.8332 0 15.2155 0 14.5714V9.71429C0 9.07019 0.245833 8.45247 0.683417 7.99703C1.121 7.54158 1.71449 7.28571 2.33333 7.28571V4.85714C2.33333 3.56895 2.825 2.33352 3.70017 1.42262C4.57534 0.511733 5.76232 0 7 0ZM7 9.71429C6.69058 9.71429 6.39383 9.84222 6.17504 10.0699C5.95625 10.2977 5.83333 10.6065 5.83333 10.9286V13.3571C5.83333 13.6792 5.95625 13.988 6.17504 14.2158C6.39383 14.4435 6.69058 14.5714 7 14.5714C7.30942 14.5714 7.60616 14.4435 7.82496 14.2158C8.04375 13.988 8.16667 13.6792 8.16667 13.3571V10.9286C8.16667 10.6065 8.04375 10.2977 7.82496 10.0699C7.60616 9.84222 7.30942 9.71429 7 9.71429ZM7 2.42857C6.38116 2.42857 5.78767 2.68444 5.35008 3.13988C4.9125 3.59533 4.66667 4.21305 4.66667 4.85714V7.28571H9.33333V4.85714C9.33333 4.21305 9.0875 3.59533 8.64991 3.13988C8.21233 2.68444 7.61884 2.42857 7 2.42857Z" fill="black"/>
                         </svg>
                         Pay ${{ number_format($price, 2) }} &amp; Activate Premium
