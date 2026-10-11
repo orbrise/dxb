@@ -163,19 +163,66 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                     S.callId = prev;
                     return;
                 }
-                // ICE-restart offer arriving on an active call
+                // Renegotiation offer arriving on an active call (ICE-restart
+                // OR mid-call switch). If a switch is in progress on this
+                // side, attach our local track BEFORE answering so both the
+                // sender's and receiver's new tracks land in one SDP round.
                 if (S.pc && S.callId === e.callId) {
                     try {
                         await S.pc.setRemoteDescription(new RTCSessionDescription({
                             type: e.payload.sdp.type || 'offer',
                             sdp: sanitizeIncomingSdp(normalizeSdp(e.payload.sdp.sdp)),
                         }));
+
+                        // Mid-switch: attach our local track(s) now that the
+                        // remote description includes new media sections.
+                        if (S._awaitingSwitchOffer === 'video' && S.localStream) {
+                            const videoTrack = S.localStream.getVideoTracks()[0];
+                            if (videoTrack) {
+                                const existingVideoTx = S.pc.getTransceivers().find(tx => tx.receiver?.track?.kind === 'video');
+                                if (existingVideoTx && existingVideoTx.sender) {
+                                    try { existingVideoTx.direction = 'sendrecv'; } catch (_) {}
+                                    await existingVideoTx.sender.replaceTrack(videoTrack);
+                                } else {
+                                    S.pc.addTrack(videoTrack, S.localStream);
+                                }
+                            }
+                            S.callType = 'video';
+                        } else if (S._awaitingSwitchOffer === 'audio') {
+                            // Downgrade: stop our video senders.
+                            S.pc.getSenders().forEach(sd => {
+                                if (sd.track && sd.track.kind === 'video') {
+                                    try { sd.replaceTrack(null); } catch (_) {}
+                                }
+                            });
+                            if (S.localStream) {
+                                S.localStream.getVideoTracks().forEach(t => {
+                                    t.stop();
+                                    try { S.localStream.removeTrack(t); } catch (_) {}
+                                });
+                            }
+                            S.callType = 'audio';
+                        }
+
                         const answer = await S.pc.createAnswer();
                         await S.pc.setLocalDescription(answer);
                         await postSignal('answer', { sdp: { type: answer.type, sdp: sanitizeOutgoingSdp(answer.sdp) } });
-                        setState('Reconnecting…');
+
+                        if (S._awaitingSwitchOffer) {
+                            const to = S._awaitingSwitchOffer;
+                            S._awaitingSwitchOffer = null;
+                            S._suppressNegotiation = false;
+                            showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
+                            attachLocalPreview();
+                            updateSwitchBtn();
+                            toast(to === 'video' ? 'Switched to video' : 'Switched to voice');
+                        } else {
+                            setState('Reconnecting…');
+                        }
                     } catch (err) {
-                        console.warn('[rtc] ICE-restart answer failed', err);
+                        console.warn('[rtc] renegotiation answer failed', err);
+                        S._awaitingSwitchOffer = null;
+                        S._suppressNegotiation = false;
                     }
                     return;
                 }
@@ -257,6 +304,56 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             }
             if (t === 'hangup') { toast('Call ended.'); endCall(false); return; }
             if (t === 'ringing') { setState('Ringing…'); return; }
+
+            // ------- Mid-call audio↔video switch (WhatsApp style) -------
+            // Three-step handshake: initiator sends 'switch-request{to}',
+            // responder shows prompt → sends 'switch-accept' or
+            // 'switch-reject'. On accept, both sides perform the actual
+            // media change + an SDP renegotiation driven by onnegotiationneeded.
+            if (t === 'switch-request' || t === 'switch-accept' || t === 'switch-reject') {
+                console.log('[rtc-switch] received ' + t, {
+                    payload: e.payload, callId: e.callId, from: e.from,
+                    myCallId: S.callId, myPending: S._pendingSwitch,
+                });
+            }
+            if (t === 'switch-request') {
+                if (!S.pc || S._pendingSwitch) {
+                    // Already in a switch flow or no active call — reject.
+                    await postSignal('switch-reject', { to: e.payload?.to || 'video' });
+                    return;
+                }
+                const to = e.payload?.to === 'audio' ? 'audio' : 'video';
+                if (to === S.callType) {
+                    // Already in the requested mode — auto-accept to keep peers in sync.
+                    await postSignal('switch-accept', { to });
+                    return;
+                }
+                S._pendingSwitch = { to, role: 'receiver' };
+                showSwitchPrompt(to);
+                return;
+            }
+
+            if (t === 'switch-accept' && S._pendingSwitch?.role === 'sender') {
+                const to = S._pendingSwitch.to;
+                S._pendingSwitch = null;
+                try {
+                    await applyMediaSwitch(to);
+                    toast(to === 'video' ? 'Switched to video' : 'Switched to voice');
+                } catch (err) {
+                    console.error('[rtc] applyMediaSwitch (sender) failed', err);
+                    toast('Could not switch — check camera permission.');
+                }
+                updateSwitchBtn();
+                return;
+            }
+
+            if (t === 'switch-reject' && S._pendingSwitch?.role === 'sender') {
+                const target = S._pendingSwitch.to;
+                S._pendingSwitch = null;
+                toast(target === 'video' ? 'Video request declined.' : 'Voice request declined.');
+                updateSwitchBtn();
+                return;
+            }
         } catch (err) {
             console.error('[rtc] signal error', err);
         }
@@ -409,6 +506,30 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             S.remoteStream.addTrack(ev.track);
         };
 
+        // Fires when addTrack/removeTrack (or direction change) requires a
+        // new offer/answer round. Used by the mid-call voice↔video switch.
+        //
+        // Only the SENDER (switch initiator) drives the renegotiation offer.
+        // The receiver suppresses their own fire via S._suppressNegotiation
+        // and instead attaches their track just-in-time inside the ICE-restart
+        // offer branch of rtcHandleSignal, before creating the answer. This
+        // avoids SDP glare where both sides race to send offers simultaneously.
+        pc.onnegotiationneeded = async () => {
+            if (!S.connectedAt) return;         // skip during initial handshake
+            if (S._suppressNegotiation) return; // receiver's add-track fires it; sender drives
+            if (S._makingOffer) return;         // already in a renegotiation round
+            S._makingOffer = true;
+            try {
+                const offer = await S.pc.createOffer();
+                await S.pc.setLocalDescription(offer);
+                await postSignal('offer', { sdp: { type: offer.type, sdp: sanitizeOutgoingSdp(offer.sdp) } });
+            } catch (err) {
+                console.warn('[rtc] renegotiation failed', err);
+            } finally {
+                S._makingOffer = false;
+            }
+        };
+
         pc.oniceconnectionstatechange = () => {
             console.log('[rtc] iceConnectionState →', pc.iceConnectionState);
         };
@@ -459,6 +580,8 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 clearTimeout(S.ringTimeout);
                 clearTimeout(S.reconnectTimer); S.reconnectTimer = null;
                 clearTimeout(S.reconnectHardTimer); S.reconnectHardTimer = null;
+                // Switch button only makes sense once media is flowing.
+                updateSwitchBtn();
             }
             // disconnected = transient blip; failed = ICE gave up. Cross-
             // country relay calls (peer A → TURN in US → peer B in Asia)
@@ -512,6 +635,180 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false,
         });
         return S.localStream;
+    }
+
+    // --- Mid-call switch (voice ↔ video) ------------------------------
+    // Called on BOTH sides after a successful handshake (sender on
+    // switch-accept, receiver inside acceptSwitch()). Modifies the local
+    // stream + peer connection in place; onnegotiationneeded fires an
+    // offer/answer renegotiation automatically if needed.
+    async function applyMediaSwitch(to) {
+        if (!S.pc) return;
+
+        if (to === 'video') {
+            // Add a camera track to the existing stream + peer connection.
+            if (!S.localStream) {
+                S.localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                });
+            } else if (!S.localStream.getVideoTracks().length) {
+                const camStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                });
+                const videoTrack = camStream.getVideoTracks()[0];
+                S.localStream.addTrack(videoTrack);
+                // Reuse an existing recvonly video transceiver if present;
+                // otherwise add a new sendrecv track to the peer connection.
+                const videoSender = S.pc.getSenders().find(s => s.track === null && s.transport);
+                const existingVideoTx = S.pc.getTransceivers().find(tx => tx.receiver?.track?.kind === 'video');
+                if (existingVideoTx && existingVideoTx.sender) {
+                    await existingVideoTx.sender.replaceTrack(videoTrack);
+                    try { existingVideoTx.direction = 'sendrecv'; } catch (_) {}
+                } else {
+                    S.pc.addTrack(videoTrack, S.localStream);
+                }
+            }
+            S.callType = 'video';
+        } else {
+            // Downgrade — stop + remove our video track(s). Peer's video track
+            // continues to be received unless they also downgrade (which they do,
+            // since both sides call applyMediaSwitch after an accept).
+            if (S.localStream) {
+                S.localStream.getVideoTracks().forEach(t => {
+                    t.stop();
+                    try { S.localStream.removeTrack(t); } catch (_) {}
+                });
+            }
+            S.pc.getSenders().forEach(sender => {
+                if (sender.track && sender.track.kind === 'video') {
+                    try { sender.replaceTrack(null); } catch (_) {}
+                }
+            });
+            S.callType = 'audio';
+        }
+
+        // Refresh the UI panel (shows/hides video elements, swaps icons).
+        showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
+        attachLocalPreview();
+        updateSwitchBtn();
+    }
+
+    // --- Switch button + prompt UI helpers ----------------------------
+    function updateSwitchBtn() {
+        const btn = document.getElementById('rtcSwitchBtn');
+        if (!btn) return;
+        // Only visible once the call is connected (not during ringing).
+        const connected = !!S.connectedAt;
+        if (!S.pc || !connected) {
+            btn.style.display = 'none';
+            btn.classList.remove('is-pending');
+            return;
+        }
+        btn.style.display = '';
+        const isVideo = S.callType === 'video';
+        btn.title = isVideo ? 'Switch to voice' : 'Switch to video';
+        btn.innerHTML = isVideo
+            ? '<i class="fa fa-phone"></i>'
+            : '<i class="fa fa-video"></i>';
+        if (S._pendingSwitch) btn.classList.add('is-pending');
+        else                  btn.classList.remove('is-pending');
+    }
+    function showSwitchPrompt(to) {
+        const el = document.getElementById('rtcSwitchPrompt');
+        if (!el) return;
+        const title = document.getElementById('rtcSwitchPromptTitle');
+        const sub   = document.getElementById('rtcSwitchPromptSub');
+        const icon  = document.getElementById('rtcSwitchPromptIcon');
+        const peerName = S.peer?.name || 'The other person';
+        if (to === 'video') {
+            if (title) title.textContent = 'Switch to video?';
+            if (sub)   sub.textContent   = `${peerName} wants to turn on video.`;
+            if (icon)  icon.className    = 'fa fa-video';
+        } else {
+            if (title) title.textContent = 'Switch to voice?';
+            if (sub)   sub.textContent   = `${peerName} wants to turn off video.`;
+            if (icon)  icon.className    = 'fa fa-phone';
+        }
+        el.classList.add('open');
+    }
+    function hideSwitchPrompt() {
+        document.getElementById('rtcSwitchPrompt')?.classList.remove('open');
+    }
+    // Receiver side: Accept the pending switch.
+    //
+    // Flow: send switch-accept → mark that we're awaiting the sender's
+    // renegotiation offer → add our local track (suppressed negotiation).
+    // When the sender's offer arrives via the ICE-restart branch, we add
+    // our track BEFORE creating the answer so both tracks land in one
+    // negotiation round — no SDP glare.
+    async function acceptSwitch() {
+        if (!S._pendingSwitch || S._pendingSwitch.role !== 'receiver') return;
+        const to = S._pendingSwitch.to;
+        hideSwitchPrompt();
+        S._pendingSwitch = null;
+        try {
+            await postSignal('switch-accept', { to });
+            // Flag so the ICE-restart offer branch knows to attach our local
+            // track before creating the answer. Suppress onnegotiationneeded
+            // for the same reason — the sender drives this round.
+            S._awaitingSwitchOffer = to;
+            S._suppressNegotiation = true;
+            // Pre-acquire the media so the just-in-time attach inside the
+            // offer handler is instant. If getUserMedia fails here, bail.
+            if (to === 'video' && (!S.localStream || !S.localStream.getVideoTracks().length)) {
+                if (!S.localStream) {
+                    S.localStream = await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                        video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                    });
+                } else {
+                    const cam = await navigator.mediaDevices.getUserMedia({
+                        video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                    });
+                    S.localStream.addTrack(cam.getVideoTracks()[0]);
+                }
+            }
+        } catch (err) {
+            console.error('[rtc] acceptSwitch failed', err);
+            toast('Could not switch — check camera permission.');
+            S._awaitingSwitchOffer = null;
+            S._suppressNegotiation = false;
+            try { await postSignal('switch-reject', { to }); } catch (_) {}
+        }
+        updateSwitchBtn();
+    }
+    // Receiver side: Decline the pending switch.
+    async function rejectSwitch() {
+        if (!S._pendingSwitch || S._pendingSwitch.role !== 'receiver') return;
+        const to = S._pendingSwitch.to;
+        hideSwitchPrompt();
+        S._pendingSwitch = null;
+        try { await postSignal('switch-reject', { to }); } catch (_) {}
+    }
+    // Sender side: Request the switch.
+    async function requestSwitch() {
+        console.log('[rtc-switch] requestSwitch called', {
+            hasPc: !!S.pc, connectedAt: S.connectedAt,
+            pending: S._pendingSwitch, callType: S.callType,
+            callId: S.callId, peerId: S.peer?.id,
+        });
+        if (!S.pc || !S.connectedAt || S._pendingSwitch) {
+            console.warn('[rtc-switch] requestSwitch bailed — missing precondition');
+            return;
+        }
+        const to = S.callType === 'video' ? 'audio' : 'video';
+        S._pendingSwitch = { to, role: 'sender' };
+        updateSwitchBtn();
+        try {
+            await postSignal('switch-request', { to });
+            console.log('[rtc-switch] switch-request sent, to=' + to);
+        } catch (err) {
+            console.error('[rtc-switch] switch-request POST failed', err);
+            S._pendingSwitch = null;
+            updateSwitchBtn();
+            toast('Could not send switch request: ' + err.message);
+        }
     }
     function attachLocalPreview() {
         const lv = document.getElementById('rtcLocalVideo');
@@ -729,6 +1026,10 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             if (rv) rv.style.display = 'block';
             if (videoBtn) videoBtn.style.display = '';
         }
+        // Recompute switch button visibility whenever the call panel renders —
+        // handles Livewire morph / navigation restore where this fn runs again
+        // after the call has already connected.
+        updateSwitchBtn();
     }
     function hideCallUI() {
         const call = document.getElementById('rtcCall');
@@ -777,6 +1078,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         const ra = document.getElementById('rtcRemoteAudio'); if (ra) ra.srcObject = null;
         S.callId = null; S.callType = null; S.peer = null; S.role = null;
         S.pendingIce = []; S._pendingOffer = null;
+        S._pendingSwitch = null;
+        S._awaitingSwitchOffer = null;
+        S._suppressNegotiation = false;
+        S._makingOffer = false;
+        hideSwitchPrompt();
         S.startedAt = null; S.connectedAt = null;
     }
 
@@ -1214,6 +1520,10 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (e.target.closest('#rtcAcceptBtn'))  { acceptIncoming(); return; }
         if (e.target.closest('#rtcDeclineBtn')) { declineIncoming(); return; }
         if (e.target.closest('#rtcHangupBtn'))  { hangup(); return; }
+
+        if (e.target.closest('#rtcSwitchBtn'))        { requestSwitch(); return; }
+        if (e.target.closest('#rtcSwitchAcceptBtn'))  { acceptSwitch(); return; }
+        if (e.target.closest('#rtcSwitchRejectBtn'))  { rejectSwitch(); return; }
 
         if (e.target.closest('#rtcMaximizeBtn')) {
             const call = document.getElementById('rtcCall');

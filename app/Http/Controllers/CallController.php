@@ -59,7 +59,7 @@ class CallController extends Controller
                 // self-call check is done manually below.
                 'target_user_id' => 'required|integer|exists:users,id',
                 'call_id'        => 'required|string|min:8|max:40',
-                'type'           => 'required|string|in:offer,answer,ice,hangup,decline,ringing',
+                'type'           => 'required|string|in:offer,answer,ice,hangup,decline,ringing,switch-request,switch-accept,switch-reject',
                 'call_type'      => 'required|string|in:audio,video',
                 'payload'        => 'nullable|array',
                 'conversation_id'=> 'nullable|integer|exists:conversations,id',

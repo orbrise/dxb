@@ -155,6 +155,63 @@
     .rtc-call .rtc-btn.hangup { background: #ef4444; width: 52px; height: 52px; font-size: 20px; }
     .rtc-call.maximized .rtc-btn.hangup { width: 64px; height: 64px; font-size: 24px; }
 
+    /* Switch button pending state — small spinner while awaiting peer's
+       accept/reject reply. .is-pending disables clicks and spins the icon. */
+    .rtc-call #rtcSwitchBtn.is-pending { opacity: 0.7; pointer-events: none; }
+    .rtc-call #rtcSwitchBtn.is-pending i {
+        animation: rtcSpin 1s linear infinite;
+    }
+    @keyframes rtcSpin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+
+    /* Incoming switch-request prompt. Positioned fixed, above everything,
+       with a dark overlay backdrop. Hidden until .open is added. */
+    .rtc-switch-prompt {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.72);
+        z-index: 100000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .rtc-switch-prompt.open { display: flex; }
+    .rtc-switch-prompt-card {
+        background: #131616;
+        border: 1px solid #242B2D;
+        border-radius: 14px;
+        padding: 24px 24px 18px;
+        max-width: 360px;
+        width: 100%;
+        text-align: center;
+        color: #fff;
+    }
+    .rtc-switch-prompt-icon {
+        width: 56px; height: 56px; border-radius: 50%;
+        background: rgba(193,241,29,0.14);
+        color: #C1F11D;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 22px;
+        margin-bottom: 12px;
+    }
+    .rtc-switch-prompt-title { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+    .rtc-switch-prompt-sub { color: #AAAEB5; font-size: 13.5px; margin-bottom: 18px; line-height: 1.45; }
+    .rtc-switch-prompt-actions { display: flex; gap: 10px; }
+    .rtc-switch-btn {
+        flex: 1 1 0;
+        border: none;
+        border-radius: 999px;
+        padding: 11px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .rtc-switch-btn--reject { background: #2a2d30; color: #fff; }
+    .rtc-switch-btn--accept { background: #C1F11D; color: #0a0a0a; }
+
     /* Header window controls (maximize / minimize toggle) */
     .rtc-call .rtc-window-btns { display: inline-flex; gap: 6px; }
     .rtc-call .rtc-window-btns button {
@@ -262,9 +319,28 @@
         <button type="button" class="rtc-btn" id="rtcVideoBtn" title="Toggle camera" style="display:none;">
             <i class="fa fa-video"></i>
         </button>
+        {{-- Mid-call switch: voice → video or video → voice, like WhatsApp.
+             Icon flips based on current callType (see updateSwitchBtn() JS).
+             Shows a spinner while awaiting the peer's accept/reject. --}}
+        <button type="button" class="rtc-btn" id="rtcSwitchBtn" title="Switch to video" style="display:none;">
+            <i class="fa fa-video"></i>
+        </button>
         <button type="button" class="rtc-btn hangup" id="rtcHangupBtn" title="Hang up">
             <i class="fa fa-phone-slash"></i>
         </button>
+    </div>
+</div>
+
+{{-- Incoming switch-request prompt: peer wants to upgrade/downgrade. --}}
+<div class="rtc-switch-prompt" id="rtcSwitchPrompt">
+    <div class="rtc-switch-prompt-card">
+        <div class="rtc-switch-prompt-icon"><i class="fa fa-video" id="rtcSwitchPromptIcon"></i></div>
+        <div class="rtc-switch-prompt-title" id="rtcSwitchPromptTitle">Switch to video?</div>
+        <div class="rtc-switch-prompt-sub" id="rtcSwitchPromptSub">The other person wants to turn on video.</div>
+        <div class="rtc-switch-prompt-actions">
+            <button type="button" class="rtc-switch-btn rtc-switch-btn--reject" id="rtcSwitchRejectBtn">Decline</button>
+            <button type="button" class="rtc-switch-btn rtc-switch-btn--accept" id="rtcSwitchAcceptBtn">Accept</button>
+        </div>
     </div>
 </div>
 
