@@ -3366,20 +3366,15 @@
                              id="chatSidebar">
                             <div class="chat-sidebar-header">
                                 @php
-                                    // Badge counts still used by the bottom
-                                    // icon nav below, so keep computing them.
-                                    $chatUnreadCount = auth()->check()
-                                        ? \App\Models\Message::whereHas('conversation', function($q) {
-                                                $q->where('user_one_id', auth()->id())->orWhere('user_two_id', auth()->id());
-                                            })
-                                            ->where('sender_id', '!=', auth()->id())
-                                            ->where(function($q) {
-                                                $q->whereNull('status')->orWhere('status', 'unread');
-                                            })->count()
-                                        : 0;
-                                    $missedCallCount = auth()->check()
-                                        ? \App\Models\Call::unseenMissedFor(auth()->id())->count()
-                                        : 0;
+                                    // Shared helper — cached ~30s and shared with
+                                    // the mobile nav / header / dashboard so this
+                                    // doesn't fire a duplicate DB query on every
+                                    // Livewire render / poll cycle.
+                                    $__badges = auth()->check()
+                                        ? \App\Support\ChatBadges::for(auth()->id())
+                                        : ['unread_messages' => 0, 'missed_calls' => 0];
+                                    $chatUnreadCount = $__badges['unread_messages'];
+                                    $missedCallCount = $__badges['missed_calls'];
                                 @endphp
 
                                 {{-- Mobile-only mini top strip: back arrow (returns
@@ -3875,7 +3870,7 @@
                                     <div class="new-chat-search">
                                         <i class="fa fa-search"></i>
                                         <input type="text"
-                                               wire:model.live.debounce.250ms="newChatSearch"
+                                               wire:model.live.debounce.500ms="newChatSearch"
                                                placeholder="Public name or @username"
                                                autofocus>
                                     </div>

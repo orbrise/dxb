@@ -16,18 +16,13 @@
     $__favoritesHref   = $__isAuth ? route('favorites.dashboard'): route('help');
     $__menuHref        = $__isAuth ? url('/my-account')          : route('help');
 
-    // Chats badge: unread messages + unseen missed calls. Two cheap aggregate
-    // queries — not shown on the Chats page itself (user is already there).
-    $__chatsBadge = 0;
-    if ($__isAuth && !$__isChats) {
-        $__uid = auth()->id();
-        $__chatsBadge  = (int) \App\Models\Message::query()
-            ->whereHas('conversation', fn ($q) => $q->where('user_one_id', $__uid)->orWhere('user_two_id', $__uid))
-            ->where('sender_id', '!=', $__uid)
-            ->where(fn ($q) => $q->whereNull('status')->orWhereIn('status', ['sent', 'delivered', 'unread']))
-            ->count();
-        $__chatsBadge += (int) \App\Models\Call::unseenMissedFor($__uid)->count();
-    }
+    // Chats badge: unread messages + unseen missed calls. Shared helper
+    // deduplicates this across the mobile nav / desktop header / dashboard
+    // nav and caches ~30s so these counts stop firing a DB query on every
+    // page load (which was what regressed home + listings performance).
+    $__chatsBadge = ($__isAuth && !$__isChats)
+        ? (int) \App\Support\ChatBadges::for(auth()->id())['total']
+        : 0;
 @endphp
 <style>
 .ev-mobile-bottom-nav {

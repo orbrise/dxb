@@ -67,16 +67,13 @@
     $authInitial       = $authUser ? strtoupper(substr($authUser->name ?? $authUser->email ?? '?', 0, 1)) : '?';
     $authName          = $authUser ? ($authUser->name ?? $authUser->username ?? strstr($authUser->email ?? '', '@', true)) : '';
     $authEmail         = $authUser->email ?? '';
-    $authProfileCount  = $authUser ? \App\Models\UsersProfile::where('user_id', $authUser->id)->count() : 0;
-    $authWalletBalance = $authUser && $authUser->wallet ? (float) $authUser->wallet->balance : 0;
-    $authChatUnread    = $authUser
-        ? \App\Models\Message::whereHas('conversation', function ($q) use ($authUser) {
-                $q->where('user_one_id', $authUser->id)->orWhere('user_two_id', $authUser->id);
-            })
-            ->where('sender_id', '!=', $authUser->id)
-            ->where(function ($q) { $q->whereNull('status')->orWhereIn('status', ['sent', 'delivered', 'unread']); })
-            ->count()
+    // Cached — runs on every page's header. Cleared by UsersProfile observers
+    // on create/delete, so the badge still updates when users add listings.
+    $authProfileCount  = $authUser
+        ? \Illuminate\Support\Facades\Cache::remember("header.profile_count.{$authUser->id}", 300, fn () => \App\Models\UsersProfile::where('user_id', $authUser->id)->count())
         : 0;
+    $authWalletBalance = $authUser && $authUser->wallet ? (float) $authUser->wallet->balance : 0;
+    $authChatUnread    = $authUser ? \App\Support\ChatBadges::for($authUser->id)['unread_messages'] : 0;
 @endphp
 
 {{-- Selected-state pill for the auth nav. `.ev-nav-link` already has the

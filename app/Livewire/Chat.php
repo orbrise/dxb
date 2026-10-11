@@ -12,6 +12,7 @@ use App\Models\StatusView;
 use App\Models\User;
 use App\Events\NewChatMessage;
 use App\Events\MessageStatusUpdated;
+use App\Support\ChatBadges;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -568,6 +569,14 @@ class Chat extends Component
                 Cache::forget("chat.convs.{$peerId}." . md5('') . ".{$pref}");
             }
         }
+
+        // Badge cache powers the global header / mobile nav badges on
+        // every non-chat page. Clear it alongside the sidebar caches so
+        // read/send/missed-call acknowledgments reflect right away on
+        // the user's next page load — otherwise the ~30s TTL would make
+        // the badge appear stuck.
+        ChatBadges::clear($userId);
+        if ($peerId) ChatBadges::clear($peerId);
     }
 
     /**
@@ -755,7 +764,13 @@ class Chat extends Component
     }
 
     /**
-     * Search users to start new conversation
+     * Search users to start new conversation.
+     *
+     * Prefix-match (LIKE 'term%') instead of substring (LIKE '%term%')
+     * so MySQL can use the users(name) / users(email) B-tree index.
+     * On a users table with real volume this is the difference between
+     * a <50ms indexed lookup and a 5-8 second full table scan — which
+     * is what was making the "New chat" search feel broken.
      */
     public function searchUsers()
     {
@@ -764,19 +779,24 @@ class Chat extends Component
         }
 
         $userId = auth()->id();
-        // Hide anyone involved in a block relationship with me (either
-        // direction) so blocked users don't surface in New-chat search.
+        // Single query for both block directions (previously two).
         $blockedIds = DB::table('user_blocks')
-            ->where('blocker_id', $userId)->pluck('blocked_id')
-            ->merge(DB::table('user_blocks')->where('blocked_id', $userId)->pluck('blocker_id'))
+            ->where(function ($q) use ($userId) {
+                $q->where('blocker_id', $userId)->orWhere('blocked_id', $userId);
+            })
+            ->selectRaw('CASE WHEN blocker_id = ? THEN blocked_id ELSE blocker_id END AS uid', [$userId])
+            ->pluck('uid')
             ->unique()
             ->all();
 
-        return User::where('id', '!=', $userId)
-            ->whereNotIn('id', $blockedIds)
-            ->where(function($q) {
-                $q->where('email', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('name', 'like', '%' . $this->searchTerm . '%');
+        $term = $this->searchTerm;
+        return User::select(['id', 'name', 'email', 'username', 'avatar'])
+            ->where('id', '!=', $userId)
+            ->when(!empty($blockedIds), fn ($q) => $q->whereNotIn('id', $blockedIds))
+            ->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term . '%')
+                  ->orWhere('email', 'like', $term . '%')
+                  ->orWhere('username', 'like', $term . '%');
             })
             ->limit(10)
             ->get();
@@ -784,18 +804,7 @@ class Chat extends Component
 
     public function selectConversation($conversationId)
     {
-        // TEMP timing: writes to storage/logs/laravel.log so we can see
-        // exactly which step is slow on prod. Remove once bottleneck is
-        // identified. Grep the log for "SELECT-CONV".
-        $t0 = microtime(true);
-        $log = function (string $step) use (&$t0) {
-            $ms = (int) ((microtime(true) - $t0) * 1000);
-            Log::warning("SELECT-CONV {$step}: {$ms}ms");
-            $t0 = microtime(true);
-        };
-
         $conversation = Conversation::find($conversationId);
-        $log('find-conversation');
 
         if (!$conversation || !$conversation->hasUser(auth()->id())) {
             return;
@@ -804,16 +813,10 @@ class Chat extends Component
         $this->selectedConversationId = $conversationId;
         $this->selectedIsSupport = (bool) $conversation->is_support;
         $this->selectedUser = $this->selectedIsSupport ? null : $conversation->getOtherUser(auth()->id());
-        $log('getOtherUser');
 
         $this->loadConversationMessages();
-        $log('loadConversationMessages');
-
         $this->markConversationAsRead();
-        $log('markConversationAsRead');
-
         $this->markMissedCallsSeen();
-        $log('markMissedCallsSeen');
 
         $this->dispatch('conversation-opened');
     }
@@ -826,11 +829,13 @@ class Chat extends Component
     {
         if ($this->selectedIsSupport || !$this->selectedUser) return;
 
-        Call::where('callee_id', auth()->id())
+        $updated = Call::where('callee_id', auth()->id())
             ->where('caller_id', $this->selectedUser->id)
             ->where('status', 'missed')
             ->whereNull('seen_at')
             ->update(['seen_at' => now()]);
+
+        if ($updated) ChatBadges::clear(auth()->id());
     }
 
     public function loadConversationMessages()
@@ -983,6 +988,11 @@ class Chat extends Component
                 $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
             })
             ->update(['status' => 'read']);
+
+        // Reading messages drops this user's unread badge — clear it so
+        // the mobile nav / header reflects the new count on next page load
+        // instead of waiting out the 30s TTL.
+        ChatBadges::clear($userId);
 
         // Defer the broadcasts until AFTER the Livewire response is sent to
         // the browser. Each broadcast() is a blocking HTTP POST to Reverb;
@@ -1293,24 +1303,41 @@ class Chat extends Component
         $needle  = ltrim($rawTerm, '@');
         $isExactHandleQuery = $rawTerm !== '' && str_starts_with($rawTerm, '@');
 
-        $q = User::where('id', '!=', auth()->id());
-
-        if ($needle !== '') {
-            $q->where(function ($sub) use ($needle, $isExactHandleQuery) {
-                if ($isExactHandleQuery) {
-                    // @-prefixed search — exact username match wins so that
-                    // private accounts are reachable by handle.
-                    $sub->where('username', $needle);
-                } else {
-                    $sub->where('name', 'like', "%{$needle}%")
-                        ->orWhere('email', 'like', "%{$needle}%")
-                        ->orWhere('username', 'like', "%{$needle}%");
-                }
+        // Empty-search case: everyone opens the overlay to the same list,
+        // so cache it per-user for a minute. First open was previously
+        // 1-2s just for an ORDER BY name on the entire users table.
+        if ($needle === '') {
+            $uid = auth()->id();
+            return Cache::remember("chat.directory.public.{$uid}", 60, function () use ($uid) {
+                return User::select(['id', 'name', 'email', 'username', 'avatar', 'is_private'])
+                    ->where('id', '!=', $uid)
+                    ->where(function ($sub) {
+                        $sub->where('is_private', 0)->orWhereNull('is_private');
+                    })
+                    ->orderBy('name')
+                    ->limit(100)
+                    ->get();
             });
         }
 
-        // Private accounts are hidden from every browse / substring search.
-        // The only way to find them is an exact @username match (handled above).
+        $q = User::select(['id', 'name', 'email', 'username', 'avatar', 'is_private'])
+            ->where('id', '!=', auth()->id());
+
+        $q->where(function ($sub) use ($needle, $isExactHandleQuery) {
+            if ($isExactHandleQuery) {
+                // @-prefixed search — exact username match wins so that
+                // private accounts are reachable by handle.
+                $sub->where('username', $needle);
+            } else {
+                // Prefix match so MySQL can use the users(name) /
+                // users(email) index — substring LIKE did a full table
+                // scan on every keystroke.
+                $sub->where('name', 'like', "{$needle}%")
+                    ->orWhere('email', 'like', "{$needle}%")
+                    ->orWhere('username', 'like', "{$needle}%");
+            }
+        });
+
         if (!$isExactHandleQuery) {
             $q->where(function ($sub) {
                 $sub->where('is_private', 0)->orWhereNull('is_private');
@@ -1362,10 +1389,11 @@ class Chat extends Component
         // Match CallLog::mount() — surfacing the calls view acknowledges
         // any missed calls, so the red badge on the phone icon clears.
         if ($this->activeTab === 'calls' && auth()->check()) {
-            Call::where('callee_id', auth()->id())
+            $updated = Call::where('callee_id', auth()->id())
                 ->where('status', 'missed')
                 ->whereNull('seen_at')
                 ->update(['seen_at' => now()]);
+            if ($updated) ChatBadges::clear(auth()->id());
         }
 
         // Reset transient Status UI state when switching away.
@@ -1739,21 +1767,30 @@ class Chat extends Component
 
     public function render()
     {
-        // TEMP timing — grep for "RENDER" in storage/logs/laravel.log
-        $t0 = microtime(true);
-        $log = function (string $step) use (&$t0) {
-            $ms = (int) ((microtime(true) - $t0) * 1000);
-            Log::warning("RENDER {$step}: {$ms}ms");
-            $t0 = microtime(true);
-        };
+        // Conversations always needed — drives the sidebar list on every tab.
+        $conversations = $this->getConversations();
 
-        $conversations = $this->getConversations();          $log('getConversations');
-        $searchResults = $this->searchUsers();                $log('searchUsers');
-        $callHistory = $this->getCallHistory();               $log('getCallHistory');
-        $directoryUsers = $this->newChatOpen ? $this->getDirectoryUsers() : collect(); $log('getDirectoryUsers');
-        $statusFeed = $this->getStatusFeed();                 $log('getStatusFeed');
-        $selectedStatus = $this->getSelectedStatus();         $log('getSelectedStatus');
-        $galleryMedia = $this->getGalleryMedia();             $log('getGalleryMedia');
+        // Everything else is gated by UI state. Previously render() ran
+        // searchUsers + getCallHistory + getStatusFeed + getGalleryMedia on
+        // EVERY render — including every 3s poll cycle — even though these
+        // panels aren't visible unless the matching tab/overlay is active.
+        // Sidebar search also surfaces user matches when the user types in
+        // the conversations search box, so fire searchUsers whenever
+        // searchTerm has content or the New-chat overlay is open.
+        $wantSearch = $this->newChatOpen || strlen((string) $this->searchTerm) >= 2;
+        $searchResults  = $wantSearch ? $this->searchUsers() : collect();
+        $directoryUsers = $this->newChatOpen ? $this->getDirectoryUsers() : collect();
+
+        $callHistory    = $this->activeTab === 'calls'  ? $this->getCallHistory() : collect();
+        $galleryMedia   = $this->activeTab === 'gallery' ? $this->getGalleryMedia() : collect();
+
+        // Status feed also powers the "my statuses" strip at the top of
+        // the Chats tab, so load it for both 'chats' and 'status'. Keep
+        // skipping it on calls/gallery/settings.
+        $statusFeed = in_array($this->activeTab, ['chats', 'status'], true)
+            ? $this->getStatusFeed()
+            : ['mine' => collect(), 'others' => collect()];
+        $selectedStatus = $this->activeTab === 'status' ? $this->getSelectedStatus() : null;
 
         // Use the already-fetched conversations collection instead of
         // firing another Conversation::forUser->count() query per render.

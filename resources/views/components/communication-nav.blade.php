@@ -1,14 +1,8 @@
 @php
-    // Get unread message count for the logged-in user
-    $unreadMsgCount = 0;
-    if (auth()->check()) {
-        $userProfiles = \App\Models\UsersProfile::where('user_id', auth()->id())->pluck('id');
-        $unreadMsgCount = \App\Models\Message::whereIn('profile_id', $userProfiles)
-            ->where(function($q) {
-                $q->whereNull('status')->orWhere('status', 'unread');
-            })
-            ->count();
-    }
+    // Unread chat messages — shared helper, cached ~30s. Replaced the
+    // per-request profile_id lookup + whereIn count that was running on
+    // every dashboard page load.
+    $unreadMsgCount = auth()->check() ? \App\Support\ChatBadges::for(auth()->id())['unread_messages'] : 0;
 
     // Resolve the active tab. Callers can pass an explicit $active key (one
     // of: 'messages', 'questions', 'reviews', 'favorites') which is the
@@ -27,10 +21,9 @@
     $isFavoritesActive = $active === 'favorites' || (is_null($active) && request()->routeIs('favorites.dashboard'));
 
     // Unseen missed calls — powers the red badge on the Calls tab.
-    $missedCallCount = 0;
-    if (auth()->check()) {
-        $missedCallCount = \App\Models\Call::unseenMissedFor(auth()->id())->count();
-    }
+    // Shares the ChatBadges helper above so this doesn't fire a second
+    // DB query per request.
+    $missedCallCount = auth()->check() ? \App\Support\ChatBadges::for(auth()->id())['missed_calls'] : 0;
 @endphp
 
 <style>
@@ -167,19 +160,9 @@
             <a href="{{ route('user.chat') }}"class="communication-nav-link {{ $isMessagesActive ? 'active' : '' }}">
                 <i class="fa fa-comments"></i>
                 <span>Messages</span>
-                @php
-                    $chatUnreadCount = 0;
-                    if (auth()->check()) {
-                        $chatUnreadCount = \App\Models\Message::whereHas('conversation', function($q) {
-                            $q->where('user_one_id', auth()->id())->orWhere('user_two_id', auth()->id());
-                        })->where('sender_id', '!=', auth()->id())
-                          ->where(function($q) {
-                              $q->whereNull('status')->orWhere('status', 'unread');
-                          })->count();
-                    }
-                @endphp
-                @if($chatUnreadCount > 0)
-                    <span class="communication-nav-badge">{{ $chatUnreadCount }}</span>
+                {{-- $unreadMsgCount already computed up top via ChatBadges helper. --}}
+                @if($unreadMsgCount > 0)
+                    <span class="communication-nav-badge">{{ $unreadMsgCount }}</span>
                 @endif
             </a>
         </li>
