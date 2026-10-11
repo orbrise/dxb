@@ -80,9 +80,24 @@
             return refreshing;
         }
 
-        // Refresh once on initial load. Runs in parallel with Livewire init —
-        // most users won't reach the form before the fetch resolves.
-        refresh();
+        // Lazy CSRF refresh. Previously fired on EVERY page load regardless of
+        // whether the page was Cloudflare-cached, doubling the per-visit worker
+        // demand on an 8-worker LiteSpeed pool. The inline <meta> token is
+        // already fresh for any uncacheable response (which is anything with
+        // Livewire markup — i.e. almost every page on this site), so skip the
+        // unconditional refresh. The 419-retry path below still rescues stale
+        // tokens served from the edge cache on the rare pages that CF does
+        // cache. We also refresh on the first form interaction so submits
+        // after a long idle still work.
+        var refreshOnFirstInteraction = function () {
+            document.removeEventListener('mousedown', refreshOnFirstInteraction, true);
+            document.removeEventListener('keydown', refreshOnFirstInteraction, true);
+            document.removeEventListener('touchstart', refreshOnFirstInteraction, true);
+            refresh();
+        };
+        document.addEventListener('mousedown', refreshOnFirstInteraction, true);
+        document.addEventListener('keydown', refreshOnFirstInteraction, true);
+        document.addEventListener('touchstart', refreshOnFirstInteraction, true);
 
         // Refresh again after Livewire is ready, and hook every outgoing
         // Livewire request to use the freshest token + retry once on 419.

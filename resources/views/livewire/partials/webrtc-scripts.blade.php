@@ -1400,12 +1400,17 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             }
         } catch (_) {}
     }
-    // Adaptive polling — idle at 500ms to keep incoming-ring latency low,
-    // switch to 120ms during an active handshake so ICE trickle candidates
-    // deliver near-instantly. Each candidate is a separate signal; at 500ms
-    // the receive side of a 3-4 candidate exchange was waiting 1.5-2s just
-    // for polling — ~half of the click-Accept → connected latency.
-    const POLL_IDLE_MS   = 500;
+    // Adaptive polling. Idle poll is a *safety net* for incoming calls when
+    // the Reverb WebSocket drops a frame; real-time delivery is Reverb's job.
+    // 500ms idle was murdering an 8-worker LiteSpeed pool — 2 requests per
+    // second per authenticated tab, forever, on EVERY page (not just chat).
+    // With 5 logged-in users browsing the site that's 10 req/s of pure
+    // polling, which was starving the pool and making guest page loads
+    // queue 3+ seconds behind the pollers. 15s idle gives a worst-case
+    // 15s "missed call" delay on WebSocket-dropped environments, which is
+    // acceptable; the active-handshake rate stays tight so in-progress
+    // ICE exchanges still feel instant.
+    const POLL_IDLE_MS   = 15000;
     const POLL_ACTIVE_MS = 120;
     function pollIntervalMs() {
         // "Active" = any point from an incoming/outgoing call being

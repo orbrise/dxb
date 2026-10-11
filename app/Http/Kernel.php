@@ -14,6 +14,9 @@ class Kernel extends HttpKernel
      * @var array<int, class-string|string>
      */
     protected $middleware = [
+        // Debug-only. Opt in with ?perf=1 to get Server-Timing + X-Debug-Perf
+        // response headers. Zero-cost when the query flag isn't present.
+        \App\Http\Middleware\ServerTiming::class,
         // Must be FIRST so it runs LAST on the response path — after StartSession has
         // added laravel_session / XSRF-TOKEN cookies. Strips Set-Cookie from responses
         // marked edge-cacheable so Cloudflare actually caches them instead of bypassing.
