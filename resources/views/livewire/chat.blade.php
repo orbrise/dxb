@@ -227,18 +227,18 @@
            Sits at the far right of the sidebar title actions, styled as
            a filled lime pill rather than the transparent ghost buttons. */
         .chat-sidebar-title-actions button.new-chat-btn {
-            width: 22px; height: 22px;
+            width: 30px; height: 30px;
             background: var(--ev-lime);
             color: var(--ev-lime-ink);
-            font-size: 14px;
+            font-size: 18px;
         }
         .chat-sidebar-title-actions button.new-chat-btn:hover {
             background: var(--ev-lime-dark);
             color: var(--ev-lime-ink);
         }
         .chat-sidebar-title-actions button.new-chat-btn svg {
-            width: 14px;
-            height: 14px;
+            width: 20px;
+            height: 20px;
         }
         /* Status-tab variant: outline circle "+" button instead of the lime
            filled chat-bubble icon. Sized to match the sibling ghost buttons
@@ -363,6 +363,27 @@
             color: var(--ev-text-3);
         }
         .new-chat-empty i { font-size: 32px; margin-bottom: 8px; display: block; }
+        /* Loading state shown inside the new-chat panel while directoryUsers
+           is being fetched for the first time. Visible immediately on tap. */
+        .new-chat-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 40px 20px;
+            color: var(--ev-text-3);
+            font-size: 13px;
+        }
+        .new-chat-spinner {
+            width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: var(--ev-lime);
+            border-radius: 50%;
+            animation: ncSpin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes ncSpin { to { transform: rotate(360deg); } }
+        .new-chat-list.is-loading { opacity: 0.6; transition: opacity 150ms; }
         .new-chat-list::-webkit-scrollbar { width: 6px; }
         .new-chat-list::-webkit-scrollbar-track { background: transparent; }
         .new-chat-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
@@ -1590,7 +1611,7 @@
             justify-content: space-around;
             align-items: center;
             padding: 12px 8px;
-            border-top: 1px solid var(--ev-border);
+            border-top: 1px solid #80888a;
             background: var(--ev-panel-2);
         }
         .chat-sidebar-tab {
@@ -1738,6 +1759,78 @@
             margin-top: 2px;
             display: flex; align-items: center; gap: 6px;
         }
+        /* WhatsApp-style presence dot + text under the user's name.
+           Green pulse = online (seen within 2 min), grey = offline. */
+        .presence-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+        .presence-dot.is-online {
+            background: var(--ev-online);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+            animation: presencePulse 1.8s ease-in-out infinite;
+        }
+        .presence-dot.is-offline {
+            background: var(--ev-text-3);
+            box-shadow: none;
+        }
+        .chat-header-email:has(.presence-dot.is-offline) .presence-text,
+        .chat-header-email:has(.presence-dot.is-offline) {
+            color: var(--ev-text-3);
+        }
+        @keyframes presencePulse {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2); }
+            50%      { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.1); }
+        }
+        /* Voice-note "sending" bubble shown optimistically while the upload
+           is in flight — WhatsApp-style. Replaced with the real bubble once
+           refreshChat() returns. */
+        .message-wrapper.msg-pending .message-bubble {
+            opacity: 0.75;
+        }
+        .msg-voice-sending {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+            color: #0b3b17;
+            font-size: 13px;
+            padding: 2px 0;
+        }
+        .msg-voice-sending .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(10, 60, 25, 0.2);
+            border-top-color: #4a9d57;
+            border-radius: 50%;
+            animation: msgSpin 0.9s linear infinite;
+            flex-shrink: 0;
+        }
+        .msg-voice-sending.failed .spinner {
+            border-top-color: var(--ev-danger);
+            animation: none;
+            background: var(--ev-danger);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .msg-voice-sending.failed .spinner::before {
+            content: "!";
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .msg-voice-sending-text { flex: 1; }
+        .msg-voice-sending-dur {
+            font-variant-numeric: tabular-nums;
+            color: #2d5a37;
+            opacity: 0.75;
+            font-size: 12px;
+        }
+        .msg-voice-sending.failed .msg-voice-sending-dur { color: var(--ev-danger); }
+        @keyframes msgSpin { to { transform: rotate(360deg); } }
         .chat-header-actions {
             display: flex; align-items: center; gap: 6px;
         }
@@ -2451,9 +2544,19 @@
             margin: 2px 4px 6px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
-        .message-ticks .tick { font-size: 11px; opacity: 0.7; }
+        /* Tighter spacing between time and ticks — matches WhatsApp.
+           letter-spacing compresses the ✓✓ glyph pair so they read as
+           one unit, and the small negative margin pulls the ticks snug
+           against the timestamp instead of floating 4-6px away. */
+        .message-ticks { display: inline-flex; align-items: center; margin-left: -1px; }
+        .message-ticks .tick {
+            font-size: 11px;
+            opacity: 0.7;
+            letter-spacing: -6px;
+            line-height: 1;
+        }
         .message-ticks .tick.read.double-tick { color: #007adf; opacity: 1; }
 
         /* Disappearing-message clock — sits next to the time on each row
@@ -3198,7 +3301,7 @@
                 bottom: 0;
                 padding: 12px 6px calc(12px + env(safe-area-inset-bottom, 0px));
                 background: var(--ev-panel-2);
-                border-top: 1px solid rgb(255 255 255 / 72%);
+                border-top: 1px solid #727B7E;
             }
             .chat-sidebar-tab {
                 width: 52px;
@@ -3341,6 +3444,11 @@
                             selConv: @entangle('selectedConversationId'),
                             selStatus: @entangle('selectedStatusId'),
                             section: @entangle('settingsSection'),
+                            /* newChatOpen entangled so clicking '+' flips the panel
+                               open client-side instantly — no waiting for the server
+                               round-trip. Livewire still syncs behind the scenes to
+                               load directoryUsers. */
+                            newChatOpen: @entangle('newChatOpen'),
                             chatFilter: 'all',
                             /* selConvMeta — populated from the clicked conv-item so
                                the chat header (name/avatar/email) renders instantly
@@ -3431,7 +3539,7 @@
                                         <div class="new-chat-wrap" :class="{ 'mobile-fab-hide': tab !== 'chats' && tab !== 'status' }">
                                             <button type="button" class="new-chat-btn"
                                                     :class="{ 'is-plus-btn': tab === 'status' }"
-                                                    @click="if (tab === 'status') { $event.currentTarget.closest('.new-chat-wrap').classList.toggle('open'); } else { $wire.openNewChat(); }"
+                                                    @click="if (tab === 'status') { $event.currentTarget.closest('.new-chat-wrap').classList.toggle('open'); } else { newChatOpen = true; $nextTick(() => document.querySelector('.new-chat-search input')?.focus()); }"
                                                     :title="tab === 'status' ? 'Add status' : 'New chat'">
                                                 <svg x-show="tab === 'status'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                                                 <svg x-show="tab !== 'status'" width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -3859,25 +3967,44 @@
                                  title, bottom nav) when open. Back arrow
                                  dismisses it; picking a user starts a
                                  conversation and closes. --}}
-                            @if($newChatOpen)
-                                <div class="new-chat-panel">
-                                    <div class="new-chat-head">
-                                        <button type="button" class="new-chat-back" wire:click="closeNewChat" title="Back">
-                                            <i class="fa fa-arrow-left"></i>
-                                        </button>
-                                        <span class="new-chat-title">New chat</span>
-                                    </div>
-                                    <div class="new-chat-search">
-                                        <i class="fa fa-search"></i>
-                                        <input type="text"
-                                               wire:model.live.debounce.500ms="newChatSearch"
-                                               placeholder="Public name or @username"
-                                               autofocus>
-                                    </div>
-                                    <div class="new-chat-help">
-                                        A name finds public profiles. <b>@username</b> finds that username.
-                                    </div>
-                                    <div class="new-chat-list">
+                            {{-- Panel is always in the DOM, Alpine controls visibility
+                                 via x-show so clicking '+' opens it INSTANTLY (no
+                                 Livewire round-trip blocking the UI). The server
+                                 syncs newChatOpen via @entangle so directoryUsers
+                                 loads in the background. --}}
+                            <div class="new-chat-panel" x-show="newChatOpen" x-cloak>
+                                <div class="new-chat-head">
+                                    {{-- @click flips Alpine (instant UI close), wire:click
+                                         fires closeNewChat() on server to also clear the
+                                         search term so the panel reopens fresh next time. --}}
+                                    <button type="button" class="new-chat-back"
+                                            @click="newChatOpen = false"
+                                            wire:click="closeNewChat"
+                                            title="Back">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <span class="new-chat-title">New chat</span>
+                                </div>
+                                <div class="new-chat-search">
+                                    <i class="fa fa-search"></i>
+                                    <input type="text"
+                                           wire:model.live.debounce.500ms="newChatSearch"
+                                           placeholder="Public name or @username">
+                                </div>
+                                <div class="new-chat-help">
+                                    A name finds public profiles. <b>@username</b> finds that username.
+                                </div>
+                                <div class="new-chat-list" wire:loading.class="is-loading" wire:target="newChatSearch,openNewChat">
+                                    {{-- Loading spinner: shown when the directory list is empty
+                                         AND we're actively waiting on the server (first open,
+                                         or in-flight search). Also shown when @entangle is still
+                                         syncing newChatOpen from Alpine → server. --}}
+                                    @if($directoryUsers->isEmpty() && empty(trim((string) $newChatSearch)))
+                                        <div class="new-chat-loading">
+                                            <span class="new-chat-spinner"></span>
+                                            <span>Loading users&hellip;</span>
+                                        </div>
+                                    @else
                                         @forelse($directoryUsers as $u)
                                             <div class="new-chat-row"
                                                  wire:key="dir-{{ $u->id }}"
@@ -3900,9 +4027,9 @@
                                                 <div>No users found</div>
                                             </div>
                                         @endforelse
-                                    </div>
+                                    @endif
                                 </div>
-                            @endif
+                            </div>
                         </div>
 
                         <div class="chat-main" id="chatMain">
@@ -3945,8 +4072,21 @@
                                                 <span x-text="selConvMeta.name"></span>
                                             </template>
                                         </div>
-                                        <div class="chat-header-email"
-                                             x-text="selConvMeta ? (selConvMeta.isSupport ? 'We usually reply within an hour' : (selConvMeta.email || '')) : ''">
+                                        {{-- Optimistic status line. Before the server returns we don't
+                                             know the peer's presence yet, so render a neutral grey dot
+                                             + "connecting…" that matches the shape of the real presence
+                                             row. Prevents the "email flashes then flips to online/offline"
+                                             jank the user noticed. --}}
+                                        <div class="chat-header-email">
+                                            <template x-if="selConvMeta && selConvMeta.isSupport">
+                                                <span>We usually reply within an hour</span>
+                                            </template>
+                                            <template x-if="selConvMeta && !selConvMeta.isSupport">
+                                                <span style="display:inline-flex;align-items:center;gap:6px;color:var(--ev-text-3);">
+                                                    <span class="presence-dot is-offline"></span>
+                                                    <span>connecting&hellip;</span>
+                                                </span>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>
@@ -4344,7 +4484,9 @@
                                                 @if($selectedIsSupport)
                                                     We usually reply within an hour
                                                 @else
-                                                    {{ $selectedUser->email }}
+                                                    @php $__isOnline = $selectedUser->isOnline(); @endphp
+                                                    <span class="presence-dot {{ $__isOnline ? 'is-online' : 'is-offline' }}"></span>
+                                                    <span class="presence-text">{{ $selectedUser->presenceStatus() }}</span>
                                                 @endif
                                             </div>
                                         </div>
@@ -5777,6 +5919,13 @@
             const ext  = type.includes('mp4') ? 'm4a' : 'webm';
             const file = new File([blob], `voice-${Date.now()}.${ext}`, { type });
 
+            // Optimistic UI — drop a "sending…" bubble into the thread
+            // immediately so the user doesn't stare at a blank space while
+            // the upload is in flight (can be 1-3s on slow uplinks).
+            // Removed once refreshChat() morphs in the real message; replaced
+            // with a retry-able error state if the upload fails.
+            const pendingEl = insertPendingVoiceBubble(durationSec);
+
             const fd = new FormData();
             fd.append('conversation_id', conversationId);
             fd.append('voice_note', file);
@@ -5799,7 +5948,7 @@
                 if (!res.ok) {
                     const body = await res.text();
                     console.error('[voice] upload HTTP', res.status, body);
-                    alert('Voice upload failed (' + res.status + ').');
+                    markPendingBubbleFailed(pendingEl, 'Upload failed (' + res.status + ')');
                     return;
                 }
                 // Refresh the chat so the new voice message appears immediately
@@ -5811,10 +5960,59 @@
                     const comp = Livewire.find(root.getAttribute('wire:id'));
                     comp?.call('refreshChat');
                 }
+                // Remove the pending bubble shortly after the refresh so the
+                // real message takes its place without flicker. The real
+                // message is appended by Livewire's morph; delaying 400ms
+                // avoids a visible "nothing there" gap between removal and
+                // morph completion.
+                setTimeout(() => pendingEl && pendingEl.remove(), 400);
             } catch (err) {
                 console.error('[voice] upload error', err);
-                alert('Voice upload failed. Check the console.');
+                markPendingBubbleFailed(pendingEl, 'Upload failed — tap to retry');
             }
+        }
+
+        /** Insert a WhatsApp-style "sending voice..." bubble into the thread. */
+        function insertPendingVoiceBubble(durationSec) {
+            const list = document.getElementById('chatMessages');
+            if (!list) return null;
+            const fmt = (s) => {
+                s = Math.max(0, Math.floor(s));
+                return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+            };
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            const wrap = document.createElement('div');
+            wrap.className = 'message-wrapper sent msg-pending';
+            wrap.innerHTML = `
+                <div class="message-bubble">
+                    <div class="msg-voice-sending">
+                        <span class="spinner"></span>
+                        <span class="msg-voice-sending-text">Sending voice…</span>
+                        <span class="msg-voice-sending-dur">${fmt(durationSec)}</span>
+                    </div>
+                </div>
+                <div class="message-time">
+                    <span>${timeStr}</span>
+                    <span class="message-ticks"><span class="tick"><i class="fa fa-clock" aria-hidden="true"></i></span></span>
+                </div>
+            `;
+            list.appendChild(wrap);
+            list.scrollTop = list.scrollHeight;
+            return wrap;
+        }
+
+        /** Flip the pending bubble into a red "failed" state the user can dismiss. */
+        function markPendingBubbleFailed(el, message) {
+            if (!el) return;
+            const body = el.querySelector('.msg-voice-sending');
+            if (body) {
+                body.classList.add('failed');
+                const text = body.querySelector('.msg-voice-sending-text');
+                if (text) text.textContent = message || 'Upload failed';
+            }
+            // Auto-dismiss after 4s so a failed bubble doesn't stick forever.
+            setTimeout(() => el && el.remove(), 4000);
         }
 
         // Force Chrome/Firefox to compute the real duration of a streamed WebM.

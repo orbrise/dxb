@@ -59,7 +59,28 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'last_seen_at' => 'datetime',
     ];
+
+    /**
+     * WhatsApp-style presence string for the chat header.
+     * Online = seen within the last 2 minutes.
+     */
+    public function presenceStatus(): string
+    {
+        if (!$this->last_seen_at) {
+            return 'offline';
+        }
+        if ($this->last_seen_at->diffInSeconds(now()) < 120) {
+            return 'online';
+        }
+        return 'last seen ' . $this->last_seen_at->diffForHumans();
+    }
+
+    public function isOnline(): bool
+    {
+        return $this->last_seen_at && $this->last_seen_at->diffInSeconds(now()) < 120;
+    }
 
     /**
      * The model's default values for attributes.

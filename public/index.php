@@ -31,7 +31,14 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 |
 */
 
+// Diagnostic timing — only when ?perf=1 is on the URL. Measures each
+// bootstrap phase BEFORE Laravel middleware starts, so we can see where
+// the invisible 1-2s is going.
+$__perf = isset($_GET['perf']) && $_GET['perf'];
+if ($__perf) { $__t0 = microtime(true); }
+
 require __DIR__.'/../vendor/autoload.php';
+if ($__perf) { $__t1 = microtime(true); }
 
 /*
 |--------------------------------------------------------------------------
@@ -45,11 +52,22 @@ require __DIR__.'/../vendor/autoload.php';
 */
 
 $app = require_once __DIR__.'/../bootstrap/app.php';
+if ($__perf) { $__t2 = microtime(true); }
 
 $kernel = $app->make(Kernel::class);
+if ($__perf) { $__t3 = microtime(true); }
 
 $response = $kernel->handle(
     $request = Request::capture()
-)->send();
+);
+if ($__perf) {
+    $__t4 = microtime(true);
+    $response->headers->set('X-Boot-Autoload',  (int)(($__t1 - $__t0)*1000) . 'ms');
+    $response->headers->set('X-Boot-App',       (int)(($__t2 - $__t1)*1000) . 'ms');
+    $response->headers->set('X-Boot-Kernel',    (int)(($__t3 - $__t2)*1000) . 'ms');
+    $response->headers->set('X-Boot-Handle',    (int)(($__t4 - $__t3)*1000) . 'ms');
+    $response->headers->set('X-Boot-Total',     (int)(($__t4 - $__t0)*1000) . 'ms');
+}
+$response->send();
 
 $kernel->terminate($request, $response);

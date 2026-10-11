@@ -43,6 +43,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\UpdateLastSeen::class,
             \App\Http\Middleware\GeoRedirectMiddleware::class,
             \App\Http\Middleware\UrlRedirectMiddleware::class,
             \App\Http\Middleware\MinifyHtml::class,
