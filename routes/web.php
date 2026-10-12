@@ -411,6 +411,7 @@ Route::group(['middleware'=>'auth'], function(){
     // the same $upload->move() workaround as chat media.
     Route::post("status/upload",             [\App\Http\Controllers\StatusController::class, 'uploadMedia'])->name('status.upload');
     Route::post("status/{id}/view",          [\App\Http\Controllers\StatusController::class, 'markViewed'])->whereNumber('id')->name('status.view');
+    Route::get("status/{id}/media",          [\App\Http\Controllers\StatusController::class, 'serveMedia'])->whereNumber('id')->name('status.media');
     Route::delete("status/{id}",             [\App\Http\Controllers\StatusController::class, 'destroy'])->whereNumber('id')->name('status.destroy');
 
     // Serve a user avatar. Same problem as chat media on this host:

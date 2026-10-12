@@ -64,17 +64,21 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * WhatsApp-style presence string for the chat header.
-     * Online = seen within the last 2 minutes.
+     * Online = seen within the last 2 minutes. For users who existed
+     * before UpdateLastSeen middleware was deployed, last_seen_at can
+     * be NULL — fall back to updated_at so we still render a useful
+     * "last seen X ago" instead of a bare "offline".
      */
     public function presenceStatus(): string
     {
-        if (!$this->last_seen_at) {
-            return 'offline';
-        }
-        if ($this->last_seen_at->diffInSeconds(now()) < 120) {
+        if ($this->last_seen_at && $this->last_seen_at->diffInSeconds(now()) < 120) {
             return 'online';
         }
-        return 'last seen ' . $this->last_seen_at->diffForHumans();
+        $lastSeen = $this->last_seen_at ?: $this->updated_at;
+        if (!$lastSeen) {
+            return 'offline';
+        }
+        return 'last seen ' . $lastSeen->diffForHumans();
     }
 
     public function isOnline(): bool

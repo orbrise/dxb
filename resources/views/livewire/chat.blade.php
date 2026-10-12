@@ -227,7 +227,7 @@
            Sits at the far right of the sidebar title actions, styled as
            a filled lime pill rather than the transparent ghost buttons. */
         .chat-sidebar-title-actions button.new-chat-btn {
-            width: 30px; height: 30px;
+            width: 28px; height: 28px;
             background: var(--ev-lime);
             color: var(--ev-lime-ink);
             font-size: 18px;
@@ -1632,8 +1632,8 @@
             color: var(--ev-text);
         }
         .chat-sidebar-tab svg {
-            width: 15px;
-            height: 14px;
+            width: 19px;
+            height: 18px;
             display: block;
         }
         .chat-sidebar-tab .tab-badge {
@@ -3261,35 +3261,31 @@
                 display: none;
             }
 
-            /* Turn the "+" action into a floating action button (FAB)
-               anchored to the bottom-right of the viewport, hovering
-               above the bottom tab strip — WhatsApp-app style. */
+            /* Keep the "+" button inline in the Messages header on mobile
+               (next to the title), not as a floating action button. User
+               feedback was to move it up into the header. */
             .chat-sidebar-title-actions .new-chat-wrap {
-                position: fixed;
-                right: 18px;
-                /* Above the ~72px bottom tab strip + iOS safe-area,
-                   so the FAB never overlaps the nav icons. */
-                bottom: calc(90px + env(safe-area-inset-bottom, 0px));
-                z-index: 45;
+                position: static;
+                z-index: auto;
             }
             .chat-sidebar-title-actions button.new-chat-btn {
-                width: 56px;
-                height: 56px;
-                font-size: 22px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+                box-shadow: none;
             }
             .chat-sidebar-title-actions button.new-chat-btn svg {
-                width: 22px;
-                height: 22px;
+                width: 20px;
+                height: 20px;
             }
-            /* Hide FAB on tabs where "+" has no meaning (calls / gallery /
+            /* Hide "+" on tabs where it has no meaning (calls / gallery /
                settings) so it doesn't linger as a dead button. Alpine
                toggles `.mobile-fab-hide` from the tab state. */
             .new-chat-wrap.mobile-fab-hide { display: none; }
-            /* Status "+" dropdown positions above the FAB. */
+            /* Status "+" dropdown opens below the inline button. */
             .chat-sidebar-title-actions .new-chat-wrap .new-chat-menu {
-                bottom: calc(100% + 8px);
-                top: auto;
+                top: calc(100% + 8px);
+                bottom: auto;
             }
 
             /* Bottom nav strip — pin to viewport bottom on mobile so it
@@ -3386,7 +3382,7 @@
         /* Very narrow phones — extra squeeze. */
         @media (max-width: 380px) {
             .chat-sidebar-title-actions button.new-chat-btn {
-                width: 52px; height: 52px;
+                width: 28px; height: 28px;
             }
             .empty-actions { gap: 12px; }
             .empty-action-card .empty-action-icon { width: 96px; height: 96px; }
@@ -3541,9 +3537,11 @@
                                                     :class="{ 'is-plus-btn': tab === 'status' }"
                                                     @click="if (tab === 'status') { $event.currentTarget.closest('.new-chat-wrap').classList.toggle('open'); } else { newChatOpen = true; $nextTick(() => document.querySelector('.new-chat-search input')?.focus()); }"
                                                     :title="tab === 'status' ? 'Add status' : 'New chat'">
-                                                <svg x-show="tab === 'status'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                                                <svg x-show="tab !== 'status'" width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M1.37611 11.21C-0.803888 5.857 3.13411 0 8.91411 0H9.23511C13.5531 0 17.0531 3.5 17.0531 7.818C17.0534 8.96478 16.8277 10.1004 16.389 11.1599C15.9502 12.2194 15.307 13.1821 14.4962 13.993C13.6853 14.8039 12.7225 15.4471 11.663 15.8859C10.6035 16.3246 9.46789 16.5503 8.32111 16.55H0.501112C0.397469 16.5502 0.296315 16.5182 0.211644 16.4585C0.126972 16.3987 0.0629685 16.3141 0.0284854 16.2164C-0.0059978 16.1186 -0.00925578 16.0126 0.0191622 15.9129C0.0475802 15.8132 0.10627 15.7249 0.187112 15.66L2.15911 14.077C2.24318 14.0095 2.3032 13.9167 2.33023 13.8124C2.35726 13.7081 2.34986 13.5978 2.30911 13.498L1.37611 11.21ZM9.65311 5.45C9.65311 5.25109 9.57409 5.06032 9.43344 4.91967C9.29279 4.77902 9.10203 4.7 8.90311 4.7C8.7042 4.7 8.51343 4.77902 8.37278 4.91967C8.23213 5.06032 8.15311 5.25109 8.15311 5.45V7.45H6.15311C5.9542 7.45 5.76343 7.52902 5.62278 7.66967C5.48213 7.81032 5.40311 8.00109 5.40311 8.2C5.40311 8.39891 5.48213 8.58968 5.62278 8.73033C5.76343 8.87098 5.9542 8.95 6.15311 8.95H8.15311V10.95C8.15311 11.1489 8.23213 11.3397 8.37278 11.4803C8.51343 11.621 8.7042 11.7 8.90311 11.7C9.10203 11.7 9.29279 11.621 9.43344 11.4803C9.57409 11.3397 9.65311 11.1489 9.65311 10.95V8.95H11.6531C11.852 8.95 12.0428 8.87098 12.1834 8.73033C12.3241 8.58968 12.4031 8.39891 12.4031 8.2C12.4031 8.00109 12.3241 7.81032 12.1834 7.66967C12.0428 7.52902 11.852 7.45 11.6531 7.45H9.65311V5.45Z" fill="currentColor"/>
+                                                {{-- Custom chat-bubble-with-plus icon supplied by product.
+                                                     Uses currentColor so it inherits lime-ink on the Chats
+                                                     tab and white on the Status tab variant. --}}
+                                                <svg viewBox="0 0 22 22" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M1.7753 14.9015C-1.03709 7.78574 4.04328 0 11.5 0H11.9141C17.4847 0 22 4.65257 22 10.3925C22.0003 11.9169 21.7092 13.4265 21.1432 14.8349C20.5772 16.2434 19.7474 17.5231 18.7013 18.601C17.6552 19.6789 16.4132 20.5339 15.0463 21.1171C13.6794 21.7003 12.2144 22.0003 10.735 22H0.646478C0.512769 22.0003 0.382272 21.9578 0.273039 21.8783C0.163806 21.7989 0.0812349 21.6864 0.0367486 21.5565C-0.00773768 21.4266 -0.0119408 21.2856 0.024721 21.1531C0.0613827 21.0206 0.137097 20.9031 0.241391 20.8169L2.78544 18.7126C2.8939 18.623 2.97133 18.4996 3.0062 18.3609C3.04108 18.2222 3.03152 18.0756 2.97896 17.943L1.7753 14.9015ZM12.4534 7.24471C12.4534 6.9803 12.3514 6.72671 12.17 6.53974C11.9885 6.35277 11.7424 6.24773 11.4858 6.24773C11.2292 6.24773 10.9831 6.35277 10.8016 6.53974C10.6202 6.72671 10.5182 6.9803 10.5182 7.24471V9.90332H7.93805C7.68144 9.90332 7.43533 10.0084 7.25388 10.1953C7.07242 10.3823 6.97049 10.6359 6.97049 10.9003C6.97049 11.1647 7.07242 11.4183 7.25388 11.6053C7.43533 11.7922 7.68144 11.8973 7.93805 11.8973H10.5182V14.5559C10.5182 14.8203 10.6202 15.0739 10.8016 15.2609C10.9831 15.4478 11.2292 15.5529 11.4858 15.5529C11.7424 15.5529 11.9885 15.4478 12.17 15.2609C12.3514 15.0739 12.4534 14.8203 12.4534 14.5559V11.8973H15.0335C15.2901 11.8973 15.5362 11.7922 15.7177 11.6053C15.8992 11.4183 16.0011 11.1647 16.0011 10.9003C16.0011 10.6359 15.8992 10.3823 15.7177 10.1953C15.5362 10.0084 15.2901 9.90332 15.0335 9.90332H12.4534V7.24471Z"/>
                                                 </svg>
                                             </button>
                                             <div class="new-chat-menu" x-show="tab === 'status'" x-cloak>
@@ -3740,9 +3738,9 @@
                                                  @click="selStatus = {{ $s->id }}">
                                                 <div class="my-status-thumb">
                                                     @if($s->type === 'photo' && $s->media_path)
-                                                        <img src="{{ smart_asset('storage/' . $s->media_path) }}" alt="">
+                                                        <img src="{{ route('status.media', $s->id) }}" alt="">
                                                     @elseif($s->type === 'video' && $s->media_path)
-                                                        <video src="{{ smart_asset('storage/' . $s->media_path) }}" muted></video>
+                                                        <video src="{{ route('status.media', $s->id) }}" muted></video>
                                                         <span class="my-status-thumb-play"><i class="fa fa-play"></i></span>
                                                     @else
                                                         <div class="my-status-thumb-text" style="background: {{ $s->background_color ?: '#075E54' }};">
@@ -3989,20 +3987,25 @@
                                     <i class="fa fa-search"></i>
                                     <input type="text"
                                            wire:model.live.debounce.500ms="newChatSearch"
-                                           placeholder="Public name or @username">
+                                           placeholder="Name, email or @username">
                                 </div>
                                 <div class="new-chat-help">
-                                    A name finds public profiles. <b>@username</b> finds that username.
+                                    Name or email finds public profiles. <b>@username</b> finds that username (public or private).
                                 </div>
-                                <div class="new-chat-list" wire:loading.class="is-loading" wire:target="newChatSearch,openNewChat">
-                                    {{-- Loading spinner: shown when the directory list is empty
-                                         AND we're actively waiting on the server (first open,
-                                         or in-flight search). Also shown when @entangle is still
-                                         syncing newChatOpen from Alpine → server. --}}
-                                    @if($directoryUsers->isEmpty() && empty(trim((string) $newChatSearch)))
-                                        <div class="new-chat-loading">
+                                <div class="new-chat-list" wire:loading.class="is-loading" wire:target="newChatSearch">
+                                    {{-- Idle state: panel just opened, search box empty.
+                                         We no longer eager-load the first 100 users here —
+                                         that query made the "+" feel laggy on prod. The
+                                         user types → we query. In-flight queries show the
+                                         spinner (hidden by default, revealed by wire:loading). --}}
+                                    @if(empty(trim((string) $newChatSearch)))
+                                        <div class="new-chat-empty" wire:loading.remove wire:target="newChatSearch">
+                                            <i class="fa fa-search"></i>
+                                            <div>Type a name, email or @username to find people</div>
+                                        </div>
+                                        <div class="new-chat-loading" wire:loading wire:target="newChatSearch" style="display:none;">
                                             <span class="new-chat-spinner"></span>
-                                            <span>Loading users&hellip;</span>
+                                            <span>Searching&hellip;</span>
                                         </div>
                                     @else
                                         @forelse($directoryUsers as $u)
@@ -4166,10 +4169,10 @@
 
                                     <div class="status-viewer-body">
                                         @if($selectedStatus['type'] === 'photo')
-                                            <img src="{{ smart_asset('storage/' . $selectedStatus['media_path']) }}"
+                                            <img src="{{ route('status.media', $selectedStatus['id']) }}"
                                                  class="status-viewer-media" alt="">
                                         @elseif($selectedStatus['type'] === 'video')
-                                            <video src="{{ smart_asset('storage/' . $selectedStatus['media_path']) }}"
+                                            <video src="{{ route('status.media', $selectedStatus['id']) }}"
                                                    class="status-viewer-media" controls autoplay muted playsinline></video>
                                         @else
                                             <div class="status-viewer-text"
@@ -5486,6 +5489,14 @@
                 if (document.querySelector('.conv-kebab .conv-kebab-menu:not([style*="display: none"])')) return;
                 if (document.querySelector('.fwd-overlay')) return;
                 if (document.querySelector('#chatSearchBar') && document.getElementById('chatSearchBar').style.display !== 'none') return;
+                // Skip while any voice note / video / audio message is actually
+                // playing. refreshChat morphs the message list, and even though
+                // the <audio> element itself survives the morph, the layout shift
+                // from re-rendering surrounding bubbles causes an audible hiccup
+                // in playback. User-visible symptom: voice notes stutter every 8s.
+                for (const media of document.querySelectorAll('#chatMessages audio, #chatMessages video')) {
+                    if (!media.paused && !media.ended) return;
+                }
                 // Chat sidebar only exists on /my-chat, so use it as the
                 // "am I still on the chat page?" sentinel.
                 const anchor = document.getElementById('chatSidebar');
@@ -5716,7 +5727,13 @@
 
         function toggleRecording() {
             if (window.__chatState.recorder) {
-                // Second tap = stop and upload.
+                // Guard against a double-fired tap (mobile Safari fast-tap,
+                // or any accidentally duplicated click listener). If the
+                // recorder was started less than 400ms ago, treat the second
+                // event as a no-op instead of stop-and-upload — otherwise a
+                // single tap on the mic silently sends an empty voice note.
+                const startedAt = window.__chatState.recStartedAt || 0;
+                if (startedAt && Date.now() - startedAt < 400) return;
                 stopRecording();
             } else {
                 startRecording();

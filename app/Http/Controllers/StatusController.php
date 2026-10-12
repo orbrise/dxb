@@ -126,6 +126,44 @@ class StatusController extends Controller
     }
 
     /**
+     * Stream a status's photo/video file with the correct Content-Type.
+     * Files live at storage/app/public/statuses/{userId}/filename and are
+     * NOT reachable via smart_asset() because the asset subdomain doesn't
+     * contain a storage/ directory. Mirrors ChatMediaController::serve.
+     *
+     * Access rule: owner can always view; others only within the 24h
+     * active window.
+     */
+    public function serveMedia(Request $request, int $statusId)
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        $status = Status::find($statusId);
+        if (!$status || !$status->media_path) {
+            abort(404);
+        }
+        if ($status->user_id !== $user->id && $status->isExpired()) {
+            abort(404);
+        }
+
+        $abs = storage_path('app/public/' . $status->media_path);
+        if (!is_file($abs)) {
+            abort(404);
+        }
+
+        $mime = $status->media_mime ?: 'application/octet-stream';
+        // Chrome ignores codecs= in Content-Type; strip if present.
+        $mime = preg_replace('/;.*$/', '', $mime);
+
+        return response()->file($abs, [
+            'Content-Type'  => $mime,
+            'Accept-Ranges' => 'bytes',
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
+    }
+
+    /**
      * Delete a status you own. Cleans up the media file too.
      */
     public function destroy(Request $request, int $statusId)

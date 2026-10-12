@@ -10,6 +10,12 @@ class StatusView extends Model
 {
     use HasFactory;
 
+    // The status_views table only has viewed_at; it has no
+    // created_at / updated_at columns. Leaving Eloquent's default
+    // timestamps on causes "Unknown column 'updated_at'" on every
+    // insert when the Chat component records a status view.
+    public $timestamps = false;
+
     protected $fillable = [
         'status_id',
         'viewer_id',

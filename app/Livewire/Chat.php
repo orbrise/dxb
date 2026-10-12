@@ -1303,21 +1303,13 @@ class Chat extends Component
         $needle  = ltrim($rawTerm, '@');
         $isExactHandleQuery = $rawTerm !== '' && str_starts_with($rawTerm, '@');
 
-        // Empty-search case: everyone opens the overlay to the same list,
-        // so cache it per-user for a minute. First open was previously
-        // 1-2s just for an ORDER BY name on the entire users table.
+        // No search term → no results. Previously we eager-loaded the first
+        // 100 public users on panel open, which made the "+" feel sluggish
+        // on prod (ORDER BY name on the full users table + 100 avatar rows).
+        // The UX is now "type to search" — the panel renders a prompt until
+        // the user types at least one character.
         if ($needle === '') {
-            $uid = auth()->id();
-            return Cache::remember("chat.directory.public.{$uid}", 60, function () use ($uid) {
-                return User::select(['id', 'name', 'email', 'username', 'avatar', 'is_private'])
-                    ->where('id', '!=', $uid)
-                    ->where(function ($sub) {
-                        $sub->where('is_private', 0)->orWhereNull('is_private');
-                    })
-                    ->orderBy('name')
-                    ->limit(100)
-                    ->get();
-            });
+            return collect();
         }
 
         $q = User::select(['id', 'name', 'email', 'username', 'avatar', 'is_private'])
@@ -1508,15 +1500,24 @@ class Chat extends Component
 
     /**
      * Open the viewer for a specific status and record the view.
+     *
+     * Owners can always view their own status — the isExpired check only
+     * applies to others' statuses. Previously an own-status that tripped
+     * the expiry check (server-clock drift, etc.) silently returned here
+     * without setting selectedStatusId, so the right-panel viewer never
+     * rendered.
      */
     public function viewStatus(int $statusId): void
     {
         $status = Status::find($statusId);
-        if (!$status || $status->isExpired()) return;
+        if (!$status) return;
+
+        $isMine = $status->user_id === auth()->id();
+        if (!$isMine && $status->isExpired()) return;
 
         $this->selectedStatusId = $statusId;
 
-        if ($status->user_id !== auth()->id()) {
+        if (!$isMine) {
             StatusView::firstOrCreate(
                 ['status_id' => $statusId, 'viewer_id' => auth()->id()],
                 ['viewed_at' => now()]
@@ -1641,9 +1642,12 @@ class Chat extends Component
         if (!$this->selectedStatusId) return null;
 
         $status = Status::with('user')->find($this->selectedStatusId);
-        if (!$status || $status->isExpired()) return null;
+        if (!$status) return null;
 
         $isMine = $status->user_id === auth()->id();
+        // Only enforce expiry for other users' statuses — the owner can
+        // always see their own even if the 24h window has lapsed.
+        if (!$isMine && $status->isExpired()) return null;
         $viewers = $isMine
             ? StatusView::with('viewer')
                 ->where('status_id', $status->id)
