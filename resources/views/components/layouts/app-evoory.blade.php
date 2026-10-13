@@ -191,7 +191,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 
     {{-- Main theme CSS (loaded after Bootstrap to override) --}}
-    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260416-1">
+    <link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20261013-1">
 
     {{-- Listing-page CSS lives in the layout (not in @push) so the <link>
          elements survive wire:navigate. Pushing them caused Livewire's head
@@ -360,6 +360,118 @@
              Silently no-ops on browsers without Push support (iOS Safari
              outside PWA installs, etc.). --}}
         @include('livewire.partials.push-init')
+
+        {{-- Real-time badge poller for the Chat & Calls icons (top header
+             + mobile bottom nav). Fetches /chat/badges every 15 seconds
+             and rewrites .ev-cc-badge (header, unread_messages) and
+             .ev-mobile-bottom-nav__badge (mobile, total). Both targets
+             are optional — the script no-ops if neither exists on the
+             current page. Skips the chat page itself (which keeps its
+             badge in sync via the inline Livewire component). --}}
+        <script>
+            (function () {
+                if (window.__chatBadgePoll) return;
+                window.__chatBadgePoll = true;
+
+                // Note: runs on /my-chat too. The top-header badge lives
+                // in the layout (not inside the Livewire chat component),
+                // so without this poll it would stay stale even while the
+                // user has the chat page open and is receiving messages.
+
+                // Exposed globally so other scripts can force an immediate
+                // badge refresh — e.g. the chat page's Echo listener for
+                // NewChatMessage calls this the moment a message pushes
+                // over WebSocket, giving sub-second badge updates on
+                // pages where Reverb is subscribed.
+                // Track last-seen total so we can detect UP changes
+                // (new message arrived) vs DOWN changes (user read / seen
+                // a missed call) between polls. An UP change on /my-chat
+                // triggers a Livewire refresh of the chat component so the
+                // sidebar's unread pill + "Unread" filter counter update
+                // without waiting for the chat page's own 8s tickPoll.
+                let __lastTotal = null;
+
+                window.__refreshChatBadges = async function () {
+                    try {
+                        const res = await fetch('/chat/badges?_=' + Date.now(), {
+                            credentials: 'same-origin',
+                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                            cache: 'no-store',
+                        });
+                        if (!res.ok) {
+                            console.warn('[badges] HTTP', res.status);
+                            return;
+                        }
+                        const data = await res.json();
+                        const unread = parseInt(data.unread_messages || 0, 10);
+                        const total  = parseInt(data.total || 0, 10);
+                        paintBadge('.ev-cc-badge', '.ev-cc-icon', unread);
+                        paintBadge('.ev-mobile-bottom-nav__badge', '.ev-mobile-bottom-nav__icon', total);
+
+                        // On /my-chat: if the total went up, force the chat
+                        // Livewire component to refresh so the sidebar unread
+                        // pill + Unread filter counter show the new message
+                        // without needing the user to reload. On DOWN changes
+                        // (read/seen) the chat page's own markConversationAsRead
+                        // already drives the re-render, so no need to force one.
+                        if (__lastTotal !== null && total > __lastTotal
+                            && window.location.pathname === '/my-chat'
+                            && window.Livewire) {
+                            const sidebar = document.getElementById('chatSidebar');
+                            const root = sidebar && sidebar.closest('[wire\\:id]');
+                            if (root) {
+                                const comp = window.Livewire.find(root.getAttribute('wire:id'));
+                                try { comp && comp.call('refreshChat'); } catch (_) {}
+                            }
+                        }
+                        __lastTotal = total;
+                    } catch (err) {
+                        console.warn('[badges] fetch failed', err);
+                    }
+                };
+
+                const refresh = async () => {
+                    if (document.hidden) return;
+                    await window.__refreshChatBadges();
+                };
+
+                // Add/update/remove the <span> badge inside the given anchor.
+                // Blade only renders the badge span when count > 0, so when
+                // the user has nothing we may need to create it, and when
+                // they drop back to zero we remove it.
+                const paintBadge = (badgeSel, anchorSel, count) => {
+                    const label = count > 99 ? '99+' : String(count);
+                    document.querySelectorAll(anchorSel).forEach(anchor => {
+                        let badge = anchor.querySelector(badgeSel);
+                        if (count > 0) {
+                            if (!badge) {
+                                badge = document.createElement('span');
+                                badge.className = badgeSel.replace('.', '');
+                                anchor.appendChild(badge);
+                            }
+                            if (badge.textContent !== label) badge.textContent = label;
+                        } else if (badge) {
+                            badge.remove();
+                        }
+                    });
+                };
+
+                // Prime immediately so the badge reflects reality within a
+                // beat of the first page load, then poll on an interval.
+                // 8s matches the chat page's own tickPoll cadence and feels
+                // like real time without hammering the DB (ChatBadges has
+                // a 30s cache + request-local memo so repeat hits are cheap).
+                refresh();
+                setInterval(refresh, 8000);
+                // Also refresh when the tab regains focus — users switching
+                // back from another tab/app shouldn't have to wait a tick.
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) refresh();
+                });
+                // And when the window regains focus (desktop multi-tab).
+                window.addEventListener('focus', refresh);
+            })();
+        </script>
     @endauth
 
     {{-- Footer --}}

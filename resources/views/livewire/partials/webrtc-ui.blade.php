@@ -245,8 +245,39 @@
     .chat-call-buttons button:hover { background: rgba(193,241,29,0.1); }
     .chat-call-buttons button:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    /* Mobile: the 340×500 floating card is awkward on a phone screen —
+       default to full-screen so the call fills the viewport like a
+       native app. Mirrors the .rtc-call.maximized rules above, so the
+       maximize button has nothing to do and hides itself. */
+    @media (max-width: 900px) {
+        .rtc-call {
+            top: 0; right: 0; bottom: 0; left: 0;
+            width: auto; height: auto;
+            max-height: none;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+        }
+        .rtc-call .rtc-topbar { padding: 14px 16px; font-size: 14px; }
+        .rtc-call .rtc-quality { padding: 4px 10px; font-size: 12px; }
+        .rtc-call .rtc-quality span:last-child { display: inline; }
+        .rtc-call .rtc-remote-audio-only .big-avatar {
+            width: 140px; height: 140px; font-size: 54px; margin-bottom: 24px;
+        }
+        .rtc-call .rtc-remote-audio-only .callee-name {
+            font-size: 20px; margin-bottom: 6px;
+        }
+        .rtc-call video.rtc-local {
+            top: 16px; right: 16px; width: 110px; height: 150px; border-radius: 10px;
+        }
+        .rtc-call .rtc-controls { padding: 22px calc(16px + env(safe-area-inset-bottom, 0px)); gap: 16px; }
+        .rtc-call .rtc-btn { width: 56px; height: 56px; font-size: 20px; }
+        .rtc-call .rtc-btn.hangup { width: 64px; height: 64px; font-size: 24px; }
+        /* Nothing to maximize when we're already filling the viewport. */
+        .rtc-call #rtcMaximizeBtn { display: none; }
+    }
+
     @media (max-width: 640px) {
-        .rtc-call video.rtc-local { width: 110px; height: 150px; top: 12px; right: 12px; }
         .rtc-incoming { top: 16px; right: 12px; left: 12px; min-width: unset; }
     }
 </style>

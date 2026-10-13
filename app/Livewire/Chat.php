@@ -912,6 +912,7 @@ class Chat extends Component
                 'created_at' => $msg->created_at->toISOString(),
                 'expires_at' => $msg->expires_at?->toISOString(),
                 'attachment_url' => $msg->attachment_url,
+                'attachment_thumbnail_url' => $msg->attachment_thumbnail_url,
                 'attachment_type' => $msg->attachment_type,
                 'attachment_mime' => $msg->attachment_mime,
                 'attachment_size' => $msg->attachment_size,
@@ -989,10 +990,12 @@ class Chat extends Component
             })
             ->update(['status' => 'read']);
 
-        // Reading messages drops this user's unread badge — clear it so
-        // the mobile nav / header reflects the new count on next page load
-        // instead of waiting out the 30s TTL.
+        // Reading messages drops this user's unread badge AND the sidebar
+        // pink pill on the just-opened conversation. Blow the chat.convs
+        // cache too so the sidebar re-renders without the pill instead of
+        // waiting out the 5s cache TTL.
         ChatBadges::clear($userId);
+        $this->invalidateChatCache();
 
         // Defer the broadcasts until AFTER the Livewire response is sent to
         // the browser. Each broadcast() is a blocking HTTP POST to Reverb;
@@ -1786,7 +1789,14 @@ class Chat extends Component
         $directoryUsers = $this->newChatOpen ? $this->getDirectoryUsers() : collect();
 
         $callHistory    = $this->activeTab === 'calls'  ? $this->getCallHistory() : collect();
-        $galleryMedia   = $this->activeTab === 'gallery' ? $this->getGalleryMedia() : collect();
+        // Gallery media is also pre-loaded on the Chats tab so switching
+        // to Media doesn't flash "No shared media yet" while the Livewire
+        // round-trip catches up — Alpine optimistically reveals the grid
+        // the instant the tab-icon is clicked. Cached 30s, so the extra
+        // load on Chats renders is essentially free after the first hit.
+        $galleryMedia   = in_array($this->activeTab, ['chats', 'gallery'], true)
+            ? $this->getGalleryMedia()
+            : collect();
 
         // Status feed also powers the "my statuses" strip at the top of
         // the Chats tab, so load it for both 'chats' and 'status'. Keep

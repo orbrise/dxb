@@ -12,6 +12,15 @@
          on subsequent Livewire updates — cutting round-trip payload
          dramatically. --}}
     <style>
+        /* Chat page only: strip the top-header's dark strip so the
+           header blends into the page background. The layout rule
+           puts the class directly on the <header> element
+           (.ev-header{background:var(--bg-secondary)} in app-evoory),
+           so this is a compound selector (header.ev-header), NOT a
+           descendant selector (header .ev-header) — the latter won't
+           match because there's no .ev-header inside a <header>. */
+        header.ev-header { background: transparent !important; }
+
         /* --------------------------------------------------------------
            evoory chat — dark theme design tokens
            Refreshed to match the messages + calls mockups. Kept every
@@ -574,15 +583,19 @@
         .cf-tab .cf-badge {
             background: var(--ev-danger);
             color: #fff;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
+            width: 18px;
             min-width: 18px;
             height: 18px;
-            padding: 0 5px;
+            padding: 0px 8px 0px 7px;
             border-radius: 999px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            line-height: 1;
+            box-sizing: border-box;
+            font-variant-numeric: tabular-nums;
         }
         .cf-tab.active .cf-badge { background: var(--ev-bg); color: var(--ev-text); }
         .conversation-item {
@@ -1596,13 +1609,17 @@
             color: #fff;
             font-size: 11px;
             font-weight: 700;
+            width: 20px;
             min-width: 20px;
             height: 20px;
-            padding: 0 6px;
-            border-radius: var(--ev-r-pill);
+            padding: 0 5px 2px 5px;;
+            border-radius: 999px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            line-height: 1;
+            box-sizing: border-box;
+            font-variant-numeric: tabular-nums;
         }
 
         /* Bottom nav strip INSIDE the sidebar (chat, phone, orbit, …) -- */
@@ -2399,35 +2416,56 @@
         .msg-menu-list button.danger:hover { background: #fef2f2; }
         .msg-menu-list button svg { width: 16px; height: 16px; flex: 0 0 auto; }
 
-        /* Reply quote block pinned to the top of a bubble (shows the parent
-           sender name + excerpt of the message being replied to). */
+        /* Bubbles containing a reply quote get tighter padding so the
+           quote hugs the bubble edges, matching WhatsApp. Right side
+           keeps enough room for the hover chevron (.msg-menu, 28px wide
+           at top:4px right:4px). Overrides .message-bubble's default
+           padding of 10px 38px 10px 14px. */
+        .message-bubble:has(> .msg-quote) {
+            padding: 5px 38px 8px 5px;
+        }
+
+        /* Reply quote block pinned to the top of a bubble. WhatsApp-style:
+           a thick colored accent bar on the left, a tinted translucent
+           panel body, bold sender name in the accent colour, muted
+           excerpt below. Rounded on all corners so it reads as a
+           distinct card inside the bubble. */
         .msg-quote {
             display: block;
-            border-left: 3px solid rgba(0,0,0,0.25);
-            background: rgba(0,0,0,0.06);
+            position: relative;
+            border-left: 4px solid #06cf9c;
+            background: rgba(6, 207, 156, 0.12);
             padding: 6px 10px;
             border-radius: 6px;
-            margin-bottom: 6px;
-            font-size: 12px;
+            margin: 0 0 5px;
+            font-size: 12.5px;
             line-height: 1.3;
+            overflow: hidden;
         }
         .message-wrapper.received .msg-quote {
-            border-left-color: rgba(255,255,255,0.25);
-            background: rgba(255,255,255,0.05);
+            border-left-color: #34d399;
+            background: rgba(52, 211, 153, 0.14);
         }
         .msg-quote-name {
-            font-weight: 600;
-            color: #0a5e2b;
-            margin-bottom: 2px;
+            font-weight: 700;
+            color: #06cf9c;
+            font-size: 13px;
+            letter-spacing: 0.1px;
+            margin: 0 0 1px;
         }
-        .message-wrapper.received .msg-quote-name { color: #7FD98B; }
+        .message-wrapper.received .msg-quote-name { color: #34d399; }
         .msg-quote-text {
-            color: rgba(0,0,0,0.65);
+            color: rgba(10, 10, 10, 0.72);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            margin: 0;
         }
         .message-wrapper.received .msg-quote-text { color: var(--ev-text-2); }
+        /* Snug gap between the quote card and the main message text so
+           the bubble reads as one grouped unit rather than two stacked
+           blocks with air between them. */
+        .msg-quote + .message-text { margin-top: 2px; }
 
         /* Replying-to strip above the composer input. */
         .reply-strip {
@@ -2805,7 +2843,7 @@
         .send-btn {
             width: 40px; height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--ev-pink), #d81b76);
+            background: #D584D0;
             color: #fff;
             border: none;
             cursor: pointer;
@@ -2815,7 +2853,7 @@
             padding: 0;
         }
         .chat-input-form button[type="submit"]:hover,
-        .send-btn:hover { transform: scale(1.05); }
+        .send-btn:hover { background: #c270bd; transform: scale(1.05); }
         .chat-input-form button[type="submit"]:disabled,
         .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
@@ -2881,19 +2919,16 @@
             transition: background 120ms;
         }
         .attach-menu button:hover { background: var(--ev-hover); }
+        /* Icon slot — fixed-width box so row labels align. The SVGs
+           supplied by product carry their own fill colours, so we
+           drop the previous coloured background chip and let the
+           glyphs render naturally. svg sits centred inside the slot. */
         .attach-menu button .icon {
-            width: 32px; height: 32px;
-            border-radius: 10px;
+            width: 24px; height: 20px;
             display: inline-flex; align-items: center; justify-content: center;
-            color: #fff;
-            font-size: 14px;
+            flex-shrink: 0;
         }
-        .attach-menu .icon.photos   { background: #3b82f6; }
-        .attach-menu .icon.camera   { background: #ec4899; }
-        .attach-menu .icon.audio    { background: #f97316; }
-        .attach-menu .icon.contact  { background: #0ea5e9; }
-        .attach-menu .icon.location { background: #22c55e; }
-        .attach-menu .icon.docs     { background: #4338ca; }
+        .attach-menu button .icon svg { display: block; }
 
         /* Attachment preview strip above the input. Hidden by default —
            the JS attachment upload path toggles .open when a file is
@@ -2920,6 +2955,249 @@
             display: inline-flex; align-items: center; justify-content: center;
         }
         .attachment-preview .remove:hover { background: rgba(239,68,68,0.25); }
+
+        /* -----------------------------------------------------------
+           Video upload — WhatsApp-style preview + progress overlay.
+           Shown when the user picks a video from the attach menu;
+           lets them preview the clip, see the first-frame poster
+           we're about to attach, and watch upload progress before
+           the video appears in the thread. 100 MB client-side cap
+           matches the server. --------------------------------------- */
+        .vu-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.78);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center; justify-content: center;
+            z-index: 10001;
+            padding: 16px;
+            animation: vuFadeIn 150ms ease-out;
+        }
+        .vu-overlay.open { display: flex; }
+        @keyframes vuFadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+        .vu-sheet {
+            width: 100%;
+            max-width: 460px;
+            background: #0b0d10;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+        }
+        .vu-head {
+            display: flex; align-items: center;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            gap: 10px;
+        }
+        .vu-head h3 {
+            margin: 0;
+            font-size: 15px; font-weight: 600;
+            color: #fff;
+            flex: 1 1 auto;
+            min-width: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .vu-close {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .vu-close:hover { background: rgba(255,255,255,0.14); }
+
+        .vu-body {
+            position: relative;
+            background: #000;
+            aspect-ratio: 16 / 9;
+            width: 100%;
+        }
+        .vu-body video {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            background: #000;
+            display: block;
+        }
+
+        .vu-progress {
+            position: absolute; inset: 0;
+            display: none;
+            align-items: center; justify-content: center;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            font-size: 13px;
+        }
+        .vu-progress.open { display: flex; }
+        .vu-progress-ring {
+            width: 72px; height: 72px;
+            position: relative;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .vu-progress-ring svg {
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+        }
+        .vu-progress-ring circle {
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: round;
+        }
+        .vu-progress-ring .bg { stroke: rgba(255,255,255,0.15); }
+        .vu-progress-ring .fg {
+            stroke: #C1F11D;
+            stroke-dasharray: 201; /* 2 * π * 32 ≈ 201 */
+            stroke-dashoffset: 201;
+            transition: stroke-dashoffset 150ms linear;
+        }
+        .vu-progress-ring .pct {
+            position: absolute;
+            font-size: 13px; font-weight: 600;
+            color: #fff;
+        }
+
+        .vu-meta {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px;
+            color: rgba(255,255,255,0.65);
+            font-size: 12.5px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .vu-meta .vu-dot { opacity: 0.4; }
+
+        .vu-caption {
+            padding: 0 14px 12px;
+        }
+        .vu-caption input {
+            width: 100%;
+            background: #15181c;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .vu-caption input:focus { outline: none; border-color: rgba(193,241,29,0.5); }
+
+        .vu-actions {
+            display: flex; gap: 10px;
+            padding: 12px 14px 14px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .vu-btn {
+            flex: 1 1 auto;
+            height: 42px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px;
+            transition: filter 120ms;
+        }
+        .vu-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .vu-btn.cancel { background: rgba(255,255,255,0.08); color: #fff; }
+        .vu-btn.cancel:hover:not(:disabled) { background: rgba(255,255,255,0.14); }
+        .vu-btn.send { background: #D584D0; color: #0a0a0a; }
+        .vu-btn.send:hover:not(:disabled) { filter: brightness(1.08); }
+
+        /* Compact mobile sheet. */
+        @media (max-width: 640px) {
+            .vu-sheet { max-width: 100%; border-radius: 12px; }
+            .vu-body { aspect-ratio: 9 / 12; }
+        }
+
+        /* Chat-thread video bubble — compact WhatsApp-style tile.
+           Fixed 220 × 300 so landscape and portrait both end up as a
+           consistent, scannable thumbnail in the thread; the native
+           controls still work for playback. object-fit:cover crops to
+           fill, which matches how WhatsApp renders chat videos (no
+           pillarboxing). */
+        .msg-video {
+            display: block;
+            width: 220px;
+            max-width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .msg-video video {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+
+        /* Optimistic "sending video" bubble — the thumbnail we captured
+           client-side is pinned as the poster, and a circular progress
+           ring is overlaid while the upload is in flight. Matches the
+           real .msg-video dimensions so the layout doesn't jump when
+           refreshChat() swaps the pending bubble out for the real one. */
+        .msg-video-pending {
+            display: block;
+            width: 220px;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000 center/cover no-repeat;
+            position: relative;
+        }
+        .msg-video-pending::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.35);
+        }
+        .msg-video-pending.failed::after {
+            background: rgba(185, 28, 28, 0.55);
+        }
+        .mvp-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 64px; height: 64px;
+            display: inline-flex;
+            align-items: center; justify-content: center;
+            z-index: 2;
+        }
+        .mvp-ring svg {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+        }
+        .mvp-ring circle {
+            fill: none; stroke-width: 5; stroke-linecap: round;
+        }
+        .mvp-ring .bg { stroke: rgba(255,255,255,0.22); }
+        .mvp-ring .fg {
+            stroke: #C1F11D;
+            stroke-dasharray: 182; /* 2π·29 ≈ 182 */
+            stroke-dashoffset: 182;
+            transition: stroke-dashoffset 150ms linear;
+        }
+        .mvp-pct {
+            position: relative;
+            font-size: 12px; font-weight: 700;
+            color: #fff;
+            z-index: 1;
+        }
+        .mvp-label {
+            position: absolute;
+            left: 0; right: 0; bottom: 10px;
+            text-align: center;
+            color: #fff; font-size: 12px; font-weight: 500;
+            z-index: 2;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
 
         /* Voice recording bar — hidden by default, JS toggles .open
            while a recording is actively being captured. Same permanent-
@@ -3351,18 +3629,18 @@
             .chat-messages { padding: 16px 12px; }
             .message-bubble { max-width: 82%; font-size: 14px; }
 
-            /* Composer — green circular send button matching the mockup,
-               tighter padding to keep the input area from eating too much
-               vertical space. */
+            /* Composer — pink circular send button matching the desktop
+               styling, tighter padding to keep the input area from eating
+               too much vertical space on mobile. */
             .chat-input { padding: 8px 10px 12px; }
             .chat-input-form { padding: 4px 6px 4px 12px; gap: 6px; }
             .chat-input-form button[type="submit"] {
-                background: var(--ev-online);
+                background: #D584D0;
                 width: 40px;
                 height: 40px;
             }
             .chat-input-form button[type="submit"]:hover {
-                background: #1ba954;
+                background: #c270bd;
                 transform: none;
             }
 
@@ -4715,7 +4993,20 @@
                                                             <button type="button" class="vp-speed" data-vp="speed" data-speed="1">1x <svg viewBox="0 0 12 12" fill="currentColor"><path d="M3 4.5l3 3 3-3H3z"/></svg></button>
                                                         </div>
                                                     @elseif($message['attachment_type'] === 'video')
-                                                        <video controls preload="metadata" src="{{ $message['attachment_url'] }}" style="max-width:280px; border-radius:10px;"></video>
+                                                        {{-- Video uploaded via the WhatsApp-style preview flow.
+                                                             The <video> is cheap: no autoplay, metadata preload
+                                                             only, poster is the client-captured first-frame JPEG
+                                                             served from R2. Browser handles range requests
+                                                             natively against the signed/public R2 URL from
+                                                             attachment_url, so playback starts without us
+                                                             touching the bytes. --}}
+                                                        <div class="msg-video" data-video-url="{{ $message['attachment_url'] }}">
+                                                            <video preload="metadata"
+                                                                   playsinline
+                                                                   controls
+                                                                   @if(!empty($message['attachment_thumbnail_url'])) poster="{{ $message['attachment_thumbnail_url'] }}" @endif
+                                                                   src="{{ $message['attachment_url'] }}"></video>
+                                                        </div>
                                                     @else
                                                         <a href="{{ $message['attachment_url'] }}" target="_blank" rel="noopener" class="msg-file" download="{{ $message['attachment_original_name'] }}">
                                                             <i class="fa fa-file"></i>
@@ -4778,6 +5069,48 @@
                                     <div class="att-info" id="attachmentPreviewLabel">Uploading…</div>
                                 </div>
 
+                                {{-- Video upload preview modal — populated by JS when the user
+                                     picks a video from the attach menu. The <video> previews
+                                     the clip; a hidden <canvas> captures the first-frame
+                                     thumbnail which is uploaded alongside the video to R2 and
+                                     used as the chat bubble's poster. --}}
+                                <div class="vu-overlay" id="videoUploadModal" role="dialog" aria-modal="true" aria-labelledby="vuTitle">
+                                    <div class="vu-sheet">
+                                        <div class="vu-head">
+                                            <h3 id="vuTitle">Send video</h3>
+                                            <button type="button" class="vu-close" id="vuCancelBtn" aria-label="Close">
+                                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+                                            </button>
+                                        </div>
+                                        <div class="vu-body">
+                                            <video id="vuPreview" playsinline muted preload="metadata"></video>
+                                            <div class="vu-progress" id="vuProgress">
+                                                <div class="vu-progress-ring">
+                                                    <svg viewBox="0 0 72 72">
+                                                        <circle class="bg" cx="36" cy="36" r="32"></circle>
+                                                        <circle class="fg" id="vuProgressFg" cx="36" cy="36" r="32"></circle>
+                                                    </svg>
+                                                    <span class="pct" id="vuProgressPct">0%</span>
+                                                </div>
+                                                <div id="vuProgressLabel">Uploading…</div>
+                                            </div>
+                                        </div>
+                                        <div class="vu-meta" id="vuMeta">
+                                            <span id="vuMetaDuration">0:00</span>
+                                            <span class="vu-dot">·</span>
+                                            <span id="vuMetaSize">0 MB</span>
+                                        </div>
+                                        <div class="vu-actions">
+                                            <button type="button" class="vu-btn cancel" id="vuCancelBtn2">Cancel</button>
+                                            <button type="button" class="vu-btn send" id="vuSendBtn">
+                                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+                                                Send
+                                            </button>
+                                        </div>
+                                        <canvas id="vuThumbCanvas" style="display:none"></canvas>
+                                    </div>
+                                </div>
+
                                 {{-- Chat Input --}}
                                 <div class="chat-input" style="position: relative;">
                                     @php
@@ -4812,18 +5145,66 @@
                                     </div>
                                     <form wire:submit.prevent="sendReply" class="chat-input-form {{ ($blockMe || $blockThem) ? 'is-blocked' : '' }}">
                                         <button type="button" class="emoji-btn" id="emojiToggleBtn" title="Emoji" aria-label="Emoji picker">
-                                            <i class="far fa-smile"></i>
+                                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                <path d="M11 21C16.5228 21 21 16.5228 21 11C21 5.47715 16.5228 1 11 1C5.47715 1 1 5.47715 1 11C1 16.5228 5.47715 21 11 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                <path d="M7 8.05001V7.95001M15 8.05001V7.95001" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                <path d="M15 13C14.5 14.5 13.21 16 11 16C8.79 16 7.5 14.5 7 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
                                         </button>
 
-                                        {{-- File attach — POSTs directly to /chat/attachment-upload,
-                                             not through Livewire's wire:model, because Livewire's
-                                             temp-upload also hits the putFileAs bug on this host. --}}
-                                        <button type="button" class="attach-btn" id="attachBtn" title="Attach file" aria-label="Attach file">
-                                            <i class="fa fa-paperclip"></i>
+                                        {{-- Paperclip opens the WhatsApp-style attachment menu
+                                             (Photos & Videos / Camera / Audio / Contact / Location /
+                                             Documents). Each menu button triggers its own hidden
+                                             <input type="file"> with the right accept filter, or in
+                                             the case of Camera/Location/Contact uses browser APIs.
+                                             All uploads POST to /chat/attachment-upload the same way
+                                             the single picker used to. --}}
+                                        <button type="button" class="attach-btn" id="attachBtn" title="Attach" aria-label="Attach" aria-haspopup="true">
+                                            <svg width="21" height="23" viewBox="0 0 21 23" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                <path d="M18.0445 2.53812C17.4769 1.97892 16.7071 1.66476 15.9044 1.66476C15.1017 1.66476 14.3318 1.97892 13.7642 2.53812L3.06296 13.0803C2.13413 13.9954 1.61231 15.2366 1.61231 16.5307C1.61231 17.8249 2.13413 19.0661 3.06296 19.9812C3.99179 20.8963 5.25155 21.4104 6.56511 21.4104C7.87868 21.4104 9.13844 20.8963 10.0673 19.9812L19.6008 10.5884C19.7564 10.4402 19.9649 10.3581 20.1813 10.3599C20.3978 10.3616 20.6048 10.4471 20.7579 10.5978C20.9111 10.7485 20.998 10.9525 21 11.1657C21.0019 11.3789 20.9188 11.5844 20.7685 11.7379L11.235 21.1317C9.99319 22.3354 8.31888 23.0069 6.5768 22.9999C4.83472 22.993 3.16602 22.308 1.93418 21.0944C0.702331 19.8807 0.00714839 18.2367 5.48207e-05 16.5203C-0.00703875 14.804 0.674532 13.1544 1.8963 11.9309L12.5976 1.38761C13.1757 0.804707 13.9004 0.383285 14.6978 0.166313C15.4952 -0.0506584 16.3367 -0.0554174 17.1365 0.152521C17.9363 0.36044 18.6658 0.773574 19.2506 1.34981C19.8355 1.92604 20.2548 2.64477 20.4659 3.43272C20.6769 4.22075 20.6721 5.04983 20.4519 5.83543C20.2317 6.62102 19.8039 7.33502 19.2123 7.90463L9.09433 17.8732C8.55282 18.41 7.81757 18.7137 7.04938 18.7179C6.28248 18.7138 5.54859 18.41 5.00884 17.8732C4.79312 17.6607 4.63683 17.3635 4.53558 17.0859C4.41441 16.7571 4.35186 16.41 4.35068 16.0601C4.35068 15.3011 4.66325 14.5713 5.20365 14.0389L14.1539 5.22192C14.2547 5.11487 14.3831 5.03661 14.5253 4.99539C14.6676 4.95416 14.8185 4.95151 14.9622 4.9877C15.1058 5.02389 15.2369 5.09758 15.3416 5.20101C15.4463 5.30445 15.5208 5.43379 15.5571 5.57542C15.5938 5.7168 15.5912 5.8653 15.5495 6.00534C15.5079 6.14537 15.4288 6.2718 15.3205 6.37135L6.3714 15.1894C6.1371 15.4207 6.0043 15.7334 6.0016 16.0601C6.0049 16.2813 6.05993 16.4993 6.16229 16.6967L6.1843 16.7314C6.42643 16.9645 6.73571 17.0914 7.04938 17.0914C7.36856 17.0914 7.68774 16.9602 7.92767 16.7227L18.0445 6.75521C18.3257 6.47829 18.5488 6.14949 18.701 5.78761C18.8532 5.42572 18.9315 5.03784 18.9315 4.64612C18.9315 4.2544 18.8532 3.86652 18.701 3.50464C18.5488 3.14275 18.3257 2.81396 18.0445 2.53704V2.53812Z" fill="currentColor"/>
+                                            </svg>
                                         </button>
-                                        <input type="file" id="attachInput"
-                                               accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,video/*"
-                                               style="display:none">
+                                        <div class="attach-menu" id="attachMenu">
+                                            <button type="button" data-attach-kind="photos">
+                                                <span class="icon photos" aria-hidden="true">
+                                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 10.5V1.5C15 0.675 14.325 0 13.5 0H4.5C3.675 0 3 0.675 3 1.5V10.5C3 11.325 3.675 12 4.5 12H13.5C14.325 12 15 11.325 15 10.5ZM6.75 7.5L8.2725 9.5325L10.5 6.75L13.5 10.5H4.5L6.75 7.5ZM0 3V13.5C0 14.325 0.675 15 1.5 15H12V13.5H1.5V3H0Z" fill="#1ABCFE"/></svg>
+                                                </span> Photos &amp; Videos
+                                            </button>
+                                            <button type="button" data-attach-kind="camera">
+                                                <span class="icon camera" aria-hidden="true">
+                                                    <svg width="16" height="13" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.13742 13H13.8629C15.2784 13 16 12.2909 16 10.8867V3.7494C16 2.34515 15.2784 1.64303 13.8629 1.64303H12.2705C11.7397 1.64303 11.5765 1.53396 11.2702 1.19308L10.7187 0.579381C10.3854 0.204761 10.0384 0 9.33048 0H6.6219C5.92095 0 5.57366 0.204761 5.23364 0.579381L4.68223 1.19308C4.38285 1.52698 4.2127 1.64303 3.6819 1.64303H2.13713C0.721571 1.64303 0 2.34515 0 3.7494V10.8867C0 12.2909 0.721861 13 2.13742 13ZM7.99681 10.8186C5.94127 10.8186 4.28761 9.16189 4.28761 7.08985C4.28761 5.01723 5.94127 3.36111 7.99652 3.36111C10.0654 3.36111 11.7124 5.01723 11.7124 7.08985C11.7124 9.16189 10.0587 10.8186 7.99652 10.8186M12.8896 5.42617C12.4267 5.42617 12.0457 5.05155 12.0457 4.58793C12.0457 4.36376 12.1346 4.14878 12.2929 3.99027C12.4511 3.83176 12.6658 3.74271 12.8896 3.74271C13.1133 3.74271 13.328 3.83176 13.4862 3.99027C13.6445 4.14878 13.7334 4.36376 13.7334 4.58793C13.7334 5.05155 13.3524 5.42617 12.8896 5.42617ZM7.99681 9.78258C8.34995 9.783 8.69971 9.71363 9.02605 9.57846C9.3524 9.44329 9.64891 9.24496 9.89862 8.99483C10.1483 8.74471 10.3463 8.4477 10.4813 8.12081C10.6162 7.79392 10.6855 7.44358 10.6851 7.08985C10.6854 6.73614 10.6162 6.38583 10.4812 6.05898C10.3462 5.73213 10.1482 5.43515 9.89852 5.18506C9.64881 4.93496 9.35231 4.73666 9.02599 4.6015C8.69966 4.46635 8.34993 4.397 7.99681 4.39742C6.51301 4.39742 5.31552 5.59719 5.31552 7.08985C5.31552 8.5828 6.51998 9.78258 7.99681 9.78258Z" fill="#FF2E74"/></svg>
+                                                </span> Camera
+                                            </button>
+                                            <button type="button" data-attach-kind="audio">
+                                                <span class="icon audio" aria-hidden="true">
+                                                    <svg width="16" height="14" viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.592 0 0 3.69765 0 8.23529V13.1765C0 13.6294 0.36 14 0.8 14H3.2C3.64 14 4 13.6294 4 13.1765V9.05882C4 8.60588 3.64 8.23529 3.2 8.23529H1.6C1.6 4.60353 4.472 1.64706 8 1.64706C11.528 1.64706 14.4 4.60353 14.4 8.23529H12.8C12.36 8.23529 12 8.60588 12 9.05882V13.1765C12 13.6294 12.36 14 12.8 14H15.2C15.64 14 16 13.6294 16 13.1765V8.23529C16 3.69765 12.408 0 8 0Z" fill="#FA6533"/></svg>
+                                                </span> Audio
+                                            </button>
+                                            <button type="button" data-attach-kind="contact">
+                                                <span class="icon contact" aria-hidden="true">
+                                                    <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.75 0C6.75544 0 5.80161 0.395088 5.09835 1.09835C4.39509 1.80161 4 2.75544 4 3.75C4 4.74456 4.39509 5.69839 5.09835 6.40165C5.80161 7.10491 6.75544 7.5 7.75 7.5C8.74456 7.5 9.69839 7.10491 10.4017 6.40165C11.1049 5.69839 11.5 4.74456 11.5 3.75C11.5 2.75544 11.1049 1.80161 10.4017 1.09835C9.69839 0.395088 8.74456 0 7.75 0ZM3.75 9.5C2.75544 9.5 1.80161 9.89509 1.09835 10.5983C0.395088 11.3016 0 12.2554 0 13.25V14.438C0 15.192 0.546 15.834 1.29 15.955C5.568 16.654 9.932 16.654 14.21 15.955C14.5698 15.8958 14.897 15.7108 15.1332 15.4331C15.3694 15.1553 15.4994 14.8027 15.5 14.438V13.25C15.5 12.2554 15.1049 11.3016 14.4017 10.5983C13.6984 9.89509 12.7446 9.5 11.75 9.5H11.41C11.2233 9.50067 11.042 9.52933 10.866 9.586L10 9.869C8.53797 10.3463 6.96203 10.3463 5.5 9.869L4.634 9.586C4.45847 9.5297 4.27534 9.50069 4.091 9.5H3.75Z" fill="#009DE2"/></svg>
+                                                </span> Contact
+                                            </button>
+                                            <button type="button" data-attach-kind="location">
+                                                <span class="icon location" aria-hidden="true">
+                                                    <svg width="12" height="17" viewBox="0 0 12 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 0C2.68762 0 0 2.44792 0 5.46429C0 10.3214 6 17 6 17C6 17 12 10.3214 12 5.46429C12 2.44792 9.31238 0 6 0ZM6 8.5C5.52533 8.5 5.06131 8.35757 4.66663 8.09071C4.27195 7.82386 3.96434 7.44457 3.78269 7.0008C3.60104 6.55704 3.55351 6.06873 3.64612 5.59764C3.73872 5.12654 3.9673 4.69381 4.30294 4.35417C4.63859 4.01453 5.06623 3.78323 5.53178 3.68952C5.99734 3.59581 6.4799 3.64391 6.91844 3.82772C7.35698 4.01153 7.73181 4.32281 7.99553 4.72219C8.25924 5.12156 8.4 5.5911 8.4 6.07143C8.39931 6.71531 8.14623 7.33262 7.69629 7.78791C7.24635 8.24321 6.63631 8.4993 6 8.5Z" fill="#06CF9C"/></svg>
+                                                </span> Location
+                                            </button>
+                                            <button type="button" data-attach-kind="docs">
+                                                <span class="icon docs" aria-hidden="true">
+                                                    <svg width="14" height="17" viewBox="0 0 14 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.46154 0.211538C8.46154 0.155435 8.43925 0.101629 8.39958 0.0619582C8.35991 0.0222871 8.3061 0 8.25 0H2.32692C1.70978 0 1.11792 0.245157 0.68154 0.68154C0.245157 1.11792 0 1.70978 0 2.32692V14.1731C0 14.7902 0.245157 15.3821 0.68154 15.8185C1.11792 16.2548 1.70978 16.5 2.32692 16.5H10.7885C11.4056 16.5 11.9975 16.2548 12.4338 15.8185C12.8702 15.3821 13.1154 14.7902 13.1154 14.1731V5.83592C13.1154 5.77982 13.0931 5.72601 13.0534 5.68634C13.0138 5.64667 12.9599 5.62438 12.9038 5.62438H9.09615C8.92784 5.62438 8.76643 5.55752 8.64741 5.43851C8.5284 5.3195 8.46154 5.15808 8.46154 4.98977V0.211538ZM9.09615 8.46154C9.26446 8.46154 9.42588 8.5284 9.54489 8.64741C9.66391 8.76643 9.73077 8.92784 9.73077 9.09615C9.73077 9.26446 9.66391 9.42588 9.54489 9.54489C9.42588 9.66391 9.26446 9.73077 9.09615 9.73077H4.01923C3.85092 9.73077 3.6895 9.66391 3.57049 9.54489C3.45148 9.42588 3.38462 9.26446 3.38462 9.09615C3.38462 8.92784 3.45148 8.76643 3.57049 8.64741C3.6895 8.5284 3.85092 8.46154 4.01923 8.46154H9.09615ZM9.09615 11.8462C9.26446 11.8462 9.42588 11.913 9.54489 12.032C9.66391 12.151 9.73077 12.3125 9.73077 12.4808C9.73077 12.6491 9.66391 12.8105 9.54489 12.9295C9.42588 13.0485 9.26446 13.1154 9.09615 13.1154H4.01923C3.85092 13.1154 3.6895 13.0485 3.57049 12.9295C3.45148 12.8105 3.38462 12.6491 3.38462 12.4808C3.38462 12.3125 3.45148 12.151 3.57049 12.032C3.6895 11.913 3.85092 11.8462 4.01923 11.8462H9.09615Z" fill="#7F66FF"/><path d="M9.73047 0.486893C9.73047 0.3312 9.89378 0.232201 10.0148 0.329508C10.1174 0.412431 10.2085 0.508893 10.2881 0.618893L12.8375 4.1702C12.8951 4.25143 12.8325 4.35635 12.7326 4.35635H9.94201C9.8859 4.35635 9.8321 4.33407 9.79243 4.2944C9.75276 4.25472 9.73047 4.20092 9.73047 4.14482V3.65782e-07Z" fill="#7F66FF"/></svg>
+                                                </span> Documents
+                                            </button>
+                                        </div>
+                                        {{-- Hidden file inputs — one per kind so each has the right accept filter.
+                                             Camera also sets `capture="environment"` which on mobile launches the
+                                             camera app directly instead of the gallery. --}}
+                                        <input type="file" id="attachInputPhotos"  accept="image/*,video/*" style="display:none">
+                                        <input type="file" id="attachInputCamera"  accept="image/*" capture="environment" style="display:none">
+                                        <input type="file" id="attachInputAudio"   accept="audio/*" style="display:none">
+                                        <input type="file" id="attachInputDocs"    accept="application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" style="display:none">
+                                        {{-- Legacy id kept so any stray references still resolve. --}}
+                                        <input type="file" id="attachInput"        accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,video/*" style="display:none">
 
                                         {{-- Recording indicator (replaces input while recording) --}}
                                         <div class="voice-recording-bar" id="voiceRecordingBar">
@@ -4860,8 +5241,10 @@
                                             <i class="fa fa-microphone"></i>
                                         </button>
 
-                                        <button type="submit" title="Send">
-                                            <i class="fa fa-paper-plane"></i>
+                                        <button type="submit" title="Send" aria-label="Send">
+                                            <svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                <path d="M14.5543 6.79394C14.5544 6.41177 14.3387 6.07601 13.9948 5.9177L1.36966 0.090244C1.02025 -0.0735256 0.608044 -0.0107162 0.321397 0.248634C0.0320204 0.505254 -0.0717363 0.909275 0.0510848 1.27233L1.8934 6.79467L0.0504505 12.3172C-0.0642226 12.6666 0.0258401 13.0461 0.285159 13.3054L0.323375 13.3436C0.609991 13.6029 1.02219 13.6602 1.37162 13.5019L13.9947 7.67025C14.3414 7.50917 14.5543 7.17612 14.5543 6.79394ZM1.28769 1.32959L11.8737 6.21537L2.91712 6.21316L1.29042 1.32686L1.28769 1.32959ZM1.28707 12.2598L2.91432 7.37333L11.8736 7.37282L1.28707 12.2598Z" fill="currentColor"/>
+                                            </svg>
                                         </button>
                                     </form>
                                 </div>
@@ -4997,7 +5380,16 @@
                                                             </button>
                                                         @elseif($m['attachment_type'] === 'video')
                                                             <button type="button" class="media-tile" onclick="window.open('{{ $m['attachment_url'] }}', '_blank')">
-                                                                <video src="{{ $m['attachment_url'] }}" preload="metadata" muted></video>
+                                                                @if(!empty($m['attachment_thumbnail_url']))
+                                                                    {{-- Prefer the pre-captured poster: avoids
+                                                                         fetching the whole R2 video just to show
+                                                                         the Media tab tile, and dodges the
+                                                                         CORS/range quirks of inline <video>
+                                                                         thumbnailing from a redirected URL. --}}
+                                                                    <img src="{{ $m['attachment_thumbnail_url'] }}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
+                                                                @else
+                                                                    <video src="{{ $m['attachment_url'] }}" preload="metadata" muted></video>
+                                                                @endif
                                                                 <span class="media-tile-badge"><i class="fa fa-play"></i></span>
                                                             </button>
                                                         @else
@@ -5130,6 +5522,34 @@
                     </div>
                 </div>
             @endif
+
+            {{-- Contact-share modal — opened by the Contact option in the
+                 attachment menu. Pure client-side; on save it drops a formatted
+                 contact message into the composer and submits it as plain text.
+                 Hidden by default; JS toggles the .open class. --}}
+            <div class="fwd-overlay contact-overlay" id="contactOverlay" style="display:none;">
+                <div class="fwd-modal" onclick="event.stopPropagation()">
+                    <div class="fwd-header">
+                        <h3>Share contact</h3>
+                        <button type="button" class="fwd-close" onclick="closeContactShare()" aria-label="Close">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <div style="padding:16px 18px 18px; display:flex; flex-direction:column; gap:12px;">
+                        <div>
+                            <label class="acct-label">Name</label>
+                            <input type="text" id="contactShareName" class="acct-input" placeholder="e.g. Ali Khan">
+                        </div>
+                        <div>
+                            <label class="acct-label">Phone</label>
+                            <input type="tel" id="contactSharePhone" class="acct-input" placeholder="+92 300 1234567">
+                        </div>
+                        <button type="button" class="acct-save-btn" onclick="submitContactShare()">
+                            <i class="fa fa-paper-plane"></i> Send
+                        </button>
+                    </div>
+                </div>
+            </div>
 
     @push('js')
     {{-- Same reasoning as the CSS push above: keeping this ~1100-line
@@ -5371,6 +5791,13 @@
                                     Livewire.find(wireId).$refresh();
                                     scrollToBottom();
                                 }
+                                // Fire the global badge refresh immediately
+                                // on message push — don't wait for the next
+                                // 8s poll tick to update the top-header +
+                                // mobile-nav chat/call icons.
+                                if (typeof window.__refreshChatBadges === 'function') {
+                                    window.__refreshChatBadges();
+                                }
                             })
                             .listen('.MessageStatusUpdated', (e) => {
                                 const chatComponent = document.querySelector('[wire\\:id]');
@@ -5486,6 +5913,8 @@
                 // on these menus, so the UI would snap shut mid-interaction.
                 if (document.querySelector('.chat-header-menu.open')) return;
                 if (document.querySelector('.new-chat-wrap.open')) return;
+                if (document.querySelector('#attachMenu.open')) return;
+                if (document.querySelector('#contactOverlay') && document.getElementById('contactOverlay').style.display === 'flex') return;
                 if (document.querySelector('.conv-kebab .conv-kebab-menu:not([style*="display: none"])')) return;
                 if (document.querySelector('.fwd-overlay')) return;
                 if (document.querySelector('#chatSearchBar') && document.getElementById('chatSearchBar').style.display !== 'none') return;
@@ -5662,10 +6091,25 @@
             window.__chatState.mediaWired = true;
 
             document.addEventListener('click', (e) => {
+                // Paperclip now toggles the attachment menu rather than opening
+                // a single file picker. The individual kinds are handled below.
                 if (e.target.closest('#attachBtn')) {
                     e.preventDefault();
-                    document.getElementById('attachInput')?.click();
+                    e.stopPropagation();
+                    document.getElementById('attachMenu')?.classList.toggle('open');
                     return;
+                }
+                // Menu row clicks — dispatch per kind.
+                const kindBtn = e.target.closest('.attach-menu [data-attach-kind]');
+                if (kindBtn) {
+                    e.preventDefault();
+                    document.getElementById('attachMenu')?.classList.remove('open');
+                    handleAttachKind(kindBtn.getAttribute('data-attach-kind'));
+                    return;
+                }
+                // Click outside closes the menu.
+                if (!e.target.closest('#attachMenu') && !e.target.closest('#attachBtn')) {
+                    document.getElementById('attachMenu')?.classList.remove('open');
                 }
                 if (e.target.closest('#voiceDeleteBtn') || e.target.closest('#voiceCancelBtn')) {
                     e.preventDefault();
@@ -5703,12 +6147,16 @@
             }, true); // capture-phase so we run before Livewire's submit binding
 
             // File input change → POST directly (bypasses Livewire's temp upload).
+            // One listener covers every attach kind — each hidden input has
+            // its own id but the upload path is identical: ChatMediaController
+            // detects type from the MIME on the server side.
             document.addEventListener('change', (e) => {
-                if (!e.target.matches('#attachInput')) return;
-                const file = e.target.files && e.target.files[0];
+                const t = e.target;
+                if (!t.matches || !t.matches('#attachInput, #attachInputPhotos, #attachInputCamera, #attachInputAudio, #attachInputDocs')) return;
+                const file = t.files && t.files[0];
                 if (!file) return;
                 uploadAttachmentFile(file);
-                e.target.value = ''; // allow picking the same file twice in a row
+                t.value = ''; // allow picking the same file twice in a row
             }, true);
 
             // Send button while recording: stop-and-upload the voice note
@@ -5723,6 +6171,98 @@
                     stopRecording(); // triggers onstop → uploadVoiceNote
                 }
             }, true);
+        }
+
+        // Dispatcher for the paperclip menu. File-based kinds trigger the
+        // matching hidden <input type="file"> and ride the normal upload
+        // path. Location and Contact don't go through file upload — they
+        // compose a text message and reuse the existing send path.
+        function handleAttachKind(kind) {
+            switch (kind) {
+                case 'photos':   document.getElementById('attachInputPhotos')?.click();  break;
+                case 'camera':   document.getElementById('attachInputCamera')?.click();  break;
+                case 'audio':    document.getElementById('attachInputAudio')?.click();   break;
+                case 'docs':     document.getElementById('attachInputDocs')?.click();    break;
+                case 'location': shareLocation();          break;
+                case 'contact':  openContactShare();       break;
+            }
+        }
+
+        // Share current location. Uses the browser's Geolocation API, formats
+        // a short text message with a Google Maps link, and submits it through
+        // the existing composer. Falls back to an alert if geolocation is
+        // unavailable or the user denies permission.
+        function shareLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by this browser.');
+                return;
+            }
+            const input = document.getElementById('chatReplyInput');
+            if (!input) { alert('Open a conversation first.'); return; }
+
+            // Light feedback: temporarily disable the paperclip while we wait.
+            const btn = document.getElementById('attachBtn');
+            btn && btn.setAttribute('disabled', 'disabled');
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    btn && btn.removeAttribute('disabled');
+                    const lat = pos.coords.latitude.toFixed(6);
+                    const lng = pos.coords.longitude.toFixed(6);
+                    const link = `https://maps.google.com/?q=${lat},${lng}`;
+                    sendTextMessage(`📍 My location: ${link}`);
+                },
+                (err) => {
+                    btn && btn.removeAttribute('disabled');
+                    console.warn('[geo] failed', err);
+                    alert('Could not get your location. Make sure location access is allowed.');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+        }
+
+        // Contact-share modal — simple name + phone fields. On submit we drop
+        // a formatted text message into the thread. Future upgrade: an attachment
+        // row with type=contact so the UI can render a dedicated "contact card".
+        window.openContactShare = function () {
+            const input = document.getElementById('chatReplyInput');
+            if (!input) { alert('Open a conversation first.'); return; }
+            const overlay = document.getElementById('contactOverlay');
+            if (!overlay) return;
+            document.getElementById('contactShareName').value = '';
+            document.getElementById('contactSharePhone').value = '';
+            overlay.style.display = 'flex';
+            setTimeout(() => document.getElementById('contactShareName').focus(), 60);
+        };
+        window.closeContactShare = function () {
+            const overlay = document.getElementById('contactOverlay');
+            if (overlay) overlay.style.display = 'none';
+        };
+        window.submitContactShare = function () {
+            const name  = (document.getElementById('contactShareName').value || '').trim();
+            const phone = (document.getElementById('contactSharePhone').value || '').trim();
+            if (!name && !phone) { alert('Enter at least a name or a phone number.'); return; }
+            closeContactShare();
+            const body = `👤 Contact\nName: ${name || '—'}\nPhone: ${phone || '—'}`;
+            sendTextMessage(body);
+        };
+
+        // Shared helper used by Location and Contact — stuffs a text body into
+        // the Livewire-bound input and triggers the composer's submit so the
+        // normal sendReply() path persists + broadcasts the message.
+        function sendTextMessage(body) {
+            const input = document.getElementById('chatReplyInput');
+            if (!input) return;
+            input.value = body;
+            // Sync into the Livewire $reply property BEFORE submitting, otherwise
+            // Livewire ignores the value we just set programmatically.
+            const root = input.closest('[wire\\:id]');
+            if (root && window.Livewire) {
+                const comp = Livewire.find(root.getAttribute('wire:id'));
+                try { comp?.set('reply', body, false); } catch (_) {}
+            }
+            const form = input.closest('form.chat-input-form');
+            if (form) form.requestSubmit();
         }
 
         function toggleRecording() {
@@ -5882,6 +6422,16 @@
         }
 
         async function uploadAttachmentFile(file) {
+            // Videos take the WhatsApp-style preview path: show the clip
+            // + duration + size, capture a first-frame thumbnail, then
+            // upload both to R2 via /chat/attachment-upload with upload
+            // progress rendered on the overlay. 100 MB cap matches the
+            // server (ChatMediaController::VIDEO_MAX_BYTES).
+            if (file && (file.type || '').startsWith('video/')) {
+                openVideoUploadFlow(file);
+                return;
+            }
+
             const input = document.getElementById('chatReplyInput');
             const conversationId = input?.getAttribute('data-conversation-id');
             if (!conversationId) { alert('No conversation open.'); return; }
@@ -5922,6 +6472,260 @@
             } finally {
                 if (preview) preview.classList.remove('open');
             }
+        }
+
+        /**
+         * WhatsApp-style video upload preview + thumbnail capture + upload.
+         *
+         * Flow:
+         *  1. 100 MB hard cap — reject up front, no modal opens.
+         *  2. Open modal, show inline <video> preview, duration & size.
+         *  3. On loadeddata, seek to 0.1s and draw to a <canvas> → blob
+         *     (the client-side poster that becomes <video poster=""> in
+         *     the chat thread; cheaper + faster than decoding server-side).
+         *  4. On Send: XHR (not fetch — need upload progress) to
+         *     /chat/attachment-upload with { attachment, thumbnail,
+         *     duration, conversation_id }. Progress ring updates in
+         *     real time. On success, refreshChat() morphs the new
+         *     message into the thread.
+         */
+        function openVideoUploadFlow(file) {
+            const MAX = 100 * 1024 * 1024;
+            if (file.size > MAX) {
+                alert('Video is larger than 100 MB. Please pick a smaller clip.');
+                return;
+            }
+
+            const convInput = document.getElementById('chatReplyInput');
+            const conversationId = convInput?.getAttribute('data-conversation-id');
+            if (!conversationId) { alert('No conversation open.'); return; }
+
+            const modal        = document.getElementById('videoUploadModal');
+            const preview      = document.getElementById('vuPreview');
+            const metaDuration = document.getElementById('vuMetaDuration');
+            const metaSize     = document.getElementById('vuMetaSize');
+            const sendBtn      = document.getElementById('vuSendBtn');
+            const cancelBtn    = document.getElementById('vuCancelBtn');
+            const cancelBtn2   = document.getElementById('vuCancelBtn2');
+            const progress     = document.getElementById('vuProgress');
+            const progressFg   = document.getElementById('vuProgressFg');
+            const progressPct  = document.getElementById('vuProgressPct');
+            const progressLbl  = document.getElementById('vuProgressLabel');
+            const thumbCanvas  = document.getElementById('vuThumbCanvas');
+
+            // Reset state from any prior open.
+            progress.classList.remove('open');
+            sendBtn.disabled = true;
+            progressFg.style.strokeDashoffset = '201';
+            progressPct.textContent = '0%';
+            progressLbl.textContent = 'Uploading…';
+
+            const objectUrl = URL.createObjectURL(file);
+            preview.src = objectUrl;
+            preview.load();
+
+            metaSize.textContent = (file.size / 1024 / 1024).toFixed(1) + ' MB';
+            metaDuration.textContent = '0:00';
+
+            // Captured on 'seeked' (after we jump to 0.1s so we don't catch
+            // a black opening frame). Stored on the modal element to survive
+            // the async handler chain.
+            let thumbBlob = null;
+            let xhr = null;
+            let aborted = false;
+
+            function cleanup() {
+                try { preview.pause(); } catch (_) {}
+                preview.removeAttribute('src');
+                preview.load();
+                URL.revokeObjectURL(objectUrl);
+                if (xhr && xhr.readyState !== 4) { aborted = true; xhr.abort(); }
+                modal.classList.remove('open');
+            }
+
+            function close() {
+                cleanup();
+                sendBtn.onclick = null;
+                cancelBtn.onclick = null;
+                cancelBtn2.onclick = null;
+            }
+
+            cancelBtn.onclick = close;
+            cancelBtn2.onclick = close;
+
+            // When metadata is ready: show the duration, seek a bit in
+            // and capture the thumbnail. Some browsers fire 'loadeddata'
+            // before duration is populated — guard with isFinite.
+            preview.addEventListener('loadedmetadata', () => {
+                const dur = isFinite(preview.duration) ? preview.duration : 0;
+                const mm = Math.floor(dur / 60);
+                const ss = Math.floor(dur % 60).toString().padStart(2, '0');
+                metaDuration.textContent = `${mm}:${ss}`;
+                // Jump a tiny bit in so we don't grab a black frame.
+                try { preview.currentTime = Math.min(0.1, Math.max(0, dur - 0.05)); }
+                catch (_) { sendBtn.disabled = false; }
+            }, { once: true });
+
+            preview.addEventListener('seeked', () => {
+                try {
+                    const w = preview.videoWidth || 640;
+                    const h = preview.videoHeight || 360;
+                    // Cap thumbnail to 720px wide — nobody needs a 4k
+                    // poster for a chat bubble; smaller = cheaper R2.
+                    const scale = w > 720 ? 720 / w : 1;
+                    const tw = Math.round(w * scale);
+                    const th = Math.round(h * scale);
+                    thumbCanvas.width = tw;
+                    thumbCanvas.height = th;
+                    thumbCanvas.getContext('2d').drawImage(preview, 0, 0, tw, th);
+                    thumbCanvas.toBlob((blob) => {
+                        thumbBlob = blob || null;
+                        sendBtn.disabled = false;
+                    }, 'image/jpeg', 0.82);
+                } catch (err) {
+                    // CORS or decode failure — upload without a thumbnail;
+                    // chat still renders, just as a black box until play.
+                    console.warn('[videoUpload] thumb capture failed', err);
+                    sendBtn.disabled = false;
+                }
+            }, { once: true });
+
+            sendBtn.onclick = () => {
+                // Grab the thumbnail object URL first so the pending bubble
+                // can show the frame instantly (object URLs don't survive
+                // the modal's URL.revokeObjectURL in close()).
+                const thumbUrl = thumbBlob ? URL.createObjectURL(thumbBlob) : null;
+                const dur = isFinite(preview.duration) ? Math.round(preview.duration) : 0;
+
+                // Close the modal immediately — WhatsApp-style, the user
+                // doesn't wait on a modal; they see the video bubble pop
+                // into the thread with a progress ring, same as the ref
+                // image. The XHR keeps running in the background.
+                aborted = false; // we want to let the upload proceed
+                sendBtn.onclick = null;
+                cancelBtn.onclick = null;
+                cancelBtn2.onclick = null;
+                try { preview.pause(); } catch (_) {}
+                preview.removeAttribute('src');
+                preview.load();
+                URL.revokeObjectURL(objectUrl);
+                modal.classList.remove('open');
+
+                // Drop the optimistic bubble into the thread, then start
+                // the XHR. The bubble shows the captured thumbnail with
+                // a ring overlay that we update as upload progress ticks.
+                const pending = insertPendingVideoBubble(thumbUrl);
+
+                const fd = new FormData();
+                fd.append('conversation_id', conversationId);
+                fd.append('attachment', file);
+                if (thumbBlob) {
+                    fd.append('thumbnail', thumbBlob, 'thumb.jpg');
+                }
+                if (dur > 0) fd.append('duration', String(dur));
+
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+                const xhr2 = new XMLHttpRequest();
+                xhr2.open('POST', '/chat/attachment-upload', true);
+                xhr2.setRequestHeader('X-CSRF-TOKEN', csrf);
+                xhr2.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr2.setRequestHeader('Accept', 'application/json');
+                xhr2.withCredentials = true;
+
+                xhr2.upload.onprogress = (ev) => {
+                    if (!ev.lengthComputable) return;
+                    const pct = Math.round((ev.loaded / ev.total) * 100);
+                    if (pending?.setProgress) pending.setProgress(pct);
+                };
+
+                xhr2.onload = () => {
+                    if (xhr2.status >= 200 && xhr2.status < 300) {
+                        // Remove the pending bubble BEFORE refreshChat so
+                        // the morph swap doesn't flash two bubbles.
+                        if (pending?.remove) pending.remove();
+                        if (thumbUrl) URL.revokeObjectURL(thumbUrl);
+                        const anchor = document.getElementById('chatReplyInput') || document.getElementById('attachBtn');
+                        const root = anchor?.closest('[wire\\:id]');
+                        if (root) Livewire.find(root.getAttribute('wire:id'))?.call('refreshChat');
+                    } else {
+                        let msg = 'Upload failed (' + xhr2.status + ')';
+                        try {
+                            const body = JSON.parse(xhr2.responseText || '{}');
+                            if (body.detail) msg = body.detail;
+                        } catch (_) {}
+                        if (pending?.markFailed) pending.markFailed(msg);
+                    }
+                };
+                xhr2.onerror = () => {
+                    if (pending?.markFailed) pending.markFailed('Upload failed');
+                };
+                xhr2.send(fd);
+            };
+
+            modal.classList.add('open');
+        }
+
+        /**
+         * Drop an optimistic "sending video" bubble into the active chat
+         * thread. The captured thumbnail (object URL) is shown as the
+         * tile background; a progress ring sits in the centre until the
+         * upload completes, then the caller removes this bubble and
+         * refreshChat() morphs in the real row from the server.
+         *
+         * Returns { el, setProgress, markFailed, remove } so the caller
+         * can drive the ring + handle failure/cleanup.
+         */
+        function insertPendingVideoBubble(thumbUrl) {
+            const list = document.getElementById('chatMessages');
+            if (!list) return null;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            const wrap = document.createElement('div');
+            wrap.className = 'message-wrapper sent msg-pending';
+            wrap.innerHTML = `
+                <div class="message-bubble" style="padding:4px;">
+                    <div class="msg-video-pending" style="${thumbUrl ? `background-image:url('${thumbUrl}');` : ''}">
+                        <div class="mvp-ring">
+                            <svg viewBox="0 0 64 64">
+                                <circle class="bg" cx="32" cy="32" r="29"></circle>
+                                <circle class="fg" cx="32" cy="32" r="29"></circle>
+                            </svg>
+                            <span class="mvp-pct">0%</span>
+                        </div>
+                        <div class="mvp-label">Uploading…</div>
+                    </div>
+                </div>
+                <div class="message-time">
+                    <span>${timeStr}</span>
+                    <span class="message-ticks"><span class="tick"><i class="fa fa-clock" aria-hidden="true"></i></span></span>
+                </div>
+            `;
+            list.appendChild(wrap);
+            list.scrollTop = list.scrollHeight;
+
+            const fg    = wrap.querySelector('.mvp-ring .fg');
+            const pctEl = wrap.querySelector('.mvp-pct');
+            const label = wrap.querySelector('.mvp-label');
+
+            return {
+                el: wrap,
+                setProgress(pct) {
+                    pct = Math.max(0, Math.min(100, pct));
+                    if (fg)    fg.style.strokeDashoffset = String(182 - (182 * pct / 100));
+                    if (pctEl) pctEl.textContent = pct + '%';
+                    if (label) label.textContent = pct >= 100 ? 'Finishing…' : `Uploading ${pct}%`;
+                },
+                markFailed(message) {
+                    const tile = wrap.querySelector('.msg-video-pending');
+                    if (tile)  tile.classList.add('failed');
+                    if (label) label.textContent = message || 'Upload failed';
+                    if (pctEl) pctEl.textContent = '!';
+                    setTimeout(() => wrap.remove(), 5000);
+                },
+                remove() { wrap.remove(); },
+            };
         }
 
         async function uploadVoiceNote(blob, durationSec, opts) {

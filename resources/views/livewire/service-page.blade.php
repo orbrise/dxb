@@ -21,7 +21,7 @@
      button label invisible. Using matching IDs lets Livewire's head
      merger reconcile the elements properly on each navigation. --}}
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" rel="stylesheet">
-<link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260416-1">
+<link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20261013-1">
 <link rel="stylesheet" id="evoory-listing-css"
       href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: 1 }}">
 <link rel="stylesheet" id="evoory-listing-inline-css"

@@ -365,6 +365,18 @@ Route::group(['middleware'=>'auth'], function(){
     // offer/answer/ICE/hangup/decline signals between the two peers over Reverb.
     Route::post("call/signal", [\App\Http\Controllers\CallController::class, 'signal'])->name('call.signal');
     Route::get("call/pending", [\App\Http\Controllers\CallController::class, 'pending'])->name('call.pending');
+
+    // Lightweight badge-counts endpoint — polled by the mobile-nav /
+    // top-header client script so the Chat & Calls badge updates in
+    // real time instead of only on page refresh. Returns a tiny JSON
+    // payload; ChatBadges::for() has its own 30s cache so the hot path
+    // is a dict lookup, not a query.
+    Route::get("chat/badges", function () {
+        if (!auth()->check()) {
+            return response()->json(['unread_messages' => 0, 'missed_calls' => 0, 'total' => 0]);
+        }
+        return response()->json(\App\Support\ChatBadges::for(auth()->id()));
+    })->name('chat.badges');
     Route::get("call/history", [\App\Http\Controllers\CallController::class, 'history'])->name('call.history');
     Route::post("rtc/ping-user/{targetUserId}", [\App\Http\Controllers\CallController::class, 'pingUser'])
         ->whereNumber('targetUserId')
@@ -405,6 +417,13 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get("chat/media/{messageId}", [\App\Http\Controllers\ChatMediaController::class, 'serve'])
         ->whereNumber('messageId')
         ->name('chat.media.serve');
+
+    // Video poster thumbnail — JPEG captured client-side at upload time
+    // and stored next to the video on R2. Used as the <video poster="">
+    // so chat rows show a frame instead of a black box.
+    Route::get("chat/media/{messageId}/thumb", [\App\Http\Controllers\ChatMediaController::class, 'serveThumbnail'])
+        ->whereNumber('messageId')
+        ->name('chat.media.thumb');
 
     // Status feature — WhatsApp-style ephemeral posts (photo/video/text
     // that auto-hide 24h after posting). Photo/video upload goes through

@@ -22,6 +22,8 @@ class Message extends Model
         'status',
         'replied_at',
         'attachment_path',
+        'attachment_disk',
+        'attachment_thumbnail_path',
         'attachment_type',
         'attachment_mime',
         'attachment_size',
@@ -41,6 +43,59 @@ class Message extends Model
         'attachment_size' => 'integer',
         'attachment_duration' => 'integer',
     ];
+
+    /**
+     * Model hooks. Any new message or status change (unread → read) must
+     * invalidate the recipient's badge cache so the chat/calls icon in the
+     * top header + mobile nav shows the right count without waiting out
+     * the 30s TTL. Covers every write path — Chat::sendReply,
+     * ChatMediaController::uploadVoice/uploadAttachment, forwardTo,
+     * admin replies — so we don't have to remember to clear per call site.
+     */
+    protected static function booted(): void
+    {
+        $invalidateBothSides = function (Message $msg) {
+            try {
+                $conv = $msg->conversation;
+                if (!$conv) return;
+                $senderId = (int) $msg->sender_id;
+                $uids = array_filter([
+                    (int) $conv->user_one_id,
+                    (int) $conv->user_two_id,
+                    $senderId,
+                ]);
+                $uids = array_values(array_unique($uids));
+
+                foreach ($uids as $uid) {
+                    // Badge counter (top header + mobile nav) — clear
+                    // so the next /chat/badges poll returns fresh values.
+                    \App\Support\ChatBadges::clear($uid);
+
+                    // Sidebar conversation list cache (unread pill, last
+                    // message preview, Unread filter counter). Without
+                    // this the sidebar stays stale until the 5s cache
+                    // TTL expires AND the next tickPoll fires.
+                    foreach (['chat.convs', 'chat.statusfeed', 'chat.gallery', 'chat.calls'] as $prefix) {
+                        \Illuminate\Support\Facades\Cache::forget("{$prefix}.{$uid}");
+                    }
+                    foreach (['0', '1'] as $pref) {
+                        // The getConversations key uses md5(searchTerm) +
+                        // the pref flag — clear the empty-search variant
+                        // (hot path; search is rare).
+                        \Illuminate\Support\Facades\Cache::forget(
+                            "chat.convs.{$uid}." . md5('') . ".{$pref}"
+                        );
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Non-critical — stale badge for up to 30s is tolerable.
+            }
+        };
+
+        static::created($invalidateBothSides);
+        static::updated($invalidateBothSides);
+        static::deleted($invalidateBothSides);
+    }
 
     /**
      * Filter out disappearing messages that have passed their expiry.
@@ -83,6 +138,19 @@ class Message extends Model
     {
         if (!$this->attachment_path || !$this->id) return null;
         return route('chat.media.serve', $this->id);
+    }
+
+    /**
+     * Public URL for the video poster thumbnail, if one was captured and
+     * uploaded alongside the video. For video attachments only; null for
+     * everything else (images are their own poster, voice notes don't
+     * have one). Served through the same /chat/media/{id}/thumb route
+     * so the permission check applies to the thumbnail too.
+     */
+    public function getAttachmentThumbnailUrlAttribute(): ?string
+    {
+        if (!$this->attachment_thumbnail_path || !$this->id) return null;
+        return route('chat.media.thumb', $this->id);
     }
 
     /**

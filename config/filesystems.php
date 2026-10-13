@@ -83,6 +83,34 @@ return [
             'throw' => false,
         ],
 
+        /*
+         * Cloudflare R2 — S3-compatible object storage used for chat video
+         * uploads (and anything else we don't want chewing up local disk).
+         * Set these in .env:
+         *   R2_ACCESS_KEY_ID         access-key from R2 → API token
+         *   R2_SECRET_ACCESS_KEY     matching secret
+         *   R2_BUCKET                bucket name
+         *   R2_ENDPOINT              https://<account>.r2.cloudflarestorage.com
+         *   R2_PUBLIC_URL            optional — public bucket URL (r2.dev
+         *                            or custom domain). If set, serve()
+         *                            redirects to it; otherwise it falls
+         *                            back to a presigned URL.
+         *
+         * region=auto is required by R2 (no AWS regions); path_style must
+         * be true because R2 does not do subdomain-virtual-host style.
+         */
+        'r2' => [
+            'driver'                   => 's3',
+            'key'                      => env('R2_ACCESS_KEY_ID'),
+            'secret'                   => env('R2_SECRET_ACCESS_KEY'),
+            'region'                   => 'auto',
+            'bucket'                   => env('R2_BUCKET'),
+            'endpoint'                 => env('R2_ENDPOINT'),
+            'url'                      => env('R2_PUBLIC_URL'),
+            'use_path_style_endpoint'  => true,
+            'throw'                    => false,
+        ],
+
     ],
 
     /*

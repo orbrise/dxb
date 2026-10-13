@@ -29,6 +29,28 @@ class Call extends Model
     ];
 
     /**
+     * Model hooks — clear the badge cache for both participants whenever
+     * a call row is created / updated (missed → seen, incoming → missed,
+     * etc.) so the top-header and mobile-nav badges reflect reality
+     * within one poll tick instead of waiting out the 30s TTL.
+     */
+    protected static function booted(): void
+    {
+        $clear = function (Call $call) {
+            try {
+                foreach ([$call->caller_id, $call->callee_id] as $uid) {
+                    if ($uid) \App\Support\ChatBadges::clear((int) $uid);
+                }
+            } catch (\Throwable $e) {
+                // Stale badge for up to 30s is tolerable; swallow.
+            }
+        };
+        static::created($clear);
+        static::updated($clear);
+        static::deleted($clear);
+    }
+
+    /**
      * Missed calls the given user (as callee) has not yet acknowledged.
      */
     public function scopeUnseenMissedFor($query, int $userId)

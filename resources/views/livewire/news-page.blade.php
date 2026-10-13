@@ -32,7 +32,7 @@
      because this page renders on the legacy `app` layout (which does not load
      evoory-theme.css by default), but we still want the same top header bar
      as the home-page evoory layout. --}}
-<link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20260416-1">
+<link rel="stylesheet" href="{{ asset('assets/css/evoory-theme.css') }}?v=20261013-1">
 <style>
 /* === Evoory Dark Theme === */
 body { background: #000 !important; }
