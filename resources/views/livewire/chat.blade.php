@@ -3115,11 +3115,9 @@
         }
 
         /* Chat-thread video bubble — compact WhatsApp-style tile.
-           Fixed 220 × 300 so landscape and portrait both end up as a
-           consistent, scannable thumbnail in the thread; the native
-           controls still work for playback. object-fit:cover crops to
-           fill, which matches how WhatsApp renders chat videos (no
-           pillarboxing). */
+           The bubble is just a poster + play overlay; clicking it opens
+           the fullscreen lightbox (openVideoLightbox) for playback.
+           Keeps the thread clean — no inline <video controls>. */
         .msg-video {
             display: block;
             width: 220px;
@@ -3129,13 +3127,209 @@
             border-radius: 10px;
             overflow: hidden;
             position: relative;
+            cursor: pointer;
+            transition: transform 120ms;
         }
-        .msg-video video {
+        .msg-video:hover { transform: scale(0.98); }
+        .msg-video-poster {
             display: block;
             width: 100%;
             height: 100%;
             object-fit: cover;
             background: #000;
+        }
+        .msg-video-poster-fallback {
+            background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+        }
+        .msg-video-play {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            display: inline-flex;
+            align-items: center; justify-content: center;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .msg-video-play svg { margin-left: 2px; } /* nudge play glyph to optical centre */
+
+        /* Chat video playback popup — opened by clicking a video bubble.
+           Sheet-style modal (not fullscreen) with a title bar + close
+           button on top and the <video> inside, constrained so a portrait
+           clip doesn't eat the whole viewport. Mirrors the reference
+           design the product spec'd. ESC + click-outside both close. */
+        .chat-video-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.72);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10050;
+            padding: 20px;
+            animation: cvlFadeIn 150ms ease-out;
+        }
+        .chat-video-lightbox.open { display: flex; }
+        @keyframes cvlFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* The inner sheet — fixed max-width/height so landscape AND
+           portrait clips sit comfortably in the centre instead of
+           stretching from edge to edge. */
+        .chat-video-lightbox .cvl-sheet {
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            background: #0b0d10;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+        }
+        .chat-video-lightbox .cvl-head {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            gap: 10px;
+            flex: 0 0 auto;
+            background: #0b0d10;
+        }
+        .chat-video-lightbox .cvl-back {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex: 0 0 auto;
+        }
+        .chat-video-lightbox .cvl-back:hover { background: rgba(255,255,255,0.08); }
+        .chat-video-lightbox .cvl-head-info {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        .chat-video-lightbox .cvl-sender {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-video-lightbox .cvl-time {
+            color: rgba(255,255,255,0.55);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        .chat-video-lightbox .cvl-share {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex: 0 0 auto;
+        }
+        .chat-video-lightbox .cvl-share:hover { background: rgba(255,255,255,0.08); }
+        .chat-video-lightbox .cvl-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            overflow: hidden;
+        }
+        .chat-video-lightbox video {
+            display: block;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            background: #000;
+            outline: none;
+        }
+        /* Reply bar at the bottom of the lightbox — mirrors the chat
+           composer: emoji trigger, input, send button. Submitting it
+           sends a reply in the thread with reply_to_id set to the video
+           message, then closes the lightbox. */
+        .chat-video-lightbox .cvl-reply {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+            background: #0b0d10;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            flex: 0 0 auto;
+        }
+        .chat-video-lightbox .cvl-reply-input {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            background: #15181c;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 999px;
+            padding: 4px 4px 4px 12px;
+        }
+        .chat-video-lightbox .cvl-reply-input input {
+            flex: 1 1 auto;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 14px;
+            padding: 8px 4px;
+            min-width: 0;
+        }
+        .chat-video-lightbox .cvl-reply-input input::placeholder { color: rgba(255,255,255,0.4); }
+        .chat-video-lightbox .cvl-reply-emoji {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.65);
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex: 0 0 auto;
+        }
+        .chat-video-lightbox .cvl-reply-emoji:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .chat-video-lightbox .cvl-reply-send {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #22c55e;
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex: 0 0 auto;
+            transition: filter 120ms;
+        }
+        .chat-video-lightbox .cvl-reply-send:hover { filter: brightness(1.08); }
+        .chat-video-lightbox .cvl-reply-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Mobile: full-width sheet with rounded top corners, kept
+           within safe-area insets so iOS home indicator doesn't overlap. */
+        @media (max-width: 640px) {
+            .chat-video-lightbox { padding: 10px; }
+            .chat-video-lightbox .cvl-sheet {
+                max-width: 100%;
+                max-height: 90vh;
+                border-radius: 12px;
+            }
         }
 
         /* Optimistic "sending video" bubble — the thumbnail we captured
@@ -4993,19 +5187,28 @@
                                                             <button type="button" class="vp-speed" data-vp="speed" data-speed="1">1x <svg viewBox="0 0 12 12" fill="currentColor"><path d="M3 4.5l3 3 3-3H3z"/></svg></button>
                                                         </div>
                                                     @elseif($message['attachment_type'] === 'video')
-                                                        {{-- Video uploaded via the WhatsApp-style preview flow.
-                                                             The <video> is cheap: no autoplay, metadata preload
-                                                             only, poster is the client-captured first-frame JPEG
-                                                             served from R2. Browser handles range requests
-                                                             natively against the signed/public R2 URL from
-                                                             attachment_url, so playback starts without us
-                                                             touching the bytes. --}}
-                                                        <div class="msg-video" data-video-url="{{ $message['attachment_url'] }}">
-                                                            <video preload="metadata"
-                                                                   playsinline
-                                                                   controls
-                                                                   @if(!empty($message['attachment_thumbnail_url'])) poster="{{ $message['attachment_thumbnail_url'] }}" @endif
-                                                                   src="{{ $message['attachment_url'] }}"></video>
+                                                        {{-- Video bubble: compact thumbnail tile that opens
+                                                             a lightbox popup when clicked (openVideoLightbox).
+                                                             We render just the poster + a play-button overlay
+                                                             here — no inline <video controls> — so the thread
+                                                             stays clean and playback happens in a dedicated
+                                                             fullscreen-ish modal. data-* attributes feed the
+                                                             lightbox header (sender/time) and the reply bar
+                                                             (which message to attach the reply to). --}}
+                                                        <div class="msg-video" role="button" tabindex="0"
+                                                             data-video-url="{{ $message['attachment_url'] }}"
+                                                             data-message-id="{{ $message['id'] }}"
+                                                             data-sender-name="{{ $message['is_mine'] ? 'You' : ($message['sender_name'] ?? 'User') }}"
+                                                             data-sent-at="{{ \Carbon\Carbon::parse($message['created_at'])->format('M j, g:i A') }}"
+                                                             aria-label="Play video">
+                                                            @if(!empty($message['attachment_thumbnail_url']))
+                                                                <img class="msg-video-poster" src="{{ $message['attachment_thumbnail_url'] }}" alt="" loading="lazy">
+                                                            @else
+                                                                <div class="msg-video-poster msg-video-poster-fallback"></div>
+                                                            @endif
+                                                            <span class="msg-video-play" aria-hidden="true">
+                                                                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                                            </span>
                                                         </div>
                                                     @else
                                                         <a href="{{ $message['attachment_url'] }}" target="_blank" rel="noopener" class="msg-file" download="{{ $message['attachment_original_name'] }}">
@@ -5067,48 +5270,6 @@
                                 <div class="attachment-preview" id="attachmentPreview">
                                     <i class="fa fa-spinner fa-spin" style="font-size:20px; color:#C1F11D;"></i>
                                     <div class="att-info" id="attachmentPreviewLabel">Uploading…</div>
-                                </div>
-
-                                {{-- Video upload preview modal — populated by JS when the user
-                                     picks a video from the attach menu. The <video> previews
-                                     the clip; a hidden <canvas> captures the first-frame
-                                     thumbnail which is uploaded alongside the video to R2 and
-                                     used as the chat bubble's poster. --}}
-                                <div class="vu-overlay" id="videoUploadModal" role="dialog" aria-modal="true" aria-labelledby="vuTitle">
-                                    <div class="vu-sheet">
-                                        <div class="vu-head">
-                                            <h3 id="vuTitle">Send video</h3>
-                                            <button type="button" class="vu-close" id="vuCancelBtn" aria-label="Close">
-                                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
-                                            </button>
-                                        </div>
-                                        <div class="vu-body">
-                                            <video id="vuPreview" playsinline muted preload="metadata"></video>
-                                            <div class="vu-progress" id="vuProgress">
-                                                <div class="vu-progress-ring">
-                                                    <svg viewBox="0 0 72 72">
-                                                        <circle class="bg" cx="36" cy="36" r="32"></circle>
-                                                        <circle class="fg" id="vuProgressFg" cx="36" cy="36" r="32"></circle>
-                                                    </svg>
-                                                    <span class="pct" id="vuProgressPct">0%</span>
-                                                </div>
-                                                <div id="vuProgressLabel">Uploading…</div>
-                                            </div>
-                                        </div>
-                                        <div class="vu-meta" id="vuMeta">
-                                            <span id="vuMetaDuration">0:00</span>
-                                            <span class="vu-dot">·</span>
-                                            <span id="vuMetaSize">0 MB</span>
-                                        </div>
-                                        <div class="vu-actions">
-                                            <button type="button" class="vu-btn cancel" id="vuCancelBtn2">Cancel</button>
-                                            <button type="button" class="vu-btn send" id="vuSendBtn">
-                                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
-                                                Send
-                                            </button>
-                                        </div>
-                                        <canvas id="vuThumbCanvas" style="display:none"></canvas>
-                                    </div>
                                 </div>
 
                                 {{-- Chat Input --}}
@@ -6475,19 +6636,20 @@
         }
 
         /**
-         * WhatsApp-style video upload preview + thumbnail capture + upload.
-         *
-         * Flow:
-         *  1. 100 MB hard cap — reject up front, no modal opens.
-         *  2. Open modal, show inline <video> preview, duration & size.
-         *  3. On loadeddata, seek to 0.1s and draw to a <canvas> → blob
-         *     (the client-side poster that becomes <video poster=""> in
-         *     the chat thread; cheaper + faster than decoding server-side).
-         *  4. On Send: XHR (not fetch — need upload progress) to
-         *     /chat/attachment-upload with { attachment, thumbnail,
-         *     duration, conversation_id }. Progress ring updates in
-         *     real time. On success, refreshChat() morphs the new
-         *     message into the thread.
+         * WhatsApp-style video upload: NO modal. Flow:
+         *  1. 100 MB cap — reject up front.
+         *  2. Insert an optimistic pending bubble into the chat thread
+         *     immediately so the user sees progress right where the
+         *     message will land.
+         *  3. In parallel: load the file into a hidden <video> element
+         *     to grab a first-frame JPEG thumbnail, kick off the XHR
+         *     upload. As soon as the thumbnail is ready it's painted
+         *     into the pending bubble as the background; the upload
+         *     starts the moment the XHR is primed (not blocked on the
+         *     thumbnail — it's just a nice-to-have).
+         *  4. On success → remove the pending bubble and refreshChat()
+         *     brings in the real row (which has the server-side poster
+         *     from R2). On failure → bubble flips red + auto-dismiss.
          */
         function openVideoUploadFlow(file) {
             const MAX = 100 * 1024 * 1024;
@@ -6500,170 +6662,264 @@
             const conversationId = convInput?.getAttribute('data-conversation-id');
             if (!conversationId) { alert('No conversation open.'); return; }
 
-            const modal        = document.getElementById('videoUploadModal');
-            const preview      = document.getElementById('vuPreview');
-            const metaDuration = document.getElementById('vuMetaDuration');
-            const metaSize     = document.getElementById('vuMetaSize');
-            const sendBtn      = document.getElementById('vuSendBtn');
-            const cancelBtn    = document.getElementById('vuCancelBtn');
-            const cancelBtn2   = document.getElementById('vuCancelBtn2');
-            const progress     = document.getElementById('vuProgress');
-            const progressFg   = document.getElementById('vuProgressFg');
-            const progressPct  = document.getElementById('vuProgressPct');
-            const progressLbl  = document.getElementById('vuProgressLabel');
-            const thumbCanvas  = document.getElementById('vuThumbCanvas');
+            // Pending bubble appears immediately. Thumbnail arrives async
+            // (usually within ~100-300ms); we patch it in via setThumb().
+            const pending = insertPendingVideoBubble(null);
 
-            // Reset state from any prior open.
-            progress.classList.remove('open');
-            sendBtn.disabled = true;
-            progressFg.style.strokeDashoffset = '201';
-            progressPct.textContent = '0%';
-            progressLbl.textContent = 'Uploading…';
+            // ---- Thumbnail capture (hidden, offscreen) ----
+            // A detached <video> + <canvas> handles the first-frame grab.
+            // Nothing is appended to the DOM so there's no visible flash.
+            const probe = document.createElement('video');
+            probe.muted = true;
+            probe.playsInline = true;
+            probe.preload = 'metadata';
+            probe.crossOrigin = 'anonymous';
+            const probeUrl = URL.createObjectURL(file);
+            probe.src = probeUrl;
 
-            const objectUrl = URL.createObjectURL(file);
-            preview.src = objectUrl;
-            preview.load();
-
-            metaSize.textContent = (file.size / 1024 / 1024).toFixed(1) + ' MB';
-            metaDuration.textContent = '0:00';
-
-            // Captured on 'seeked' (after we jump to 0.1s so we don't catch
-            // a black opening frame). Stored on the modal element to survive
-            // the async handler chain.
             let thumbBlob = null;
-            let xhr = null;
-            let aborted = false;
+            let thumbReady = false;
+            let dur = 0;
 
-            function cleanup() {
-                try { preview.pause(); } catch (_) {}
-                preview.removeAttribute('src');
-                preview.load();
-                URL.revokeObjectURL(objectUrl);
-                if (xhr && xhr.readyState !== 4) { aborted = true; xhr.abort(); }
-                modal.classList.remove('open');
-            }
-
-            function close() {
-                cleanup();
-                sendBtn.onclick = null;
-                cancelBtn.onclick = null;
-                cancelBtn2.onclick = null;
-            }
-
-            cancelBtn.onclick = close;
-            cancelBtn2.onclick = close;
-
-            // When metadata is ready: show the duration, seek a bit in
-            // and capture the thumbnail. Some browsers fire 'loadeddata'
-            // before duration is populated — guard with isFinite.
-            preview.addEventListener('loadedmetadata', () => {
-                const dur = isFinite(preview.duration) ? preview.duration : 0;
-                const mm = Math.floor(dur / 60);
-                const ss = Math.floor(dur % 60).toString().padStart(2, '0');
-                metaDuration.textContent = `${mm}:${ss}`;
-                // Jump a tiny bit in so we don't grab a black frame.
-                try { preview.currentTime = Math.min(0.1, Math.max(0, dur - 0.05)); }
-                catch (_) { sendBtn.disabled = false; }
-            }, { once: true });
-
-            preview.addEventListener('seeked', () => {
+            const captureThumbAndMaybeAttach = () => {
                 try {
-                    const w = preview.videoWidth || 640;
-                    const h = preview.videoHeight || 360;
-                    // Cap thumbnail to 720px wide — nobody needs a 4k
-                    // poster for a chat bubble; smaller = cheaper R2.
+                    const w = probe.videoWidth || 640;
+                    const h = probe.videoHeight || 360;
                     const scale = w > 720 ? 720 / w : 1;
                     const tw = Math.round(w * scale);
                     const th = Math.round(h * scale);
-                    thumbCanvas.width = tw;
-                    thumbCanvas.height = th;
-                    thumbCanvas.getContext('2d').drawImage(preview, 0, 0, tw, th);
-                    thumbCanvas.toBlob((blob) => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = tw;
+                    canvas.height = th;
+                    canvas.getContext('2d').drawImage(probe, 0, 0, tw, th);
+                    canvas.toBlob((blob) => {
                         thumbBlob = blob || null;
-                        sendBtn.disabled = false;
+                        thumbReady = true;
+                        if (thumbBlob && pending?.setThumb) {
+                            const url = URL.createObjectURL(thumbBlob);
+                            pending.setThumb(url);
+                            // Revoke later; the pending bubble will be
+                            // removed when upload completes, releasing
+                            // the reference naturally.
+                            pending._thumbUrl = url;
+                        }
+                        // If the XHR already fetched its FormData snapshot
+                        // before the thumb was ready we can't retroactively
+                        // add it — that's fine, server stores the video
+                        // without a poster and the frontend still renders
+                        // (just as a dark tile until play).
                     }, 'image/jpeg', 0.82);
                 } catch (err) {
-                    // CORS or decode failure — upload without a thumbnail;
-                    // chat still renders, just as a black box until play.
                     console.warn('[videoUpload] thumb capture failed', err);
-                    sendBtn.disabled = false;
+                    thumbReady = true;
                 }
+            };
+
+            probe.addEventListener('loadedmetadata', () => {
+                dur = isFinite(probe.duration) ? Math.round(probe.duration) : 0;
+                try { probe.currentTime = Math.min(0.1, Math.max(0, (probe.duration || 0) - 0.05)); }
+                catch (_) { captureThumbAndMaybeAttach(); }
             }, { once: true });
+            probe.addEventListener('seeked',  captureThumbAndMaybeAttach, { once: true });
+            probe.addEventListener('error', () => { thumbReady = true; }, { once: true });
 
-            sendBtn.onclick = () => {
-                // Grab the thumbnail object URL first so the pending bubble
-                // can show the frame instantly (object URLs don't survive
-                // the modal's URL.revokeObjectURL in close()).
-                const thumbUrl = thumbBlob ? URL.createObjectURL(thumbBlob) : null;
-                const dur = isFinite(preview.duration) ? Math.round(preview.duration) : 0;
-
-                // Close the modal immediately — WhatsApp-style, the user
-                // doesn't wait on a modal; they see the video bubble pop
-                // into the thread with a progress ring, same as the ref
-                // image. The XHR keeps running in the background.
-                aborted = false; // we want to let the upload proceed
-                sendBtn.onclick = null;
-                cancelBtn.onclick = null;
-                cancelBtn2.onclick = null;
-                try { preview.pause(); } catch (_) {}
-                preview.removeAttribute('src');
-                preview.load();
-                URL.revokeObjectURL(objectUrl);
-                modal.classList.remove('open');
-
-                // Drop the optimistic bubble into the thread, then start
-                // the XHR. The bubble shows the captured thumbnail with
-                // a ring overlay that we update as upload progress ticks.
-                const pending = insertPendingVideoBubble(thumbUrl);
+            // ---- Upload (fires as soon as the probe has settled) ----
+            // We wait up to 1.5s for the thumbnail; if it's taking longer
+            // we go without one so the upload isn't blocked on slow
+            // decoding of large clips. Server will have no poster, which
+            // only means a darker tile in chat — acceptable fallback.
+            const startUpload = () => {
+                URL.revokeObjectURL(probeUrl);
 
                 const fd = new FormData();
                 fd.append('conversation_id', conversationId);
                 fd.append('attachment', file);
-                if (thumbBlob) {
-                    fd.append('thumbnail', thumbBlob, 'thumb.jpg');
-                }
+                if (thumbBlob) fd.append('thumbnail', thumbBlob, 'thumb.jpg');
                 if (dur > 0) fd.append('duration', String(dur));
 
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/chat/attachment-upload', true);
+                xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.withCredentials = true;
 
-                const xhr2 = new XMLHttpRequest();
-                xhr2.open('POST', '/chat/attachment-upload', true);
-                xhr2.setRequestHeader('X-CSRF-TOKEN', csrf);
-                xhr2.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                xhr2.setRequestHeader('Accept', 'application/json');
-                xhr2.withCredentials = true;
-
-                xhr2.upload.onprogress = (ev) => {
+                xhr.upload.onprogress = (ev) => {
                     if (!ev.lengthComputable) return;
                     const pct = Math.round((ev.loaded / ev.total) * 100);
                     if (pending?.setProgress) pending.setProgress(pct);
                 };
-
-                xhr2.onload = () => {
-                    if (xhr2.status >= 200 && xhr2.status < 300) {
-                        // Remove the pending bubble BEFORE refreshChat so
-                        // the morph swap doesn't flash two bubbles.
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        if (pending?._thumbUrl) URL.revokeObjectURL(pending._thumbUrl);
                         if (pending?.remove) pending.remove();
-                        if (thumbUrl) URL.revokeObjectURL(thumbUrl);
                         const anchor = document.getElementById('chatReplyInput') || document.getElementById('attachBtn');
                         const root = anchor?.closest('[wire\\:id]');
                         if (root) Livewire.find(root.getAttribute('wire:id'))?.call('refreshChat');
                     } else {
-                        let msg = 'Upload failed (' + xhr2.status + ')';
+                        let msg = 'Upload failed (' + xhr.status + ')';
                         try {
-                            const body = JSON.parse(xhr2.responseText || '{}');
+                            const body = JSON.parse(xhr.responseText || '{}');
                             if (body.detail) msg = body.detail;
                         } catch (_) {}
                         if (pending?.markFailed) pending.markFailed(msg);
                     }
                 };
-                xhr2.onerror = () => {
+                xhr.onerror = () => {
                     if (pending?.markFailed) pending.markFailed('Upload failed');
                 };
-                xhr2.send(fd);
+                xhr.send(fd);
             };
 
-            modal.classList.add('open');
+            // Give the thumbnail up to 1.5s to materialise before firing.
+            let fired = false;
+            const fire = () => { if (fired) return; fired = true; startUpload(); };
+            const settleCheck = setInterval(() => {
+                if (thumbReady) { clearInterval(settleCheck); fire(); }
+            }, 50);
+            setTimeout(() => { clearInterval(settleCheck); fire(); }, 1500);
+        }
+
+        // Lightbox-style video player — opened by clicking a sent/received
+        // video bubble. Keeps the thread view uncluttered (bubbles are
+        // posters, not inline players) and gives the video the whole
+        // viewport for playback. Also handles ESC + background-click to
+        // close, and native <video controls> for seek/volume/fullscreen.
+        /**
+         * Chat video playback lightbox — sheet-style modal with a WhatsApp-style
+         * header (back + sender + timestamp + share) and a Reply field at the
+         * bottom. Reply submits as a normal threaded reply (reply_to_id = the
+         * video message), then closes the lightbox.
+         *
+         * ctx = { url, messageId, senderName, sentAt }
+         */
+        window.openVideoLightbox = function (ctx) {
+            // Back-compat: callers that pass a plain URL still work.
+            if (typeof ctx === 'string') ctx = { url: ctx };
+            const { url, messageId, senderName, sentAt } = ctx;
+
+            let lb = document.getElementById('chatVideoLightbox');
+            if (!lb) {
+                lb = document.createElement('div');
+                lb.id = 'chatVideoLightbox';
+                lb.className = 'chat-video-lightbox';
+                lb.innerHTML = `
+                    <div class="cvl-sheet" role="dialog" aria-modal="true">
+                        <div class="cvl-head">
+                            <button type="button" class="cvl-back" aria-label="Close">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <div class="cvl-head-info">
+                                <div class="cvl-sender"></div>
+                                <div class="cvl-time"></div>
+                            </div>
+                            <button type="button" class="cvl-share" aria-label="Forward">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>
+                            </button>
+                        </div>
+                        <div class="cvl-body">
+                            <video controls playsinline></video>
+                        </div>
+                        <form class="cvl-reply" autocomplete="off">
+                            <div class="cvl-reply-input">
+                                <input type="text" placeholder="Reply">
+                                <button type="button" class="cvl-reply-emoji" aria-label="Emoji" tabindex="-1">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                                </button>
+                            </div>
+                            <button type="submit" class="cvl-reply-send" aria-label="Send" disabled>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                `;
+                const close = () => {
+                    const v = lb.querySelector('video');
+                    try { v.pause(); } catch (_) {}
+                    v.removeAttribute('src');
+                    v.load();
+                    lb.classList.remove('open');
+                    lb.querySelector('.cvl-reply input').value = '';
+                    lb.querySelector('.cvl-reply-send').disabled = true;
+                };
+
+                // Click on the dark backdrop OR on the back arrow closes.
+                lb.addEventListener('click', (e) => {
+                    if (e.target === lb || e.target.closest('.cvl-back')) close();
+                });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && lb.classList.contains('open')) close();
+                });
+
+                // Enable/disable Send based on input content.
+                const input = lb.querySelector('.cvl-reply input');
+                const sendBtn = lb.querySelector('.cvl-reply-send');
+                input.addEventListener('input', () => {
+                    sendBtn.disabled = input.value.trim().length === 0;
+                });
+
+                // Share button → forward the message.
+                lb.querySelector('.cvl-share').addEventListener('click', () => {
+                    const mid = lb.__messageId;
+                    if (!mid) return;
+                    const anchor = document.getElementById('chatSidebar');
+                    const root = anchor?.closest('[wire\\:id]');
+                    if (root) Livewire.find(root.getAttribute('wire:id'))?.call('startForward', mid);
+                    close();
+                });
+
+                // Reply submit → send inline reply with reply_to_id set to the
+                // video message, then close the lightbox. We batch three
+                // Livewire calls (startReply + set reply text + sendReply)
+                // so Livewire 3's request queue handles them in one trip.
+                lb.querySelector('.cvl-reply').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const text = input.value.trim();
+                    const mid = lb.__messageId;
+                    if (!text || !mid) return;
+                    const anchor = document.getElementById('chatSidebar');
+                    const root = anchor?.closest('[wire\\:id]');
+                    const comp = root ? Livewire.find(root.getAttribute('wire:id')) : null;
+                    if (!comp) { close(); return; }
+                    try {
+                        comp.call('startReply', mid);
+                        comp.set('reply', text);
+                        comp.call('sendReply');
+                    } catch (err) {
+                        console.warn('[cvl] inline reply failed', err);
+                    }
+                    close();
+                });
+
+                document.body.appendChild(lb);
+            }
+
+            // Populate per-open fields.
+            lb.__messageId = messageId || null;
+            lb.querySelector('.cvl-sender').textContent = senderName || 'User';
+            lb.querySelector('.cvl-time').textContent = sentAt || '';
+            const v = lb.querySelector('video');
+            v.src = url;
+            lb.classList.add('open');
+            v.play().catch(() => {});
+        };
+
+        // Delegated click handler for video bubbles → opens the lightbox.
+        // Document-scoped so it survives every Livewire DOM morph.
+        if (!window.__chatState.videoLightboxWired) {
+            window.__chatState.videoLightboxWired = true;
+            document.addEventListener('click', (e) => {
+                const bubble = e.target.closest('.msg-video[data-video-url]');
+                if (!bubble) return;
+                e.preventDefault();
+                window.openVideoLightbox({
+                    url:        bubble.getAttribute('data-video-url'),
+                    messageId:  bubble.getAttribute('data-message-id'),
+                    senderName: bubble.getAttribute('data-sender-name'),
+                    sentAt:     bubble.getAttribute('data-sent-at'),
+                });
+            });
         }
 
         /**
@@ -6705,12 +6961,21 @@
             list.appendChild(wrap);
             list.scrollTop = list.scrollHeight;
 
-            const fg    = wrap.querySelector('.mvp-ring .fg');
-            const pctEl = wrap.querySelector('.mvp-pct');
-            const label = wrap.querySelector('.mvp-label');
+            const tileEl = wrap.querySelector('.msg-video-pending');
+            const fg     = wrap.querySelector('.mvp-ring .fg');
+            const pctEl  = wrap.querySelector('.mvp-pct');
+            const label  = wrap.querySelector('.mvp-label');
 
             return {
                 el: wrap,
+                // Patch the background image once the thumbnail is ready
+                // (the bubble is dropped into the DOM immediately on
+                // upload start; the thumbnail capture completes a few
+                // hundred ms later).
+                setThumb(url) {
+                    if (!tileEl || !url) return;
+                    tileEl.style.backgroundImage = `url('${url}')`;
+                },
                 setProgress(pct) {
                     pct = Math.max(0, Math.min(100, pct));
                     if (fg)    fg.style.strokeDashoffset = String(182 - (182 * pct / 100));
