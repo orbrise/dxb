@@ -895,7 +895,7 @@
                 display: inline-flex; align-items: center; gap: 6px; font-weight: 500;
             }
             .rd-back-link:hover { color: #d9ff4a; }
-            .rd-crumb { color: #fff; font-size: 14px; font-weight: 500; margin: 0; }
+            .rd-crumb { color: #fff; font-size: 15px; font-weight: 500; margin: 0; }
             .rd-crumb-spacer { width: 60px; }
 
             .rd-container { max-width: 1240px; margin: 0 auto; padding: 0 16px; }

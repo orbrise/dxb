@@ -1100,7 +1100,7 @@
     }
     .acct-tabs a {
         flex: 1 1 0;
-        padding: 10px 16px;
+        padding: 5px 16px;
         background: #131616;
         color: #fff;
         border-radius: 5px;
@@ -1111,15 +1111,15 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
-        height: 42px;
+        height: 35px;
         border: 1px solid transparent;
         transition: background 120ms, color 120ms;
     }
     .acct-tabs a:hover { color: #fff; background: #1a1f1f; }
     .acct-tabs a.active {
-        background: rgba(193,241,29,0.08);
+        
         color: #C1F11D;
-        border-color: rgba(193,241,29,0.3);
+        
     }
 
     .acct-flash {
@@ -1250,7 +1250,7 @@
     .acct-premium-card { padding: 0; overflow: hidden; background: #131616; }
     .acct-premium-card .acct-premium-head {
         background: #1D2224;
-        padding: 14px 20px;
+        padding: 10px 20px;
         margin: 0;
         border-bottom: 1px solid rgba(255,255,255,0.04);
     }

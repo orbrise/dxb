@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 <style>
     .ev-back-bar {
-        background: #1f2222;
+        background: #131616;
         padding: 12px 0;
     }
     .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }
@@ -987,7 +987,7 @@
         <a href="javascript:history.back()" style="position:absolute; left:16px; display:none;" class="ev-mobile-back">
             <i class="fa fa-angle-left"></i> Back
         </a>
-        <h1><a href="{{ route('user.dashboard') }}">Welcome {{Auth::user()->name}}</a></h1>
+        <h1><a href="{{ route('user.dashboard') }}">My Profile</a></h1>
     </div>
 </div>
 

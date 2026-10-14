@@ -37,11 +37,31 @@
         }
     }
 
-    /* Replace the legacy MR silhouette image with the local Evoory one.
-       Overrides evoory-theme.css which points at massagerepublic.com.co. */
+    /* Force the body to pure black on the homepage. The site's global
+       stylesheet applies `background: var(--bg-primary) !important` on
+       body, so !important is required to override it. */
+    body { background: #000 !important; }
+
+    /* Unified card background: all homepage cards (Find an escort, List
+       Now CTA, country tiles) use the same near-black fill instead of
+       the global `--bg-card` grey. */
+    .ev-card,
+    .ev-country-card { background: #0D1011 !important; }
+
+    /* Full-width Evoory banner: image covers the entire card instead of
+       sitting on the right third over a lime fill. Overrides evoory-theme.css
+       (lime fill + 70% right-positioned MR silhouette). Title flips to white
+       so it stays readable over the dark space background; right-padding is
+       removed since there's no longer a clear-zone for the image to occupy. */
     .ev-popular {
-        background-image: url('{{ asset("assets/newtheme/homebacground.png") }}') !important;
+        background: #000 !important;
+        background-image: url('https://assets.evoory.com/assets/images/mainhomebanner.png') !important;
+        background-repeat: no-repeat !important;
+        background-position: center 23% !important;
+        background-size: cover !important;
+        padding-right: 24px !important;
     }
+    .ev-popular-title { color: #fff !important; }
 
     /* Custom scrollbar UI — hidden on desktop. Only used on mobile. */
     .ev-popular-scroller { display: none; }

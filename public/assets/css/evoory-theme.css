@@ -75,7 +75,7 @@ button.ev-nav-link{height:35px;padding:12px 12px;font-size:14px;font-family:inhe
 /* Search Section */
 .ev-search-section{padding:40px 0 4px}
 .ev-search-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-.ev-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:24px;transition:var(--transition)}
+.ev-card{background:var(--bg-card);border-radius:4px;padding:24px;transition:var(--transition)}
 .ev-card-title{font-size:25px;font-weight:400;margin:0 0 16px}
 .ev-input{margin-right:11px;width:98%;padding:8px 16px;background:#fff;border:1px solid var(--border-color);border-radius:var(--radius);color:#111;font-size:14px;transition:var(--transition)}
 .ev-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(163,230,53,.15)}

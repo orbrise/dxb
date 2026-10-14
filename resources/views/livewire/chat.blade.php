@@ -84,6 +84,44 @@
            display: flex rule from the layout stylesheet. */
         body .ev-mobile-bottom-nav { display: none !important; }
 
+        /* /my-chat only: unstick the top site header so the sub-header +
+           chat UI scroll under it instead of pinning to the viewport. */
+        header.ev-header { position: static !important; }
+
+        /* Wallet-style sub-header shown at the top of /my-chat: dark
+           bar with a lime "< Back" link on the left and a centered
+           page title. The inner uses the shared .ev-container class so
+           the Back link's left edge sits at exactly the same X as the
+           top-header logo — no manual width/padding math. */
+        .chat-subheader {
+            background: #131616;
+            padding: 14px 0;
+            margin-bottom: 16px;
+        }
+        .chat-subheader-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .chat-subheader-back {
+            color: #C1F11D;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+        .chat-subheader-back:hover { color: #d9ff4a; text-decoration: none; }
+        .chat-subheader-title {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 500;
+            margin: 0;
+        }
+        .chat-subheader-spacer { width: 60px; }
+
         .ev-chat-shell {
             max-width: 1240px;
             margin: 16px auto 24px;
@@ -3867,6 +3905,20 @@
          tabs) and give the whole page a WhatsApp-Web feel: one big dark
          rounded shell floating on a pale-grey backdrop. Category navigation
          is preserved as the icon strip at the bottom of the sidebar. --}}
+    {{-- Wallet-style sub-header: dark strip with "< Back" and the
+         page title. Shown at the top of /my-chat so the user has a
+         clear way back out of the chat UI. --}}
+    <div class="chat-subheader">
+        <div class="ev-container chat-subheader-inner">
+            <a href="{{ url('/') }}" wire:navigate class="chat-subheader-back" aria-label="Back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </a>
+            <h1 class="chat-subheader-title">Chat &amp; Calls</h1>
+            <div class="chat-subheader-spacer"></div>
+        </div>
+    </div>
+
     <div class="ev-chat-shell">
                 <div class="mb-3 clearfix" style="clear: both;" id="my-chat">
                     {{-- Flash Messages --}}

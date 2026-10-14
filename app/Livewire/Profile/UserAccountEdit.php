@@ -24,6 +24,13 @@ class UserAccountEdit extends Component
     public $countrycode = '';
     public $phone = '';
 
+    /**
+     * Toggled true only after save() is called with missing fields,
+     * so the orange "Missing: …" chip on the completion card is a
+     * post-submit nudge instead of a persistent reminder on load.
+     */
+    public $showMissing = false;
+
     public function mount()
     {
         $user = Auth::user();
@@ -34,6 +41,12 @@ class UserAccountEdit extends Component
         $this->account_type = $user->type;
         $this->countrycode = $user->country_code ?? '';
         $this->phone = $user->phone ?? '';
+
+        // Pick up the "show missing" flag flashed by save() so the
+        // orange nudge chip survives the post-save redirect. One-shot:
+        // if the user then edits more fields without saving, the chip
+        // disappears again until the next submit.
+        $this->showMissing = (bool) session('acct_show_missing', false);
     }
 
     protected function rules(): array
@@ -118,7 +131,13 @@ class UserAccountEdit extends Component
     public function save()
     {
         $validated = $this->validate();
-        
+
+        // Flip the "Missing: …" chip on so the completion card tells
+        // the user which optional fields they still haven't filled in.
+        // Only matters if the profile is still incomplete; a fully
+        // complete profile shows the "Great job!" message instead.
+        $this->showMissing = true;
+
         $user = Auth::user();
  
         if($this->avatar) {
@@ -139,7 +158,8 @@ class UserAccountEdit extends Component
         $user->save();
 
         session()->flash('message', 'Account updated successfully.');
-        
+        session()->flash('acct_show_missing', true);
+
         return redirect()->route('user.account.edit');
     }
 

@@ -959,7 +959,7 @@
                 font-weight: 500;
             }
             .qd-back-link:hover { color: #d9ff4a; }
-            .qd-crumb { color: #fff; font-size: 14px; font-weight: 500; margin: 0; }
+            .qd-crumb { color: #fff; font-size: 15px; font-weight: 500; margin: 0; }
             .qd-crumb-spacer { width: 60px; }
 
             .qd-container {
