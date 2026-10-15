@@ -4,7 +4,7 @@
 <style>
     .ev-back-bar {
         background: #131616;
-        padding: 12px 0;
+        padding: 7px 0;
     }
     .ev-back-bar a { color: #C1F11D; text-decoration: none; font-size: 15px; }
     .ev-back-bar h1 { color: #fff; font-size: 18px; font-weight: 600; margin: 0; }

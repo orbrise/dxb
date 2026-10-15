@@ -14,7 +14,7 @@
 
     .uw-page { background: #000; min-height: 100vh; color: #fff; padding-bottom: 60px; }
 
-    .uw-back-wrap { background: #131616; padding: 14px 0; margin-bottom: 32px; }
+    .uw-back-wrap { background: #131616; padding: 7px 0; margin-bottom: 32px; }
     .uw-back-wrap .ev-container {
         display: flex;
         align-items: center;

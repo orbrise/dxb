@@ -20,7 +20,7 @@
     .fav-subheader {
         background: #131616;
         border-bottom: 1px solid rgba(255,255,255,0.06);
-        padding: 14px 0;
+        padding: 7px 0;
         margin-bottom: 8px;
     }
 
@@ -68,6 +68,13 @@
         .fav-subheader-back { font-size: 13px; }
         .fav-subheader-back span { display: none; }
         .fav-subheader-title { font-size: 15px; }
+    }
+    /* On mobile the global account header (ev-header-account) already
+       renders "< Back  My Favorite Profiles" at the top, so the page's
+       own subheader was doubling up. Hide the local one to match the
+       breakpoint where ev-header-account becomes visible (≤768px). */
+    @media (max-width: 768px) {
+        .fav-subheader { display: none; }
     }
 
     .fav-shell {
@@ -253,7 +260,7 @@
         color: #ef4444;
         transform: scale(1.06);
     }
-    .fav-row-heart i { font-size: 14px; }
+    .fav-row-heart i { font-size: 10px; }
 
     /* Empty state. */
     .fav-empty {
@@ -308,9 +315,14 @@
     }
 
     /* --------------- Responsive ---------------------------------
-       Mirror the home-page fallback-card mobile treatment: title above
-       the image row, image + stacked thumbs as one connected unit,
-       description + CTA below full-width. */
+       Mobile layout per the reference design:
+         1. Title + favorite heart on top (same row)
+         2. Main image + stacked thumbs in the middle
+         3. Description + "See more contact" CTA at the bottom
+       The desktop markup wraps title/desc/CTA inside .fav-row-info so
+       they sit as the right-hand column. On mobile we switch .fav-row-info
+       to `display: contents` which hoists its children to be direct flex
+       children of .fav-row, then use `order` to rearrange them. */
     @media (max-width: 640px) {
         .fav-head h1 { font-size: 22px; }
         .fav-head p { font-size: 13px; }
@@ -319,52 +331,86 @@
             gap: 0;
             flex-wrap: wrap;
             padding: 16px 0;
+            width: 100%;
         }
+
+        /* Hoist info's children up to the row level so title/desc/cta
+           can be placed independently via `order`. */
+        .fav-row-info { display: contents; }
+
+        /* Title row: full width, first in reading order. Leaves room on
+           the right for the absolute-positioned heart. */
+        .fav-row-name {
+            order: 1;
+            flex: 0 0 100%;
+            width: 100%;
+            white-space: normal;
+            max-width: calc(100% - 50px);
+            font-size: 17px;
+            margin: 0 0 12px;
+        }
+
+        /* Image row — main image on the left, 3 thumbs stacked on the
+           right. 8px gap between main and thumbs column, and between
+           individual thumbs, so each tile reads as its own card instead
+           of one glued strip. Widths subtract the gap so the row still
+           totals 100%. */
         .fav-row-main {
-            flex: 0 0 78%;
-            width: 78%;
+            order: 2;
+            flex: 0 0 calc(78% - 8px);
+            width: calc(78% - 8px);
+            margin-right: 8px;
             max-width: none;
             height: auto;
             aspect-ratio: 1 / 1;
-            border-radius: 10px 0 0 10px;
+            border-radius: 10px;
         }
-        .fav-row-main img { border-radius: 0; }
+        .fav-row-main img { border-radius: 10px; }
         .fav-row-thumbs {
+            order: 3;
             flex: 0 0 22%;
             width: 22%;
-            gap: 0;
+            gap: 8px;
         }
         .fav-row-thumb {
             width: 100%;
             max-width: none;
-            height: calc((78vw - 32px) / 3);
+            height: auto;
             aspect-ratio: 1 / 1;
-            border-radius: 0;
+            border-radius: 8px;
         }
-        .fav-row-thumb img { border-radius: 0; }
-        .fav-row-thumb:first-child { border-radius: 0 10px 0 0; }
-        .fav-row-thumb:last-child  { border-radius: 0 0 10px 0; }
-        .fav-row-info {
+        .fav-row-thumb img { border-radius: 8px; }
+
+        /* Description + CTA sit under the image strip. */
+        .fav-row-desc {
+            order: 4;
             flex: 0 0 100%;
             width: 100%;
-            order: 99;
-            padding-left: 0;
-            margin-top: 12px;
+            margin: 14px 0 14px;
         }
-        .fav-row-name {
-            white-space: normal;
-            max-width: calc(100% - 50px);
-            font-size: 18px;
-        }
+        /* "See more contact" button: hug its label instead of spanning
+           the full card width, and center it under the description. */
         .fav-row-cta {
-            display: block;
-            text-align: center;
+            order: 5;
+            display: inline-block;
+            width: auto;
+            align-self: center;
             margin: 0 auto;
+            padding: 10px 28px;
         }
+
+        /* Heart overlays the title row at the top-right. Right offset
+           pulls it in from the card edge so it doesn't visually collide
+           with the thumb column below. */
         .fav-row-heart {
-            top: 16px;
-            right: 0;
-            width: 32px; height: 32px;
+            top: 10px;
+            right: 10px;
+            width: 28px; height: 28px;
+        }
+        /* Give the title row's clear zone extra breathing room so the
+           name text ends well before the heart. */
+        .fav-row-name {
+            max-width: calc(100% - 60px);
         }
     }
 </style>

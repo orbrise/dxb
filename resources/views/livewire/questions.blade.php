@@ -942,7 +942,7 @@
                provides its own full-width back bar + hero + card list. */
             .qd-page ~ .ev-container { display: none !important; }
 
-            .qd-back-wrap { background: #131616; padding: 14px 0; margin-bottom: 32px; }
+            .qd-back-wrap { background: #131616; padding: 7px 0; margin-bottom: 32px; }
             .qd-back-wrap .ev-container {
                 display: flex;
                 align-items: center;

@@ -18,7 +18,7 @@
     /* Dark back-bar strip at the top of the content. */
     .acctpw-header {
         background: #131616;
-        padding: 14px 0;
+        padding: 7px 0;
         border-bottom: 1px solid rgba(255,255,255,0.06);
         margin-bottom: 24px;
     }

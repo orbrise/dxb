@@ -30,7 +30,7 @@
     /* Dark back-bar strip at the top of the main content. */
     .acctedit-header {
         background: #131616;
-        padding: 14px 0;
+        padding: 7px 0;
         border-bottom: 1px solid rgba(255,255,255,0.06);
         margin-bottom: 24px;
     }
@@ -498,20 +498,127 @@
     .acctedit-save-btn:hover { background: #d4ff3a; transform: translateY(-1px); }
     .acctedit-save-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-    /* Responsive — stack grid, tighten paddings on mobile. */
+    /* Mobile-only tabs copy sits ABOVE the Complete card. The original
+       tabs (inside .acctedit-grid > div) stay in place on desktop for
+       alignment with the right sidecards. On mobile we swap: hide the
+       in-grid tabs, show this top copy. */
+    .acctedit-tabs--mobile { display: none; }
+
+    /* Responsive — stack everything, reorder per the mobile mockup.
+       Mobile reading order (top-to-bottom):
+         1. Tabs (Account / Edit / Password)
+         2. "Complete Your Profile" card
+         3. Profile photo card (hoisted from the right-side aside)
+         4. Form fields
+         5. Save button
+       (Trust & Verification is dropped on mobile.) */
     @media (max-width: 900px) {
-        .acctedit-grid { grid-template-columns: 1fr; }
+        /* Swap tabs: top copy visible, in-grid copy hidden. */
+        .acctedit-tabs--mobile  { display: grid; margin-bottom: 18px; }
+        .acctedit-tabs--desktop { display: none; }
+
+        .acctedit-grid {
+            display: flex;
+            flex-direction: column;
+            grid-template-columns: 1fr; /* harmless fallback */
+        }
+        .acctedit-grid > div,
+        .acctedit-grid > aside { display: contents; }
+
+        /* Visual order inside the collapsed grid: photo first, then
+           form, then save. Tabs + Complete already sit above the grid
+           in source order. */
+        .acctedit-grid > aside > .acctedit-sidecard:first-child {
+            order: 1;
+            margin-bottom: 18px;
+        }
+        .acctedit-formcard  { order: 2; }
+        .acctedit-save-wrap { order: 3; }
+
+        /* Trust & Verification is the second sidecard — hidden on mobile. */
+        .acctedit-grid > aside > .acctedit-sidecard:nth-child(2) { display: none; }
+
+        /* Profile photo sidecard: compact two-column layout on mobile —
+           small square preview on the LEFT, "Choose File" button on the
+           RIGHT. Caption drops to the next row full-width and centered.
+           Explicit row + auto widths override the desktop column/100%
+           rules; !important on sidecard width guards against the aside's
+           display:contents collapse accidentally shrinking it. */
+        .acctedit-grid > aside > .acctedit-sidecard:first-child {
+            padding: 18px;
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+        .acctedit-photo {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+        }
+        /* Explicit `order` so Choose File always sits next to the preview,
+           even when Remove Photo is rendered (the HTML has Remove BEFORE
+           Choose in source order, which otherwise forces Choose onto a
+           third row below both). */
+        .acctedit-photo-preview {
+            order: 1;
+            width: 110px !important;
+            height: 110px !important;
+            aspect-ratio: 1 / 1;
+            flex-shrink: 0;
+            margin: 0;
+        }
+        .acctedit-photo-choose {
+            order: 2;
+            flex: 1 1 160px;
+            min-width: 140px;
+            width: auto !important;
+        }
+        /* Remove Photo + caption drop to their own full-width rows UNDER
+           the preview+choose pair. */
+        .acctedit-photo-remove {
+            order: 3;
+            flex-basis: 100%;
+            width: 100%;
+            justify-content: center;
+        }
+        .acctedit-photo-caption {
+            order: 4;
+            flex-basis: 100%;
+            width: 100%;
+            text-align: center;
+            margin: 4px 0 0;
+        }
+
         .acctedit-row2 { grid-template-columns: 1fr; }
-        .acctedit-complete { flex-direction: row; align-items: center; padding: 16px 18px; gap: 14px; }
-        .acctedit-complete-meter { padding: 10px 14px; gap: 10px; }
-        .acctedit-complete-meter-label { font-size: 12px; display: none; }
+
+        /* Completion card: column stack. The row layout crushed the
+           body column into a 90-100px strip at phone widths and the
+           title/description text wrapped word-by-word — unreadable. */
+        .acctedit-complete {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 18px;
+            gap: 14px;
+        }
+        .acctedit-complete-body { width: 100%; min-width: 0; }
+        .acctedit-complete-meter {
+            min-width: 0;
+            width: 100%;
+            padding: 12px 16px;
+            gap: 14px;
+        }
+        .acctedit-complete-meter-label { font-size: 13px; }
         .acctedit-ring svg { width: 56px; height: 56px; }
         .acctedit-ring-pct { font-size: 12px; }
-        .acctedit-complete-head h3 { font-size: 16px; }
-        .acctedit-complete-desc { font-size: 13px; }
+        .acctedit-complete-head h3 { font-size: 17px; }
+        .acctedit-complete-desc { font-size: 13.5px; line-height: 1.5; }
+
         .acctedit-tabs { gap: 8px; }
-        .acctedit-tab { padding: 5px 8px; font-size: 13px; }
+        .acctedit-tab { padding: 8px 10px; font-size: 13px; gap: 6px; }
         .acctedit-tab i { display: none; }
+
         .acctedit-formcard, .acctedit-sidecard { padding: 18px; }
         .acctedit-header-title { font-size: 15px; }
         .acctedit-header-back span { display: none; }
@@ -523,6 +630,49 @@
         .acctedit-header-inner { padding: 0 12px; }
         .acctedit-header-back { left: 12px; }
         .acctedit-wrap { padding: 0 12px 48px; }
+        /* The global account header (ev-header-account) renders "<Back Edit"
+           at the top on mobile — hide the page's own back-bar so the two
+           don't stack. */
+        .acctedit-header { display: none; }
+    }
+
+    /* Phone-tight overrides — the real workhorse breakpoint for
+       portrait phones. Keeps the design cohesive at 360-430px widths. */
+    @media (max-width: 640px) {
+        .acctedit-wrap { padding: 0 12px 36px; }
+
+        /* Completion card: tighter paddings, title stays prominent. */
+        .acctedit-complete { padding: 16px; gap: 12px; margin-bottom: 18px; }
+        .acctedit-complete-head { gap: 8px; margin-bottom: 6px; }
+        .acctedit-complete-head h3 { font-size: 16px; font-weight: 500; }
+        .acctedit-complete-desc { font-size: 13px; }
+        .acctedit-complete-missing { font-size: 12px; padding: 5px 10px; }
+        .acctedit-complete-meter { padding: 10px 14px; }
+
+        /* Tabs: shrink labels so Account/Edit/Password all fit in a
+           3-column grid on a 360-wide phone. SVG icons kept, text
+           bumped down 1px. */
+        .acctedit-tabs { grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 18px; }
+        .acctedit-tab { padding: 7px 4px; font-size: 12px; gap: 5px; border-radius: 5px; }
+        .acctedit-tab svg { width: 14px; height: 14px; }
+
+        /* Form card tighter inside — label + input vertical rhythm. */
+        .acctedit-formcard { padding: 0; }
+        .acctedit-field { margin-bottom: 14px; }
+        .acctedit-input, .acctedit-textarea { font-size: 14px; padding: 11px 12px; }
+
+        /* Sidecards (Profile photo + Trust) use less padding and
+           stretch to the row's full width since the grid collapsed. */
+        .acctedit-sidecard { padding: 16px; margin-bottom: 14px; }
+
+        /* Save button: full width, chunkier tap target. */
+        .acctedit-save-wrap { margin-top: 20px; }
+        .acctedit-save-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 12px 18px;
+            font-size: 15px;
+        }
     }
 </style>
 @endpush
@@ -547,6 +697,34 @@
                 <i class="fa fa-check-circle"></i> {{ session('message') }}
             </div>
         @endif
+
+        {{-- Mobile-only tabs copy — on phones the nav sits at the very
+             top of the page per the mockup. Hidden on desktop by CSS;
+             the primary tabs still live inside .acctedit-grid > div
+             so desktop alignment with the right sidecards is preserved. --}}
+        <div class="acctedit-tabs acctedit-tabs--mobile">
+            <a href="/my-account" wire:navigate class="acctedit-tab">
+                <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M1 15C1 13.9391 1.42143 12.9217 2.17157 12.1716C2.92172 11.4214 3.93913 11 5 11H13C14.0609 11 15.0783 11.4214 15.8284 12.1716C16.5786 12.9217 17 13.9391 17 15C17 15.5304 16.7893 16.0391 16.4142 16.4142C16.0391 16.7893 15.5304 17 15 17H3C2.46957 17 1.96086 16.7893 1.58579 16.4142C1.21071 16.0391 1 15.5304 1 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M9 7C10.6569 7 12 5.65685 12 4C12 2.34315 10.6569 1 9 1C7.34315 1 6 2.34315 6 4C6 5.65685 7.34315 7 9 7Z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Account
+            </a>
+            <a href="/my-account/edit" wire:navigate class="acctedit-tab active">
+                <svg viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M4 5.00012H3C2.46957 5.00012 1.96086 5.21084 1.58579 5.58591C1.21071 5.96098 1 6.46969 1 7.00012V16.0001C1 16.5306 1.21071 17.0393 1.58579 17.4143C1.96086 17.7894 2.46957 18.0001 3 18.0001H12C12.5304 18.0001 13.0391 17.7894 13.4142 17.4143C13.7893 17.0393 14 16.5306 14 16.0001V15.0001" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13 3.00011L16 6.00011M17.385 4.58511C17.7788 4.19126 18.0001 3.65709 18.0001 3.10011C18.0001 2.54312 17.7788 2.00895 17.385 1.61511C16.9912 1.22126 16.457 1 15.9 1C15.343 1 14.8088 1.22126 14.415 1.61511L6 10.0001V13.0001H9L17.385 4.58511Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Edit
+            </a>
+            <a href="/my-password/edit" wire:navigate class="acctedit-tab">
+                <svg viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M1.49715 14.1093C1.17892 14.4275 1.0001 14.859 1 15.3089V17.1516C1 17.3766 1.08938 17.5924 1.24848 17.7515C1.40759 17.9106 1.62337 18 1.84838 18H4.39351C4.61851 18 4.8343 17.9106 4.9934 17.7515C5.15251 17.5924 5.24189 17.3766 5.24189 17.1516V16.3032C5.24189 16.0782 5.33127 15.8625 5.49037 15.7034C5.64947 15.5442 5.86526 15.4549 6.09027 15.4549H6.93864C7.16365 15.4549 7.37944 15.3655 7.53854 15.2064C7.69764 15.0473 7.78702 14.8315 7.78702 14.6065V13.7581C7.78702 13.5331 7.8764 13.3173 8.03551 13.1582C8.19461 12.9991 8.4104 12.9097 8.6354 12.9097H8.78132C9.23129 12.9096 9.6628 12.7308 9.98093 12.4126L10.6715 11.722C11.8506 12.1327 13.1342 12.1312 14.3123 11.7176C15.4904 11.3039 16.4933 10.5027 17.1568 9.44507C17.8204 8.38738 18.1053 7.13582 17.9651 5.89513C17.8249 4.65443 17.2677 3.49805 16.3848 2.61516C15.502 1.73226 14.3456 1.17513 13.1049 1.0349C11.8642 0.894666 10.6126 1.17964 9.55493 1.84319C8.49725 2.50675 7.69607 3.5096 7.28245 4.6877C6.86883 5.8658 6.86726 7.14939 7.27799 8.3285L1.49715 14.1093Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13.3011 6.12267C13.5354 6.12267 13.7253 5.93275 13.7253 5.69848C13.7253 5.46421 13.5354 5.27429 13.3011 5.27429C13.0669 5.27429 12.877 5.46421 12.877 5.69848C12.877 5.93275 13.0669 6.12267 13.3011 6.12267Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Password
+            </a>
+        </div>
 
         {{-- "Complete Your Profile" card — appears above the tabs,
              with a circular % meter on the right and a progress bar
@@ -617,7 +795,7 @@
             <div class="acctedit-grid">
                 {{-- LEFT COLUMN — tabs + form fields --}}
                 <div>
-                    <div class="acctedit-tabs">
+                    <div class="acctedit-tabs acctedit-tabs--desktop">
                         <a href="/my-account" wire:navigate class="acctedit-tab">
                             {{-- Account: person glyph (currentColor so it
                                  adopts the tab's text color — grey when

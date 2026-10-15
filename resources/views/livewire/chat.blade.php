@@ -95,7 +95,7 @@
            top-header logo — no manual width/padding math. */
         .chat-subheader {
             background: #131616;
-            padding: 14px 0;
+            padding: 7px 0;
             margin-bottom: 16px;
         }
         .chat-subheader-inner {

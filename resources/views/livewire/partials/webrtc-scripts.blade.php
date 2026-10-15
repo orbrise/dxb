@@ -169,23 +169,57 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 // sender's and receiver's new tracks land in one SDP round.
                 if (S.pc && S.callId === e.callId) {
                     try {
+                        console.log('[rtc-switch] renegotiation offer received, awaitingSwitch=' + S._awaitingSwitchOffer);
                         await S.pc.setRemoteDescription(new RTCSessionDescription({
                             type: e.payload.sdp.type || 'offer',
                             sdp: sanitizeIncomingSdp(normalizeSdp(e.payload.sdp.sdp)),
                         }));
 
-                        // Mid-switch: attach our local track(s) now that the
-                        // remote description includes new media sections.
-                        if (S._awaitingSwitchOffer === 'video' && S.localStream) {
-                            const videoTrack = S.localStream.getVideoTracks()[0];
+                        // Mid-switch to VIDEO: make sure we have a camera
+                        // track ready. acceptSwitch pre-acquires it, but
+                        // as a safety net we also acquire here — otherwise
+                        // if acceptSwitch's camera call failed silently
+                        // (user dismissed permission late, device busy,
+                        // etc.) the peer would never see our video.
+                        if (S._awaitingSwitchOffer === 'video') {
+                            if (!S.localStream || !S.localStream.getVideoTracks().length) {
+                                try {
+                                    if (!S.localStream) {
+                                        S.localStream = await navigator.mediaDevices.getUserMedia({
+                                            audio: true,
+                                            video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                                        });
+                                    } else {
+                                        const cam = await navigator.mediaDevices.getUserMedia({
+                                            video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                                        });
+                                        S.localStream.addTrack(cam.getVideoTracks()[0]);
+                                    }
+                                } catch (camErr) {
+                                    console.error('[rtc-switch] camera acquisition failed in offer handler', camErr);
+                                    toast(mediaErrorMessage(camErr, 'camera'));
+                                }
+                            }
+                            const videoTrack = S.localStream?.getVideoTracks?.()[0];
                             if (videoTrack) {
+                                // Prefer attaching to the transceiver Chrome
+                                // just created from the remote offer. Setting
+                                // direction=sendrecv BEFORE replaceTrack is
+                                // important: Chrome defaults new remote-driven
+                                // transceivers to recvonly, which would silently
+                                // keep the answer SDP recvonly and the peer
+                                // would never receive our video.
                                 const existingVideoTx = S.pc.getTransceivers().find(tx => tx.receiver?.track?.kind === 'video');
                                 if (existingVideoTx && existingVideoTx.sender) {
                                     try { existingVideoTx.direction = 'sendrecv'; } catch (_) {}
                                     await existingVideoTx.sender.replaceTrack(videoTrack);
+                                    console.log('[rtc-switch] attached camera via existing transceiver');
                                 } else {
                                     S.pc.addTrack(videoTrack, S.localStream);
+                                    console.log('[rtc-switch] attached camera via addTrack');
                                 }
+                            } else {
+                                console.warn('[rtc-switch] no video track available to attach on receiver side');
                             }
                             S.callType = 'video';
                         } else if (S._awaitingSwitchOffer === 'audio') {
@@ -207,6 +241,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                         const answer = await S.pc.createAnswer();
                         await S.pc.setLocalDescription(answer);
                         await postSignal('answer', { sdp: { type: answer.type, sdp: sanitizeOutgoingSdp(answer.sdp) } });
+                        console.log('[rtc-switch] answer sent, callType=' + S.callType);
 
                         if (S._awaitingSwitchOffer) {
                             const to = S._awaitingSwitchOffer;
@@ -336,12 +371,13 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             if (t === 'switch-accept' && S._pendingSwitch?.role === 'sender') {
                 const to = S._pendingSwitch.to;
                 S._pendingSwitch = null;
+                dismissToast();
                 try {
                     await applyMediaSwitch(to);
                     toast(to === 'video' ? 'Switched to video' : 'Switched to voice');
                 } catch (err) {
                     console.error('[rtc] applyMediaSwitch (sender) failed', err);
-                    toast('Could not switch — check camera permission.');
+                    toast(mediaErrorMessage(err, to === 'video' ? 'camera' : 'microphone'));
                 }
                 updateSwitchBtn();
                 return;
@@ -350,7 +386,18 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             if (t === 'switch-reject' && S._pendingSwitch?.role === 'sender') {
                 const target = S._pendingSwitch.to;
                 S._pendingSwitch = null;
+                dismissToast();
                 toast(target === 'video' ? 'Video request declined.' : 'Voice request declined.');
+                updateSwitchBtn();
+                return;
+            }
+
+            // Caller tapped Cancel on their pending-switch toast — dismiss
+            // our prompt (receiver side) so we don't ask about a request
+            // that's no longer live.
+            if (t === 'switch-cancel' && S._pendingSwitch?.role === 'receiver') {
+                S._pendingSwitch = null;
+                hideSwitchPrompt();
                 updateSwitchBtn();
                 return;
             }
@@ -640,77 +687,129 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     // --- Mid-call switch (voice ↔ video) ------------------------------
     // Called on BOTH sides after a successful handshake (sender on
     // switch-accept, receiver inside acceptSwitch()). Modifies the local
+    // Convert a getUserMedia / getDisplayMedia error into a user-facing
+    // message so the toast actually tells the user what went wrong
+    // (permission vs. missing device vs. device-in-use) instead of a
+    // generic "check camera permission" catch-all.
+    function mediaErrorMessage(err, kind = 'camera') {
+        const name = err && err.name ? err.name : '';
+        switch (name) {
+            case 'NotAllowedError':
+            case 'SecurityError':
+                return `${kind.charAt(0).toUpperCase() + kind.slice(1)} access was blocked. Allow it in the browser's address-bar permissions.`;
+            case 'NotFoundError':
+            case 'OverconstrainedError':
+                return `No ${kind} found on this device.`;
+            case 'NotReadableError':
+            case 'TrackStartError':
+                return `${kind.charAt(0).toUpperCase() + kind.slice(1)} is in use by another app or browser tab.`;
+            case 'AbortError':
+                return `${kind.charAt(0).toUpperCase() + kind.slice(1)} startup was interrupted. Try again.`;
+            default:
+                return err?.message ? `Could not open ${kind}: ${err.message}` : `Could not open ${kind}.`;
+        }
+    }
+
     // stream + peer connection in place; onnegotiationneeded fires an
     // offer/answer renegotiation automatically if needed.
     async function applyMediaSwitch(to) {
         if (!S.pc) return;
 
-        if (to === 'video') {
-            // Add a camera track to the existing stream + peer connection.
-            if (!S.localStream) {
-                S.localStream = await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: { width: { ideal: 640 }, height: { ideal: 480 } },
-                });
-            } else if (!S.localStream.getVideoTracks().length) {
-                const camStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 640 }, height: { ideal: 480 } },
-                });
-                const videoTrack = camStream.getVideoTracks()[0];
-                S.localStream.addTrack(videoTrack);
-                // Reuse an existing recvonly video transceiver if present;
-                // otherwise add a new sendrecv track to the peer connection.
-                const videoSender = S.pc.getSenders().find(s => s.track === null && s.transport);
-                const existingVideoTx = S.pc.getTransceivers().find(tx => tx.receiver?.track?.kind === 'video');
-                if (existingVideoTx && existingVideoTx.sender) {
-                    await existingVideoTx.sender.replaceTrack(videoTrack);
-                    try { existingVideoTx.direction = 'sendrecv'; } catch (_) {}
-                } else {
-                    S.pc.addTrack(videoTrack, S.localStream);
-                }
-            }
-            S.callType = 'video';
-        } else {
-            // Downgrade — stop + remove our video track(s). Peer's video track
-            // continues to be received unless they also downgrade (which they do,
-            // since both sides call applyMediaSwitch after an accept).
-            if (S.localStream) {
-                S.localStream.getVideoTracks().forEach(t => {
-                    t.stop();
-                    try { S.localStream.removeTrack(t); } catch (_) {}
-                });
-            }
-            S.pc.getSenders().forEach(sender => {
-                if (sender.track && sender.track.kind === 'video') {
-                    try { sender.replaceTrack(null); } catch (_) {}
-                }
-            });
-            S.callType = 'audio';
-        }
+        // Suppress the automatic onnegotiationneeded path BEFORE any
+        // addTrack / setDirection call. Chrome fires the event as a
+        // microtask immediately after addTrack; if the flag isn't set
+        // first, we end up racing our manual createOffer below against
+        // the event handler's createOffer and one of them fails with
+        // InvalidStateError, leaving the peer with no new SDP.
+        S._suppressNegotiation = true;
+        S._makingOffer = true;
 
-        // Refresh the UI panel (shows/hides video elements, swaps icons).
-        showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
-        attachLocalPreview();
-        updateSwitchBtn();
+        try {
+            if (to === 'video') {
+                // Add a camera track to the existing stream + peer connection.
+                if (!S.localStream) {
+                    S.localStream = await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                        video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                    });
+                } else if (!S.localStream.getVideoTracks().length) {
+                    const camStream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                    });
+                    const videoTrack = camStream.getVideoTracks()[0];
+                    S.localStream.addTrack(videoTrack);
+                    const existingVideoTx = S.pc.getTransceivers().find(tx => tx.receiver?.track?.kind === 'video');
+                    if (existingVideoTx && existingVideoTx.sender) {
+                        try { existingVideoTx.direction = 'sendrecv'; } catch (_) {}
+                        await existingVideoTx.sender.replaceTrack(videoTrack);
+                    } else {
+                        S.pc.addTrack(videoTrack, S.localStream);
+                    }
+                }
+                S.callType = 'video';
+            } else {
+                // Downgrade — stop + remove our video track(s). Peer's track
+                // keeps flowing unless they also downgrade (which they do,
+                // since both sides call applyMediaSwitch after an accept).
+                if (S.localStream) {
+                    S.localStream.getVideoTracks().forEach(t => {
+                        t.stop();
+                        try { S.localStream.removeTrack(t); } catch (_) {}
+                    });
+                }
+                S.pc.getSenders().forEach(sender => {
+                    if (sender.track && sender.track.kind === 'video') {
+                        try { sender.replaceTrack(null); } catch (_) {}
+                    }
+                });
+                S.callType = 'audio';
+            }
+
+            // Refresh the UI panel immediately so the caller sees the new
+            // state (shows/hides video elements, swaps icons).
+            showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
+            attachLocalPreview();
+            updateSwitchBtn();
+
+            // Drive the renegotiation ourselves rather than waiting for
+            // onnegotiationneeded. Chrome occasionally skips the event
+            // (prior pending offer, connectedAt check, etc.), and when
+            // that happens the sender silently has a new track but never
+            // tells the peer about it — classic "I see my own video but
+            // they don't see me" bug.
+            if (S.pc.signalingState !== 'stable') {
+                console.warn('[rtc-switch] signalingState not stable, skipping createOffer:', S.pc.signalingState);
+            } else {
+                const offer = await S.pc.createOffer();
+                await S.pc.setLocalDescription(offer);
+                await postSignal('offer', { sdp: { type: offer.type, sdp: sanitizeOutgoingSdp(offer.sdp) } });
+                console.log('[rtc-switch] renegotiation offer sent, callType=' + S.callType);
+            }
+        } catch (err) {
+            console.error('[rtc-switch] applyMediaSwitch failed', err);
+            throw err; // bubble up so the caller handler can toast an error
+        } finally {
+            S._makingOffer = false;
+            S._suppressNegotiation = false;
+        }
     }
 
     // --- Switch button + prompt UI helpers ----------------------------
     function updateSwitchBtn() {
         const btn = document.getElementById('rtcSwitchBtn');
         if (!btn) return;
-        // Only visible once the call is connected (not during ringing).
-        const connected = !!S.connectedAt;
-        if (!S.pc || !connected) {
+        // Only visible during VOICE calls — it's the "upgrade to video"
+        // affordance. During video calls the dedicated Video toggle
+        // (rtcVideoBtn) occupies the same control-sheet slot, so we hide
+        // this one to avoid two buttons stacking in the Video cell.
+        if (!S.pc || S.callType === 'video') {
             btn.style.display = 'none';
             btn.classList.remove('is-pending');
             return;
         }
         btn.style.display = '';
-        const isVideo = S.callType === 'video';
-        btn.title = isVideo ? 'Switch to voice' : 'Switch to video';
-        btn.innerHTML = isVideo
-            ? '<i class="fa fa-phone"></i>'
-            : '<i class="fa fa-video"></i>';
+        btn.title = 'Switch to video';
+        btn.innerHTML = '<i class="fa fa-video"></i>';
         if (S._pendingSwitch) btn.classList.add('is-pending');
         else                  btn.classList.remove('is-pending');
     }
@@ -747,15 +846,17 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         const to = S._pendingSwitch.to;
         hideSwitchPrompt();
         S._pendingSwitch = null;
+
+        // CRITICAL ordering: set the state flags + pre-acquire media
+        // BEFORE sending the accept. Otherwise the sender posts a new
+        // SDP offer the moment they get the accept and that offer can
+        // race back to us before `_awaitingSwitchOffer` is set — in
+        // which case the offer handler skips the "attach my camera
+        // track" branch and the peer never sees our video.
+        S._awaitingSwitchOffer = to;
+        S._suppressNegotiation = true;
+
         try {
-            await postSignal('switch-accept', { to });
-            // Flag so the ICE-restart offer branch knows to attach our local
-            // track before creating the answer. Suppress onnegotiationneeded
-            // for the same reason — the sender drives this round.
-            S._awaitingSwitchOffer = to;
-            S._suppressNegotiation = true;
-            // Pre-acquire the media so the just-in-time attach inside the
-            // offer handler is instant. If getUserMedia fails here, bail.
             if (to === 'video' && (!S.localStream || !S.localStream.getVideoTracks().length)) {
                 if (!S.localStream) {
                     S.localStream = await navigator.mediaDevices.getUserMedia({
@@ -769,9 +870,12 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                     S.localStream.addTrack(cam.getVideoTracks()[0]);
                 }
             }
+            // All local prep is done — now notify the sender. Any offer
+            // they send back will find _awaitingSwitchOffer already set.
+            await postSignal('switch-accept', { to });
         } catch (err) {
             console.error('[rtc] acceptSwitch failed', err);
-            toast('Could not switch — check camera permission.');
+            toast(mediaErrorMessage(err, to === 'video' ? 'camera' : 'microphone'));
             S._awaitingSwitchOffer = null;
             S._suppressNegotiation = false;
             try { await postSignal('switch-reject', { to }); } catch (_) {}
@@ -793,13 +897,40 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             pending: S._pendingSwitch, callType: S.callType,
             callId: S.callId, peerId: S.peer?.id,
         });
-        if (!S.pc || !S.connectedAt || S._pendingSwitch) {
-            console.warn('[rtc-switch] requestSwitch bailed — missing precondition');
+        if (!S.pc || S._pendingSwitch) {
+            console.warn('[rtc-switch] requestSwitch bailed — no pc or already pending');
+            return;
+        }
+        // Pre-connect: the switch RPC rides the same signaling channel
+        // as answer/ice; it only works once the peer is actually in the
+        // call. Tell the caller to wait instead of silently no-op'ing.
+        if (!S.connectedAt) {
+            toast('Please wait until the call connects.');
             return;
         }
         const to = S.callType === 'video' ? 'audio' : 'video';
         S._pendingSwitch = { to, role: 'sender' };
         updateSwitchBtn();
+        // WhatsApp-style persistent "asking Peter to turn on video…" banner.
+        // Stays visible until the peer accepts/rejects or the caller taps
+        // Cancel; the pulsing dot signals the wait state at a glance.
+        const peerName = S.peer?.name || 'the other person';
+        toast(
+            to === 'video'
+                ? `Asking ${peerName} to switch to a video call…`
+                : `Asking ${peerName} to switch to a voice call…`,
+            {
+                persistent: true,
+                cancelLabel: 'Cancel',
+                onCancel: () => {
+                    if (!S._pendingSwitch || S._pendingSwitch.role !== 'sender') return;
+                    S._pendingSwitch = null;
+                    updateSwitchBtn();
+                    // Best-effort tell the peer to drop the prompt on their side.
+                    postSignal('switch-cancel', {}).catch(() => {});
+                },
+            }
+        );
         try {
             await postSignal('switch-request', { to });
             console.log('[rtc-switch] switch-request sent, to=' + to);
@@ -807,6 +938,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             console.error('[rtc-switch] switch-request POST failed', err);
             S._pendingSwitch = null;
             updateSwitchBtn();
+            dismissToast();
             toast('Could not send switch request: ' + err.message);
         }
     }
@@ -819,6 +951,132 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         } else {
             lv.classList.add('audio-only');
         }
+    }
+
+    // --- Screen share -------------------------------------------------
+    // Swaps the outgoing video sender's track between the camera and a
+    // getDisplayMedia() screen capture. No signaling renegotiation needed —
+    // replaceTrack() on the RTCRtpSender keeps the SDP intact. Only enabled
+    // during video calls (voice calls have no video sender to swap).
+    //
+    // iOS Safari doesn't expose getDisplayMedia — we detect that upfront
+    // and show a friendly toast rather than throwing a cryptic error.
+    async function toggleScreenShare() {
+        if (S._screenShare) {
+            stopScreenShare();
+            return;
+        }
+        await startScreenShare();
+    }
+
+    async function startScreenShare() {
+        if (S._screenShare) return;
+        if (S.callType !== 'video' || !S.pc) {
+            toast('Screen sharing is only available during video calls.');
+            return;
+        }
+        if (!navigator.mediaDevices?.getDisplayMedia) {
+            toast('Screen sharing isn\'t supported on this browser.');
+            return;
+        }
+
+        const videoSender = S.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (!videoSender) {
+            toast('Video track not ready. Try again in a moment.');
+            return;
+        }
+
+        let screenStream;
+        try {
+            screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: { frameRate: { ideal: 15, max: 30 } },
+                audio: false,
+            });
+        } catch (err) {
+            // User cancelled the picker, or permission denied — both are
+            // treated as a soft decline, no toast needed. Real errors
+            // get logged.
+            if (err && err.name !== 'NotAllowedError' && err.name !== 'AbortError') {
+                console.warn('[rtc-share] getDisplayMedia failed', err);
+                toast('Could not start screen share.');
+            }
+            return;
+        }
+
+        const screenTrack = screenStream.getVideoTracks()[0];
+        if (!screenTrack) {
+            screenStream.getTracks().forEach(t => t.stop());
+            toast('Could not start screen share.');
+            return;
+        }
+
+        // Remember the original camera track so we can restore it later.
+        const cameraTrack = videoSender.track;
+        S._screenShare = { stream: screenStream, cameraTrack, videoSender };
+
+        try {
+            await videoSender.replaceTrack(screenTrack);
+        } catch (err) {
+            console.error('[rtc-share] replaceTrack failed', err);
+            screenStream.getTracks().forEach(t => t.stop());
+            S._screenShare = null;
+            toast('Could not start screen share.');
+            return;
+        }
+
+        // Mirror the shared screen in the local preview so the user can
+        // see what the peer sees. Camera preview resumes on stop.
+        const lv = document.getElementById('rtcLocalVideo');
+        if (lv) {
+            lv.srcObject = screenStream;
+            lv.style.transform = 'none'; // disable mirror flip for screen content
+        }
+
+        // Browser-native "Stop sharing" bar triggers onended on the track;
+        // route that back through our stop path so UI stays in sync.
+        screenTrack.addEventListener('ended', () => stopScreenShare(), { once: true });
+
+        const btn = document.getElementById('rtcShareBtn');
+        if (btn) {
+            btn.classList.add('sharing');
+            btn.title = 'Stop sharing';
+            btn.setAttribute('aria-label', 'Stop sharing');
+        }
+        const lbl = document.getElementById('rtcShareLabel');
+        if (lbl) lbl.textContent = 'Stop';
+        toast('You\'re sharing your screen.');
+    }
+
+    function stopScreenShare() {
+        const sh = S._screenShare;
+        if (!sh) return;
+        S._screenShare = null;
+
+        // Stop the capture so the browser's indicator / tab-sharing bar clears.
+        try { sh.stream.getTracks().forEach(t => t.stop()); } catch (_) {}
+
+        // Restore the camera track on the same sender — no renegotiation.
+        if (sh.videoSender && sh.cameraTrack) {
+            sh.videoSender.replaceTrack(sh.cameraTrack).catch(err => {
+                console.warn('[rtc-share] restoring camera track failed', err);
+            });
+        }
+
+        // Restore local preview to the camera stream (mirrored).
+        const lv = document.getElementById('rtcLocalVideo');
+        if (lv) {
+            lv.srcObject = S.localStream;
+            lv.style.transform = ''; // re-enable the CSS mirror flip
+        }
+
+        const btn = document.getElementById('rtcShareBtn');
+        if (btn) {
+            btn.classList.remove('sharing');
+            btn.title = 'Share screen';
+            btn.setAttribute('aria-label', 'Share screen');
+        }
+        const lbl = document.getElementById('rtcShareLabel');
+        if (lbl) lbl.textContent = 'Share';
     }
 
     // --- Connection quality indicator ---------------------------------
@@ -859,17 +1117,38 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 quality.classList.add(tier);
             }
             if (label) label.textContent = text;
+
+            // WhatsApp-style weak-connection alert. We only pop the toast
+            // on the first transition into "poor" so a sustained bad
+            // network doesn't spam a toast every 2 seconds. The toast
+            // self-dismisses after ~4s; when the connection recovers to
+            // "good"/"fair" we reset the latch so a future dip alerts again.
+            if (tier === 'poor') {
+                if (!S._weakAlertShown) {
+                    S._weakAlertShown = true;
+                    toast('Weak connection — audio or video may stutter.');
+                }
+            } else if (tier === 'good') {
+                S._weakAlertShown = false;
+            }
         }, 2000);
     }
 
     // --- Timer --------------------------------------------------------
+    // Writes the elapsed time into BOTH #rtcTimer (legacy top-right slot,
+    // hidden by CSS in the new WhatsApp layout) and #rtcCallState (the
+    // line directly under the peer's name). The state line held "Ringing…"
+    // / "Connecting…" during setup; once we're connected the ticker takes
+    // over so the under-name slot flips to e.g. "02:55" like WhatsApp.
     function startTimer() {
-        const el = document.getElementById('rtcTimer');
-        if (!el) return;
-        el.style.display = 'inline-block';
+        const timerEl = document.getElementById('rtcTimer');
+        const stateEl = document.getElementById('rtcCallState');
+        if (timerEl) timerEl.style.display = 'inline-block';
         S.stateTicker = setInterval(() => {
             const s = Math.floor((Date.now() - S.connectedAt) / 1000);
-            el.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+            const txt = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+            if (timerEl) timerEl.textContent = txt;
+            if (stateEl) stateEl.textContent = txt;
         }, 500);
     }
 
@@ -1010,10 +1289,15 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         const ao = document.getElementById('rtcAudioOnly');
         const rv = document.getElementById('rtcRemoteVideo');
         const videoBtn = document.getElementById('rtcVideoBtn');
+        // Share-screen button stays visible on both call types. If the
+        // user taps it during a voice call, startScreenShare() shows a
+        // friendly "video calls only" toast — same as WhatsApp.
+        const shareBtn = document.getElementById('rtcShareBtn');
+        if (shareBtn) shareBtn.style.display = '';
         if (S.callType === 'audio') {
             if (ao) ao.style.display = 'block';
             if (rv) rv.style.display = 'none';
-            if (videoBtn) videoBtn.style.display = 'none';
+            if (videoBtn)  videoBtn.style.display  = 'none';
             const audioName = document.getElementById('rtcAudioName');
             if (audioName) audioName.textContent = S.peer.name;
             const ba = document.getElementById('rtcAudioAvatar');
@@ -1024,7 +1308,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         } else {
             if (ao) ao.style.display = 'none';
             if (rv) rv.style.display = 'block';
-            if (videoBtn) videoBtn.style.display = '';
+            if (videoBtn)  videoBtn.style.display  = '';
         }
         // Recompute switch button visibility whenever the call panel renders —
         // handles Livewire morph / navigation restore where this fn runs again
@@ -1048,13 +1332,46 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         const el = document.getElementById('rtcCallState');
         if (el) el.textContent = txt;
     }
-    function toast(msg) {
+    /**
+     * Show a status toast at the top of the call UI.
+     *
+     * Default: transient — fades in, holds ~3.5s, fades out.
+     * With `{ persistent: true }`: stays open until `dismissToast()` is
+     *     called (used for "waiting for peer…" style messages).
+     * With `{ cancelLabel, onCancel }`: adds an inline cancel link
+     *     (used so the caller can back out of a pending switch request).
+     */
+    function toast(msg, opts = {}) {
         const el = document.getElementById('rtcToast');
         if (!el) return;
-        el.textContent = msg;
-        el.classList.remove('open');
+        el.classList.remove('open', 'persistent');
         void el.offsetWidth;
+
+        const persistent = !!opts.persistent;
+        const parts = [];
+        if (persistent) parts.push('<span class="rtc-toast-dot"></span>');
+        parts.push('<span class="rtc-toast-msg"></span>');
+        if (opts.cancelLabel) parts.push('<button type="button" class="rtc-toast-cancel"></button>');
+        el.innerHTML = parts.join('');
+        el.querySelector('.rtc-toast-msg').textContent = msg;
+        if (opts.cancelLabel) {
+            const btn = el.querySelector('.rtc-toast-cancel');
+            btn.textContent = opts.cancelLabel;
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                dismissToast();
+                if (typeof opts.onCancel === 'function') {
+                    try { opts.onCancel(); } catch (err) { console.warn('[toast] onCancel failed', err); }
+                }
+            });
+        }
         el.classList.add('open');
+        if (persistent) el.classList.add('persistent');
+    }
+    function dismissToast() {
+        const el = document.getElementById('rtcToast');
+        if (!el) return;
+        el.classList.remove('open', 'persistent');
     }
 
     function endCall() {
@@ -1068,6 +1385,10 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         clearTimeout(S.ringTimeout);
         clearInterval(S.statsTicker); S.statsTicker = null;
         clearInterval(S.stateTicker); S.stateTicker = null;
+        // Make sure any live screen capture is stopped BEFORE the pc + stream
+        // teardown — otherwise the browser's "sharing your screen" bar
+        // outlives the call. stopScreenShare() is a no-op if we weren't sharing.
+        try { stopScreenShare(); } catch (_) {}
         if (S.pc) { try { S.pc.close(); } catch (_) {} S.pc = null; }
         if (S.localStream) { S.localStream.getTracks().forEach(t => t.stop()); S.localStream = null; }
         S.remoteStream = null;
@@ -1083,6 +1404,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         S._suppressNegotiation = false;
         S._makingOffer = false;
         hideSwitchPrompt();
+        dismissToast();
         S.startedAt = null; S.connectedAt = null;
     }
 
@@ -1564,6 +1886,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             track.enabled = !track.enabled;
             btn.classList.toggle('video-off', !track.enabled);
             btn.innerHTML = track.enabled ? '<i class="fa fa-video"></i>' : '<i class="fa fa-video-slash"></i>';
+            return;
+        }
+
+        if (e.target.closest('#rtcShareBtn')) {
+            toggleScreenShare();
             return;
         }
 

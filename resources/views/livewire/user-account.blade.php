@@ -16,7 +16,7 @@
     }
     .ev-back-bar {
         background: #1f2222;
-        padding: 12px 0;
+        padding: 7px 0;
     }
     .ev-back-bar a {
         color: var(--accent, #C1F11D);
@@ -1572,6 +1572,7 @@
             <a href="{{ url('/') }}" wire:navigate class="ev-am-back" aria-label="Back">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 <span>Back</span>
+                
             </a>
             <a href="{{ url('/') }}" wire:navigate class="ev-am-logo">
                 @if(isset($setting) && $setting->app_logo)
