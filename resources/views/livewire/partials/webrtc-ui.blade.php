@@ -293,11 +293,13 @@
     .rtc-call #rtcSwitchBtn.is-pending { opacity: 0.55; pointer-events: none; }
 
     /* Incoming switch-request prompt. Positioned fixed, above everything,
-       with a dark overlay backdrop. Hidden until .open is added. */
+       with a dark overlay backdrop. Hidden until .open is added.
+       z-index must be ABOVE .rtc-call (100040) — on mobile .rtc-call goes
+       edge-to-edge and would otherwise cover this prompt entirely. */
     .rtc-switch-prompt {
         position: fixed; inset: 0;
         background: rgba(0,0,0,0.72);
-        z-index: 100000;
+        z-index: 100070;
         display: none;
         align-items: center;
         justify-content: center;

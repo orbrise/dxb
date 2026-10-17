@@ -64,6 +64,10 @@
     // because this component also renders for guests.
     $authUser          = auth()->user();
     $authAvatarUrl     = $authUser && $authUser->avatar ? user_avatar_url($authUser) : null;
+    // Gravatar fallback — used by <img onerror> when the primary URL 404s
+    // (common when an avatar row references a file that only lived on local
+    // dev storage, or when the controller falls back to a wrong CDN variant).
+    $authGravatarUrl   = $authUser ? ('https://www.gravatar.com/avatar/' . md5(strtolower(trim($authUser->email ?? ''))) . '?s=128&d=identicon') : null;
     $authInitial       = $authUser ? strtoupper(substr($authUser->name ?? $authUser->email ?? '?', 0, 1)) : '?';
     $authName          = $authUser ? ($authUser->name ?? $authUser->username ?? strstr($authUser->email ?? '', '@', true)) : '';
     $authEmail         = $authUser->email ?? '';
@@ -402,7 +406,7 @@
                             <button type="button" class="ev-user-trigger" @click="open = !open">
                                 <span class="ev-user-avatar">
                                     @if($authAvatarUrl)
-                                        <img src="{{ $authAvatarUrl }}" alt="" onerror="this.style.display='none'">
+                                        <img src="{{ $authAvatarUrl }}" alt="" onerror="this.onerror=null;this.src='{{ $authGravatarUrl }}'">
                                     @else
                                         {{ $authInitial }}
                                     @endif
@@ -415,7 +419,7 @@
                                 <div class="ev-user-menu-head">
                                     <span class="ev-user-avatar ev-user-avatar--lg">
                                         @if($authAvatarUrl)
-                                            <img src="{{ $authAvatarUrl }}" alt="" onerror="this.style.display='none'">
+                                            <img src="{{ $authAvatarUrl }}" alt="" onerror="this.onerror=null;this.src='{{ $authGravatarUrl }}'">
                                         @else
                                             {{ $authInitial }}
                                         @endif

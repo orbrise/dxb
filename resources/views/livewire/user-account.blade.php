@@ -1006,7 +1006,7 @@
     }
     .acct-back-wrap {
         background: #131616;
-        padding: 14px 0;
+        padding: 7px 0;
         margin-bottom: 20px;
     }
     .acct-back-inner {
@@ -1780,9 +1780,12 @@
             {{-- Two-column grid: tabs + profile + info on left, premium + newsletter on right --}}
             @php
                 $authUser = auth()->user();
-                $accountAvatarUrl = !empty($authUser->avatar) && \Illuminate\Support\Facades\Storage::disk('public')->exists($authUser->avatar)
-                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($authUser->avatar)
-                    : 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($authUser->email))) . '?s=128&d=identicon';
+                // Route through the /u/{id}/avatar controller (same as the header),
+                // because this host has public/storage as a real directory — not a
+                // symlink — so Storage::url() produces 404ing /storage/avatars/* URLs.
+                // Fall back to Gravatar (via <img onerror>) when the controller 404s.
+                $gravatarUrl      = 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($authUser->email ?? ''))) . '?s=128&d=identicon';
+                $accountAvatarUrl = user_avatar_url($authUser) ?: $gravatarUrl;
                 $accountTypeLabel = ['1' => 'Standard', '2' => 'Individual', '3' => 'Agency'][$authUser->type] ?? 'Standard';
                 $memberSince = $authUser->created_at ? $authUser->created_at->format('m/d/Y') : '—';
                 $usernameDisplay = $authUser->username ? '@' . $authUser->username : '—';
@@ -1824,7 +1827,7 @@
 
                     {{-- Profile card --}}
                     <div class="acct-card acct-profile-card">
-                        <img src="{{ $accountAvatarUrl }}" alt="{{ $authUser->name }}" class="acct-profile-avatar">
+                        <img src="{{ $accountAvatarUrl }}" alt="{{ $authUser->name }}" class="acct-profile-avatar" onerror="this.onerror=null;this.src='{{ $gravatarUrl }}'">
                         <div class="acct-profile-info">
                             <h3>{{ $authUser->name }}</h3>
                             <p><strong>Account</strong> type {{ $accountTypeLabel }}</p>

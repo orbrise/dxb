@@ -151,6 +151,14 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     // --- Signal handler (delivered by polling /call/pending) ----------
     window.rtcHandleSignal = async function (e) {
         const t = e.type;
+        // Blanket log every incoming signal so we can diagnose
+        // mid-call switch flows. Especially useful for finding whether
+        // a renegotiation 'offer' is reaching the peer at all.
+        console.log('[rtc-sig] IN  ' + t, {
+            callId: e.callId, from: e.from,
+            myCallId: S.callId, pcState: S.pc?.connectionState,
+            matches: S.callId === e.callId,
+        });
         if (S.callId && S.callId !== e.callId && t !== 'offer') return;
 
         try {
@@ -169,19 +177,37 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 // sender's and receiver's new tracks land in one SDP round.
                 if (S.pc && S.callId === e.callId) {
                     try {
-                        console.log('[rtc-switch] renegotiation offer received, awaitingSwitch=' + S._awaitingSwitchOffer);
+                        // Detect what media the remote wants from the raw SDP
+                        // BEFORE touching the pc. We can't rely on
+                        // `_awaitingSwitchOffer` alone — if the user clicked
+                        // Accept quickly and the sender's offer came back
+                        // before our local flag was set, the flag-only check
+                        // misses the upgrade and the UI stays audio-only.
+                        // Detecting from the SDP itself is race-free.
+                        const rawSdp = e.payload.sdp.sdp || '';
+                        const remoteHasVideo = /^m=video (?!0 )/m.test(rawSdp);
+                        const previousCallType = S.callType;
+                        console.log('[rtc-switch] renegotiation offer received, awaitingSwitch=' + S._awaitingSwitchOffer + ', remoteHasVideo=' + remoteHasVideo);
+
                         await S.pc.setRemoteDescription(new RTCSessionDescription({
                             type: e.payload.sdp.type || 'offer',
                             sdp: sanitizeIncomingSdp(normalizeSdp(e.payload.sdp.sdp)),
                         }));
 
-                        // Mid-switch to VIDEO: make sure we have a camera
-                        // track ready. acceptSwitch pre-acquires it, but
-                        // as a safety net we also acquire here — otherwise
-                        // if acceptSwitch's camera call failed silently
-                        // (user dismissed permission late, device busy,
-                        // etc.) the peer would never see our video.
-                        if (S._awaitingSwitchOffer === 'video') {
+                        // Treat the renegotiation as a video upgrade if either
+                        // (a) we were already expecting one (acceptSwitch set
+                        // the flag) OR (b) the remote offer carries a live
+                        // m=video section while we were still in audio mode.
+                        const upgradingToVideo = (S._awaitingSwitchOffer === 'video')
+                            || (remoteHasVideo && previousCallType !== 'video');
+                        const downgradingToAudio = (S._awaitingSwitchOffer === 'audio')
+                            || (!remoteHasVideo && previousCallType === 'video');
+
+                        if (upgradingToVideo) {
+                            // Make sure we have a camera track ready — belt and
+                            // suspenders against acceptSwitch's pre-grab failing
+                            // or the SDP-detected upgrade path where no flag was
+                            // ever set (so no pre-grab happened).
                             if (!S.localStream || !S.localStream.getVideoTracks().length) {
                                 try {
                                     if (!S.localStream) {
@@ -222,7 +248,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                                 console.warn('[rtc-switch] no video track available to attach on receiver side');
                             }
                             S.callType = 'video';
-                        } else if (S._awaitingSwitchOffer === 'audio') {
+                        } else if (downgradingToAudio) {
                             // Downgrade: stop our video senders.
                             S.pc.getSenders().forEach(sd => {
                                 if (sd.track && sd.track.kind === 'video') {
@@ -243,14 +269,20 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                         await postSignal('answer', { sdp: { type: answer.type, sdp: sanitizeOutgoingSdp(answer.sdp) } });
                         console.log('[rtc-switch] answer sent, callType=' + S.callType);
 
-                        if (S._awaitingSwitchOffer) {
-                            const to = S._awaitingSwitchOffer;
-                            S._awaitingSwitchOffer = null;
-                            S._suppressNegotiation = false;
+                        // Clear switch flags whether or not they were set — they
+                        // might have been set and we handled them, or we detected
+                        // the switch from the SDP. Either way the UI needs to
+                        // reflect the new state.
+                        const didChangeType = (S.callType !== previousCallType);
+                        S._awaitingSwitchOffer = null;
+                        S._suppressNegotiation = false;
+
+                        if (didChangeType) {
                             showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
                             attachLocalPreview();
                             updateSwitchBtn();
-                            toast(to === 'video' ? 'Switched to video' : 'Switched to voice');
+                            toast(S.callType === 'video' ? 'Switched to video' : 'Switched to voice');
+                            console.log('[rtc-switch] UI updated to callType=' + S.callType);
                         } else {
                             setState('Reconnecting…');
                         }
@@ -370,14 +402,37 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
 
             if (t === 'switch-accept' && S._pendingSwitch?.role === 'sender') {
                 const to = S._pendingSwitch.to;
-                S._pendingSwitch = null;
+                S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
                 dismissToast();
-                try {
-                    await applyMediaSwitch(to);
-                    toast(to === 'video' ? 'Switched to video' : 'Switched to voice');
-                } catch (err) {
-                    console.error('[rtc] applyMediaSwitch (sender) failed', err);
-                    toast(mediaErrorMessage(err, to === 'video' ? 'camera' : 'microphone'));
+                // NEW DESIGN: receiver drives the renegotiation. All we
+                // need to do here is pre-acquire our own camera and set
+                // the flag so the incoming offer handler knows this is a
+                // switch upgrade (not just an ICE restart). The actual
+                // media attach + answer happens in the offer handler.
+                if (to === 'video') {
+                    S._awaitingSwitchOffer = 'video';
+                    try {
+                        if (!S.localStream) {
+                            S.localStream = await navigator.mediaDevices.getUserMedia({
+                                audio: true,
+                                video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                            });
+                        } else if (!S.localStream.getVideoTracks().length) {
+                            const cam = await navigator.mediaDevices.getUserMedia({
+                                video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                            });
+                            S.localStream.addTrack(cam.getVideoTracks()[0]);
+                        }
+                        console.log('[rtc-switch] sender pre-acquired camera, awaiting receiver\'s offer');
+                    } catch (err) {
+                        console.error('[rtc-switch] sender camera pre-acquisition failed', err);
+                        toast(mediaErrorMessage(err, 'camera'));
+                        S._awaitingSwitchOffer = null;
+                        updateSwitchBtn();
+                        return;
+                    }
+                } else if (to === 'audio') {
+                    S._awaitingSwitchOffer = 'audio';
                 }
                 updateSwitchBtn();
                 return;
@@ -385,7 +440,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
 
             if (t === 'switch-reject' && S._pendingSwitch?.role === 'sender') {
                 const target = S._pendingSwitch.to;
-                S._pendingSwitch = null;
+                S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
                 dismissToast();
                 toast(target === 'video' ? 'Video request declined.' : 'Voice request declined.');
                 updateSwitchBtn();
@@ -396,7 +451,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             // our prompt (receiver side) so we don't ask about a request
             // that's no longer live.
             if (t === 'switch-cancel' && S._pendingSwitch?.role === 'receiver') {
-                S._pendingSwitch = null;
+                S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
                 hideSwitchPrompt();
                 updateSwitchBtn();
                 return;
@@ -529,6 +584,22 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         pc.ontrack = (ev) => {
             const rv = document.getElementById('rtcRemoteVideo');
             const ra = document.getElementById('rtcRemoteAudio');
+            console.log('[rtc] ontrack fired, kind=' + ev.track.kind + ', readyState=' + ev.track.readyState + ', muted=' + ev.track.muted);
+
+            // Log when the track transitions from muted→unmuted (actual media
+            // flow started) so we can diagnose "track arrived but nothing
+            // visible" issues like the mid-call video upgrade.
+            ev.track.addEventListener('unmute', () => {
+                console.log('[rtc] track unmuted — media flowing, kind=' + ev.track.kind);
+                // Safety net: re-attach srcObject in case the video element
+                // was reset by a Livewire morph between ontrack and unmute.
+                if (ev.track.kind === 'video' && rv && S.remoteVideoStream) {
+                    if (rv.srcObject !== S.remoteVideoStream) {
+                        rv.srcObject = S.remoteVideoStream;
+                    }
+                    if (rv.paused) rv.play().catch(() => {});
+                }
+            });
 
             if (ev.track.kind === 'audio') {
                 if (!S.remoteAudioStream) {
@@ -540,13 +611,33 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             } else if (ev.track.kind === 'video') {
                 if (!S.remoteVideoStream) {
                     S.remoteVideoStream = new MediaStream();
-                    if (rv) rv.srcObject = S.remoteVideoStream;
                 }
+                // ALWAYS set srcObject — even if the stream existed before.
+                // On a mid-call switch, the <video> element may have had its
+                // srcObject cleared by a UI refresh; re-assigning here makes
+                // sure the newly-arrived remote track actually renders.
                 S.remoteVideoStream.addTrack(ev.track);
+                if (rv) {
+                    rv.srcObject = S.remoteVideoStream;
+                    rv.style.display = 'block';
+                    rv.play().catch((err) => {
+                        console.warn('[rtc] remote video play() failed', err);
+                    });
+                }
                 const ao = document.getElementById('rtcAudioOnly');
                 if (ao) ao.style.display = 'none';
-                if (rv) rv.style.display = 'block';
-                if (rv && rv.paused) rv.play().catch(() => {});
+                // Also flip callType to video if we're still thinking audio —
+                // handles the edge case where ontrack beats the SDP-detected
+                // upgrade in the offer handler. UI will catch up on the
+                // offer-handler path too, but this makes the big video area
+                // appear the instant the first video frame arrives.
+                if (S.callType !== 'video') {
+                    console.log('[rtc] ontrack-driven video upgrade (callType was ' + S.callType + ')');
+                    S.callType = 'video';
+                    showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
+                    attachLocalPreview();
+                    updateSwitchBtn();
+                }
             }
 
             if (!S.remoteStream) S.remoteStream = new MediaStream();
@@ -845,49 +936,96 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (!S._pendingSwitch || S._pendingSwitch.role !== 'receiver') return;
         const to = S._pendingSwitch.to;
         hideSwitchPrompt();
-        S._pendingSwitch = null;
+        S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
 
-        // CRITICAL ordering: set the state flags + pre-acquire media
-        // BEFORE sending the accept. Otherwise the sender posts a new
-        // SDP offer the moment they get the accept and that offer can
-        // race back to us before `_awaitingSwitchOffer` is set — in
-        // which case the offer handler skips the "attach my camera
-        // track" branch and the peer never sees our video.
-        S._awaitingSwitchOffer = to;
+        // NEW DESIGN: the RECEIVER drives the renegotiation (not the
+        // sender). Why: the receiver is the one who just acquired a camera
+        // via acceptSwitch, so we KNOW the camera works before offering.
+        // The sender just has to answer. Previous "sender drives" flow
+        // had a silent-failure window where the sender's offer never
+        // reached the peer and the UI got stuck half-upgraded.
         S._suppressNegotiation = true;
+        S._makingOffer = true;
 
         try {
-            if (to === 'video' && (!S.localStream || !S.localStream.getVideoTracks().length)) {
-                if (!S.localStream) {
-                    S.localStream = await navigator.mediaDevices.getUserMedia({
-                        audio: true,
-                        video: { width: { ideal: 640 }, height: { ideal: 480 } },
-                    });
-                } else {
-                    const cam = await navigator.mediaDevices.getUserMedia({
-                        video: { width: { ideal: 640 }, height: { ideal: 480 } },
-                    });
-                    S.localStream.addTrack(cam.getVideoTracks()[0]);
+            if (to === 'video') {
+                // 1. Acquire camera.
+                if (!S.localStream || !S.localStream.getVideoTracks().length) {
+                    if (!S.localStream) {
+                        S.localStream = await navigator.mediaDevices.getUserMedia({
+                            audio: true,
+                            video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                        });
+                    } else {
+                        const cam = await navigator.mediaDevices.getUserMedia({
+                            video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                        });
+                        S.localStream.addTrack(cam.getVideoTracks()[0]);
+                    }
                 }
+
+                // 2. Attach the camera to the peer connection so the
+                //    renegotiation offer we're about to create includes video.
+                const videoTrack = S.localStream.getVideoTracks()[0];
+                if (videoTrack && S.pc) {
+                    const existingVideoTx = S.pc.getTransceivers().find(tx => tx.receiver?.track?.kind === 'video' || tx.sender?.track?.kind === 'video');
+                    if (existingVideoTx && existingVideoTx.sender) {
+                        try { existingVideoTx.direction = 'sendrecv'; } catch (_) {}
+                        await existingVideoTx.sender.replaceTrack(videoTrack);
+                        console.log('[rtc-switch] receiver attached camera via existing tx');
+                    } else {
+                        S.pc.addTrack(videoTrack, S.localStream);
+                        console.log('[rtc-switch] receiver attached camera via addTrack');
+                    }
+                }
+
+                // 3. Optimistically flip the local UI to video.
+                S.callType = 'video';
+                showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
+                attachLocalPreview();
+                updateSwitchBtn();
+                const lv = document.getElementById('rtcLocalVideo');
+                if (lv && lv.paused) lv.play().catch(() => {});
             }
-            // All local prep is done — now notify the sender. Any offer
-            // they send back will find _awaitingSwitchOffer already set.
+
+            // 4. Tell the sender we accepted. They'll be ready to expect
+            //    the renegotiation offer that follows.
             await postSignal('switch-accept', { to });
+
+            // 5. Drive the renegotiation from THIS side. The sender's
+            //    'offer' handler will see our new offer, acquire their
+            //    camera, attach it, and answer.
+            if (to === 'video' && S.pc && S.pc.signalingState === 'stable') {
+                const offer = await S.pc.createOffer();
+                await S.pc.setLocalDescription(offer);
+                await postSignal('offer', { sdp: { type: offer.type, sdp: sanitizeOutgoingSdp(offer.sdp) } });
+                console.log('[rtc-switch] receiver sent renegotiation offer (we drive now)');
+            } else if (to === 'video') {
+                console.warn('[rtc-switch] signalingState not stable, offer skipped:', S.pc?.signalingState);
+            }
         } catch (err) {
             console.error('[rtc] acceptSwitch failed', err);
             toast(mediaErrorMessage(err, to === 'video' ? 'camera' : 'microphone'));
-            S._awaitingSwitchOffer = null;
-            S._suppressNegotiation = false;
+            // Roll back if camera acquisition failed.
+            if (to === 'video') {
+                S.callType = 'audio';
+                showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
+                attachLocalPreview();
+                updateSwitchBtn();
+            }
             try { await postSignal('switch-reject', { to }); } catch (_) {}
+        } finally {
+            S._suppressNegotiation = false;
+            S._makingOffer = false;
+            updateSwitchBtn();
         }
-        updateSwitchBtn();
     }
     // Receiver side: Decline the pending switch.
     async function rejectSwitch() {
         if (!S._pendingSwitch || S._pendingSwitch.role !== 'receiver') return;
         const to = S._pendingSwitch.to;
         hideSwitchPrompt();
-        S._pendingSwitch = null;
+        S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
         try { await postSignal('switch-reject', { to }); } catch (_) {}
     }
     // Sender side: Request the switch.
@@ -896,9 +1034,28 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             hasPc: !!S.pc, connectedAt: S.connectedAt,
             pending: S._pendingSwitch, callType: S.callType,
             callId: S.callId, peerId: S.peer?.id,
+            awaiting: S._awaitingSwitchOffer,
         });
-        if (!S.pc || S._pendingSwitch) {
-            console.warn('[rtc-switch] requestSwitch bailed — no pc or already pending');
+        if (!S.pc) {
+            console.warn('[rtc-switch] requestSwitch bailed — no pc');
+            return;
+        }
+        // Stale-state cleanup. If a previous switch attempt left
+        // `_pendingSwitch` / `_awaitingSwitchOffer` set (switch-accept
+        // never arrived, offer dropped mid-flight, user navigated away
+        // and back), subsequent requestSwitch calls would silently bail
+        // forever. Clear anything older than 15s on each new attempt so
+        // the user can always retry.
+        const now = Date.now();
+        if (S._pendingSwitch && S._pendingSwitchStartedAt && (now - S._pendingSwitchStartedAt > 15000)) {
+            console.warn('[rtc-switch] clearing stale _pendingSwitch (' + Math.round((now - S._pendingSwitchStartedAt) / 1000) + 's old)');
+            S._pendingSwitch = null;
+            S._awaitingSwitchOffer = null;
+            dismissToast();
+        }
+        if (S._pendingSwitch) {
+            console.warn('[rtc-switch] requestSwitch bailed — switch already in progress');
+            toast('A switch request is already in progress.');
             return;
         }
         // Pre-connect: the switch RPC rides the same signaling channel
@@ -910,6 +1067,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         }
         const to = S.callType === 'video' ? 'audio' : 'video';
         S._pendingSwitch = { to, role: 'sender' };
+        S._pendingSwitchStartedAt = Date.now();
         updateSwitchBtn();
         // WhatsApp-style persistent "asking Peter to turn on video…" banner.
         // Stays visible until the peer accepts/rejects or the caller taps
@@ -924,7 +1082,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 cancelLabel: 'Cancel',
                 onCancel: () => {
                     if (!S._pendingSwitch || S._pendingSwitch.role !== 'sender') return;
-                    S._pendingSwitch = null;
+                    S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
                     updateSwitchBtn();
                     // Best-effort tell the peer to drop the prompt on their side.
                     postSignal('switch-cancel', {}).catch(() => {});
@@ -936,7 +1094,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             console.log('[rtc-switch] switch-request sent, to=' + to);
         } catch (err) {
             console.error('[rtc-switch] switch-request POST failed', err);
-            S._pendingSwitch = null;
+            S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
             updateSwitchBtn();
             dismissToast();
             toast('Could not send switch request: ' + err.message);
@@ -1399,7 +1557,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         const ra = document.getElementById('rtcRemoteAudio'); if (ra) ra.srcObject = null;
         S.callId = null; S.callType = null; S.peer = null; S.role = null;
         S.pendingIce = []; S._pendingOffer = null;
-        S._pendingSwitch = null;
+        S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
         S._awaitingSwitchOffer = null;
         S._suppressNegotiation = false;
         S._makingOffer = false;
@@ -1412,6 +1570,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     async function postSignal(type, payload, opts = {}) {
         const target = opts.targetOverride || S.peer?.id;
         if (!target) return;
+        console.log('[rtc-sig] OUT ' + type, { to: target, callId: S.callId });
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         const res = await fetch('/call/signal', {
             method: 'POST',
@@ -1434,6 +1593,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (!res.ok) {
             let body = '';
             try { body = await res.text(); } catch (_) {}
+            console.error('[rtc-sig] OUT ' + type + ' FAILED', res.status, body.slice(0, 200));
             throw new Error('signal ' + type + ' failed: ' + res.status + ' ' + body.slice(0, 200));
         }
     }
