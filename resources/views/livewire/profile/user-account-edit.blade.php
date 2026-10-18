@@ -629,7 +629,7 @@
     @media (max-width: 768px) {
         .acctedit-header-inner { padding: 0 12px; }
         .acctedit-header-back { left: 12px; }
-        .acctedit-wrap { padding: 0 12px 48px; }
+        .acctedit-wrap { padding: 12px 12px 48px; }
         /* The global account header (ev-header-account) renders "<Back Edit"
            at the top on mobile — hide the page's own back-bar so the two
            don't stack. */
@@ -639,7 +639,7 @@
     /* Phone-tight overrides — the real workhorse breakpoint for
        portrait phones. Keeps the design cohesive at 360-430px widths. */
     @media (max-width: 640px) {
-        .acctedit-wrap { padding: 0 12px 36px; }
+        .acctedit-wrap { padding: 12 12px 36px; }
 
         /* Completion card: tighter paddings, title stays prominent. */
         .acctedit-complete { padding: 16px; gap: 12px; margin-bottom: 18px; }
@@ -653,7 +653,7 @@
            3-column grid on a 360-wide phone. SVG icons kept, text
            bumped down 1px. */
         .acctedit-tabs { grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 18px; }
-        .acctedit-tab { padding: 7px 4px; font-size: 12px; gap: 5px; border-radius: 5px; }
+        .acctedit-tab { padding: 7px 4px; font-size: 12px; gap: 5px; border-radius: 12px; border:1px solid #364153 }
         .acctedit-tab svg { width: 14px; height: 14px; }
 
         /* Form card tighter inside — label + input vertical rhythm. */
@@ -682,7 +682,7 @@
          sub-headers used elsewhere in the account section. --}}
     <div class="acctedit-header">
         <div class="acctedit-header-inner">
-            <a href="{{ url('/my-account') }}" wire:navigate class="acctedit-header-back" aria-label="My account">
+            <a href="{{ url('/my-account/info') }}" wire:navigate class="acctedit-header-back" aria-label="My account">
                 <i class="fa fa-chevron-left"></i>
                 <span>My account</span>
             </a>
@@ -703,7 +703,10 @@
              the primary tabs still live inside .acctedit-grid > div
              so desktop alignment with the right sidecards is preserved. --}}
         <div class="acctedit-tabs acctedit-tabs--mobile">
-            <a href="/my-account" wire:navigate class="acctedit-tab">
+            {{-- /my-account is the mobile dashboard grid; the Account content
+                 lives at /my-account/info. Route there so clicking Account
+                 from Edit/Password lands on the account view, not the grid. --}}
+            <a href="/my-account/info" wire:navigate class="acctedit-tab">
                 <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M1 15C1 13.9391 1.42143 12.9217 2.17157 12.1716C2.92172 11.4214 3.93913 11 5 11H13C14.0609 11 15.0783 11.4214 15.8284 12.1716C16.5786 12.9217 17 13.9391 17 15C17 15.5304 16.7893 16.0391 16.4142 16.4142C16.0391 16.7893 15.5304 17 15 17H3C2.46957 17 1.96086 16.7893 1.58579 16.4142C1.21071 16.0391 1 15.5304 1 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                     <path d="M9 7C10.6569 7 12 5.65685 12 4C12 2.34315 10.6569 1 9 1C7.34315 1 6 2.34315 6 4C6 5.65685 7.34315 7 9 7Z" stroke="currentColor" stroke-width="2"/>
@@ -796,7 +799,7 @@
                 {{-- LEFT COLUMN — tabs + form fields --}}
                 <div>
                     <div class="acctedit-tabs acctedit-tabs--desktop">
-                        <a href="/my-account" wire:navigate class="acctedit-tab">
+                        <a href="/my-account/info" wire:navigate class="acctedit-tab">
                             {{-- Account: person glyph (currentColor so it
                                  adopts the tab's text color — grey when
                                  idle, lime when .active). --}}

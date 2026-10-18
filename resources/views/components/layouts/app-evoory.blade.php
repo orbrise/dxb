@@ -488,6 +488,46 @@
     {{-- Theme JS - Deferred for performance --}}
     <script src="{{ asset('assets/js/evoory-theme.js') }}?v=20260318-4" defer></script>
 
+    {{-- iOS Safari zoom-on-focus fix. If any form field has font-size < 16px,
+         Safari auto-zooms the page on focus (and does NOT zoom back out,
+         leaving the whole site stuck zoomed). Bumping to 16px on narrow
+         viewports suppresses that behaviour while keeping pinch-zoom. */
+         Scoped under max-width: 767px so desktop inputs are untouched. --}}
+    <style>
+    @media (max-width: 767px) {
+        input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
+        select,
+        textarea {
+            font-size: 16px !important;
+        }
+    }
+    </style>
+
+    {{-- iOS Safari keyboard fix. CSS `100dvh` doesn't shrink when the virtual
+         keyboard opens — the composer gets pushed below the keyboard and the
+         user can't see what they're typing. We publish `--app-height` and
+         `--kb-inset` from the actual visualViewport so any fullscreen page
+         (chat, new profile, etc.) can bind height/padding to a value that
+         always equals the visible area. --}}
+    <script>
+    (function () {
+        var vv = window.visualViewport;
+        function sync() {
+            var h   = vv ? vv.height : window.innerHeight;
+            var inset = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+            document.documentElement.style.setProperty('--app-height', h + 'px');
+            document.documentElement.style.setProperty('--kb-inset', inset + 'px');
+        }
+        sync();
+        if (vv) {
+            vv.addEventListener('resize', sync);
+            vv.addEventListener('scroll', sync);
+        }
+        window.addEventListener('resize', sync);
+        window.addEventListener('orientationchange', sync);
+    })();
+    </script>
+
     {{-- Additional page-specific JS --}}
     @stack('js')
 </body>

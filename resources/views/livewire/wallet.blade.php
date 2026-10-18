@@ -52,8 +52,16 @@
         gap: 24px;
         align-items: start;
     }
+    /* minmax(0, 1fr) — the default `1fr` resolves to `minmax(auto, 1fr)`,
+       which lets the column grow to fit min-content. The transaction table
+       has min-width:760px, so without this the whole grid column stretched
+       to 760px on mobile and dragged the Buy button + balance card off the
+       right edge of the viewport. */
     @media (max-width: 900px) {
-        .uw-grid { grid-template-columns: 1fr; }
+        .uw-grid { grid-template-columns: minmax(0, 1fr); }
+        /* The <div> wrapping balance + tx-card is itself a grid child —
+           needs the same min-width override to pass the constraint down. */
+        .uw-grid > * { min-width: 0; }
     }
 
     /* ─── Hero head (icon + title + subtitle) ─── */
@@ -66,13 +74,7 @@
     .uw-hero-icon {
         width: 60px;
         height: 60px;
-        border-radius: 50%;
-        /* Two layered gradients + transparent border = gradient border on
-           a rounded shape (border-image doesn't honor border-radius). */
-        background:
-            linear-gradient(180deg, #0F2821 0%, #153421 40.38%, #1A3D21 72.12%, #216D27 100%) padding-box,
-            linear-gradient(180deg, #1F4C41 0%, #275828 100%) border-box;
-        border: 1px solid transparent;
+       
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -398,8 +400,182 @@
     @media (max-width: 640px) {
         .uw-modal { padding: 16px 8px; }
         .uw-modal-dialog { padding: 18px 14px 16px; }
-        .uw-balance { flex-direction: column; align-items: flex-start; gap: 14px; }
-        .uw-buy-btn { width: 100%; justify-content: center; }
+    }
+
+    /* ============================================================
+       MOBILE LAYOUT (<=900px) — matches the ref mockup:
+         - Balance card: lime UPPERCASE label on top, big $, sub,
+           coin icon pinned top-right, full-width Buy button at bottom
+         - "We accept" strip under balance
+         - Transactions become cards (not a table)
+         - Desktop table + right sidebar hidden
+       ============================================================ */
+    .uw-tx-cards { display: none; }
+
+    @media (max-width: 900px) {
+        /* Hide the desktop transaction table; cards version takes over. */
+        .uw-tx-scroll { display: none !important; }
+        .uw-tx-cards { display: block; }
+
+        /* Flatten the wrappers so balance, we-accept, and tx-card become
+           direct grid children — then CSS `order` can arrange them as
+           balance → we-accept → tx-card (matching the ref mockup).
+           Secure & Private is hidden on mobile. */
+        .uw-grid > div:first-child { display: contents; }
+        .uw-side { display: contents; }
+        .uw-side .uw-side-card { display: none; }
+
+        .uw-balance { order: 1; }
+        .uw-accept-wrap { order: 2; margin: 2px 2px 0px; }
+        .uw-tx-card { order: 3;     background: transparent;
+    border: 0px solid #242B2D;
+    border-radius: 0px;
+    padding: 0px }
+
+        /* Hero head — smaller icon, tighter spacing */
+        .uw-hero-head { gap: 3px; margin-bottom: 14px; }
+        .uw-hero-icon { width: 44px; height: 44px; }
+        .uw-hero-icon svg { width: 24px; height: 28px; }
+        .uw-hero-head h2 { font-size: 18px; }
+        .uw-hero-head p { font-size: 11.5px; line-height: 1.4; }
+
+        /* ─── Balance card: column, label-on-top, coin top-right ─── */
+        .uw-balance {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 18px 18px 18px;
+            gap: 0;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(90deg, #161A19 0%, #1C4116 100%);
+            border: 0.3px solid #51BF95;
+        }
+        /* Coin icon: pinned top-right, smaller rounded tile */
+        .uw-balance-icon {
+            order: 0;
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #104828;
+            border: 0.3px solid #51BF95;
+        }
+        .uw-balance-icon svg { width: 24px; height: 24px; }
+        .uw-balance-info { order: 1; padding-right: 60px; }
+        .uw-balance-label {
+            color: #18D189;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .uw-balance-amount { font-size: 36px; letter-spacing: -0.02em; margin-bottom: 6px; }
+        .uw-balance-sub { color: #fff; font-size: 13px; margin: 0 0 16px; opacity: 0.9; }
+        .uw-buy-btn {
+            order: 2;
+            width: 100%;
+            justify-content: center;
+            padding: 8px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 999px;
+        }
+
+        .uw-balance{margin-bottom:0px;}
+        /* ─── "We accept" mobile strip ─── */
+        .uw-accept-wrap .uw-accept-label {
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 0 0 10px;
+        }
+        .uw-accept-wrap .uw-accept-logos svg,
+        .uw-accept-wrap .uw-accept-logos img {
+            width: 100%;
+            max-width: 360px;
+            height: auto;
+            display: block;
+        }
+
+        /* ─── Transaction history card ─── */
+        .uw-tx-card { padding: 0px; }
+        .uw-tx-head h3 { font-size: 20px; margin-bottom: 4px; }
+        .uw-tx-head p  { font-size: 13px; }
+
+        /* Tab pills: slightly larger touch targets */
+        .uw-tx-tabs { gap: 8px; flex-wrap: wrap; }
+        .uw-tx-tab, .uw-tx-tab-sub { padding: 9px 20px; font-size: 13.5px; }
+
+        /* ─── Transaction cards (grid of 3 columns per row) ─── */
+        .uw-tx-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 4px;
+        }
+        .uw-tx-card-row {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            background: #171B1D;
+            border: 1px solid #242B2D;
+            border-radius: 12px;
+            padding: 14px 14px;
+        }
+        .uw-tx-card-row .uw-tx-icon {
+            width: 44px;
+            height: 44px;
+            align-self: center;
+        }
+        .uw-tx-card-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .uw-tx-card-title {
+            color: #fff;
+            font-size: 14.5px;
+            font-weight: 600;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .uw-tx-card-meta {
+            color: rgba(255,255,255,0.55);
+            font-size: 12.5px;
+            line-height: 1.3;
+        }
+        /* The status pill wraps to its own line underneath, inline-flex so
+           the pill hugs its content instead of stretching the full width. */
+        .uw-tx-card-main .uw-tx-status {
+            align-self: flex-start;
+            margin-top: 4px;
+        }
+        .uw-tx-card-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            min-width: 0;
+        }
+        .uw-tx-card-right .uw-tx-amt {
+            font-size: 14.5px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .uw-tx-card-right .uw-tx-ref {
+            color: rgba(255,255,255,0.45);
+            font-size: 12px;
+            font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+            white-space: nowrap;
+        }
     }
 </style>
 @endpush
@@ -471,6 +647,74 @@
                                     class="uw-tx-tab-sub {{ $txFilter === 'debit' ? 'is-active' : '' }}"
                                     wire:click="$set('txFilter', 'debit')">Credits out</button>
                         </div>
+                    </div>
+
+                    {{-- Mobile-only cards layout (shown instead of the table under
+                         900px; see .uw-tx-cards CSS). Each tx becomes a dark
+                         card: icon left, title/method/status middle, amount +
+                         ref right. Mirrors the ref mockup for the mobile view. --}}
+                    <div class="uw-tx-cards" aria-hidden="false">
+                        @forelse($transactions as $tx)
+                            @php
+                                $isCredit = in_array($tx->type, $creditTypes, true);
+                                $typeTitle = match(true) {
+                                    $tx->type === 'credit_purchase'          => 'Credits Purchased',
+                                    $tx->type === 'credit'                   => 'Credits Added',
+                                    $tx->type === 'package_purchase'         => 'Package Purchased',
+                                    $tx->type === 'package_upgrade'          => 'Profile Upgraded',
+                                    $tx->type === 'paypal_payment'           => 'PayPal Payment',
+                                    $tx->type === 'primary_gateway_payment'  => 'Card Payment',
+                                    $tx->type === 'debit'                    => 'Credits Spent',
+                                    default                                  => ucwords(str_replace('_', ' ', (string) $tx->type)),
+                                };
+                                $methodLabel = match($tx->payment_method) {
+                                    'primary_gateway' => 'Credit Card',
+                                    'paypal'          => 'PayPal',
+                                    'wallet'          => 'Wallet',
+                                    null              => '—',
+                                    default           => ucfirst(str_replace('_', ' ', (string) $tx->payment_method)),
+                                };
+                                $statusClass = 'is-' . strtolower((string) ($tx->status ?: 'pending'));
+                                $ref = $tx->reference ? '#' . $tx->reference : '—';
+                            @endphp
+                            <div class="uw-tx-card-row">
+                                <span class="uw-tx-icon {{ $isCredit ? 'is-in' : 'is-out' }}">
+                                    @if($isCredit)
+                                        <svg width="17" height="17" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M9 5H11V15H9V5Z" fill="#92FF38"/>
+                                            <path d="M5 9H15V11H5V9Z" fill="#92FF38"/>
+                                            <path d="M10 0C4.486 0 0 4.486 0 10C0 15.514 4.486 20 10 20C15.514 20 20 15.514 20 10C20 4.486 15.514 0 10 0ZM10 18C5.589 18 2 14.411 2 10C2 5.589 5.589 2 10 2C14.411 2 18 5.589 18 10C18 14.411 14.411 18 10 18Z" fill="#92FF38"/>
+                                        </svg>
+                                    @else
+                                        <svg width="17" height="17" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M5 9H15V11H5V9Z" fill="#FF3838"/>
+                                            <path d="M10 0C4.486 0 0 4.486 0 10C0 15.514 4.486 20 10 20C15.514 20 20 15.514 20 10C20 4.486 15.514 0 10 0ZM10 18C5.589 18 2 14.411 2 10C2 5.589 5.589 2 10 2C14.411 2 18 5.589 18 10C18 14.411 14.411 18 10 18Z" fill="#FF3838"/>
+                                        </svg>
+                                    @endif
+                                </span>
+                                <div class="uw-tx-card-main">
+                                    <div class="uw-tx-card-title">{{ $typeTitle }}</div>
+                                    <div class="uw-tx-card-meta">
+                                        {{ $methodLabel }} &middot; {{ \Carbon\Carbon::parse($tx->created_at)->format('M d, Y') }}
+                                    </div>
+                                    <span class="uw-tx-status {{ $statusClass }}">
+                                        @if($tx->status === 'completed')<i class="fa fa-check-circle"></i>@endif
+                                        {{ ucfirst($tx->status ?: 'pending') }}
+                                    </span>
+                                </div>
+                                <div class="uw-tx-card-right">
+                                    <div class="uw-tx-amt {{ $isCredit ? 'is-in' : 'is-out' }}">
+                                        {{ $isCredit ? '+' : '-' }}${{ number_format((float) $tx->amount, 2) }}
+                                    </div>
+                                    <div class="uw-tx-ref">{{ $ref }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="uw-tx-empty">
+                                <i class="fa fa-receipt"></i>
+                                No transactions yet. Buy credits to get started.
+                            </div>
+                        @endforelse
                     </div>
 
                     <div class="uw-tx-scroll">
@@ -583,7 +827,7 @@
                     </div>
                 </div>
 
-                <div class="">
+                <div class="uw-accept-wrap">
                     <div class="uw-accept-label">We accept:</div>
                     <div class="uw-accept-logos">
 <svg width="394" height="97" viewBox="0 0 394 97" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">

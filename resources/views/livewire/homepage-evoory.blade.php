@@ -71,8 +71,8 @@
         a.ev-tag,
         a.ev-tag:link,
         a.ev-tag:visited {
-            color: #fff !important;
-            background: transparent !important;
+            color: #050505 !important;
+            background: #fff !important;
             border: 1px solid #2a3a4a !important;
             border-radius: 999px !important;
             padding: 5px 18px !important;

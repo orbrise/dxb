@@ -186,15 +186,19 @@
     @media (max-width: 768px) {
         .acctpw-header-inner { padding: 0 12px; }
         .acctpw-header-back { left: 12px; }
-        .acctpw-wrap { padding: 0 12px 48px; }
+        .acctpw-wrap { padding: 12px 12px 48px; }
     }
 
     @media (max-width: 900px) {
         .acctpw-tabs { gap: 8px; }
-        .acctpw-tab { padding: 10px 8px; font-size: 13px; }
+        .acctpw-tab { padding: 7px 8px; font-size: 12px; border: 1px solid #364153; border-radius: 12px; }
         .acctpw-tab i { display: none; }
         .acctpw-header-title { font-size: 15px; }
         .acctpw-header-back span { display: none; }
+        /* Hide the page's own "Change Password" sub-header on mobile — the
+           layout's parent "Back / Password" strip above already serves as
+           the page title; stacking two sub-headers is redundant. */
+        .acctpw-header { display: none; }
     }
 </style>
 @endpush
@@ -203,7 +207,7 @@
     {{-- Dark back-bar header matching the Edit page. --}}
     <div class="acctpw-header">
         <div class="acctpw-header-inner">
-            <a href="{{ url('/my-account') }}" wire:navigate class="acctpw-header-back" aria-label="My account">
+            <a href="{{ url('/my-account/info') }}" wire:navigate class="acctpw-header-back" aria-label="My account">
                 <i class="fa fa-chevron-left"></i>
                 <span>My account</span>
             </a>
@@ -222,7 +226,10 @@
              currentColor-stroked so they inherit the tab's text color
              (grey when idle, lime when .active). --}}
         <div class="acctpw-tabs">
-            <a href="/my-account" wire:navigate class="acctpw-tab">
+            {{-- /my-account is the mobile dashboard grid; the Account content
+                 lives at /my-account/info. Route there so clicking Account
+                 from Edit/Password lands on the account view, not the grid. --}}
+            <a href="/my-account/info" wire:navigate class="acctpw-tab">
                 <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M1 15C1 13.9391 1.42143 12.9217 2.17157 12.1716C2.92172 11.4214 3.93913 11 5 11H13C14.0609 11 15.0783 11.4214 15.8284 12.1716C16.5786 12.9217 17 13.9391 17 15C17 15.5304 16.7893 16.0391 16.4142 16.4142C16.0391 16.7893 15.5304 17 15 17H3C2.46957 17 1.96086 16.7893 1.58579 16.4142C1.21071 16.0391 1 15.5304 1 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                     <path d="M9 7C10.6569 7 12 5.65685 12 4C12 2.34315 10.6569 1 9 1C7.34315 1 6 2.34315 6 4C6 5.65685 7.34315 7 9 7Z" stroke="currentColor" stroke-width="2"/>

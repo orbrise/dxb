@@ -1009,10 +1009,17 @@
         padding: 7px 0;
         margin-bottom: 20px;
     }
+    /* Three-column strip: Back link · centered page title · empty spacer.
+       The spacer takes the same width as the Back link so the title stays
+       true-centered. Matches the "My Wallet" sub-header pattern. */
     .acct-back-inner {
         max-width: 1337px;
         margin: 0 auto;
         padding: 0 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
     }
     .acct-back-link {
         color: #C1F11D;
@@ -1022,20 +1029,25 @@
         align-items: center;
         gap: 6px;
         font-weight: 500;
+        flex: 0 0 auto;
     }
     .acct-back-link:hover { color: #d9ff4a; }
 
-    .acct-title {
-        font-size: 28px;
-        font-weight: 700;
+    /* "My Account" centered in the sub-header strip. The large H1 below is
+       hidden on desktop too (see .acct-title rule) — the strip is now the
+       single source of the page title. */
+    .acct-back-title {
         color: #fff;
-        margin: 14px 0 4px;
+        font-size: 15px;
+        font-weight: 500;
+        margin: 0;
     }
-    .acct-subtitle {
-        color: rgba(255,255,255,0.5);
-        font-size: 14px;
-        margin: 0 0 22px;
-    }
+    .acct-back-spacer { width: 60px; flex: 0 0 auto; }
+
+    /* Hidden on desktop (title lives in the strip above). The mobile detail
+       view brings back its own compact H1 — handled further down. */
+    .acct-title    { display: none; }
+    .acct-subtitle { display: none; }
 
     /* -------- Hero premium banner -------- */
     .acct-hero {
@@ -1429,9 +1441,6 @@
     .acct-delete-btn svg path { fill: #F24E1E; }
     .acct-delete-btn:hover { background: #1a1d1d; border-color: rgba(242,78,30,0.4); }
 
-    /* Centered title inside the back-wrap strip, mobile detail view only. */
-    .acct-back-title { display: none; }
-
     /* Responsive */
     @media (max-width: 900px) {
         /* By default the "desktop" new design is hidden on mobile — the
@@ -1440,6 +1449,15 @@
            dashboard "My Account" row), show the detail view on mobile too
            with a mobile-optimized layout. */
         .acct-page-desktop:not(.acct-page-info) { display: none !important; }
+
+        /* Hide the site's top ev-header on the mobile info view so only the
+           page's own "Back / My Account" sub-header shows — matches the
+           Edit and Password pages which also drop the ev-header on mobile.
+           :has() scopes it to this page only; other pages' headers are
+           untouched. */
+        body:has(.acct-page-info) #header,
+        body:has(.acct-page-info) .ev-header,
+        body:has(.acct-page-info) .ev-header-account { display: none !important; }
 
         /* Compact top nav: "< Home" on left, "My Account" centered. */
         .acct-page-info .acct-back-wrap { margin-bottom: 14px; }
@@ -1459,7 +1477,7 @@
         }
         .acct-page-info .acct-tabs a.active {
             background: rgba(193,241,29,0.08);
-            border-color: rgba(193,241,29,0.5);
+          
         }
         .acct-page-info .acct-back-title {
             display: block;
@@ -1486,8 +1504,8 @@
         .acct-page-info .acct-col { display: contents; }
 
         .acct-page-info .acct-flash { order: 1; }
-        .acct-page-info .acct-tabs { order: 2; margin-bottom: 4px; }
-        .acct-page-info .acct-hero { order: 3; }
+        .acct-page-info .acct-tabs { order: 2; margin-bottom: 16px; }
+        .acct-page-info .acct-hero { order: 3; margin-bottom: 15px; }
         .acct-page-info .acct-profile-card { display: none; }
         .acct-page-info .acct-info-card { order: 5; }
         .acct-page-info .acct-connect-card { order: 6; }
@@ -1509,8 +1527,8 @@
 
         /* Tabs — compact row of 3 on mobile. */
         .acct-page-info .acct-tabs a {
-            padding: 8px 10px;
-            height: 38px;
+            padding: 7px 10px;
+            height: 35px;
             font-size: 12px;
         }
         .acct-page-info .acct-tabs a svg { width: 15px; height: 15px; }
@@ -1536,7 +1554,7 @@
         .acct-page-info .acct-premium-card { display: none; }
 
         /* Stay Connected card — shorter on mobile. */
-        .acct-page-info .acct-connect-card { min-height: 160px; padding: 16px; }
+        .acct-page-info .acct-connect-card { min-height: 160px; padding: 16px; margin-top:16px; }
         .acct-page-info .acct-connect-head { font-size: 16px; }
         .acct-page-info .acct-connect-desc { font-size: 11px; max-width: 65%; }
         .acct-page-info .acct-connect-nl { font-size: 13px; }
@@ -1547,7 +1565,7 @@
     }
     @media (max-width: 1024px) and (min-width: 901px) {
         .acct-grid { grid-template-columns: 1fr; }
-        .acct-hero { flex-direction: column; align-items: flex-start; }
+        .acct-hero { flex-direction: column; align-items: flex-start; margin-bottom: 16px; min-height: 120px; }
     }
 </style>
 @endpush
@@ -1753,8 +1771,11 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                     {{ $isAcctInfoPage ? 'Home' : 'Back' }}
                 </a>
-                {{-- Centered page title shown only on mobile detail view. --}}
+                {{-- Centered page title — single source of truth for the page
+                     heading (the large H1 below is hidden by CSS now). --}}
                 <span class="acct-back-title">My Account</span>
+                {{-- Empty spacer keeps the title true-centered inside the strip. --}}
+                <span class="acct-back-spacer" aria-hidden="true"></span>
             </div>
         </div>
         <div class="acct-container">
@@ -1802,7 +1823,14 @@
                     {{-- Tabs sit inside left column so they align horizontally with
                          the Upgrade to Premium card header on the right. --}}
                     <div class="acct-tabs">
-                        <a href="/my-account" wire:navigate class="{{ request()->is('my-account') && !request()->is('my-account/*') ? 'active' : '' }}">
+                        {{-- Account tab is the "root" of this screen. On
+                             mobile the detail view lives at /my-account/info,
+                             so keep users on that URL when they tap Account;
+                             on desktop /my-account is the account page itself.
+                             Active for BOTH URLs so the pill lights up in
+                             either context. --}}
+                        <a href="{{ $isAcctInfoPage ? '/my-account/info' : '/my-account' }}" wire:navigate
+                           class="{{ (request()->is('my-account') && !request()->is('my-account/*')) || request()->is('my-account/info') ? 'active' : '' }}">
                             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M1 15C1 13.9391 1.42143 12.9217 2.17157 12.1716C2.92172 11.4214 3.93913 11 5 11H13C14.0609 11 15.0783 11.4214 15.8284 12.1716C16.5786 12.9217 17 13.9391 17 15C17 15.5304 16.7893 16.0391 16.4142 16.4142C16.0391 16.7893 15.5304 17 15 17H3C2.46957 17 1.96086 16.7893 1.58579 16.4142C1.21071 16.0391 1 15.5304 1 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                                 <path d="M9 7C10.6569 7 12 5.65685 12 4C12 2.34315 10.6569 1 9 1C7.34315 1 6 2.34315 6 4C6 5.65685 7.34315 7 9 7Z" stroke="currentColor" stroke-width="2"/>

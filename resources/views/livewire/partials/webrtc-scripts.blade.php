@@ -109,7 +109,16 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         S.conversationId = conversationId || null;
         S.startedAt = Date.now();
 
-        showCallUI('Ringing…');
+        // WhatsApp-style status progression:
+        //   "Calling…"  — invite sent, no confirmation from peer yet (offline?
+        //                 unreachable? app closed?)
+        //   "Ringing…"  — peer's device acknowledged with a 'ringing' signal,
+        //                 so we KNOW they're online and their UI is ringing.
+        //   "In call"   — peer accepted; RTCPeerConnection reached 'connected'.
+        // The flip from Calling → Ringing happens in the 'ringing' handler
+        // further down (sets S.calleeRinging = true + setState).
+        showCallUI('Calling…');
+        S.calleeRinging = false;
         console.log('[rtc] starting call', { userId, type, callId: S.callId });
 
         try {
@@ -370,7 +379,12 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 return;
             }
             if (t === 'hangup') { toast('Call ended.'); endCall(false); return; }
-            if (t === 'ringing') { setState('Ringing…'); return; }
+            if (t === 'ringing') {
+                // Peer confirmed delivery — flip from "Calling…" to "Ringing…".
+                S.calleeRinging = true;
+                setState('Ringing…');
+                return;
+            }
 
             // ------- Mid-call audio↔video switch (WhatsApp style) -------
             // Three-step handshake: initiator sends 'switch-request{to}',
@@ -1561,6 +1575,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         S._awaitingSwitchOffer = null;
         S._suppressNegotiation = false;
         S._makingOffer = false;
+        S.calleeRinging = false;
         hideSwitchPrompt();
         dismissToast();
         S.startedAt = null; S.connectedAt = null;
@@ -1973,8 +1988,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (st === 'closed' || st === 'failed') return;
 
         // Active call — re-render call card, then rebind media streams.
+        // Caller label mirrors the live progression: Calling → Ringing → In call.
         const label = (st === 'connected') ? 'In call'
-                    : (S.role === 'caller' ? 'Ringing…' : 'Connecting…');
+                    : (S.role === 'caller'
+                        ? (S.calleeRinging ? 'Ringing…' : 'Calling…')
+                        : 'Connecting…');
         showCallUI(label);
 
         if (S.remoteAudioStream) {

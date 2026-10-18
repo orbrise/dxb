@@ -58,6 +58,10 @@ class ChatMediaController extends Controller
         $rules = [
             'conversation_id' => 'required|integer|exists:conversations,id',
             $field            => 'required|file',
+            // Optional caption — used by the image send flow (WhatsApp-style
+            // preview modal lets the user type a line before uploading).
+            // Trimmed + length-capped so it can't blow up the message column.
+            'message'         => 'nullable|string|max:1000',
         ];
         if ($isVoice) {
             $rules['duration'] = 'nullable|integer|min:1|max:600';
@@ -102,7 +106,7 @@ class ChatMediaController extends Controller
             if ($type === 'video') {
                 return $this->storeVideo($request, $conversation, $user, $upload, $mime, $size);
             }
-            return $this->storeOnLocalDisk($conversation, $user, $upload, $mime, $type, $isVoice, (int)($data['duration'] ?? 0));
+            return $this->storeOnLocalDisk($conversation, $user, $upload, $mime, $type, $isVoice, (int)($data['duration'] ?? 0), trim((string)($data['message'] ?? '')));
         } catch (\Throwable $e) {
             Log::error('Media upload failed', [
                 'type'  => $type,
@@ -119,7 +123,7 @@ class ChatMediaController extends Controller
      * Behaviour unchanged from before R2 was added so existing rows
      * (and the voice-recorder flow) keep working.
      */
-    protected function storeOnLocalDisk(Conversation $conversation, $user, $upload, string $mime, string $type, bool $isVoice, int $duration)
+    protected function storeOnLocalDisk(Conversation $conversation, $user, $upload, string $mime, string $type, bool $isVoice, int $duration, string $caption = '')
     {
         if ($isVoice) {
             $ext = str_contains($mime, 'mp4') ? 'm4a' : 'webm';
@@ -141,7 +145,10 @@ class ChatMediaController extends Controller
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id'       => $user->id,
-            'message'         => '',
+            // Caption from the WhatsApp-style image preview modal; empty for
+            // uploads where no caption was supplied (voice notes, docs,
+            // audio, legacy direct image uploads).
+            'message'         => $caption,
             'status'          => 'sent',
             'attachment_path' => "{$dir}/{$filename}",
             'attachment_disk' => 'public',
