@@ -99,6 +99,26 @@ class HomePage extends Component
 
     public function mount($city = '', $gender = '', $category = '', $page = 1, $isMobile = false, $showMobileSearch = false)
 {
+    // Livewire 3's parameter binding passes stray values to mount() when the
+    // route segments don't line up with the mount signature. On the paginated
+    // route `/{gender}-escorts-in-{city}/page/{page}`, the string "2" was
+    // leaking into $category and triggering the abort(404) below.
+    //
+    // Fix: when running inside a real HTTP request, trust ONLY the route's
+    // named parameters — never the function arguments. If the current route
+    // has no {category} segment, $category is forced to '' regardless of
+    // what Livewire tried to pass.
+    //
+    // When mount() is called directly (e.g. from a unit test with no bound
+    // route), request()->route() is null and we keep the arguments as-is.
+    $route = request()->route();
+    if ($route) {
+        $routeParams = $route->parameters();
+        $city     = $routeParams['city']     ?? '';
+        $gender   = $routeParams['gender']   ?? '';
+        $category = $routeParams['category'] ?? '';
+        $page     = (int) ($routeParams['page'] ?? 1);
+    }
 
     // /{category}-in-{city} routes bind $category (route param name matches).
     // Resolve it to a Listing row so getProfiles() can filter and so the view

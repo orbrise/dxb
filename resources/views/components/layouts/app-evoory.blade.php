@@ -234,16 +234,49 @@
         function isListingPath(path){
             return /-escorts-in-/.test(path);
         }
-        function syncListingCss(){
-            var on = !!document.querySelector('.ev-listing-page')
-                  || isListingPath(window.location.pathname);
+        function setListingCss(on){
             var links = document.querySelectorAll(
                 'link[href*="evoory-homepage.css"], link[href*="listing-page-inline.css"]'
             );
             links.forEach(function(el){ el.media = on ? 'all' : 'print'; });
         }
+        function syncListingCss(){
+            setListingCss(!!document.querySelector('.ev-listing-page')
+                  || isListingPath(window.location.pathname));
+        }
+        // Flip the CSS media attribute right before the body swap, based on
+        // the DESTINATION url. Timing matters here:
+        //
+        //   - livewire:navigate fires on CLICK, before the fetch starts. If
+        //     we flip here the fetch takes 100-500ms and the user sees the
+        //     CURRENT page with the NEW page's CSS applied the whole time
+        //     (visible restyle flash on the page they're leaving).
+        //   - livewire:navigating fires after fetch, immediately before the
+        //     DOM swap. The window between this event and the swap is a
+        //     single microtask — no visible paint. This is the right moment.
+        //
+        // But alpine:navigating is dispatched WITHOUT event.detail (see
+        // livewire.esm.js:9308), so we can't read the destination from it.
+        // Workaround: capture the URL on livewire:navigate (which does have
+        // event.detail.url) and consume it on livewire:navigating.
+        var __pendingListing = null;
+        document.addEventListener('livewire:navigate', function (event) {
+            var url = event.detail && event.detail.url;
+            if (!url) { __pendingListing = null; return; }
+            try {
+                var path = (typeof url === 'string')
+                    ? new URL(url, window.location.origin).pathname
+                    : (url.pathname || new URL(url.toString(), window.location.origin).pathname);
+                __pendingListing = isListingPath(path);
+            } catch (_) { __pendingListing = null; }
+        });
+        document.addEventListener('livewire:navigating', function () {
+            if (__pendingListing !== null) {
+                setListingCss(__pendingListing);
+                __pendingListing = null;
+            }
+        });
         document.addEventListener('livewire:navigated', syncListingCss);
-        document.addEventListener('livewire:navigating', syncListingCss);
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', syncListingCss);
         } else {
