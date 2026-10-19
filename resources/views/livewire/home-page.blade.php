@@ -1609,7 +1609,7 @@
     </div>
     <div class="ev-whatsnew-scroll">
         @foreach($reviews->take(6) as $rev)
-        <a href="/{{ $gender ?? 'female' }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $rev->profile_id }}/{{ $rev->getuser->slug ?? '' }}" class="ev-whatsnew-card">
+        <a wire:navigate href="/{{ $gender ?? 'female' }}-escorts-in-{{ $currentCity ? $currentCity->slug : 'dubai' }}/{{ $rev->profile_id }}/{{ $rev->getuser->slug ?? '' }}" class="ev-whatsnew-card">
             <div class="ev-whatsnew-card-img">
                 @if($rev->getpic)
                 <img src="{{ webp_asset('userimages/'.$rev->getpic->user_id.'/'.$rev->getpic->profile_id.'/'.$rev->getpic->image) }}" alt="{{ $rev->getuser->name ?? '' }}" loading="lazy" />
@@ -2097,7 +2097,7 @@
                  title to a 404 for other profiles. Route to the real
                  profile using the same {gender}-escorts-in-{city}/{id}/{slug}
                  pattern as the desktop H2 further below. --}}
-            <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}" title="{{ $profile->name }}, escort in {{ $cityname }}">{{$profile->name}} <span class="badge" data-placement="top" data-toggle="tooltip" title="One review. Rating: ❤❤❤❤❤">
+            <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}" title="{{ $profile->name }}, escort in {{ $cityname }}">{{$profile->name}} <span class="badge" data-placement="top" data-toggle="tooltip" title="One review. Rating: ❤❤❤❤❤">
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 <span>1</span>
               </span>
@@ -2105,7 +2105,7 @@
           </h2>
           <div class="thumbs">
             <div class="main-thumbs">
-              <a class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a wire:navigate class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper premium">
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2152,7 +2152,7 @@
             
               @forelse($profile->multipleimgs->take(3) as $imgs)
               <div class="thumb thumb-{{ $loop->index }}">
-                <a class="img img-responsive pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+                <a wire:navigate class="img img-responsive pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">
                  
                     @if($profile->is_verified)
@@ -2184,7 +2184,7 @@
           <div class="listing-info-wrapper">
             <div class="listing-info">
               <h2>
-                <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}" title="Lea, Ukrainian escort in Dubai (3)">{{$profile->name}} 
+                <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}" title="Lea, Ukrainian escort in Dubai (3)">{{$profile->name}} 
                   @if($profile->reviews_count > 0)
                   <span class="badge" data-placement="top" data-toggle="tooltip" title="{{$profile->reviews_count}} Reviews">
                   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -2198,11 +2198,11 @@
 
                 </a>
               </h2>
-              <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <p>{{str()->of($profile->about)->stripTags()->squish()->limit(400)}}</p>
               </a>
               <p class="no-margin see-more">
-                <a class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
+                <a wire:navigate class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
               </p>
             </div>
           </div>
@@ -2211,11 +2211,11 @@
         @elseif($isFeatured)
         <div class="listing-li pb-3 featured thumbs-2 thumbs-mini">
           <h2 class="visible-xxs">
-            <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
+            <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
           </h2>
           <div class="thumbs">
             <div class="main-thumbs">
-              <a class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a wire:navigate class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper featured">
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2238,7 +2238,7 @@
             <div class="other-thumbs pull-left">
           @forelse($profile->multipleimgs->take(2) as $k => $imgs)
               <div class="thumb thumb-{{ $k }}">
-                <a class="img img-responsive pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+                <a wire:navigate class="img img-responsive pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                   <span class="img-wrapper mini">
                     @if($profile->is_verified)
                     <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2265,13 +2265,13 @@
           <div class="listing-info-wrapper">
             <div class="listing-info">
               <h2>
-                <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}} </a>
+                <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}} </a>
               </h2>
-              <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <p>{{str()->of($profile->about)->stripTags()->squish()->limit(150)}}</p>
               </a>
               <p class="no-margin see-more">
-                <a class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
+                <a wire:navigate class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
               </p>
             </div>
           </div>
@@ -2280,7 +2280,7 @@
         @elseif($isBasic)
         <div class="listing-li pb-3 basic thumbs-0 thumbs-basic" style="padding-left:0px">
           <h2 class="visible-xxs">
-            <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}  <span class="badge" data-placement="top" data-toggle="tooltip" title="" data-original-title="Curve Amber has answered 3 questions">
+            <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}  <span class="badge" data-placement="top" data-toggle="tooltip" title="" data-original-title="Curve Amber has answered 3 questions">
                 <i class="fa fa-question-circle"></i>
                 <span>3</span>
               </span>
@@ -2288,7 +2288,7 @@
           </h2>
           <div class="thumbs">
             <div class="main-thumbs">
-              <a class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a wire:navigate class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2312,17 +2312,17 @@
           <div class="listing-info-wrapper">
             <div class="listing-info">
               <h2>
-                <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}  <span class="badge" data-placement="top" data-toggle="tooltip" title="" data-original-title="Curve Amber has answered 3 questions">
+                <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}  <span class="badge" data-placement="top" data-toggle="tooltip" title="" data-original-title="Curve Amber has answered 3 questions">
                     <i class="fa fa-question-circle"></i>
                     <span>3</span>
                   </span>
                 </a>
               </h2>
-              <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <p>{{str()->of($profile->about)->stripTags()->squish()->limit(70)}}</p>
               </a>
               <p class="no-margin see-more">
-                <a class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
+                <a wire:navigate class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
               </p>
             </div>
           </div>
@@ -2332,11 +2332,11 @@
         {{-- Free profiles - same layout as basic --}}
         <div class="listing-li pb-3 basic thumbs-0 thumbs-basic" style="padding-left:0px">
           <h2 class="visible-xxs">
-            <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
+            <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
           </h2>
           <div class="thumbs">
             <div class="main-thumbs">
-              <a class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a wire:navigate class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
@@ -2360,13 +2360,13 @@
           <div class="listing-info-wrapper">
             <div class="listing-info">
               <h2>
-                <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
+                <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">{{$profile->name}}</a>
               </h2>
-              <a class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
+              <a wire:navigate class="nostyle-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <p>{{str()->of($profile->about)->stripTags()->squish()->limit(70)}}</p>
               </a>
               <p class="no-margin see-more">
-                <a class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
+                <a wire:navigate class="btn btn-dark" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">See more &amp; contact</a>
               </p>
             </div>
           </div>

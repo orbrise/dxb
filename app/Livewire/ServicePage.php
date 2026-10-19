@@ -512,8 +512,17 @@ class ServicePage extends Component
             || $this->outcall
             || $this->withreviews;
 
+        $profiles = $this->getProfiles();
+
+        // Share with the layout so <meta name="robots"> emits index/follow
+        // when this page actually renders profiles, noindex/follow otherwise.
+        // Uses ->count() (profiles on THIS page) rather than ->total() so
+        // overflow pagination URLs past the last real page are correctly
+        // flagged noindex.
+        view()->share('hasProfiles', $profiles->count() > 0);
+
         return view('livewire.service-page', [
-            'profiles' => $this->getProfiles(),
+            'profiles' => $profiles,
             'isSearching' => $isSearching,
             'services' => cache()->remember('services_lookup', 3600, function() {
                 return Service::select('id', 'name')->get();

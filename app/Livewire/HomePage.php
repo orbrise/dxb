@@ -1122,6 +1122,13 @@ public function checkIfFavorited($profileId)
         $profiles = $this->getProfiles();
         $fallback = $profiles->total() === 0 ? $this->getFallbackProfiles($currentCity) : null;
 
+        // Share with the layout so <meta name="robots"> emits index/follow
+        // when this page actually renders profiles, noindex/follow otherwise.
+        // Uses ->count() (profiles on THIS page) rather than ->total() so
+        // overflow pagination URLs (e.g. /page/50 past the last real page)
+        // are correctly flagged noindex and don't accumulate as thin pages.
+        view()->share('hasProfiles', $profiles->count() > 0);
+
         $isSearching = filled($this->name)
             || filled($this->rate)
             || filled($this->ethnicity)

@@ -32,7 +32,19 @@
     <title>{{ $seo['title'] }}</title>
     <meta name="keywords" content="{{ $seo['keywords'] }}">
     <meta name="description" content="{{ $seo['description'] }}">
-    
+
+    {{-- Robots directive for listing/city pages: index when there are profiles
+         on the current page, noindex (follow) when the listing is empty.
+         ServicePage shares $hasProfiles from render(); other pages leave it
+         unset and fall back to the crawler default. --}}
+    @isset($hasProfiles)
+        @if($hasProfiles)
+    <meta name="robots" content="index, follow" inertia="public-head-robots">
+        @else
+    <meta name="robots" content="noindex, follow" inertia="public-head-robots">
+        @endif
+    @endisset
+
     <!-- Canonical URL for SEO -->
     <link rel="canonical" href="{{ $canonicalUrl }}" />
     

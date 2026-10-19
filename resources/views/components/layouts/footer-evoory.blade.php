@@ -3,13 +3,16 @@
     <div class="ev-container">
         {{-- Top Links --}}
         <div class="ev-footer-links-row">
-            <a href="/about" class="ev-footer-link">About</a>
+            <a href="/about" class="ev-footer-link" wire:navigate>About</a>
             <span class="ev-footer-sep">|</span>
+            {{-- Advertise intentionally does NOT use wire:navigate — matches the
+                 Add Profile exclusion in header-evoory. The new-profile page's
+                 inline CSS/JS doesn't fully re-init on soft swap. --}}
             <a href="/action/listings/new" class="ev-footer-link">Advertise Escort Services</a>
             <span class="ev-footer-sep">|</span>
-            <a href="/help-for-advertisers" class="ev-footer-link">Help for Advertisers</a>
+            <a href="/help-for-advertisers" class="ev-footer-link" wire:navigate>Help for Advertisers</a>
             <span class="ev-footer-sep">|</span>
-            <a href="/guide-to-seeing-an-escort" class="ev-footer-link">Guide to seeing an escort</a>
+            <a href="/guide-to-seeing-an-escort" class="ev-footer-link" wire:navigate>Guide to seeing an escort</a>
             <span class="ev-footer-sep">|</span>
             <a href="https://trafficking.help/" target="_blank" rel="noopener" class="ev-footer-link">Stop Human Trafficking</a>
         </div>

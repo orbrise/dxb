@@ -346,7 +346,7 @@
                     </form>
                     <p class="ev-search-note">
                         Our goal is to help you find the right escort for you, right now! Evoory provides listings of providers of massage and other services. 
-                        Not looking for a female escort? Click here for <a href="male-escorts-in-dubai">male escorts</a> or <a href="shemale-escorts-in-dubai">shemale escorts</a>.
+                        Not looking for a female escort? Click here for <a href="male-escorts-in-dubai" wire:navigate>male escorts</a> or <a href="shemale-escorts-in-dubai" wire:navigate>shemale escorts</a>.
                     </p>
                 </div>
                 
@@ -399,25 +399,25 @@
                 <p class="ev-popular-title">Interested in other popular locations?</p>
                 <div class="ev-popular-tags">
                     <div class="ev-popular-row">
-                        <a href="female-escorts-in-abu-dhabi" class="ev-tag">Abu Dhabi</a>
-                        <a href="female-escorts-in-al-manama" class="ev-tag">Al Manama</a>
-                        <a href="female-escorts-in-nairobi" class="ev-tag">Nairobi</a>
-                        <a href="female-escorts-in-dubai" class="ev-tag">Dubai</a>
-                        <a href="female-escorts-in-bangalore" class="ev-tag">Bangalore</a>
-                        <a href="female-escorts-in-bangkok" class="ev-tag">Bangkok</a>
+                        <a href="female-escorts-in-abu-dhabi" class="ev-tag" wire:navigate>Abu Dhabi</a>
+                        <a href="female-escorts-in-al-manama" class="ev-tag" wire:navigate>Al Manama</a>
+                        <a href="female-escorts-in-nairobi" class="ev-tag" wire:navigate>Nairobi</a>
+                        <a href="female-escorts-in-dubai" class="ev-tag" wire:navigate>Dubai</a>
+                        <a href="female-escorts-in-bangalore" class="ev-tag" wire:navigate>Bangalore</a>
+                        <a href="female-escorts-in-bangkok" class="ev-tag" wire:navigate>Bangkok</a>
                         </div>
                         <div class="ev-popular-row">
-                        <a href="female-escorts-in-chennai" class="ev-tag">Chennai</a>
-                        <a href="female-escorts-in-doha" class="ev-tag">Doha</a>
-                        <a href="female-escorts-in-hyderabad" class="ev-tag">Hyderabad</a>
-                        <a href="female-escorts-in-manila" class="ev-tag">Manila</a>
-                        <a href="female-escorts-in-mumbai" class="ev-tag">Mumbai</a>
-                        <a href="female-escorts-in-muscat" class="ev-tag">Muscat</a>
+                        <a href="female-escorts-in-chennai" class="ev-tag" wire:navigate>Chennai</a>
+                        <a href="female-escorts-in-doha" class="ev-tag" wire:navigate>Doha</a>
+                        <a href="female-escorts-in-hyderabad" class="ev-tag" wire:navigate>Hyderabad</a>
+                        <a href="female-escorts-in-manila" class="ev-tag" wire:navigate>Manila</a>
+                        <a href="female-escorts-in-mumbai" class="ev-tag" wire:navigate>Mumbai</a>
+                        <a href="female-escorts-in-muscat" class="ev-tag" wire:navigate>Muscat</a>
                         </div>
                         <div class="ev-popular-row">
-                        <a href="female-escorts-in-new-delhi" class="ev-tag">New Delhi</a>
-                        <a href="female-escorts-in-pune" class="ev-tag">Pune</a>
-                        <a href="female-escorts-in-riyadh" class="ev-tag">Riyadh</a>
+                        <a href="female-escorts-in-new-delhi" class="ev-tag" wire:navigate>New Delhi</a>
+                        <a href="female-escorts-in-pune" class="ev-tag" wire:navigate>Pune</a>
+                        <a href="female-escorts-in-riyadh" class="ev-tag" wire:navigate>Riyadh</a>
                     </div>
                 </div>
                 <div class="ev-popular-scroller" data-popular-scroller>

@@ -138,6 +138,18 @@
     @if(!empty($seoKeywords))
     <meta name="keywords" content="{{ $seoKeywords }}">
     @endif
+    {{-- Robots directive for listing/city pages: index when there are profiles
+         on the current page, noindex (follow) when the listing is empty so
+         Google doesn't accumulate thin empty pages. HomePage/ServicePage
+         share $hasProfiles from render(); other pages leave it unset and
+         fall back to the crawler default (indexable). --}}
+    @isset($hasProfiles)
+        @if($hasProfiles)
+    <meta name="robots" content="index, follow" inertia="public-head-robots">
+        @else
+    <meta name="robots" content="noindex, follow" inertia="public-head-robots">
+        @endif
+    @endisset
     
     {{-- Preconnect for performance --}}
     <link rel="preconnect" href="https://assets.evoory.com" crossorigin>
@@ -305,9 +317,11 @@
         </div>
       </div>
     </div>
-    <script>
+    <script data-navigate-once>
     @if(session('impersonation_started'))
     (function () {
+      if (window.__impersonationTimer) return;
+      window.__impersonationTimer = true;
       var startTime = new Date('{{ session('impersonation_started') }}');
       function updateTimer() {
         var el = document.getElementById('impersonation-timer');
@@ -368,7 +382,7 @@
              are optional — the script no-ops if neither exists on the
              current page. Skips the chat page itself (which keeps its
              badge in sync via the inline Livewire component). --}}
-        <script>
+        <script data-navigate-once>
             (function () {
                 if (window.__chatBadgePoll) return;
                 window.__chatBadgePoll = true;
@@ -509,7 +523,7 @@
          `--kb-inset` from the actual visualViewport so any fullscreen page
          (chat, new profile, etc.) can bind height/padding to a value that
          always equals the visible area. --}}
-    <script>
+    <script data-navigate-once>
     (function () {
         var vv = window.visualViewport;
         function sync() {
