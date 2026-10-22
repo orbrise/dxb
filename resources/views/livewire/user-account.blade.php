@@ -1105,6 +1105,12 @@
     }
     .acct-hero-btn:hover { background: #d1ff2d; color: #0a0a0a; }
 
+    /* Active-premium variant: same background art, no CTA on the right so
+       the text block can breathe across the full width. Teal label matches
+       the "ACTIVE PREMIUM SUBSCRIPTION" accent in the mockup. */
+    .acct-hero--active { padding-right: 30px; }
+    .acct-hero-label--active { color: #2CE4A5; letter-spacing: 2px; }
+
     /* -------- Tabs -------- */
     .acct-tabs {
         display: flex;
@@ -1609,6 +1615,22 @@
             <div class="ev-alert-success ev-am-alert">{{ session('success') }}</div>
         @endif
 
+        {{-- Premium hero (mobile) — only shown when the user has an
+             active premium. Reuses the same .acct-hero styling as desktop. --}}
+        @if($premiumPlan)
+            <a href="{{ route('user.account.membership') }}" wire:navigate class="acct-hero acct-hero--active"
+               style="margin: 10px 14px 16px; text-decoration: none; display: flex;">
+                <div class="acct-hero-content">
+                    <div class="acct-hero-label acct-hero-label--active">ACTIVE PREMIUM SUBSCRIPTION</div>
+                    <h2 class="acct-hero-title">{{ $premiumDaysRemaining }} {{ \Illuminate\Support\Str::plural('Day', $premiumDaysRemaining) }} Remaining</h2>
+                    <p class="acct-hero-desc">
+                        Your {{ $premiumPlan->name }} Premium is active until
+                        {{ $premiumExpiresAt->format('d/m/Y') }}. Tap to manage.
+                    </p>
+                </div>
+            </a>
+        @endif
+
         {{-- User identity --}}
         <div class="ev-am-user">
             <div class="ev-am-avatar">
@@ -1782,17 +1804,36 @@
             <h1 class="acct-title">My Account</h1>
             <p class="acct-subtitle">Manage your profile, credits and account settings.</p>
 
-            {{-- Hero / Premium banner --}}
-            <div class="acct-hero">
-                <div class="acct-hero-content">
-                    <div class="acct-hero-label">EXCLUSIVE ACCESS</div>
-                    <h2 class="acct-hero-title">Your Connection Matters</h2>
-                    <p class="acct-hero-desc">Upgrade to Premium to unlock unlimited messaging and connect without boundaries.</p>
+            {{-- Hero banner — two variants driven by premium status.
+                 - Active premium: "ACTIVE PREMIUM SUBSCRIPTION" + days
+                   remaining + plan expiry. No CTA (user already paid).
+                 - Non-premium: original upgrade CTA. --}}
+            @if($premiumPlan)
+                <div class="acct-hero acct-hero--active">
+                    <div class="acct-hero-content">
+                        <div class="acct-hero-label acct-hero-label--active">ACTIVE PREMIUM SUBSCRIPTION</div>
+                        <h2 class="acct-hero-title">{{ $premiumDaysRemaining }} {{ \Illuminate\Support\Str::plural('Day', $premiumDaysRemaining) }} Remaining</h2>
+                        <p class="acct-hero-desc">
+                            Your {{ $premiumPlan->name }} Premium is active until
+                            {{ $premiumExpiresAt->format('d/m/Y') }}. Enjoy unlimited chatting!
+                        </p>
+                    </div>
+                    <a href="{{ route('user.account.membership') }}" wire:navigate class="acct-hero-btn">
+                        Manage Membership
+                    </a>
                 </div>
-                <a href="{{ url('/premium-account') }}" wire:navigate class="acct-hero-btn">
-                    <i class="fa fa-crown"></i> Upgrade to Premium
-                </a>
-            </div>
+            @else
+                <div class="acct-hero">
+                    <div class="acct-hero-content">
+                        <div class="acct-hero-label">EXCLUSIVE ACCESS</div>
+                        <h2 class="acct-hero-title">Your Connection Matters</h2>
+                        <p class="acct-hero-desc">Upgrade to Premium to unlock unlimited messaging and connect without boundaries.</p>
+                    </div>
+                    <a href="{{ url('/premium-account') }}" wire:navigate class="acct-hero-btn">
+                        <i class="fa fa-crown"></i> Upgrade to Premium
+                    </a>
+                </div>
+            @endif
 
             @if(session('success'))
                 <div class="acct-flash">{{ session('success') }}</div>

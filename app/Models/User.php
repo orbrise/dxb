@@ -60,7 +60,50 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'last_seen_at' => 'datetime',
+        'premium_expires_at' => 'datetime',
     ];
+
+    public function premiumPlan()
+    {
+        return $this->belongsTo(PremiumPlan::class, 'premium_plan_id');
+    }
+
+    public function hasActivePremium(): bool
+    {
+        return $this->premium_expires_at !== null
+            && $this->premium_expires_at->isFuture();
+    }
+
+    /**
+     * Activate / renew a premium subscription. If the user is already on
+     * an active premium, extend from the existing expiry so paying again
+     * before the current window ends doesn't eat the unused days.
+     * Also records a PremiumTransaction so the Membership Management
+     * screen's "Payment & Renewal History" has a row to display.
+     */
+    public function activatePremium(PremiumPlan $plan, string $paymentMethod = 'wallet', ?string $referenceId = null): void
+    {
+        $days = max(0, (int) $plan->duration_days);
+        $startFrom = $this->hasActivePremium() ? $this->premium_expires_at : now();
+        $this->premium_plan_id    = $plan->id;
+        $this->premium_expires_at = $days > 0 ? $startFrom->copy()->addDays($days) : null;
+        $this->save();
+
+        PremiumTransaction::create([
+            'user_id'             => $this->id,
+            'premium_plan_id'     => $plan->id,
+            'plan_name_snapshot'  => $plan->name,
+            'amount'              => (float) $plan->price,
+            'payment_method'      => $paymentMethod,
+            'status'              => 'completed',
+            'reference_id'        => $referenceId,
+        ]);
+    }
+
+    public function premiumTransactions()
+    {
+        return $this->hasMany(PremiumTransaction::class);
+    }
 
     /**
      * WhatsApp-style presence string for the chat header.

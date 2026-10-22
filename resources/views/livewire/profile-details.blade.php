@@ -2,14 +2,12 @@
 @if(isset($images) && $images->count() > 0)
     <link rel="preload" as="image" href="{{ webp_asset('userimages/'.$images->first()->user_id.'/'.$images->first()->profile_id.'/'.$images->first()->image) }}" fetchpriority="high">
 @endif
-<link rel="preload" href="{{ asset('assets/css/evoory-profile.css') }}?v={{ filemtime(public_path('assets/css/evoory-profile.css')) }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="{{ asset('assets/css/evoory-profile.css') }}?v={{ filemtime(public_path('assets/css/evoory-profile.css')) }}"></noscript>
-
-{{-- Profile-page-specific styles, previously inlined as a 22k-line <style> block.
-     Extracted to a static file so the HTML payload is small and the CSS gets its
-     own long-lived edge cache entry. Loaded sync (not async) to match prior render
-     behavior — these styles are not safe to defer without testing for FOUC. --}}
-<link rel="stylesheet" href="{{ asset('assets/css/profile-details-inline.css') }}?v={{ @filemtime(public_path('assets/css/profile-details-inline.css')) ?: time() }}">
+{{-- evoory-profile.css + profile-details-inline.css are declared permanently
+     in the app-evoory layout <head> with media="print"/"all" toggled on
+     wire:navigate. Previously pushed from here, which caused a FOUC race on
+     soft nav from listing → profile: body swapped + painted BEFORE the new
+     <link> parsed → subheader rendered container-fluid-wide and fav icon
+     styling was absent until hard refresh. See app-evoory.blade.php. --}}
 <style>
 /* Mobile photo overlay icons: camera (bottom-left) and search+ zoom
    (bottom-right) must match — same size, same round black background,
@@ -288,7 +286,7 @@
       <meta content="1" itemprop="position" />
       <div class="listing-title title hidden-xs">
 
-        @livewire('favorite-profile', ['profileId' => $profile->id])
+        @livewire('favorite-profile', ['profileId' => $profile->id], 'favorite-profile-'.$profile->id)
 
         <a href="/{{ $gender }}-escorts-in-{{ $citySlug }}/{{ $profile->slug }}">
           <h1 style="font-size: 18px; margin-top: 7px; font-weight: 500;">{{ ucfirst($profile->name)}} – {{ $nationality }} escort in {{ $cityName }}</h1>
@@ -339,7 +337,7 @@
     <div class="content-wrapper no-sidebar">
       <div id="content" style="margin-top:20px">
         <div class="listing-title title visible-xs">
-          @livewire('favorite-profile', ['profileId' => $profile->id])
+          @livewire('favorite-profile', ['profileId' => $profile->id], 'favorite-profile-'.$profile->id)
           <a href="javascript:void(0);">
             <h1>{{ ucfirst($profile->name)}} – {{ $nationality }} escort in {{ $cityName }}</h1>
           </a>

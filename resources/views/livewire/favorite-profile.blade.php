@@ -1,6 +1,11 @@
 <div style="display: inline-flex; vertical-align: middle; margin-top: 7px;">
     <button wire:click="toggleFavorite" class="favorite-bookmark-btn {{ $isFavorited ? 'bookmarked' : '' }}" type="button" title="{{ $isFavorited ? 'Remove bookmark' : 'Add bookmark' }}">
-        <i class="fa fa-bookmark"></i>
+        {{-- Inline SVG, not Font Awesome. The `fa fa-bookmark` glyph was
+             intermittently invisible on wire:navigate (visible empty circle
+             with no icon inside) because the FA font file hadn't finished
+             loading when the Livewire component painted. Every other icon
+             on the profile page is already inline SVG for this reason. --}}
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
         <span class="sr-only">{{ $isFavorited ? 'Remove bookmark' : 'Add bookmark' }}</span>
     </button>
 
@@ -26,9 +31,10 @@
             transition: color .2s ease, border-color .2s ease, background-color .2s ease;
         }
 
-        .favorite-bookmark-btn i {
-            font-size: 12px;
-            line-height: 1;
+        .favorite-bookmark-btn svg {
+            display: block;
+            width: 12px;
+            height: 12px;
         }
 
         .favorite-bookmark-btn:hover {
@@ -58,7 +64,7 @@
             background: #d4f84d;
         }
 
-        .favorite-bookmark-btn.bookmarked i {
+        .favorite-bookmark-btn.bookmarked svg {
             animation: bookmarkPop 0.3s ease;
         }
 

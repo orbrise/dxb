@@ -466,7 +466,67 @@
     }
 
     @media (max-width: 640px) {
-        .rtc-incoming { top: 16px; right: 12px; left: 12px; min-width: unset; }
+        /* Full-screen incoming call UI on mobile — WhatsApp-style.
+           Replaces the previous small-top-banner so the user can see the
+           caller clearly and tap the big Accept/Decline buttons without
+           needing to hunt for a tiny banner at the top of the screen. */
+        .rtc-incoming {
+            top: 0; right: 0; left: 0; bottom: 0;
+            min-width: unset;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            background: linear-gradient(180deg, #10151A 0%, #050709 100%);
+            box-shadow: none;
+            animation: none; /* kill the lime pulse — too busy at full-screen */
+        }
+        .rtc-incoming.open { display: flex; flex-direction: column; }
+        .rtc-incoming .who {
+            flex: 1;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 24px;
+            margin: 0;
+            padding: 48px 24px 32px;
+            text-align: center;
+        }
+        .rtc-incoming .avatar {
+            width: 140px;
+            height: 140px;
+            font-size: 56px;
+            box-shadow: 0 0 0 6px rgba(193, 241, 29, 0.15),
+                        0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: rtcIncomingAvatarPulse 1.8s ease-in-out infinite;
+        }
+        .rtc-incoming .name { font-size: 26px; font-weight: 600; }
+        .rtc-incoming .sub { font-size: 15px; margin-top: 4px; }
+        .rtc-incoming .actions {
+            gap: 70px;
+            padding: 0 24px calc(48px + env(safe-area-inset-bottom, 0px));
+            justify-content: center;
+        }
+        .rtc-incoming .btn-accept,
+        .rtc-incoming .btn-decline {
+            flex: 0 0 72px;
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            padding: 0;
+            font-size: 26px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        .rtc-incoming .btn-accept  { animation: rtcAcceptNudge 1.6s ease-in-out infinite; }
+        .rtc-incoming .btn-decline { animation: rtcDeclineShake 1.6s ease-in-out infinite; }
+        .rtc-incoming .btn-accept i,
+        .rtc-incoming .btn-decline i { font-size: 24px; }
+        /* Hide the "Accept" / "Decline" text labels on the buttons —
+           icon-only matches WhatsApp. The screen-reader name is covered
+           by the button's own semantics. */
+        .rtc-incoming .btn-accept,
+        .rtc-incoming .btn-decline { font-size: 0; }
+        .rtc-incoming .btn-accept i,
+        .rtc-incoming .btn-decline i { font-size: 24px; }
+
         /* Push the toast below the call topbar on phone screens so the
            "Asking … to switch to video" pill clears the peer name header. */
         .rtc-toast {
@@ -475,6 +535,19 @@
             padding: 10px 18px;
             font-size: 13px;
         }
+    }
+    @keyframes rtcIncomingAvatarPulse {
+        0%, 100% { box-shadow: 0 0 0 6px rgba(193, 241, 29, 0.15),  0 10px 40px rgba(0,0,0,0.5); }
+        50%      { box-shadow: 0 0 0 18px rgba(193, 241, 29, 0.05), 0 10px 40px rgba(0,0,0,0.5); }
+    }
+    @keyframes rtcAcceptNudge {
+        0%, 100% { transform: translateY(0); }
+        50%      { transform: translateY(-6px); }
+    }
+    @keyframes rtcDeclineShake {
+        0%, 100% { transform: rotate(0); }
+        25%      { transform: rotate(-12deg); }
+        75%      { transform: rotate(12deg); }
     }
 </style>
 

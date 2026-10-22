@@ -195,6 +195,24 @@
         }
         a{color:var(--accent);text-decoration:none}
         .nostyle-link,.nostyle-link *{color:inherit;text-decoration:none}
+
+        /* Constrain the profile detail page to the same 1200px gutter as
+           the rest of the site. profile-details.blade.php uses Bootstrap's
+           `.container-fluid` (full-viewport width), so without this override
+           the subheader + content stretch edge-to-edge while the global
+           header (which uses .ev-container) stays at 1200px, producing a
+           visible misalignment on wide screens. Scoped under .profile-details-page
+           so the rule doesn't bleed into any other page that uses .container-fluid. */
+        .profile-details-page > .nav-bar > .container-fluid,
+        .profile-details-page > .container-fluid,
+        .profile-details-page .listing-user-actions{
+            max-width:1200px;
+            margin-left:auto;
+            margin-right:auto;
+            padding-left:16px;
+            padding-right:16px;
+            box-sizing:border-box;
+        }
     </style>
     
     {{-- Bootstrap 4 CSS + Font Awesome (required for grid, components, icons).
@@ -216,6 +234,9 @@
          small JS at the bottom of <head> flips it on wire:navigate. --}}
     @php
         $__isListingPage = request()->is('*-escorts-in-*');
+        // Profile-detail URL: /{gender}-escorts-in-{city}/{numeric-id}/{slug}.
+        // Must distinguish from pagination (/page/N) which is a listing page.
+        $__isProfilePage = (bool) preg_match('#-escorts-in-[^/]+/\d+/#', request()->path());
     @endphp
     <link rel="stylesheet" id="evoory-listing-css"
           href="{{ asset('assets/css/evoory-homepage.css') }}?v={{ @filemtime(public_path('assets/css/evoory-homepage.css')) ?: 1 }}"
@@ -223,6 +244,19 @@
     <link rel="stylesheet" id="evoory-listing-inline-css"
           href="{{ asset('assets/css/listing-page-inline.css') }}?v={{ @filemtime(public_path('assets/css/listing-page-inline.css')) ?: 1 }}"
           media="{{ $__isListingPage ? 'all' : 'print' }}">
+    {{-- Profile-detail CSS lives in the layout for the same reason as the
+         listing CSS above: pushing from profile-details.blade.php via @push
+         creates a race on wire:navigate where the body swaps + paints BEFORE
+         the new <link> is parsed, so the subheader renders container-fluid
+         wide and the fav icon has no styling until a hard refresh. Having
+         the link in <head> permanently and just flipping media="all"/"print"
+         is instant. --}}
+    <link rel="stylesheet" id="evoory-profile-css"
+          href="{{ asset('assets/css/evoory-profile.css') }}?v={{ @filemtime(public_path('assets/css/evoory-profile.css')) ?: 1 }}"
+          media="{{ $__isProfilePage ? 'all' : 'print' }}">
+    <link rel="stylesheet" id="evoory-profile-inline-css"
+          href="{{ asset('assets/css/profile-details-inline.css') }}?v={{ @filemtime(public_path('assets/css/profile-details-inline.css')) ?: 1 }}"
+          media="{{ $__isProfilePage ? 'all' : 'print' }}">
     <script>
     (function(){
         // Toggle listing-only CSS between media="all" and media="print" so its
@@ -232,7 +266,11 @@
         // these stylesheets (service-page does); getElementById would only
         // touch the first match and leave the rest stuck.
         function isListingPath(path){
-            return /-escorts-in-/.test(path);
+            return /-escorts-in-/.test(path) && !/-escorts-in-[^/]+\/\d+\//.test(path);
+        }
+        function isProfilePath(path){
+            // /{gender}-escorts-in-{city}/{numeric-id}/{slug}
+            return /-escorts-in-[^/]+\/\d+\//.test(path);
         }
         function setListingCss(on){
             var links = document.querySelectorAll(
@@ -240,9 +278,18 @@
             );
             links.forEach(function(el){ el.media = on ? 'all' : 'print'; });
         }
+        function setProfileCss(on){
+            var links = document.querySelectorAll(
+                'link[href*="evoory-profile.css"], link[href*="profile-details-inline.css"]'
+            );
+            links.forEach(function(el){ el.media = on ? 'all' : 'print'; });
+        }
         function syncListingCss(){
+            var path = window.location.pathname;
             setListingCss(!!document.querySelector('.ev-listing-page')
-                  || isListingPath(window.location.pathname));
+                  || isListingPath(path));
+            setProfileCss(!!document.querySelector('.profile-details-page')
+                  || isProfilePath(path));
         }
         // Flip the CSS media attribute right before the body swap, based on
         // the DESTINATION url. Timing matters here:
@@ -260,20 +307,28 @@
         // Workaround: capture the URL on livewire:navigate (which does have
         // event.detail.url) and consume it on livewire:navigating.
         var __pendingListing = null;
+        var __pendingProfile = null;
         document.addEventListener('livewire:navigate', function (event) {
             var url = event.detail && event.detail.url;
-            if (!url) { __pendingListing = null; return; }
+            __pendingListing = null;
+            __pendingProfile = null;
+            if (!url) return;
             try {
                 var path = (typeof url === 'string')
                     ? new URL(url, window.location.origin).pathname
                     : (url.pathname || new URL(url.toString(), window.location.origin).pathname);
                 __pendingListing = isListingPath(path);
-            } catch (_) { __pendingListing = null; }
+                __pendingProfile = isProfilePath(path);
+            } catch (_) {}
         });
         document.addEventListener('livewire:navigating', function () {
             if (__pendingListing !== null) {
                 setListingCss(__pendingListing);
                 __pendingListing = null;
+            }
+            if (__pendingProfile !== null) {
+                setProfileCss(__pendingProfile);
+                __pendingProfile = null;
             }
         });
         document.addEventListener('livewire:navigated', syncListingCss);

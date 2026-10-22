@@ -1,4 +1,42 @@
 <div class="evoory-upgrade-controller">
+{{-- Add the body class SYNCHRONOUSLY before the browser paints the rest
+     of the component. The main theme CSS (further down this file) relies
+     on `body.evoory-upgrade-controller-active` to hide #header .ev-header
+     on mobile and to recolor the global nav. Previously the class was
+     only added after DOM-ready via the sync loop below, which meant:
+
+       1. Browser paints body WITHOUT the class → mobile logo bar visible
+          → subheader is pushed down by the logo bar's height.
+       2. JS runs, adds the class → mobile logo bar hidden → subheader
+          snaps up ~60px.
+
+     That shift is the "down and up" shake. Running it inline (before
+     the body paints the rest of the component) means the class is on
+     body by the time the first paint happens, so there's never a frame
+     where the logo bar is taking space on this page. --}}
+<script>document.body.classList.add('evoory-upgrade-controller-active');</script>
+{{-- Critical subheader CSS inlined BEFORE the markup so the browser
+     applies min-height + flex rules on the very first paint. Previously
+     these lived only in @push('css') → @stack('css'), which lands in
+     <head> *after* the body has already been rendered on cold loads —
+     causing a visible flash where the subheader rendered taller (using
+     legacy navbar padding) then snapped down to 48px once the pushed
+     stylesheet arrived. Inline here solves that FOUC/CLS. The same
+     rules are duplicated inside @push('css') below so they also survive
+     wire:navigate re-mounts (where the inline block may be morphed). --}}
+<style>
+    .evoory-upgrade-controller .ev-upgrade-subheader {
+        background: #131616 !important;
+        min-height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    .evoory-upgrade-controller .ev-upgrade-subheader .ev-upgrade-subheader__inner {
+      
+        width: 100% !important;
+        position: relative !important;
+    }
+</style>
 {{-- Back-link sub-header. Previously this was rendered via
      @section('headerform') so the legacy app.blade.php layout's
      @yield('headerform') would slot it inside <header id="header">,
@@ -30,12 +68,20 @@
        <style> tag inside the component body but morphdom occasionally
        failed to keep them active after a round-trip (Home → back to
        Upgrade), causing the "Back" link and title to jam together. */
+    .evoory-upgrade-controller .ev-upgrade-subheader {
+      background: #131616 !important;
+      min-height: 48px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
     .evoory-upgrade-controller .ev-upgrade-subheader .ev-upgrade-subheader__inner {
       display: flex !important;
       align-items: center !important;
       gap: 12px !important;
       flex-wrap: nowrap !important;
       position: relative !important;
+      width: 100% !important;
+
     }
     .evoory-upgrade-controller .ev-upgrade-subheader__inner .back-link {
       position: absolute !important;
@@ -46,19 +92,36 @@
       align-items: center !important;
       gap: 4px !important;
       z-index: 2 !important;
+      line-height: 1 !important;
     }
+    /* Title uses the same absolute + translate centering trick as the
+       Back link. This is immune to inherited padding/line-height/margin
+       from the legacy app.blade.php CSS bundle, which was adding
+       top-padding to h1 and offsetting the title above the Back link's
+       vertical centerline. Flex `align-items:center` on the parent kept
+       losing to those cascaded rules; absolute positioning doesn't care
+       what any ancestor says — it just pins to 50%/50% of the containing
+       block. pointer-events:none lets any underlying clickable element
+       (there isn't one today, but safeguards the Back link if the title
+       ever grows wide enough to overlap it). */
     .evoory-upgrade-controller .ev-upgrade-subheader__inner .title {
-      flex: 1 1 auto !important;
-      min-width: 0 !important;
+      position: absolute !important;
+      top: 100% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      width: 100% !important;
       text-align: center !important;
+      pointer-events: none !important;
+      flex: none !important;
     }
     .evoory-upgrade-controller .ev-upgrade-subheader__inner .title h1 {
       margin: 0 !important;
+      padding: 0 70px !important;
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       font-size: 18px !important;
-      padding: 0 70px !important;
+      line-height: 1 !important;
     }
     /* Select-days block flex row: VIP name + Back-to-selection pill. */
     .evoory-upgrade-controller .upgrade-duration .upgrade-title {
@@ -240,7 +303,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
     color: #000 !important;
     border: none !important;
     border-radius: 22px !important;
-    padding: 10px 30px !important;
+    padding: 5px 30px !important;
     font-weight: 600 !important;
     font-size: 15px !important;
     transition: all 0.3s ease !important;
@@ -268,7 +331,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
     display: none;
     background-color: #C1F11D;
     color: #000;
-    padding: 10px 20px;
+    padding: 5px 20px;
     border-radius: 22px;
     font-size: 14px;
     font-weight: 500;
@@ -588,7 +651,7 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
                     
                     <!-- Upgrade Button - Shows after package selection -->
                     <div class='upgrade-button-wrapper text-center' style='display: none; margin: 30px 0;'>
-                        <button class='btn btn-primary btn-lg checkout-button' type='button' style='padding: 10px 40px; font-size: 16px;'>
+                        <button class='btn btn-primary btn-lg checkout-button' type='button' style='padding: 7px 40px; font-size: 16px;'>
                             Proceed Upgrade <i class='fa fa-arrow-right'></i>
                         </button>
                     </div>

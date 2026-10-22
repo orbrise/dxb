@@ -37,8 +37,33 @@ class PremiumCheckout extends Component
         if ($method === 'card') {
             return redirect()->route('user.account.premium.payment', ['plan' => $this->plan]);
         }
-        // Wallet → straight to success. TODO: deduct from wallet and
-        // activate the subscription in a transaction before redirecting.
+
+        // Wallet path — deduct balance and activate the plan in one go so
+        // the My Account hero + success page have state to display. Guard
+        // against double-charge / insufficient balance here (not just at
+        // Alpine level) because the client-side canUseWallet check is
+        // trivially bypass-able.
+        $planModel = PremiumPlan::where('slug', $this->plan)->where('is_active', true)->first();
+        $user = Auth::user();
+        if (!$planModel || !$user) {
+            abort(404, 'Plan not found');
+        }
+
+        $price = (float) $planModel->price;
+        $wallet = $user->wallet;
+        if ($price > 0) {
+            if (!$wallet || (float) $wallet->balance < $price) {
+                session()->flash('error', 'Insufficient wallet balance.');
+                return redirect()->route('user.account.premium.checkout', ['plan' => $this->plan]);
+            }
+            \DB::transaction(function () use ($wallet, $price, $user, $planModel) {
+                $wallet->decrement('balance', $price);
+                $user->activatePremium($planModel, 'wallet');
+            });
+        } else {
+            $user->activatePremium($planModel, 'free');
+        }
+
         return redirect()->route('user.account.premium.success', ['plan' => $this->plan]);
     }
 

@@ -343,6 +343,13 @@
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         margin-top: 4px;
     }
+    /* Open state driven by a class, not by inline-style equality — the JS
+       toggle previously read `dd.style.display === 'block'`, which was
+       false any time the inline style had been cleared (empty string),
+       e.g. after a Livewire morph. Result: clicking the button looked
+       like "do nothing" when really the state was already open from the
+       JS's point of view. Class-based toggle is immune to that race. */
+    .ev-country-dropdown.is-open { display: block; }
     .ev-country-dropdown input {
         width: 100%;
         padding: 10px 12px;
@@ -1187,7 +1194,7 @@ function initAccountCountryDropdown() {
     function $(id) { return document.getElementById(id); }
     function closeDropdown() {
         var dd = $('countryDropdown');
-        if (dd) dd.style.display = 'none';
+        if (dd) dd.classList.remove('is-open');
     }
 
     document.addEventListener('click', function (e) {
@@ -1196,9 +1203,13 @@ function initAccountCountryDropdown() {
             var dd = $('countryDropdown');
             var trig = $('countryCodeDisplay');
             if (!dd) return;
-            var isOpen = dd.style.display === 'block';
-            dd.style.display = isOpen ? 'none' : 'block';
-            if (!isOpen) {
+            // Class-based toggle. Inline-style toggle used to break when
+            // Livewire morphs reset dd.style.display to empty — the check
+            // dd.style.display === 'block' then returned false even when
+            // the dropdown had been opened a moment earlier, so the next
+            // click looked like a no-op.
+            var isOpen = dd.classList.toggle('is-open');
+            if (isOpen) {
                 var search = $('countrySearch');
                 var list = $('countryList');
                 if (search) search.value = '';
@@ -1256,7 +1267,7 @@ function initAccountCountryDropdown() {
         var dd = $('countryDropdown');
         var trig = $('countryCodeDisplay');
         if (dd && trig && !dd.contains(e.target) && !trig.contains(e.target)) {
-            dd.style.display = 'none';
+            dd.classList.remove('is-open');
         }
     });
 

@@ -1325,23 +1325,93 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     }
 
     // --- Ringback (caller side) --------------------------------------
+    // Preferred: play /assets/sounds/call-outgoing.mp3 if present (drop in
+    // the real WhatsApp outgoing sound here for an exact match). Fallback:
+    // synth bell tone. Synth will never be a perfect WhatsApp match since
+    // the real sound is a sampled bell with multiple harmonics — the
+    // closest Web-Audio approximation is a sine fundamental + a quieter
+    // 2x-frequency harmonic with a bell-like exponential decay envelope.
+    const RINGBACK_FILE_URL = '/assets/sounds/call-outgoing.mp3';
+    let __ringbackFileExists = null; // null = unknown, true/false = cached
+
     function startRingback() {
+        tryStartRingbackFile().then(ok => {
+            if (!ok) startRingbackSynth();
+        });
+    }
+
+    async function tryStartRingbackFile() {
+        if (__ringbackFileExists === false) return false;
+        try {
+            // HEAD-check once per session to avoid 404 spam. If the admin
+            // hasn't uploaded a file we silently use the synth.
+            if (__ringbackFileExists === null) {
+                const r = await fetch(RINGBACK_FILE_URL, { method: 'HEAD' });
+                __ringbackFileExists = r.ok;
+                if (!r.ok) return false;
+            }
+            let a = S.ringbackAudio;
+            if (!a) {
+                a = new Audio(RINGBACK_FILE_URL);
+                a.loop = true;
+                a.preload = 'auto';
+                a.volume = 0.9;
+                S.ringbackAudio = a;
+            }
+            try { a.currentTime = 0; } catch (_) {}
+            await a.play();
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function startRingbackSynth() {
         try {
             const ctx = window.__rtc._audio = window.__rtc._audio || new (window.AudioContext || window.webkitAudioContext)();
-            const play = () => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.frequency.value = 440; gain.gain.value = 0.15;
-                osc.connect(gain).connect(ctx.destination);
-                osc.start();
-                setTimeout(() => osc.stop(), 400);
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+            S.ringbackOscs = S.ringbackOscs || [];
+            // playBell = fundamental + one quieter harmonic for bell timbre,
+            // with a short attack and long exponential decay (bell-shape).
+            const playBell = (startAt, freq, decay, vol) => {
+                [[freq, vol], [freq * 2.01, vol * 0.35]].forEach(([f, v]) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = f;
+                    gain.gain.setValueAtTime(0.0001, startAt);
+                    gain.gain.exponentialRampToValueAtTime(v, startAt + 0.008);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + decay);
+                    osc.connect(gain).connect(ctx.destination);
+                    osc.start(startAt);
+                    osc.stop(startAt + decay + 0.02);
+                    S.ringbackOscs.push(osc);
+                });
             };
-            play();
-            S.ringInterval = setInterval(play, 3000);
+            const cycle = () => {
+                const now = ctx.currentTime;
+                // Two bells close together — WhatsApp outgoing cadence.
+                playBell(now,        587, 0.55, 0.22); // D5
+                playBell(now + 0.35, 587, 0.55, 0.22);
+            };
+            cycle();
+            S.ringInterval = setInterval(cycle, 3000);
         } catch (_) {}
     }
+
     function stopRingback() {
         clearInterval(S.ringInterval); S.ringInterval = null;
+        if (S.ringbackAudio) {
+            try { S.ringbackAudio.pause(); } catch (_) {}
+            try { S.ringbackAudio.currentTime = 0; } catch (_) {}
+        }
+        if (S.ringbackOscs) {
+            for (const osc of S.ringbackOscs) {
+                try { osc.stop(); } catch (_) {}
+                try { osc.disconnect(); } catch (_) {}
+            }
+            S.ringbackOscs = [];
+        }
     }
 
     // --- Incoming ringtone -------------------------------------------
@@ -1391,24 +1461,29 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         try {
             const ctx = window.__rtc._audio = window.__rtc._audio || new (window.AudioContext || window.webkitAudioContext)();
             if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-            const playNote = (freq, startAt, duration) => {
+            const playNote = (freq, startAt, duration, vol) => {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
                 osc.frequency.value = freq;
                 gain.gain.setValueAtTime(0.0001, startAt);
-                gain.gain.exponentialRampToValueAtTime(0.22, startAt + 0.10);
-                gain.gain.setValueAtTime(0.22, startAt + duration - 0.10);
+                gain.gain.exponentialRampToValueAtTime(vol, startAt + 0.05);
+                gain.gain.setValueAtTime(vol, startAt + duration - 0.08);
                 gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
                 osc.connect(gain).connect(ctx.destination);
                 osc.start(startAt);
-                osc.stop(startAt + duration + 0.01);
+                osc.stop(startAt + duration + 0.02);
                 S.ringOscillators.push(osc);
             };
             S.ringOscillators = [];
             const now = ctx.currentTime;
-            playNote(800,  now,        0.40);
-            playNote(1000, now + 0.50, 0.40);
+            // WhatsApp-style incoming: a short 4-note phrase (C5 E5 C5 E5)
+            // repeated every 3s via startSynthLoop's setInterval. Softer and
+            // more musical than the previous 800Hz/1000Hz alert blips.
+            playNote(523.25, now,         0.18, 0.28); // C5
+            playNote(659.25, now + 0.24,  0.18, 0.28); // E5
+            playNote(523.25, now + 0.60,  0.18, 0.28); // C5
+            playNote(659.25, now + 0.84,  0.30, 0.28); // E5 (longer tail)
         } catch (_) {}
     }
     function stopIncomingRing() {

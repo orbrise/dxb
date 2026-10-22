@@ -151,11 +151,26 @@ class UserAccount extends Component
             : 0;
         $walletBalance = ($user && $user->wallet) ? (float) $user->wallet->balance : 0;
 
+        // Premium hero data — only populated when the user actually has an
+        // active subscription. The view renders nothing when $premiumPlan
+        // is null, so free users don't see the hero at all.
+        $premiumPlan = null;
+        $premiumDaysRemaining = 0;
+        $premiumExpiresAt = null;
+        if ($user && $user->hasActivePremium()) {
+            $premiumPlan = $user->premiumPlan;
+            $premiumExpiresAt = $user->premium_expires_at;
+            $premiumDaysRemaining = max(0, (int) ceil(now()->diffInHours($premiumExpiresAt, false) / 24));
+        }
+
         return view('livewire.user-account', [
             'profilesCount' => $profilesCount,
             'favoritesCount' => $favoritesCount,
             'chatsCount' => $chatsCount,
             'walletBalance' => $walletBalance,
+            'premiumPlan' => $premiumPlan,
+            'premiumDaysRemaining' => $premiumDaysRemaining,
+            'premiumExpiresAt' => $premiumExpiresAt,
         ]);
     }
 }

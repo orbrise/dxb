@@ -30,7 +30,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1350px;
+    max-width: 1324px;
     margin: 0 auto;
     padding: 0 0px;
 }
@@ -168,30 +168,84 @@
     margin-top: 30px !important;
 }
 
-/* ---- Photo gallery grid ---- */
+/* ---- Photo gallery column + grid ---- */
+/* The gallery sits in a Bootstrap `col-lg-5 col-lg-pull-7` wrapper (41.67%
+   of the 1200px main container ≈ 500px wide) with the content area in
+   `col-lg-7 col-lg-push-5`. The HTML order puts the content first, and
+   pull/push swaps them visually: gallery LEFT, content RIGHT.
+   At 41.67% width, two 50%-wide images come out ~240px each — too small,
+   with visible empty space between the gallery and the content column.
+   Widen the gallery to 50% (and shrink the content column to 50%) so each
+   image renders ~290×400. Bootstrap defines col-lg-pull-7 as `right:58.33%`
+   and col-lg-push-5 as `left:41.67%`; with a 50/50 split, both need to be
+   50% to keep the visual swap intact.
+
+   MUST be scoped to the lg breakpoint (≥992px) — Bootstrap only applies the
+   lg pull/push declarations at that width. Without this media-query guard
+   the `left: 50% !important` leaks to mobile and shoves the whole content
+   column halfway off-screen (reported bug: huge empty left margin on
+   phones). */
+@media (min-width: 992px) {
+    .pb-thumbnails.col-lg-5.col-lg-pull-7 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        width: 50% !important;
+        right: 50% !important;   /* pull gallery to the LEFT by 50% of parent */
+        left: auto !important;
+    }
+    #listing-content.col-lg-7.col-lg-push-5 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        width: 50% !important;
+        left: 50% !important;    /* push content to the RIGHT by 50% of parent */
+        right: auto !important;
+    }
+}
+
+/* Two images per row inside the gallery column. The three !important
+   declarations below override Bootstrap 4's `.col-lg-6 { flex: 0 0 50%;
+   max-width: 50%; }` with the same values + !important so we win
+   regardless of load order. */
 .listing-photos-sm-plus {
     display: flex;
     flex-wrap: wrap;
-    gap: 0px;
+    gap: 10px 0;
+    margin: 0 !important;
 }
 .listing-photos-sm-plus .col-lg-6 {
-    padding: 0 !important;
+    padding: 0 5px !important;
+    width: 50% !important;
+    max-width: 50% !important;
+    flex: 0 0 50% !important;
     display: flex;
     justify-content: center;
-    margin-bottom: 8px;
+    margin-bottom: 0;
+    box-sizing: border-box;
 }
 .listing-photos-sm-plus .image-wrapper {
     width: 100% !important;
-    height: 280px !important;
+    height: 400px !important;
     overflow: hidden;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 .listing-photos-sm-plus .uniform-image,
 .listing-photos-sm-plus .img-responsive {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 10px;
+}
+/* Scale image height with the viewport so the aspect stays roughly 4:5
+   across the lg (1200+), md (992-1199) and sm (768-991) breakpoints. */
+@media (max-width: 1199px) and (min-width: 992px) {
+    .listing-photos-sm-plus .image-wrapper {
+        height: 320px !important;
+    }
+}
+@media (max-width: 991px) and (min-width: 768px) {
+    .listing-photos-sm-plus .image-wrapper {
+        height: 240px !important;
+    }
 }
 .listing-photos-sm-plus .img-wrapper {
     display: block;

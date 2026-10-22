@@ -346,6 +346,10 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get("premium-account/success/{plan}", \App\Livewire\PremiumSuccess::class)
         ->where('plan', '[a-z0-9-]+')
         ->name("user.account.premium.success");
+    // Membership management — subscription status, days remaining, payment
+    // history, and renew/change CTA. Only accessible to signed-in users.
+    Route::get("my-account/membership", \App\Livewire\MembershipManagement::class)
+        ->name("user.account.membership");
     Route::get("my-account/edit", \App\Livewire\Profile\UserAccountEdit::class)->name("user.account.edit");
     Route::get("my-password/edit", \App\Livewire\Profile\UserAccountPassword::class)->name("user.account.password");
     Route::get("my-account/newsletter/edit", \App\Livewire\NewsletterSettings::class)->name("user.account.newsletter");

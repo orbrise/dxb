@@ -244,6 +244,60 @@ margin-bottom: 10px !important;
     border-radius: 6px;
 }
 
+/* Floating toast (used for bid success) */
+.ev-toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 240px;
+    max-width: 360px;
+    padding: 12px 14px 12px 14px;
+    border-radius: 10px;
+    background: #1a1f1a;
+    border: 1px solid rgba(193, 241, 29, 0.35);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.3;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+    animation: ev-toast-in 220ms ease-out;
+    transition: opacity 400ms ease, transform 400ms ease;
+}
+.ev-toast-success .ev-toast-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #C1F11D;
+    color: #0D1011;
+    flex-shrink: 0;
+}
+.ev-toast-text { flex: 1; }
+.ev-toast-close {
+    background: transparent;
+    border: 0;
+    color: #999;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    margin-left: 4px;
+}
+.ev-toast-close:hover { color: #fff; }
+.ev-toast-hiding { opacity: 0; transform: translateX(16px); }
+@keyframes ev-toast-in {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@media (max-width: 575px) {
+    .ev-toast { top: 12px; right: 12px; left: 12px; max-width: none; }
+}
+
 /* Timer icon */
 .timer-icon { margin-right: 10px; filter: invert(1); }
 
@@ -437,6 +491,11 @@ select.native-select option {
     padding: 8px;
 }
 
+.navbar-top-nav {
+    padding-top:6px;
+    padding-bottom:2px;
+}
+
 /* ═══ MOBILE VIEW ═══ */
 @media (max-width: 768px) {
     /* Header */
@@ -626,9 +685,33 @@ select.native-select option {
     @endif
 
     @if($successMessage)
-    <div class="alert alert-success">
-        {{ $successMessage }}
+    {{-- Floating toast (top-right). Replaces the old full-width green banner
+         which looked clunky after a successful bid. Auto-dismisses after
+         ~4s via the inline script below, which also nulls the Livewire
+         property so the toast doesn't re-appear on the next re-render. --}}
+    <div class="ev-toast ev-toast-success" role="status" aria-live="polite" wire:key="bid-toast-{{ md5($successMessage) }}">
+        <span class="ev-toast-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <span class="ev-toast-text">{{ $successMessage }}</span>
+        <button type="button" class="ev-toast-close" onclick="this.closest('.ev-toast').remove(); window.Livewire && window.Livewire.find(this.closest('[wire\\:id]').getAttribute('wire:id')).set('successMessage', null);" aria-label="Close">&times;</button>
     </div>
+    <script>
+        (function () {
+            var toast = document.querySelector('.ev-toast-success');
+            if (!toast) return;
+            setTimeout(function () { toast.classList.add('ev-toast-hiding'); }, 3500);
+            setTimeout(function () {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+                try {
+                    var root = toast.closest('[wire\\:id]');
+                    if (root && window.Livewire) {
+                        window.Livewire.find(root.getAttribute('wire:id')).set('successMessage', null);
+                    }
+                } catch (_) {}
+            }, 4000);
+        })();
+    </script>
     @endif
 
     @if($auction)
@@ -646,18 +729,48 @@ select.native-select option {
                 <form wire:submit.prevent="placeBid">
                     <div class="form-group">
                         <label for="selectedProfile">Select Profile</label>
-                        {{-- Native <select> intentionally — the CustomSelect2 wrapper
-                             kept clipping descenders on mobile no matter what we did
-                             with padding/line-height. Native renders reliably on all
-                             browsers and shows the OS-native picker on mobile, which
-                             is a better UX anyway. Class `native-select` (not
-                             `apply-custom-select2`) so the JS below skips this one. --}}
-                        <select wire:model="selectedProfile" id="selectedProfile" class="form-control native-select @error('selectedProfile') is-invalid @enderror">
-                            <option value="">-- Select Profile --</option>
-                            @foreach($userProfiles as $profile)
-                            <option value="{{ $profile->id }}">{{ $profile->name }}</option>
-                            @endforeach
-                        </select>
+                        {{-- Uses `apply-custom-select2` so the CustomSelect2 wrapper
+                             (defined further down in this file + initialized by
+                             initializeSpotBiddingSelect2()) adds a searchable
+                             dropdown. Users with many listed profiles can type to
+                             filter instead of scrolling the long native list.
+
+                             wire:ignore is CRITICAL here: without it, every time
+                             the user picks an option the Livewire re-render
+                             morphs the DOM and removes the .custom-select2
+                             wrapper (which is inserted by JS and isn't part of
+                             the server-rendered markup). The native <select>
+                             then reappears until the next tick re-wraps it,
+                             which looks like the dropdown "reverts" to the
+                             browser default. wire:ignore pins this subtree so
+                             Livewire never touches it. The CustomSelect2
+                             onChange callback already pushes the chosen value
+                             to the Livewire component via component.set(), so
+                             form submission still sees the right profile id. --}}
+                        {{-- wire:model intentionally OMITTED from the <select>.
+                             Keeping it caused the whole bid-form card to
+                             "vibrate" on selection: wire:model made Livewire
+                             treat this subtree as reactive and briefly
+                             destroy the .custom-select2 wrapper during the
+                             morph (showing the native box for ~50ms before
+                             the morph.updated hook re-wrapped it). The
+                             CustomSelect2 onChange callback already calls
+                             component.set('selectedProfile', value), so the
+                             server state is kept in sync without wire:model.
+                             We also pass the current value through
+                             data-selected so the hidden <option selected>
+                             matches on re-render and the custom display box
+                             stays correct. --}}
+                        <div wire:ignore>
+                            <select id="selectedProfile"
+                                    data-wire-model="selectedProfile"
+                                    class="form-control apply-custom-select2 @error('selectedProfile') is-invalid @enderror">
+                                <option value="">-- Select Profile --</option>
+                                @foreach($userProfiles as $profile)
+                                <option value="{{ $profile->id }}" @if($selectedProfile == $profile->id) selected @endif>{{ $profile->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         @error('selectedProfile') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
@@ -671,9 +784,16 @@ select.native-select option {
                     </div>
 
                     <div class="bid-form-footer">
-                        <button type="submit" class="btn btn-primary btn-lg" wire:loading.attr="disabled">
-                            <span wire:loading.remove>Place Bid</span>
-                            <span wire:loading>Processing...</span>
+                        {{-- wire:target scopes wire:loading to ONLY the
+                             placeBid action. Without it, any Livewire request
+                             (e.g. the component.set('selectedProfile', ...)
+                             call fired by CustomSelect2's onChange) flips the
+                             button into its "Processing..." state and back,
+                             which the user sees as a flicker when picking a
+                             profile. --}}
+                        <button type="submit" class="btn btn-primary btn-lg" wire:loading.attr="disabled" wire:target="placeBid">
+                            <span wire:loading.remove wire:target="placeBid">Place Bid</span>
+                            <span wire:loading wire:target="placeBid">Processing...</span>
                         </button>
                         <div class="bid-form-meta">
                             <span class="current-price">Current Price: ${{ number_format($auction->current_price, 2) }}</span>
@@ -775,17 +895,26 @@ select.native-select option {
                             $highestBidderProfile = $highestBid ? $highestBid->profile : null;
                         @endphp
 
-                        @if($highestBidderProfile && $highestBidderProfile->singleimg)
-                        <img src="{{ asset('storage/userimages/'.$highestBidderProfile->user_id.'/'.$highestBidderProfile->id.'/'.$highestBidderProfile->singleimg->image) }}"
-                             class="highest-bidder-img">
+                        {{-- Image URL uses the project's standard webp_asset() helper
+                             (matches profile-details etc.). The previous
+                             asset('storage/userimages/...') pointed at a path
+                             that doesn't resolve on this environment, so the
+                             image rendered as a broken/empty box. Also fall
+                             back to coverimg if singleimg isn't present. --}}
+                        @php
+                            $highestBidderImg = $highestBidderProfile
+                                ? ($highestBidderProfile->singleimg ?? $highestBidderProfile->coverimg)
+                                : null;
+                        @endphp
+                        @if($highestBidderImg)
+                        <img src="{{ webp_asset('userimages/'.$highestBidderProfile->user_id.'/'.$highestBidderProfile->id.'/'.$highestBidderImg->image) }}"
+                             class="highest-bidder-img" alt="{{ $highestBidderProfile->name }}">
                         @endif
                         <div class="highest-bidder-info">
                             <h5>{{ $highestBidderProfile->name ?? 'No bids yet' }}</h5>
                             <p>Current bid: ${{ number_format($auction->current_price, 2) }}</p>
-                            @if($highestBidderProfile)
-                            <a href="{{ url($gender.'-escorts-in-'.$city.'/'.$highestBidderProfile->id.'/'.$highestBidderProfile->slug) }}"
-                               class="btn btn-outline-primary" style="margin-top:8px;">View Profile</a>
-                            @endif
+                            {{-- Second (small) View Profile button removed — the
+                                 full-width button below is the one we show. --}}
                         </div>
                     </div>
                     @if($highestBidderProfile)
@@ -865,7 +994,7 @@ class CustomSelect2 {
         // render, whatever) can override. Padding-bottom 16px + line-height 26
         // guarantees descenders (y/g/j/p) fit fully inside the box.
         this.selectionBox.style.cssText +=
-            'min-height:52px;padding:12px 32px 16px 12px;line-height:26px;' +
+            'min-height:35px;padding:5px 32px 5px 10px;line-height:26px;' +
             'box-sizing:border-box;display:block;';
 
         this.dropdown = document.createElement('div');
@@ -984,7 +1113,11 @@ function initializeSpotBiddingSelect2() {
         if (select.customSelect2Instance) { select.customSelect2Instance.destroy(); select.customSelect2Instance = null; }
 
         const placeholder = select.options[0]?.textContent || 'Select an option';
-        const wireModel = select.getAttribute('wire:model');
+        // Read from data-wire-model: we intentionally don't put wire:model on
+        // the select itself (see the blade comment above). The CustomSelect2
+        // onChange still needs to know the Livewire property name so it can
+        // call component.set() to sync the chosen value back to the server.
+        const wireModel = select.getAttribute('data-wire-model') || select.getAttribute('wire:model');
 
         select.customSelect2Instance = new CustomSelect2(select, {
             placeholder: placeholder,
@@ -1009,10 +1142,36 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(initializeSpotBiddingSelect2, 100);
 });
 
-if (typeof Livewire !== 'undefined') {
-    Livewire.hook('message.processed', () => { setTimeout(initializeSpotBiddingSelect2, 100); });
-}
+// Livewire 3 hooks. The select is inside wire:ignore AND has no wire:model
+// (we read the Livewire property name from data-wire-model instead), so the
+// morph should never touch the .custom-select2 wrapper after an update. The
+// `morphed` hook is kept as a defensive safety net — initializeSpotBidding-
+// Select2() early-returns when the wrapper is still intact, so this is a
+// cheap no-op in the common case and only re-wraps if something unexpected
+// stripped the wrapper. Without this safety net we had the "dropdown
+// reverts to native" bug; with the aggressive commit.succeed version we had
+// the "card vibrates" bug. One passive hook is the sweet spot.
+document.addEventListener('livewire:init', function () {
+    if (window.Livewire && typeof window.Livewire.hook === 'function') {
+        window.Livewire.hook('morphed', () => { initializeSpotBiddingSelect2(); });
+    }
+});
 document.addEventListener('livewire:navigated', () => { setTimeout(initializeSpotBiddingSelect2, 200); });
-document.addEventListener('livewire:load', () => { setTimeout(initializeSpotBiddingSelect2, 200); });
+
+// Direct kick: when the browser parses this inline script tag, the <select>
+// above has already been rendered (we're near the end of <body>), so we can
+// try an immediate initialization WITHOUT waiting for DOMContentLoaded /
+// livewire events. The various event hooks above are the safety net for
+// SPA re-mounts; this inline call handles the first-paint case where none
+// of those events will fire again.
+try {
+    if (typeof initializeSpotBiddingSelect2 === 'function') {
+        initializeSpotBiddingSelect2();
+        // One more retry after a tick, in case Livewire's own render pipeline
+        // is still finishing when we first ran.
+        setTimeout(initializeSpotBiddingSelect2, 50);
+        setTimeout(initializeSpotBiddingSelect2, 300);
+    }
+} catch (e) { console.error('[SpotBidding] inline init failed:', e); }
 </script>
 </div>

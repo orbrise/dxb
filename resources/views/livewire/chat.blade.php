@@ -2886,15 +2886,15 @@
             background: var(--ev-hover);
             color: var(--ev-text);
         }
-        /* Send button — pink round pill matching the mockup. Targets
-           both a bare submit button AND anything with .send-btn class
-           so future refactors don't lose the styling. */
+        /* Send button — lime round pill matching the evoory accent.
+           Targets both a bare submit button AND anything with .send-btn
+           class so future refactors don't lose the styling. */
         .chat-input-form button[type="submit"],
         .send-btn {
             width: 40px; height: 40px;
             border-radius: 50%;
-            background: #D584D0;
-            color: #fff;
+            background: #C1F11D;
+            color: #0D1011;
             border: none;
             cursor: pointer;
             display: inline-flex; align-items: center; justify-content: center;
@@ -2903,7 +2903,7 @@
             padding: 0;
         }
         .chat-input-form button[type="submit"]:hover,
-        .send-btn:hover { background: #c270bd; transform: scale(1.05); }
+        .send-btn:hover { background: #d4f84d; transform: scale(1.05); }
         .chat-input-form button[type="submit"]:disabled,
         .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
@@ -3155,7 +3155,7 @@
         .vu-btn:disabled { opacity: 0.55; cursor: not-allowed; }
         .vu-btn.cancel { background: rgba(255,255,255,0.08); color: #fff; }
         .vu-btn.cancel:hover:not(:disabled) { background: rgba(255,255,255,0.14); }
-        .vu-btn.send { background: #D584D0; color: #0a0a0a; }
+        .vu-btn.send { background: #C1F11D; color: #0D1011; }
         .vu-btn.send:hover:not(:disabled) { filter: brightness(1.08); }
 
         /* Compact mobile sheet. */
@@ -4007,18 +4007,19 @@
             .chat-messages { padding: 16px 12px; }
             .message-bubble { max-width: 82%; font-size: 14px; }
 
-            /* Composer — pink circular send button matching the desktop
+            /* Composer — lime circular send button matching the desktop
                styling, tighter padding to keep the input area from eating
                too much vertical space on mobile. */
             .chat-input { padding: 8px 10px 12px; }
             .chat-input-form { padding: 4px 6px 4px 12px; gap: 6px; }
             .chat-input-form button[type="submit"] {
-                background: #D584D0;
+                background: #C1F11D;
+                color: #0D1011;
                 width: 40px;
                 height: 40px;
             }
             .chat-input-form button[type="submit"]:hover {
-                background: #c270bd;
+                background: #d4f84d;
                 transform: none;
             }
 
@@ -4121,7 +4122,14 @@
                                while the Livewire round-trip loads the messages. */
                             selConvMeta: null
                          }"
-                         :data-tab="tab"
+                         {{-- Fallback to the server-rendered values so Alpine
+                              can never flip data-tab (etc.) to an empty string
+                              during entangle init. If it does, every CSS rule
+                              scoped by [data-tab="chats"] stops matching and
+                              the whole chat page renders blank (fixed bug:
+                              sidebar + right-pane empty state both vanishing
+                              on refresh). --}}
+                         :data-tab="tab || '{{ $activeTab ?: 'chats' }}'"
                          :data-has-conv="selConv ? '1' : '0'"
                          :data-has-status="selStatus ? '1' : '0'"
                          :data-has-section="section ? '1' : '0'">
@@ -4266,7 +4274,7 @@
                                      Only shown on Chats + Calls tabs — Status/Gallery/Settings
                                      don't need conversation search. x-show binds to Alpine's
                                      client-side `tab` so tab-swap is instant. --}}
-                                <div class="chat-search" x-show="tab === 'chats' || tab === 'calls'" x-cloak>
+                                <div class="chat-search" x-show="(tab || '{{ $activeTab ?: 'chats' }}') === 'chats' || (tab || '{{ $activeTab ?: 'chats' }}') === 'calls'" x-cloak>
                                     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                                     <input
                                         type="text"
@@ -4306,7 +4314,7 @@
                                  switch (zero server round-trip) — matching
                                  WhatsApp/Telegram tab feel. --}}
                             <div class="conversation-list">
-                                <div x-show="tab === 'chats'">
+                                <div x-show="(tab || '{{ $activeTab ?: 'chats' }}') === 'chats'" x-cloak>
                                     @php
                                         $supportConvs = collect($conversations)->filter(fn($c) => !empty($c['is_support']));
                                         $nonSupportConvs = collect($conversations)->filter(fn($c) => empty($c['is_support']));
@@ -4366,7 +4374,7 @@
                                         </div>
                                     @endif
                                 </div>
-                                <div x-show="tab === 'status'" x-cloak>
+                                <div x-show="(tab || '{{ $activeTab ?: 'chats' }}') === 'status'" x-cloak>
                                     {{-- Status tab — My status card on top,
                                          then Recent list of everyone else's
                                          active statuses (last 24 h). Clicking
@@ -4475,7 +4483,7 @@
                                         </div>
                                     @endif
                                 </div>
-                                <div x-show="tab === 'settings'" x-cloak>
+                                <div x-show="(tab || '{{ $activeTab ?: 'chats' }}') === 'settings'" x-cloak>
                                     {{-- Settings tab — user profile card
                                          at top, then a list of setting
                                          sub-sections. Each row opens its
@@ -4516,7 +4524,7 @@
                                         </div>
                                     @endforeach
                                 </div>
-                                <div x-show="tab === 'gallery'" x-cloak>
+                                <div x-show="(tab || '{{ $activeTab ?: 'chats' }}') === 'gallery'" x-cloak>
                                     {{-- Gallery tab — grid of every photo /
                                          video shared or received across all
                                          conversations. Clicking a thumbnail
@@ -4545,7 +4553,7 @@
                                         </div>
                                     @endif
                                 </div>
-                                <div x-show="tab === 'calls'" x-cloak>
+                                <div x-show="(tab || '{{ $activeTab ?: 'chats' }}') === 'calls'" x-cloak>
                                     {{-- Calls tab — Favourites (empty for now,
                                          reuses the same Add Favorite tile as Chats)
                                          plus Recent call history. --}}

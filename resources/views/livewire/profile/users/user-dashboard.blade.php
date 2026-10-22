@@ -1030,14 +1030,14 @@
                class="{{ request()->routeIs('user.pending') ? 'active' : '' }}">
                 <i class="fa fa-clock"></i> Pending ({{ $pendingCount }})
             </a>
-            <a href="{{ route('profile.archived') }}" 
+            <a href="{{ route('profile.archived') }}"
                class="{{ request()->routeIs('profile.archived') ? 'active' : '' }}">
                 <i class="fa fa-archive"></i> Archived ({{ $archivedCount }})
             </a>
         </div>
-        <a href="{{ route('new.profile') }}" class="ev-add-btn">
-            <i class="fa fa-plus"></i> Add Profile
-        </a>
+        {{-- Add Profile button removed. The global header's "Add Profile"
+             button + the mobile bottom nav's "Add Profile" tab already
+             expose this action from everywhere else on the site. --}}
     </div>
 
     <!-- Pending Moderation Alert -->
@@ -1132,7 +1132,12 @@
                                 <span class="ev-badge ev-badge-green" title="Phone Clicks">
                                     <i class="fa fa-phone"></i> {{ $profile->phone_clicks ?? 0 }}
                                 </span>
-                                @if($profile->package_id && $profile->getpackage)
+                                {{-- Hide the package name badge (VIP / FEATURED / etc) and
+                                     the days-left badge the moment the package expires
+                                     ($daysRemaining === 0). Still show when $daysRemaining
+                                     is null (legacy profiles without expiry info) so we
+                                     don't accidentally hide active-but-untracked packages. --}}
+                                @if($profile->package_id && $profile->getpackage && ($daysRemaining === null || $daysRemaining > 0))
                                 <span class="ev-badge ev-badge-accent">
                                     <i class="fa fa-star"></i> {{ strtoupper($profile->getpackage->name ?? 'PACKAGE') }}
                                 </span>
@@ -1170,7 +1175,7 @@
 
                             <!-- Action Buttons -->
                             <div class="ev-actions">
-                                <a class="ev-btn ev-btn-accent" href="{{url('edit-profile/'.$profile->slug.'/'.$profile->id)}}">
+                                <a class="ev-btn ev-btn-dark" href="{{url('edit-profile/'.$profile->slug.'/'.$profile->id)}}">
                                     <i class="fa fa-pencil-alt"></i> Edit
                                 </a>
                                 <a class="ev-btn ev-btn-dark" href="{{ $profileUrl }}">
@@ -1264,13 +1269,13 @@
             </div>
 
             <!-- Delete Profile -->
-            <div style="text-align: right; padding: 0 4px;">
+            <!-- <div style="text-align: right; padding: 0 4px;">
                 <a class="ev-delete-link" href="javascript:void(0)"
                    wire:click="deleteProfile({{ $user->id }})"
                    wire:confirm="Are you sure you want to DELETE this profile? It will be moved to Archived.">
                     <i class="fa fa-times"></i> Delete Profile
                 </a>
-            </div>
+            </div> -->
         </div>
     </div>
 

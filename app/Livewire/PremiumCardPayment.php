@@ -24,11 +24,18 @@ class PremiumCardPayment extends Component
      * Called from the iframe postMessage listener once myads reports
      * payment_success. Reference prefix (PREMIUM_) distinguishes this from
      * the credits / profile-upgrade flows that share the same relay page.
-     * TODO: record transaction + mark user Premium with expiry.
+     * Activates the plan on the user (sets premium_plan_id + expiry) before
+     * handing off to the success page — otherwise the success page / My
+     * Account hero has nothing to render.
      */
     #[On('processPremiumPayment')]
     public function processPremiumPayment($referenceId = null)
     {
+        $planModel = PremiumPlan::where('slug', $this->plan)->where('is_active', true)->first();
+        $user = Auth::user();
+        if ($planModel && $user) {
+            $user->activatePremium($planModel, 'card', $referenceId);
+        }
         return redirect()->route('user.account.premium.success', ['plan' => $this->plan]);
     }
 
