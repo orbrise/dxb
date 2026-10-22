@@ -2553,7 +2553,12 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           $('#reviewStarRating .star').removeClass('hover');
         });
           
-          $("a.add-review1").off('click').on('click', function() {
+          // Document-level delegation (NOT direct binding) so the handler
+          // survives wire:navigate DOM swaps — direct `$("a.add-review1")`
+          // bindings pointed at old DOM nodes that get morphed away, leaving
+          // the Add Review link dead until a hard refresh.
+          $(document).off('click.openReviewModal').on('click.openReviewModal', 'a.add-review1', function (e) {
+            e.preventDefault();
             $("div.reviewmodal").modal("show");
           });
 
@@ -2609,7 +2614,8 @@ document.querySelectorAll('.report-link').forEach(function(link) {
               $label.html(originalLabel);
             });
           });
-          $("a.ask-question1").off('click').on('click', function() {
+          $(document).off('click.openAskQuestion').on('click.openAskQuestion', 'a.ask-question1', function (e) {
+            e.preventDefault();
             $("div.askq").modal({
               backdrop: 'static',
               keyboard: false
@@ -2666,10 +2672,11 @@ document.querySelectorAll('.report-link').forEach(function(link) {
               $label.html(originalLabel);
             });
           });
-          $("a.send-message1").off('click').on('click', function() {
+          $(document).off('click.openMsgModal').on('click.openMsgModal', 'a.send-message1', function (e) {
+            e.preventDefault();
             $("div.msgmodal").modal("show");
           });
-          $("a.contact-phone1").off('click').on('click', function(e) {
+          $(document).off('click.openCallModal').on('click.openCallModal', 'a.contact-phone1', function(e) {
             e.preventDefault();
             e.stopPropagation();
 
@@ -3572,8 +3579,10 @@ $(document).on('click', '.send-message1', function() {
     }, 300);
 });
 
-// Also initialize on modal shown event
-$('.msgmodal').on('shown.bs.modal', function() {
+// Also initialize on modal shown event. Document-level delegation so this
+// still fires after a wire:navigate DOM swap — direct binding to .msgmodal
+// nodes dies with the previous page's DOM.
+$(document).off('shown.bs.modal.msgModalSelect2').on('shown.bs.modal.msgModalSelect2', '.msgmodal', function () {
     setTimeout(function() {
         initializeCustomSelect2();
     }, 100);
@@ -3584,30 +3593,37 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(initializeCustomSelect2, 500);
 });
 
-// Initialize Bootstrap tabs explicitly for mobile compatibility
-$(document).ready(function() {
-    // Ensure tab functionality works on all devices
-    $('#revsAndQs .nav-tabs a[data-toggle="tab"]').on('click', function (e) {
-        e.preventDefault();
-        
-        // Hide all tab panes with !important
-        $('#revsAndQs .tab-content .tab-pane').removeClass('in active').attr('style', 'display: none !important');
-        
-        // Show the clicked tab pane
-        var target = $(this).attr('href');
-        $(target).addClass('in active').attr('style', 'display: block !important');
-        
-        // Update active state on tabs
-        $('#revsAndQs .nav-tabs li').removeClass('active');
-        $(this).parent('li').addClass('active');
-    });
-    
-    // Ensure only the active tab content is visible on page load
+// Initialize Bootstrap tabs. Click handler is delegated so it keeps working
+// after wire:navigate swaps the DOM (direct binding here was dropping the
+// Reviews/Questions tab click behavior on soft nav).
+$(document).off('click.evReviewTabs').on('click.evReviewTabs', '#revsAndQs .nav-tabs a[data-toggle="tab"]', function (e) {
+    e.preventDefault();
+
+    // Hide all tab panes with !important
+    $('#revsAndQs .tab-content .tab-pane').removeClass('in active').attr('style', 'display: none !important');
+
+    // Show the clicked tab pane
+    var target = $(this).attr('href');
+    $(target).addClass('in active').attr('style', 'display: block !important');
+
+    // Update active state on tabs
+    $('#revsAndQs .nav-tabs li').removeClass('active');
+    $(this).parent('li').addClass('active');
+});
+
+// Default-tab reset runs on BOTH jQuery ready (initial load) AND
+// livewire:navigated (soft nav). Without the navigate hook, the morphed
+// page kept whatever tab was active on the previous profile instead of
+// landing on Reviews.
+function evResetReviewTabs() {
+    if (!document.getElementById('revsAndQs')) return;
     $('#revsAndQs .tab-content .tab-pane').removeClass('in active').attr('style', 'display: none !important');
     $('#listingReviews').addClass('in active').attr('style', 'display: block !important');
     $('#revsAndQs .nav-tabs li').removeClass('active');
     $('#revsAndQs .nav-tabs li:first-child').addClass('active');
-});
+}
+$(document).ready(evResetReviewTabs);
+document.addEventListener('livewire:navigated', evResetReviewTabs);
 
 // WhatsApp Rotation Message Handler
 function handleWhatsAppClick(event, element) {

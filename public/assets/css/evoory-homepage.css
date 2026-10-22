@@ -1033,6 +1033,50 @@ button.btn.btn-primary#submit[type="submit"]:hover {
     font-size: 14px;
     flex: 1;
 }
+
+/* --input variant: pill now wraps an <input> + results dropdown.
+   Position relative so the absolute dropdown anchors to the pill. */
+.ev-location-pill--input {
+    position: relative;
+    padding: 4px 14px;
+}
+.ev-location-pill-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 16px;             /* 16px hard-floor on mobile inputs to prevent
+                                    iOS Safari's auto-zoom on focus — see memory
+                                    `ios_safari_zoom_fix`. */
+    padding: 2px 0;
+    font-family: inherit;
+    -webkit-appearance: none;
+}
+.ev-location-pill-input::placeholder { color: #888; }
+.ev-location-pill-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.ev-location-pill-results .dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+.ev-location-pill-results .dropdown-item:hover { background: #222; }
 .ev-location-pill svg {
     color: #999;
     flex-shrink: 0;

@@ -33,8 +33,8 @@
 
         .favorite-bookmark-btn svg {
             display: block;
-            width: 12px;
-            height: 12px;
+            width: 18px;
+            height: 16px;
         }
 
         .favorite-bookmark-btn:hover {

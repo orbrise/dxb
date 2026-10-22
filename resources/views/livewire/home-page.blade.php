@@ -76,35 +76,55 @@
         .premium-effects { opacity: 0; transition: opacity 0.3s ease; }
         .premium-effects.loaded { opacity: 1; }
         
-        /* Image optimization with shimmer preloader */
-        img[loading="lazy"] {
-            background: linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%, #1a1a1a 100%) !important;
-            background-size: 200% 100% !important;
-            animation: shimmer 1.5s ease-in-out infinite !important;
-            min-height: 60px;
+        /* === Image skeleton loader ===
+           Previous version applied a dim #1a1a1a → #3a3a3a shimmer directly
+           on the <img>; on a near-black (#0a0a0a) page it was invisible, so
+           listings looked like empty black boxes while images were in
+           flight. New approach:
+             - Wrapper .image-wrapper / .img-wrapper gets a visible shimmer
+               background that fills the whole box (not just the img rect).
+             - A paired .ev-skeleton::after overlay provides the moving
+               highlight for the "shimmer sweep" look.
+             - When the <img> inside finishes loading, JS adds .ev-loaded on
+               the WRAPPER (parent) which removes the skeleton animation
+               and reveals the loaded image on top of the solid wrapper bg.
+             - Delegated via idempotent init called on DOMContentLoaded AND
+               livewire:navigated so wire:navigate'd pages also animate. */
+        .image-wrapper,
+        .img-wrapper {
             position: relative;
+            background-color: #141818;
         }
-        
-        @keyframes shimmer {
-            0% { 
-                background-position: -200% 0; 
-            }
-            100% { 
-                background-position: 200% 0; 
-            }
+        .image-wrapper:not(.ev-loaded),
+        .img-wrapper:not(.ev-loaded) {
+            background-image: linear-gradient(
+                90deg,
+                #141818 0%,
+                #1f2529 40%,
+                #2a3237 50%,
+                #1f2529 60%,
+                #141818 100%
+            );
+            background-size: 200% 100%;
+            animation: ev-skeleton-shimmer 1.4s ease-in-out infinite;
         }
-        
-        img[loading="lazy"].loaded {
-            animation: none !important;
-            background: transparent !important;
+        .image-wrapper:not(.ev-loaded) > img,
+        .img-wrapper:not(.ev-loaded) > img {
+            opacity: 0;
+            transition: opacity 240ms ease-out;
         }
-        
-        /* Add shimmer to image wrappers */
-        .img-wrapper img:not(.loaded),
-        .image-wrapper img:not(.loaded) {
-            background: linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%, #1a1a1a 100%) !important;
-            background-size: 200% 100% !important;
-            animation: shimmer 1.5s ease-in-out infinite !important;
+        .image-wrapper.ev-loaded > img,
+        .img-wrapper.ev-loaded > img {
+            opacity: 1;
+        }
+        .image-wrapper.ev-loaded,
+        .img-wrapper.ev-loaded {
+            animation: none;
+            background-image: none;
+        }
+        @keyframes ev-skeleton-shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* === Auction winner cards — match Daisy design reference ===
@@ -920,30 +940,40 @@
             }, 100);
         });
         
-        // Handle image loading animations immediately (don't wait for window load)
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🖼️ Setting up image shimmer effect...');
-            
-            const images = document.querySelectorAll('img[loading="lazy"], .img-wrapper img, .image-wrapper img');
-            console.log('Found ' + images.length + ' images');
-            
-            images.forEach(function(img) {
-                // If image already loaded
+        // === Image skeleton loader — reveal-on-load ===
+        //
+        // Walks every .image-wrapper / .img-wrapper once. For each, if the
+        // inner <img> is already decoded, mark the wrapper .ev-loaded now;
+        // otherwise attach one-shot load/error listeners that will do it.
+        // Idempotent (uses a dataset flag per element) so re-running on
+        // livewire:navigated won't double-bind listeners when some wrappers
+        // are brand new but others are reused across the morph.
+        function evInitImageSkeletons(root) {
+            root = root || document;
+            const wrappers = root.querySelectorAll('.image-wrapper, .img-wrapper');
+            wrappers.forEach(function (wrap) {
+                if (wrap.dataset.skelInit === '1') return;
+                wrap.dataset.skelInit = '1';
+                const img = wrap.querySelector('img');
+                if (!img) { wrap.classList.add('ev-loaded'); return; }
+                const markLoaded = function () { wrap.classList.add('ev-loaded'); };
                 if (img.complete && img.naturalHeight !== 0) {
-                    img.classList.add('loaded');
+                    markLoaded();
                 } else {
-                    // Add loaded class when image loads
-                    img.addEventListener('load', function() {
-                        console.log('✅ Image loaded:', this.alt || this.src);
-                        this.classList.add('loaded');
-                    });
-                    // Handle error case
-                    img.addEventListener('error', function() {
-                        console.log('❌ Image error:', this.src);
-                        this.classList.add('loaded');
-                    });
+                    img.addEventListener('load',  markLoaded, { once: true });
+                    img.addEventListener('error', markLoaded, { once: true }); // reveal broken img icon instead of forever-shimmering
                 }
             });
+        }
+        document.addEventListener('DOMContentLoaded', function () { evInitImageSkeletons(); });
+        // wire:navigate swaps the body: new wrappers need a fresh init pass.
+        document.addEventListener('livewire:navigated',   function () { evInitImageSkeletons(); });
+        // Also catch Livewire's post-morph tick so pagination / filter
+        // changes that re-render JUST the listings get skeletonized too.
+        document.addEventListener('livewire:init', function () {
+            if (window.Livewire && typeof window.Livewire.hook === 'function') {
+                window.Livewire.hook('morphed', function () { evInitImageSkeletons(); });
+            }
         });
     </script>
 
@@ -1277,12 +1307,24 @@
 
 {{-- Mobile Location Bar --}}
 <div class="ev-mobile-location-bar visible-xs">
-    <div class="ev-location-pill">
+    {{-- Inline city search input (same pattern as desktop #citysearch).
+         Typing fires the same delegated search logic that already powers the
+         modal's #mobile_city_search — both IDs are matched by the listener
+         in the <script> block below. The results dropdown mounts right under
+         the pill. --}}
+    <div class="ev-location-pill ev-location-pill--input">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 10c0 6-9 13-9 13s-9-7-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3"></circle>
         </svg>
-        <span>{{ $currentCity ? ucfirst($currentCity->name) : 'Dubai' }}</span>
+        <input type="text"
+               id="mobile_city_search_bar"
+               class="ev-location-pill-input"
+               value="{{ $currentCity ? ucfirst($currentCity->name) : ($selectedcity ?? 'Dubai') }}"
+               placeholder="Type a city..."
+               autocomplete="off"
+               aria-label="Search city">
+        <div id="mobile_city_search_bar_results" class="ev-location-pill-results" style="display:none;"></div>
     </div>
     <div class="ev-location-actions">
         <a href="{{ route('mobile.search', ['gender' => $gender ?? 'female', 'city' => $selectedcity ?? 'Dubai']) }}" class="ev-location-action-btn" aria-label="Advanced Search">
@@ -3089,22 +3131,47 @@ setTimeout(() => {
     }
 }, 3000);
 
-// Mobile City Search Functionality
-function initMobileCitySearch() {
-    console.log('📱 Initializing mobile city search...');
-    
-    const mobileCityInput = document.getElementById('mobile_city_search');
-    const mobileCityResults = document.getElementById('mobile_city_results');
-    const mobileSelectedCityName = document.getElementById('mobile_selected_city_name');
-    
-    if (!mobileCityInput) {
-        console.log('❌ Mobile city input not found');
-        return false;
-    }
-    
-    console.log('✅ Mobile city input found');
-    
+// Mobile City Search Functionality.
+//
+// Previous version did `getElementById('mobile_city_search').addEventListener(...)`
+// which dies the first time Livewire re-renders the mobile search modal
+// (or when wire:navigate swaps the page) — the new input element has no
+// handler, so typing does nothing. Reported bug: "unable to click city,
+// unable to search city on mobile listing page". Fixed by moving every
+// listener to document-level delegation (survives any DOM swap) and
+// scoping all shared state (searchTimeout) to a module-level IIFE instead
+// of a closure that would die with the element.
+(function initMobileCitySearchDelegated() {
+    console.log('📱 Delegated mobile city search listeners attached');
+
     let searchTimeout = null;
+
+    // Two inputs share this logic:
+    //  - #mobile_city_search      (inside the mobile-search modal; renders only when $showMobileSearch)
+    //  - #mobile_city_search_bar  (always-visible pill at the top of the listing page)
+    // Each has its own results container (same id + '_results' pattern isn't
+    // used because the modal has an older #mobile_city_results id — we just
+    // special-case it below).
+    const INPUT_IDS = ['mobile_city_search', 'mobile_city_search_bar'];
+    function isCityInput(el) { return el && INPUT_IDS.indexOf(el.id) !== -1; }
+    function resultsFor(inputEl) {
+        if (!inputEl) return null;
+        if (inputEl.id === 'mobile_city_search_bar') return document.getElementById('mobile_city_search_bar_results');
+        return document.getElementById('mobile_city_results');
+    }
+    function labelFor(inputEl) {
+        if (!inputEl) return null;
+        // Only the modal has a secondary "Selected: X" caption; the pill
+        // doesn't need one since the input itself shows the selection.
+        if (inputEl.id === 'mobile_city_search_bar') return null;
+        return document.getElementById('mobile_selected_city_name');
+    }
+    // Legacy helpers kept so the rest of the file (if it still calls them)
+    // doesn't break. getInput() returns whichever is in the DOM — modal
+    // takes precedence if both are mounted (rare).
+    function getInput()   { return document.getElementById('mobile_city_search') || document.getElementById('mobile_city_search_bar'); }
+    function getResults() { return resultsFor(getInput()); }
+    function getLabel()   { return labelFor(getInput()); }
 
     // Country-name → ISO-2 code lookup. See window.EvooryGetCountryCode in /assets/js/listing-page.js.
     function getCountryCode(countryName) {
@@ -3113,8 +3180,15 @@ function initMobileCitySearch() {
         return null;
     }
 
-    // Function to search cities from database
     function searchCities(query) {
+        const mobileCityInput   = getInput();
+        const mobileCityResults = getResults();
+        const mobileSelectedCityName = getLabel();
+        if (!mobileCityInput || !mobileCityResults) return;
+        return _searchCitiesImpl(query, mobileCityInput, mobileCityResults, mobileSelectedCityName);
+    }
+
+    function _searchCitiesImpl(query, mobileCityInput, mobileCityResults, mobileSelectedCityName) {
         clearTimeout(searchTimeout);
         
         if (query.length < 2) {
@@ -3241,50 +3315,36 @@ function initMobileCitySearch() {
         }, 300);
     }
     
-    // Input event listener
-    mobileCityInput.addEventListener('input', function(e) {
-        const value = e.target.value.trim();
-        console.log('📝 Mobile city input changed:', value);
-        searchCities(value);
+    // ---- Document-level delegation (survives DOM swaps) ----
+
+    // Typing in either city input → debounced city search routed to the
+    // matching results container.
+    document.addEventListener('input', function (e) {
+        if (!isCityInput(e.target)) return;
+        const value = (e.target.value || '').trim();
+        _searchCitiesImpl(value, e.target, resultsFor(e.target), labelFor(e.target));
     });
-    
-    // Click outside to close dropdown
-    document.addEventListener('click', function(e) {
-        if (!mobileCityInput.contains(e.target) && !mobileCityResults.contains(e.target)) {
-            mobileCityResults.style.display = 'none';
-        }
+
+    // Focus → re-open dropdown with existing text if 2+ chars.
+    document.addEventListener('focusin', function (e) {
+        if (!isCityInput(e.target)) return;
+        const value = (e.target.value || '').trim();
+        if (value.length >= 2) _searchCitiesImpl(value, e.target, resultsFor(e.target), labelFor(e.target));
     });
-    
-    // Focus event
-    mobileCityInput.addEventListener('focus', function() {
-        if (this.value.trim().length >= 2) {
-            searchCities(this.value.trim());
-        }
+
+    // Click outside EITHER input/results pair → hide its dropdown.
+    document.addEventListener('click', function (e) {
+        INPUT_IDS.forEach(function (id) {
+            const input   = document.getElementById(id);
+            const results = resultsFor(input);
+            if (!input || !results) return;
+            if (!input.contains(e.target) && !results.contains(e.target)) {
+                results.style.display = 'none';
+            }
+        });
     });
-    
-    console.log('📱 Mobile city search initialized successfully');
-    return true;
-}
 
-// Initialize mobile city search
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => initMobileCitySearch(), 1000);
-});
-
-window.addEventListener('load', function() {
-    setTimeout(() => initMobileCitySearch(), 1500);
-});
-
-// Listen for mobile search modal open event
-document.addEventListener('livewire:load', function() {
-    setTimeout(() => initMobileCitySearch(), 500);
-});
-
-Livewire.on('mobile-search-toggled', function(data) {
-    if (data.show) {
-        setTimeout(() => initMobileCitySearch(), 300);
-    }
-});
+})();
 
 // Listen for currency updates from Livewire and update the currency dropdown
 Livewire.on('currency-updated', function(data) {
@@ -3335,12 +3395,10 @@ Livewire.on('currency-updated', function(data) {
     }
 });
 
-// Fallback
-setTimeout(() => {
-    if (!initMobileCitySearch()) {
-        setTimeout(() => initMobileCitySearch(), 2000);
-    }
-}, 3000);
+// No fallback init needed — initMobileCitySearchDelegated() above installs
+// document-level listeners once on first script parse and they survive any
+// Livewire DOM swap. The old per-element init had retry setTimeouts for
+// late-mounting inputs; delegation makes those unnecessary.
   </script>
 
   {{-- What's New scroll indicator moved to /assets/js/listing-page.js --}}

@@ -6019,6 +6019,62 @@
             scrollToBottom();
         });
 
+        /* iOS Safari keyboard-safe focus guard.
+           Problem: when the user taps #chatReplyInput, iOS auto-scrolls the
+           document to try to bring the input into view. Even though html/body
+           are position:fixed and we track visualViewport, iOS still scrolls
+           the layout viewport, which pushes the composer to the TOP of the
+           visible area and leaves a huge empty black strip above the keyboard
+           (reported bug). The fix is to immediately reset the scroll back to
+           0 after iOS does its thing, and rely on --app-height from the
+           visualViewport sync (in app-evoory layout) to resize the shell
+           above the keyboard. Document-level listener on `focusin` so it
+           survives Livewire DOM swaps / navigation. */
+        (function () {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+                       || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (!isIOS) return;
+
+            const resetScroll = () => {
+                window.scrollTo(0, 0);
+                if (document.documentElement) document.documentElement.scrollTop = 0;
+                if (document.body) document.body.scrollTop = 0;
+                if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+            };
+
+            document.addEventListener('focusin', (e) => {
+                const el = e.target;
+                if (!el || !(el instanceof HTMLElement)) return;
+                // Only guard focus inside the chat shell. We don't want this
+                // scroll-reset running on OTHER pages (profile edit, auction
+                // bid, etc.) where the normal iOS auto-scroll is useful.
+                if (!el.closest('.ev-chat-shell') && !el.closest('.chat-container')) return;
+                // iOS fires focus → the browser kicks off its own scroll in
+                // the next few frames. Reset after each tick for ~500ms to
+                // beat the scroll regardless of when it lands. requestAnim-
+                // ationFrame + a couple of setTimeouts covers 60/120Hz devices.
+                resetScroll();
+                requestAnimationFrame(resetScroll);
+                setTimeout(resetScroll, 50);
+                setTimeout(resetScroll, 150);
+                setTimeout(resetScroll, 300);
+                // Also pin the thread to its bottom so the latest message
+                // stays visible right above the composer.
+                setTimeout(() => { try { scrollToBottom(); } catch (_) {} }, 320);
+            }, true);
+
+            // On blur (keyboard dismiss), one more reset so iOS doesn't leave
+            // the viewport scrolled a few pixels after the keyboard animates
+            // away.
+            document.addEventListener('focusout', (e) => {
+                const el = e.target;
+                if (!el || !(el instanceof HTMLElement)) return;
+                if (!el.closest('.ev-chat-shell') && !el.closest('.chat-container')) return;
+                setTimeout(resetScroll, 50);
+                setTimeout(resetScroll, 300);
+            }, true);
+        })();
+
         document.addEventListener('livewire:navigated', () => {
             initEchoListener();
             wireEmojiPicker();
