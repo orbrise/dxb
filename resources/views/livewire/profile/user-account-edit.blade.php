@@ -319,7 +319,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 9px 12px;
+        padding: 12px 12px;
         background: #14141A2E;
         border: 1px solid #5E6365;
         border-radius: 5px;

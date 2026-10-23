@@ -246,6 +246,20 @@ div.listings div.listing-li::after {
         -webkit-line-clamp: 1 !important;
         line-clamp: 1 !important;
     }
+
+    /* Skeleton-state only: clip the thumb column to the main-image height
+       so loading tiles can't push past the big image on the left.
+       Does NOT touch width/image sizing — just a vertical overflow cap
+       while images haven't painted yet. Collapses to normal once each
+       wrapper gets .ev-loaded. */
+    .listings .listing-li.premium .thumbs:has(.image-wrapper:not(.ev-loaded)) .other-thumbs {
+        max-height: 208px !important;
+        overflow: hidden !important;
+    }
+    .listings .listing-li.featured .thumbs:has(.image-wrapper:not(.ev-loaded)) .other-thumbs {
+        max-height: 135px !important;
+        overflow: hidden !important;
+    }
 }
 
 /* Listing thumbnails - no borders, asymmetric corner rounding */
@@ -265,7 +279,7 @@ div.listings div.listing-li::after {
     box-shadow: none !important;
 }
 
-/* Big main image - rounded LEFT side only (top-left + bottom-left) */
+/* Big main image — rounded LEFT side only (top-left + bottom-left). */
 .listing-li .thumbs .main-thumbs .img-wrapper,
 .listing-li .thumbs .main-thumbs .image-wrapper,
 .listing-li .thumbs .main-thumbs img {
@@ -274,7 +288,7 @@ div.listings div.listing-li::after {
     border-bottom-right-radius: 0 !important;
 }
 
-/* Small thumbs - rounded RIGHT side only (first = top-right, last = bottom-right) */
+/* Small thumbs — rounded RIGHT side only (first = top-right, last = bottom-right). */
 .listing-li .thumbs .other-thumbs .thumb:first-child .img-wrapper,
 .listing-li .thumbs .other-thumbs .thumb:first-child .image-wrapper,
 .listing-li .thumbs .other-thumbs .thumb:first-child img {
@@ -296,7 +310,7 @@ div.listings div.listing-li::after {
 .listing-li .thumbs .other-thumbs .thumb:not(:first-child):not(:last-child) img {
     border-radius: 0 !important;
 }
-/* Single small thumb on the right - rounds both right corners */
+/* Single small thumb on the right — rounds both right corners. */
 .listing-li .thumbs .other-thumbs .thumb:only-child .img-wrapper,
 .listing-li .thumbs .other-thumbs .thumb:only-child .image-wrapper,
 .listing-li .thumbs .other-thumbs .thumb:only-child img {
@@ -304,19 +318,33 @@ div.listings div.listing-li::after {
     border-top-left-radius: 0 !important;
     border-bottom-left-radius: 0 !important;
 }
-/* Main image with no side thumbs - fully rounded */
+/* Main image with no side thumbs — fully rounded. */
 .listing-li .thumbs .main-thumbs:only-child .img-wrapper,
 .listing-li .thumbs .main-thumbs:only-child .image-wrapper,
 .listing-li .thumbs .main-thumbs:only-child img {
     border-radius: 8px !important;
 }
 
-/* Remove any gap so images join together as one rounded block */
+/* Images join edge-to-edge as one rounded block — no gaps. */
 .listing-li .thumbs .other-thumbs {
     margin-left: 0 !important;
 }
 .listing-li .thumbs .other-thumbs .thumb + .thumb {
     margin-top: 0 !important;
+}
+
+/* Skeleton-only gap: while any image inside this listing is still shimmering
+   (wrapper not yet .ev-loaded), insert a small gap between the big main
+   image and the stacked side thumbs — and between each stacked thumb —
+   so the loading tiles read as separate shapes instead of one giant blob.
+   Once images load and `.ev-loaded` is added to each wrapper by
+   evInitImageSkeletons() in home-page.blade.php, the gap collapses to 0
+   and the images join back together as one rounded block. */
+.listing-li .thumbs:has(.image-wrapper:not(.ev-loaded)) .other-thumbs {
+    margin-left: 6px !important;
+}
+.listing-li .thumbs:has(.image-wrapper:not(.ev-loaded)) .other-thumbs .thumb + .thumb {
+    margin-top: 6px !important;
 }
 .listings .listing-li.premium {
     background: transparent !important;

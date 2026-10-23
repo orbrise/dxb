@@ -1325,14 +1325,43 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     }
 
     // --- Ringback (caller side) --------------------------------------
-    // Preferred: play /assets/sounds/call-outgoing.mp3 if present (drop in
-    // the real WhatsApp outgoing sound here for an exact match). Fallback:
-    // synth bell tone. Synth will never be a perfect WhatsApp match since
-    // the real sound is a sampled bell with multiple harmonics — the
-    // closest Web-Audio approximation is a sine fundamental + a quieter
-    // 2x-frequency harmonic with a bell-like exponential decay envelope.
-    const RINGBACK_FILE_URL = '/assets/sounds/call-outgoing.mp3';
-    let __ringbackFileExists = null; // null = unknown, true/false = cached
+    // Preferred: play the hosted outgoing-call sample. Fallback: synth
+    // tone pair. We skip the HEAD-check — cross-origin HEAD can fail CORS
+    // even when audio playback is allowed, so we treat audio.play()'s
+    // outcome as the only truth. If it rejects → fall through to synth.
+    const RINGBACK_FILE_URL = 'https://assets.evoory.com/assets/ring/outgoingcall1.mp3';
+    let __ringbackFileFailed = false; // sticky after first play() rejection
+
+    // Unlock audio playback inside the click gesture that fired the call.
+    // iOS Safari / mobile Chrome refuse HTMLAudioElement.play() and
+    // AudioContext.resume() if the user gesture window has lapsed (which
+    // it has by the time rtcStartCall finishes its getUserMedia + ICE
+    // + offer awaits). Priming a silent audio element and resuming the
+    // AudioContext here keeps both unlocked for the rest of the session.
+    function primeAudioForCall() {
+        try {
+            if (!S.ringbackAudio) {
+                const a = new Audio(RINGBACK_FILE_URL);
+                a.loop = true;
+                a.preload = 'auto';
+                a.volume = 0.9;
+                S.ringbackAudio = a;
+            }
+            // play() during the gesture even if it 404s — the "unlock" is
+            // what matters. We immediately pause so no sound leaks here.
+            const p = S.ringbackAudio.play();
+            if (p && typeof p.then === 'function') {
+                p.then(() => { try { S.ringbackAudio.pause(); } catch (_) {} })
+                 .catch(() => {});
+            }
+        } catch (_) {}
+        try {
+            window.__rtc = window.__rtc || {};
+            const ctx = window.__rtc._audio = window.__rtc._audio
+                || new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+        } catch (_) {}
+    }
 
     function startRingback() {
         tryStartRingbackFile().then(ok => {
@@ -1341,15 +1370,8 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     }
 
     async function tryStartRingbackFile() {
-        if (__ringbackFileExists === false) return false;
+        if (__ringbackFileFailed) return false;
         try {
-            // HEAD-check once per session to avoid 404 spam. If the admin
-            // hasn't uploaded a file we silently use the synth.
-            if (__ringbackFileExists === null) {
-                const r = await fetch(RINGBACK_FILE_URL, { method: 'HEAD' });
-                __ringbackFileExists = r.ok;
-                if (!r.ok) return false;
-            }
             let a = S.ringbackAudio;
             if (!a) {
                 a = new Audio(RINGBACK_FILE_URL);
@@ -1362,6 +1384,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             await a.play();
             return true;
         } catch (_) {
+            // Sticky — if the first attempt rejects (404, CORS, autoplay
+            // block that even primeAudioForCall couldn't fix), fall back
+            // to synth for the rest of the session instead of re-trying
+            // and burning the ~200ms before every outbound call.
+            __ringbackFileFailed = true;
             return false;
         }
     }
@@ -1371,16 +1398,20 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             const ctx = window.__rtc._audio = window.__rtc._audio || new (window.AudioContext || window.webkitAudioContext)();
             if (ctx.state === 'suspended') ctx.resume().catch(() => {});
             S.ringbackOscs = S.ringbackOscs || [];
-            // playBell = fundamental + one quieter harmonic for bell timbre,
-            // with a short attack and long exponential decay (bell-shape).
-            const playBell = (startAt, freq, decay, vol) => {
-                [[freq, vol], [freq * 2.01, vol * 0.35]].forEach(([f, v]) => {
+            // WhatsApp outgoing cadence is a soft two-tone chirp around
+            // A4 (440 Hz) — not the sharp D5 bell we had before. Shorter
+            // decay (0.3s) and a lower fifth harmonic give the warm,
+            // phone-earpiece timbre instead of a ringing dinner bell.
+            const playTone = (startAt, freq, decay, vol) => {
+                [[freq, vol], [freq * 1.5, vol * 0.25]].forEach(([f, v]) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
                     osc.type = 'sine';
                     osc.frequency.value = f;
+                    // Soft attack (30ms) — not a bell "ting", a gentle rise.
                     gain.gain.setValueAtTime(0.0001, startAt);
-                    gain.gain.exponentialRampToValueAtTime(v, startAt + 0.008);
+                    gain.gain.exponentialRampToValueAtTime(v, startAt + 0.03);
+                    gain.gain.setValueAtTime(v, startAt + decay - 0.05);
                     gain.gain.exponentialRampToValueAtTime(0.0001, startAt + decay);
                     osc.connect(gain).connect(ctx.destination);
                     osc.start(startAt);
@@ -1390,9 +1421,9 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             };
             const cycle = () => {
                 const now = ctx.currentTime;
-                // Two bells close together — WhatsApp outgoing cadence.
-                playBell(now,        587, 0.55, 0.22); // D5
-                playBell(now + 0.35, 587, 0.55, 0.22);
+                // Pair of soft A4 tones, 0.3s apart — classic ringback cadence.
+                playTone(now,       440, 0.30, 0.20); // A4
+                playTone(now + 0.30, 440, 0.30, 0.20);
             };
             cycle();
             S.ringInterval = setInterval(cycle, 3000);
@@ -2152,6 +2183,10 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         const videoBtn = e.target.closest('[data-rtc-call="video"]');
         if (audioBtn || videoBtn) {
             const btn = audioBtn || videoBtn;
+            // Unlock audio inside this click gesture so startRingback()
+            // can actually play on mobile. Must run synchronously BEFORE
+            // rtcStartCall's awaits burn the gesture window.
+            primeAudioForCall();
             window.rtcStartCall({
                 userId: parseInt(btn.dataset.peerId, 10),
                 name: btn.dataset.peerName,
