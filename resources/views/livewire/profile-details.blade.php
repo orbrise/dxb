@@ -188,7 +188,7 @@
        fit its inline content (~450px) and the 55vh dropdown escaped
        out the bottom. */
     .msgmodal .modal-content {
-        min-height: 40vh !important;
+        min-height: 32vh !important;
     }
     .msgmodal .modal-body {
         max-height: none !important;
@@ -2070,38 +2070,6 @@
                   style="width:100%;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
               </div>
 
-              <div class="form-group" style="margin-bottom:24px;">
-                <label style="display:block;color:#fff;font-size:14px;font-weight:500;margin-bottom:8px;" for="listing_message_phone_number_attributes_phone_digits">Telephone</label>
-                <div style="display:flex;gap:8px;">
-                  {{-- `apply-custom-select2` opts this select into the
-                       page's JS-rendered dark-theme dropdown (see
-                       CustomSelect2 class at the bottom of this file).
-                       Without it mobile browsers render the native OS
-                       picker with a white background — the trigger text
-                       also gets truncated because the fixed 110px width
-                       can't fit "+213 - Algeria" etc. The custom dropdown
-                       displays only the "+NNN" code in the trigger via
-                       the codeMatch regex in selectOption(), so 110px is
-                       fine, and the dropdown itself expands to the modal
-                       body width when open. --}}
-                  <select name="code"
-                    id="message_phone_code"
-                    class="apply-custom-select2"
-                    data-placeholder="+971"
-                    data-searchable="true"
-                    style="background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 12px;font-size:14px;outline:none;width:110px;appearance:none;-webkit-appearance:none;cursor:pointer;">
-                    <option value="">+971</option>
-                    @foreach($countries as $country)
-                    <option value="{{$country->phonecode}}">+{{$country->phonecode}} - {{$country->nicename}}</option>
-                    @endforeach
-                  </select>
-                  <input name="phone" type="text"
-                    placeholder="Phone number"
-                    id="listing_message_phone_number_attributes_phone_digits"
-                    style="flex:1;background:transparent;border:1px solid #5E6365;border-radius:4px;color:#fff;padding:4px 14px;font-size:14px;outline:none;box-sizing:border-box;">
-                </div>
-              </div>
-
               <div style="text-align:left;">
                 <button data-btn-submit="" type="submit" id="messageSubmitBtn"
                   style="background:#c8ff00;color:#000;font-weight:500;font-size:15px;border:none;border-radius:50px;padding:5px 30px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
@@ -2489,20 +2457,18 @@ document.querySelectorAll('.report-link').forEach(function(link) {
 });
 </script>
 <script>
-  // Flag to prevent multiple initializations
-  window.profileDetailsInitialized = false;
-  
   function initProfileDetails() {
-    // Prevent multiple initializations
-    if (window.profileDetailsInitialized) {
-      return;
-    }
-    
+    // No init-once guard. Previously `window.profileDetailsInitialized`
+    // was flipped true on first run and NEVER reset for the lifetime of
+    // the window — after a wire:navigate TO this page the guard bailed
+    // out before initCustomGallery() ran, leaving the thumbnail popup
+    // dead until a hard refresh. Every binding below uses `.off().on()`
+    // so re-running is idempotent; the flag was unnecessary.
+
     // Wait for jQuery to be fully loaded
     const checkJQuery = setInterval(() => {
       if (window.jQuery) {
         clearInterval(checkJQuery);
-        window.profileDetailsInitialized = true;
         const $ = window.jQuery;
         
         // Star rating click handler - uses existing CSS classes
@@ -3203,14 +3169,19 @@ document.querySelectorAll('.report-link').forEach(function(link) {
               }
             })();
 
-            // Bind click events to gallery links
-            $('.pb-photo-link').off('click.customGallery').on('click.customGallery', function(e) {
-              e.preventDefault();
-              const clickedIndex = galleryImages.indexOf($(this).attr('href'));
-              console.log('Opening gallery at index:', clickedIndex);
-              showImage(clickedIndex);
-              return false;
-            });
+            // Document-level delegation so wire:navigate'd thumbnails
+            // still open the popup. Direct `$('.pb-photo-link').on(...)`
+            // pointed at element refs that get morphed away on soft nav,
+            // leaving every thumb click dead until a hard refresh.
+            $(document)
+              .off('click.customGallery', '.pb-photo-link')
+              .on('click.customGallery', '.pb-photo-link', function(e) {
+                e.preventDefault();
+                const clickedIndex = galleryImages.indexOf($(this).attr('href'));
+                console.log('Opening gallery at index:', clickedIndex);
+                showImage(clickedIndex);
+                return false;
+              });
             
             // Lightbox controls
             $('#customLightbox').off('click.customGallery').on('click.customGallery', function(e) {

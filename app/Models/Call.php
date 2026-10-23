@@ -39,10 +39,16 @@ class Call extends Model
         $clear = function (Call $call) {
             try {
                 foreach ([$call->caller_id, $call->callee_id] as $uid) {
-                    if ($uid) \App\Support\ChatBadges::clear((int) $uid);
+                    if (!$uid) continue;
+                    \App\Support\ChatBadges::clear((int) $uid);
+                    // Also bust Chat::getCallHistory()'s 10s cache so a
+                    // freshly-written row surfaces in the Calls tab on the
+                    // next render instead of waiting out the TTL. Keyed
+                    // per-user to match Cache::remember("chat.calls.{uid}").
+                    \Illuminate\Support\Facades\Cache::forget("chat.calls.{$uid}");
                 }
             } catch (\Throwable $e) {
-                // Stale badge for up to 30s is tolerable; swallow.
+                // Stale badge / list for up to 30s is tolerable; swallow.
             }
         };
         static::created($clear);

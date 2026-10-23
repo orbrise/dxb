@@ -1260,12 +1260,36 @@ class Chat extends Component
     }
 
     /**
+     * Lifecycle hook — fires whenever $newChatOpen changes (including via
+     * the Alpine @entangle sync when the sidebar "+" button sets
+     * `newChatOpen = true` client-side). Clears any lingering
+     * conversation search when the New-chat overlay opens so the stale
+     * dropdown doesn't float on top of the directory. Can't rely on the
+     * view's @click.outside — the "+" button uses .stop so its click
+     * never reaches the document, bypassing Alpine's outside-click.
+     */
+    public function updatedNewChatOpen($value): void
+    {
+        if ($value) {
+            // Sidebar conversation search.
+            $this->searchTerm = '';
+            // New Chat directory's own search — without this, the stale
+            // filtered result from a previous session kept showing on
+            // top of the directory even though the input was empty
+            // (openNewChat() clears this but Alpine's @entangle flip
+            // bypasses that method and only triggers this hook).
+            $this->newChatSearch = '';
+        }
+    }
+
+    /**
      * Show / hide the New-chat overlay (user directory).
      */
     public function openNewChat(): void
     {
         $this->newChatOpen = true;
         $this->newChatSearch = '';
+        $this->searchTerm = '';
     }
 
     public function closeNewChat(): void
@@ -1788,7 +1812,15 @@ class Chat extends Component
         $searchResults  = $wantSearch ? $this->searchUsers() : collect();
         $directoryUsers = $this->newChatOpen ? $this->getDirectoryUsers() : collect();
 
-        $callHistory    = $this->activeTab === 'calls'  ? $this->getCallHistory() : collect();
+        // Always load — ungated. Previously this was gated on
+        // `activeTab === 'calls'`, which meant the Calls panel was
+        // server-rendered with an empty collection on first /my-chat
+        // hit (activeTab defaults to 'chats'), baking "No calls yet"
+        // into the DOM. If the subsequent wire:click → re-render →
+        // morph for the Calls panel didn't swap cleanly, the user kept
+        // seeing stale empty. The 10s cache in getCallHistory() makes
+        // this effectively free after the first fetch.
+        $callHistory    = $this->getCallHistory();
         // Gallery media is also pre-loaded on the Chats tab so switching
         // to Media doesn't flash "No shared media yet" while the Livewire
         // round-trip catches up — Alpine optimistically reveals the grid

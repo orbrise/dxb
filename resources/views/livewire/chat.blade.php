@@ -4115,7 +4115,12 @@
                                open client-side instantly — no waiting for the server
                                round-trip. Livewire still syncs behind the scenes to
                                load directoryUsers. */
-                            newChatOpen: @entangle('newChatOpen'),
+                            {{-- `.live` so Alpine's `newChatOpen = true` from the "+"
+                                 button pushes to the server immediately. Without .live
+                                 the entangle is deferred — the server never saw the
+                                 flip, so `updatedNewChatOpen()` never fired and the
+                                 sidebar/directory searches never cleared. --}}
+                            newChatOpen: @entangle('newChatOpen').live,
                             chatFilter: 'all',
                             /* selConvMeta — populated from the clicked conv-item so
                                the chat header (name/avatar/email) renders instantly
@@ -4274,7 +4279,20 @@
                                      Only shown on Chats + Calls tabs — Status/Gallery/Settings
                                      don't need conversation search. x-show binds to Alpine's
                                      client-side `tab` so tab-swap is instant. --}}
-                                <div class="chat-search" x-show="(tab || '{{ $activeTab ?: 'chats' }}') === 'chats' || (tab || '{{ $activeTab ?: 'chats' }}') === 'calls'" x-cloak>
+                                {{-- @click.outside clears the search when the user taps
+                                     anywhere else (new-chat "+", a conversation in the
+                                     list, empty sidebar space). Previously `searchTerm`
+                                     stuck around and the result dropdown stayed open
+                                     until the user manually deleted the input.
+
+                                     x-show also hides the whole search container the
+                                     instant the New-chat panel opens — without this the
+                                     user briefly saw the stale sidebar search + results
+                                     flash BEFORE the server round-trip cleared them. --}}
+                                <div class="chat-search"
+                                     x-show="!newChatOpen && ((tab || '{{ $activeTab ?: 'chats' }}') === 'chats' || (tab || '{{ $activeTab ?: 'chats' }}') === 'calls')"
+                                     x-cloak
+                                     @click.outside="if ($wire.searchTerm) { $wire.set('searchTerm', ''); }">
                                     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                                     <input
                                         type="text"
@@ -4293,7 +4311,6 @@
                                                     </div>
                                                     <div class="conversation-info">
                                                         <div class="conversation-name">{{ $user->name ?? $user->email }}</div>
-                                                        <div class="conversation-preview">{{ $user->email }}</div>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -4318,7 +4335,11 @@
                                     @php
                                         $supportConvs = collect($conversations)->filter(fn($c) => !empty($c['is_support']));
                                         $nonSupportConvs = collect($conversations)->filter(fn($c) => empty($c['is_support']));
-                                        $unreadCount = $nonSupportConvs->filter(fn($c) => ($c['unread_count'] ?? 0) > 0)->count();
+                                        // Exclude archived — they don't appear in the Unread
+                                        // filter list, so they shouldn't inflate the badge.
+                                        $unreadCount = $nonSupportConvs
+                                            ->filter(fn($c) => ($c['unread_count'] ?? 0) > 0 && empty($c['is_archived']))
+                                            ->count();
                                     @endphp
 
                                     {{-- Filter pills: All / Unread / Active / Archived.
@@ -4346,12 +4367,20 @@
 
                                     @foreach($nonSupportConvs as $conversation)
                                         @php
-                                            $tags = ['all'];
-                                            if (($conversation['unread_count'] ?? 0) > 0) $tags[] = 'unread';
-                                            $lastAt = $conversation['last_message_at'] ?? null;
-                                            if ($lastAt && \Carbon\Carbon::parse($lastAt)->greaterThan(now()->subHours(24))) $tags[] = 'active';
-                                            if (!empty($conversation['is_archived'])) $tags[] = 'archived';
-                                            if (!empty($conversation['is_pinned']))   $tags[] = 'favorites';
+                                            // Archive is EXCLUSIVE — an archived conv only shows
+                                            // in the Archived filter and nowhere else (not All,
+                                            // Unread, Active, or Favorites). Previously 'all'
+                                            // was always added, so archived chats leaked back
+                                            // into every tab.
+                                            if (!empty($conversation['is_archived'])) {
+                                                $tags = ['archived'];
+                                            } else {
+                                                $tags = ['all'];
+                                                if (($conversation['unread_count'] ?? 0) > 0) $tags[] = 'unread';
+                                                $lastAt = $conversation['last_message_at'] ?? null;
+                                                if ($lastAt && \Carbon\Carbon::parse($lastAt)->greaterThan(now()->subHours(24))) $tags[] = 'active';
+                                                if (!empty($conversation['is_pinned']))   $tags[] = 'favorites';
+                                            }
                                             $tagsStr = implode(' ', $tags);
                                         @endphp
                                         <div x-show="'{{ $tagsStr }}'.split(' ').includes(chatFilter)">
