@@ -2470,7 +2470,36 @@ document.querySelectorAll('.report-link').forEach(function(link) {
       if (window.jQuery) {
         clearInterval(checkJQuery);
         const $ = window.jQuery;
-        
+
+        // Bootstrap 3 is loaded via a `defer` <script src> below. On a
+        // hard refresh the CDN race is tiny and the plugin lands before
+        // any user click. On a wire:navigate the inline init re-executes
+        // immediately but the browser is still fetching bootstrap from
+        // the CDN — in production the latency is enough that user clicks
+        // land BEFORE `$.fn.modal` is defined, so the delegated handlers
+        // call .modal("show") on undefined and the popup silently fails.
+        // safeShowModal() waits (up to 5s, polling every 50ms) for the
+        // plugin to attach before invoking it. No-op if the plugin never
+        // loads (e.g. CDN blocked) — logs a warning instead of throwing.
+        window._safeShowModal = function (sel, arg) {
+            const $$ = window.jQuery;
+            if (!$$) return;
+            const start = Date.now();
+            const open = () => {
+                if ($$.fn && typeof $$.fn.modal === 'function') {
+                    try { $$(sel).modal(arg === undefined ? 'show' : arg); }
+                    catch (e) { console.warn('[profile] safeShowModal error', sel, e); }
+                    return;
+                }
+                if (Date.now() - start > 5000) {
+                    console.warn('[profile] bootstrap modal plugin never loaded for', sel);
+                    return;
+                }
+                setTimeout(open, 50);
+            };
+            open();
+        };
+
         // Star rating click handler - uses existing CSS classes
         $(document).on('click', '#reviewStarRating .star', function(e) {
           e.preventDefault();
@@ -2525,7 +2554,7 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           // the Add Review link dead until a hard refresh.
           $(document).off('click.openReviewModal').on('click.openReviewModal', 'a.add-review1', function (e) {
             e.preventDefault();
-            $("div.reviewmodal").modal("show");
+            window._safeShowModal("div.reviewmodal");
           });
 
           // Plain HTTP AJAX review submission — see form comment for why.
@@ -2582,7 +2611,7 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           });
           $(document).off('click.openAskQuestion').on('click.openAskQuestion', 'a.ask-question1', function (e) {
             e.preventDefault();
-            $("div.askq").modal({
+            window._safeShowModal("div.askq", {
               backdrop: 'static',
               keyboard: false
             });
@@ -2640,7 +2669,7 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           });
           $(document).off('click.openMsgModal').on('click.openMsgModal', 'a.send-message1', function (e) {
             e.preventDefault();
-            $("div.msgmodal").modal("show");
+            window._safeShowModal("div.msgmodal");
           });
           $(document).off('click.openCallModal').on('click.openCallModal', 'a.contact-phone1', function(e) {
             e.preventDefault();
@@ -2657,7 +2686,7 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             }
 
             setTimeout(function() {
-              $("div.callnow").modal({
+              window._safeShowModal("div.callnow", {
                 backdrop: 'static',
                 keyboard: false,
                 show: true
@@ -2717,7 +2746,7 @@ document.querySelectorAll('.report-link').forEach(function(link) {
           });
           
           $(".report-link").off('click').on('click', function() {
-            $(".reportModal").modal("show");
+            window._safeShowModal(".reportModal");
           });
 
           // Live character counter for the report textarea.
