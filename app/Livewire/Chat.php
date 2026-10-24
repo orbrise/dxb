@@ -640,12 +640,43 @@ class Chat extends Component
         // Cap the number of conversations we load — top ~100 by
         // last_message_at is more than enough for any active user, and
         // stops power users' sidebars from grinding the DB every 3 s.
-        $conversationRows = Conversation::forUser($userId)
+        //
+        // Sidebar search is pushed into the SQL query so the limit kicks
+        // in AFTER filtering. Previously the limit ran first and the
+        // PHP-side filter below only ever saw the top-100 recent convs,
+        // so searching for a user you chatted with earlier returned
+        // "No conversations" even though the thread existed.
+        $query = Conversation::forUser($userId)
             ->with(['userOne', 'userTwo', 'latestMessage'])
             ->orderByDesc('is_pinned')
-            ->orderByDesc('last_message_at')
-            ->limit(100)
-            ->get();
+            ->orderByDesc('last_message_at');
+
+        if ($this->searchTerm !== '') {
+            $term = $this->searchTerm;
+            $like = '%' . $term . '%';
+            $query->where(function ($q) use ($userId, $like) {
+                // Match on the OTHER participant only — don't match a
+                // conv just because the viewer's own name/email contains
+                // the term (every row would match).
+                $q->where(function ($u) use ($userId, $like) {
+                    $u->where('user_two_id', '!=', $userId)
+                      ->whereHas('userTwo', function ($x) use ($like) {
+                          $x->where('name', 'like', $like)
+                            ->orWhere('email', 'like', $like)
+                            ->orWhere('username', 'like', $like);
+                      });
+                })->orWhere(function ($u) use ($userId, $like) {
+                    $u->where('user_one_id', '!=', $userId)
+                      ->whereHas('userOne', function ($x) use ($like) {
+                          $x->where('name', 'like', $like)
+                            ->orWhere('email', 'like', $like)
+                            ->orWhere('username', 'like', $like);
+                      });
+                });
+            });
+        }
+
+        $conversationRows = $query->limit(100)->get();
 
         // BATCHED unread counts — a single aggregation over the messages
         // table instead of one COUNT query per conversation (was N+1 and
@@ -744,13 +775,9 @@ class Chat extends Component
                 ];
             });
 
-        if ($this->searchTerm) {
-            $search = strtolower($this->searchTerm);
-            $conversations = $conversations->filter(function ($conv) use ($search) {
-                return str_contains(strtolower($conv['other_user_name']), $search) ||
-                       str_contains(strtolower($conv['other_user_email']), $search);
-            });
-        }
+        // Search filter now lives in the SQL above — the PHP post-filter
+        // used to check only other_user_name / other_user_email, so a
+        // username-only match (which the SQL returns) got dropped here.
 
         // "Show all unanswered chats" pref (Chats settings). An unanswered
         // thread = last message was from the other party AND I haven't
@@ -1403,16 +1430,43 @@ class Chat extends Component
      */
     public function setActiveTab(string $tab): void
     {
-        $this->activeTab = in_array($tab, ['chats', 'calls', 'status', 'gallery', 'settings'], true) ? $tab : 'chats';
+        $previous = $this->activeTab;
+        $next = in_array($tab, ['chats', 'calls', 'status', 'gallery', 'settings'], true) ? $tab : 'chats';
+
+        // Fast path — if the tab hasn't actually changed, do no work and
+        // skip render. On mobile the round-trip latency for this call was
+        // showing as a visible lag between tapping the icon and the new
+        // panel appearing. Alpine has already flipped `tab` client-side
+        // so there's genuinely nothing for the server to do.
+        if ($previous === $next) {
+            $this->skipRender();
+            return;
+        }
+
+        $this->activeTab = $next;
+
+        // Clear sidebar search when switching tabs — the term is scoped
+        // to the list under the current tab (chats or calls), so carrying
+        // it across would hide items on the new tab for no good reason.
+        $this->searchTerm = '';
 
         // Match CallLog::mount() — surfacing the calls view acknowledges
         // any missed calls, so the red badge on the phone icon clears.
+        // Deferred to after-response so the DB UPDATE doesn't block the
+        // Livewire response that mobile is waiting on.
         if ($this->activeTab === 'calls' && auth()->check()) {
-            $updated = Call::where('callee_id', auth()->id())
-                ->where('status', 'missed')
-                ->whereNull('seen_at')
-                ->update(['seen_at' => now()]);
-            if ($updated) ChatBadges::clear(auth()->id());
+            $userId = auth()->id();
+            app()->terminating(function () use ($userId) {
+                try {
+                    $updated = Call::where('callee_id', $userId)
+                        ->where('status', 'missed')
+                        ->whereNull('seen_at')
+                        ->update(['seen_at' => now()]);
+                    if ($updated) ChatBadges::clear($userId);
+                } catch (\Throwable $e) {
+                    Log::warning('Deferred missed-call ack failed: ' . $e->getMessage());
+                }
+            });
         }
 
         // Reset transient Status UI state when switching away.
@@ -1805,11 +1859,14 @@ class Chat extends Component
         // searchUsers + getCallHistory + getStatusFeed + getGalleryMedia on
         // EVERY render — including every 3s poll cycle — even though these
         // panels aren't visible unless the matching tab/overlay is active.
-        // Sidebar search also surfaces user matches when the user types in
-        // the conversations search box, so fire searchUsers whenever
-        // searchTerm has content or the New-chat overlay is open.
-        $wantSearch = $this->newChatOpen || strlen((string) $this->searchTerm) >= 2;
-        $searchResults  = $wantSearch ? $this->searchUsers() : collect();
+        //
+        // searchUsers() returns ALL matching users across the platform —
+        // that's only wanted inside the New-chat overlay. The sidebar
+        // search bar (Chats/Calls tabs) is meant to filter the EXISTING
+        // conversations/call-history list for that user, not surface
+        // strangers. Previously the sidebar input also fired searchUsers,
+        // which bled unrelated users into the results dropdown.
+        $searchResults  = $this->newChatOpen ? $this->searchUsers() : collect();
         $directoryUsers = $this->newChatOpen ? $this->getDirectoryUsers() : collect();
 
         // Always load — ungated. Previously this was gated on
@@ -1821,6 +1878,18 @@ class Chat extends Component
         // seeing stale empty. The 10s cache in getCallHistory() makes
         // this effectively free after the first fetch.
         $callHistory    = $this->getCallHistory();
+
+        // Sidebar search filters the Calls list to only peers whose
+        // display name matches the term — same scoping rule as the
+        // Chats list in getConversations(). Filter here (not inside
+        // getCallHistory) so the 10s per-user cache stays keyed on
+        // the full history and isn't thrashed per keystroke.
+        if ($this->activeTab === 'calls' && strlen((string) $this->searchTerm) > 0) {
+            $callSearch = strtolower($this->searchTerm);
+            $callHistory = $callHistory->filter(function ($call) use ($callSearch) {
+                return str_contains(strtolower((string) ($call['peer_name'] ?? '')), $callSearch);
+            })->values();
+        }
         // Gallery media is also pre-loaded on the Chats tab so switching
         // to Media doesn't flash "No shared media yet" while the Livewire
         // round-trip catches up — Alpine optimistically reveals the grid

@@ -546,6 +546,57 @@
             overflow-y: auto;
             padding: 4px 8px 12px;
         }
+
+        /* Skeleton loader shown in the conversation-list slot before
+           Alpine finishes initializing. Alpine's x-init removes the
+           element on boot, but the shimmer gives the user something
+           to look at during the painted-but-not-interactive window. */
+        .chat-list-skeleton {
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-list-skeleton-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 8px;
+        }
+        .chat-list-skeleton-avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: linear-gradient(90deg,
+                rgba(255,255,255,0.04) 0%,
+                rgba(255,255,255,0.09) 50%,
+                rgba(255,255,255,0.04) 100%);
+            background-size: 200% 100%;
+            animation: chatSkelShimmer 1.4s linear infinite;
+        }
+        .chat-list-skeleton-text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .chat-list-skeleton-line {
+            height: 10px;
+            border-radius: 6px;
+            background: linear-gradient(90deg,
+                rgba(255,255,255,0.04) 0%,
+                rgba(255,255,255,0.09) 50%,
+                rgba(255,255,255,0.04) 100%);
+            background-size: 200% 100%;
+            animation: chatSkelShimmer 1.4s linear infinite;
+        }
+        .chat-list-skeleton-line--name    { width: 55%; }
+        .chat-list-skeleton-line--preview { width: 85%; height: 8px; }
+        @keyframes chatSkelShimmer {
+            0%   { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
         /* Section header labels above Support / Favourites / Recent
            groups. Small white bold text with just enough vertical
            breathing room to feel like a category divider without a rule. */
@@ -4331,6 +4382,25 @@
                                  switch (zero server round-trip) — matching
                                  WhatsApp/Telegram tab feel. --}}
                             <div class="conversation-list">
+                                {{-- Skeleton loader — bridges the gap between the
+                                     browser painting the HTML and Alpine finishing
+                                     init. Without this, every panel body inside
+                                     is x-cloak'd (hidden) during Alpine boot and
+                                     the user sees a blank black area under the
+                                     "Messages" header on slow mobile. The skeleton
+                                     is visible by default, then x-init removes
+                                     it the instant Alpine takes over. --}}
+                                <div class="chat-list-skeleton" x-show="false">
+                                    @for($i = 0; $i < 7; $i++)
+                                        <div class="chat-list-skeleton-row">
+                                            <div class="chat-list-skeleton-avatar"></div>
+                                            <div class="chat-list-skeleton-text">
+                                                <div class="chat-list-skeleton-line chat-list-skeleton-line--name"></div>
+                                                <div class="chat-list-skeleton-line chat-list-skeleton-line--preview"></div>
+                                            </div>
+                                        </div>
+                                    @endfor
+                                </div>
                                 <div x-show="(tab || '{{ $activeTab ?: 'chats' }}') === 'chats'" x-cloak>
                                     @php
                                         $supportConvs = collect($conversations)->filter(fn($c) => !empty($c['is_support']));

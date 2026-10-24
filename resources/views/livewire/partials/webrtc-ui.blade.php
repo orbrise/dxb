@@ -292,6 +292,48 @@
        waiting" affordance rather than a loading animation. */
     .rtc-call #rtcSwitchBtn.is-pending { opacity: 0.55; pointer-events: none; }
 
+    /* Highlighted "downgrade available" state — shown on the switch button
+       while a video call is active, so the user clearly sees they can
+       flip back to audio-only. Same visual treatment as the active-share
+       state (white filled circle with dark glyph + lime label). */
+    .rtc-call .rtc-btn.is-active-mode { background: #fff; color: #0a0a0a; }
+    .rtc-ctrl:has(> .rtc-btn.is-active-mode) .rtc-ctrl-label { color: #C1F11D; }
+
+    /* Switch-in-progress overlay — centred spinner + label over the
+       video stage. Visible while a voice↔video switch is in flight so the
+       user sees "something is happening" instead of a frozen avatar until
+       the first remote video frame renders. */
+    .rtc-switch-loader {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: rgba(6, 10, 10, 0.55);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        color: #fff;
+        z-index: 5;
+        pointer-events: none;
+    }
+    .rtc-switch-loader-spinner {
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.18);
+        border-top-color: #C1F11D;
+        animation: rtcSwitchSpin 0.9s linear infinite;
+    }
+    .rtc-switch-loader-label {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+    }
+    @keyframes rtcSwitchSpin {
+        to { transform: rotate(360deg); }
+    }
+
     /* Incoming switch-request prompt. Positioned fixed, above everything,
        with a dark overlay backdrop. Hidden until .open is added.
        z-index must be ABOVE .rtc-call (100040) — on mobile .rtc-call goes
@@ -628,6 +670,14 @@
         </div>
         <video class="rtc-remote" id="rtcRemoteVideo" autoplay playsinline></video>
         <video class="rtc-local"  id="rtcLocalVideo"  autoplay playsinline muted></video>
+        {{-- Switch-in-progress overlay. Shown while we're waiting for the
+             SDP renegotiation + camera acquisition after a mid-call voice↔
+             video switch, so the user sees a spinner instead of a frozen
+             audio-only avatar until the first remote video frame arrives. --}}
+        <div class="rtc-switch-loader" id="rtcSwitchLoader" style="display:none;">
+            <div class="rtc-switch-loader-spinner"></div>
+            <div class="rtc-switch-loader-label" id="rtcSwitchLoaderLabel">Switching to video…</div>
+        </div>
         {{-- Dedicated audio element for remote AUDIO tracks — mobile browsers
              refuse to autoplay audio through a <video> tag when there's no
              video track (voice-only calls), leaving remote voice silent.
@@ -648,18 +698,27 @@
             <span class="rtc-ctrl-label">Audio</span>
         </div>
 
-        {{-- Video / switch — the explicit "video toggle" (rtcVideoBtn) is
-             visible when the current call type is video; "switch" (rtcSwitchBtn)
-             is visible otherwise and sends the upgrade request. Both share
-             the same visual slot. --}}
+        {{-- Camera toggle — on/off during a video call. Hidden during
+             audio calls because there's no local video track to toggle. --}}
         <div class="rtc-ctrl">
             <button type="button" class="rtc-btn" id="rtcVideoBtn" title="Toggle camera" style="display:none;">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M15 8v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2zm7-1l-5 3v4l5 3V7z"/></svg>
             </button>
-            <button type="button" class="rtc-btn" id="rtcSwitchBtn" title="Switch to video" style="display:none;">
+            <span class="rtc-ctrl-label">Camera</span>
+        </div>
+
+        {{-- Switch mode — tap to request a voice↔video flip. Dedicated cell
+             (used to share the Video slot) so it stays visible in BOTH
+             audio and video calls. updateSwitchBtn() flips the icon,
+             label and highlight state based on the current call type:
+               audio call → video icon,  label "Video", normal state
+               video call → phone icon, label "Audio", highlighted (is-active-mode)
+             so the user has a clear "switch back to audio" affordance. --}}
+        <div class="rtc-ctrl" id="rtcSwitchCell" style="display:none;">
+            <button type="button" class="rtc-btn" id="rtcSwitchBtn" title="Switch to video">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M15 8v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2zm7-1l-5 3v4l5 3V7z"/></svg>
             </button>
-            <span class="rtc-ctrl-label">Video</span>
+            <span class="rtc-ctrl-label" id="rtcSwitchLabel">Video</span>
         </div>
 
         <div class="rtc-ctrl">

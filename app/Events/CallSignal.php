@@ -23,6 +23,7 @@ class CallSignal implements ShouldBroadcastNow
     public string $type;        // offer | answer | ice | hangup | decline | ringing
     public string $callType;    // audio | video (only meaningful on offer/ringing)
     public array $payload;      // SDP / ICE candidate / meta
+    public ?int $signalId;      // call_signals row id (dedup key client-side)
 
     public function __construct(
         int $targetUserId,
@@ -30,7 +31,8 @@ class CallSignal implements ShouldBroadcastNow
         string $callId,
         string $type,
         string $callType,
-        array $payload = []
+        array $payload = [],
+        ?int $signalId = null
     ) {
         $this->targetUserId = $targetUserId;
         $this->fromUserId   = $fromUserId;
@@ -38,6 +40,7 @@ class CallSignal implements ShouldBroadcastNow
         $this->type         = $type;
         $this->callType     = $callType;
         $this->payload      = $payload;
+        $this->signalId     = $signalId;
     }
 
     public function broadcastOn(): array
@@ -73,6 +76,7 @@ class CallSignal implements ShouldBroadcastNow
         }
 
         return [
+            'id' => $this->signalId,
             'from' => $this->fromUserId,
             'fromName' => $this->_fromMeta['fromName'],
             'fromAvatar' => $this->_fromMeta['fromAvatar'],

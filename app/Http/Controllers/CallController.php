@@ -149,7 +149,8 @@ class CallController extends Controller
                 $data['call_id'],
                 $data['type'],
                 $data['call_type'],
-                $data['payload'] ?? []
+                $data['payload'] ?? [],
+                $row->id ?? null
             ))->toOthers();
             $rtc->info('signal.broadcast_ok', [
                 'call_id' => $data['call_id'],
@@ -341,6 +342,11 @@ class CallController extends Controller
             'signals' => $rows->map(function ($r) use ($callers) {
                 $u = $callers[$r->from_user_id] ?? null;
                 return [
+                    // Row id is used client-side as the dedup key, so a
+                    // user sending the SAME (callId, type) twice during a
+                    // call (e.g. two renegotiation offers for successive
+                    // mid-call switches) isn't collapsed into one.
+                    'id' => $r->id,
                     'callId' => $r->call_id,
                     'from' => $r->from_user_id,
                     'fromName' => $u?->name ?? $u?->email ?? 'Someone',

@@ -309,11 +309,11 @@
     <div class="list-group list-group-dark">
       <a class="list-group-item contact-phone1" href="javascript:void(0)" style="background-color: #131616 !important;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        <span>Phone</span>
+        <span>Call</span>
       </a>
       <a class="list-group-item send-message1" href="javascript:void(0)" style="background-color: #131616 !important;">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 6H11.25M4.5 9H11.25M4.5 12H8.25M15.75 8.25C15.75 12.3922 12.3922 15.75 8.25 15.75H0.75V8.25C0.75 4.10775 4.10775 0.75 8.25 0.75C12.3922 0.75 15.75 4.10775 15.75 8.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Message</span>
+        <span>Chat</span>
       </a>
       @if(!empty($user->website))
       <a class="list-group-item contact-website track-event" 
@@ -374,11 +374,11 @@
               <div class="ev-profile-actions visible-xs">
                 <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--filled contact-phone1">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                  <span>Phone</span>
+                  <span>Call</span>
                 </a>
                 <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--filled send-message1">
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 5.3H9.85M4 7.9H9.85M4 10.5H7.25M13.75 7.25C13.75 10.8399 10.8399 13.75 7.25 13.75H0.75V7.25C0.75 3.66005 3.66005 0.75 7.25 0.75C10.8399 0.75 13.75 3.66005 13.75 7.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <span>Message</span>
+                  <span>Chat</span>
                 </a>
                 <a href="javascript:void(0)" class="ev-profile-actions__btn ev-profile-actions__btn--ghost ask-question1">
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.5938 7.5C13.5938 9.11616 12.9517 10.6661 11.8089 11.8089C10.6661 12.9517 9.11616 13.5938 7.5 13.5938C5.88384 13.5938 4.33387 12.9517 3.19107 11.8089C2.04827 10.6661 1.40625 9.11616 1.40625 7.5C1.40625 5.88384 2.04827 4.33387 3.19107 3.19107C4.33387 2.04827 5.88384 1.40625 7.5 1.40625C9.11616 1.40625 10.6661 2.04827 11.8089 3.19107C12.9517 4.33387 13.5938 5.88384 13.5938 7.5ZM15 7.5C15 9.48912 14.2098 11.3968 12.8033 12.8033C11.3968 14.2098 9.48912 15 7.5 15C5.51088 15 3.60322 14.2098 2.1967 12.8033C0.790176 11.3968 0 9.48912 0 7.5C0 5.51088 0.790176 3.60322 2.1967 2.1967C3.60322 0.790176 5.51088 0 7.5 0C9.48912 0 11.3968 0.790176 12.8033 2.1967C14.2098 3.60322 15 5.51088 15 7.5ZM4.61906 4.67812C4.35219 5.08062 4.21875 5.4775 4.21875 5.86875C4.21875 6.05938 4.30312 6.23625 4.47188 6.39937C4.64062 6.5625 4.84719 6.64375 5.09156 6.64313C5.50719 6.64313 5.78938 6.41 5.93813 5.94375C6.09562 5.49813 6.28813 5.16062 6.51562 4.93125C6.74312 4.7025 7.0975 4.58813 7.57875 4.58813C7.99 4.58813 8.32594 4.70156 8.58656 4.92844C8.84656 5.15594 8.97656 5.43469 8.97656 5.76469C8.9777 5.93024 8.93361 6.09297 8.84906 6.23531C8.7622 6.37982 8.65625 6.51195 8.53406 6.62813C8.33694 6.80865 8.13434 6.9831 7.92656 7.15125C7.60781 7.41562 7.35406 7.64375 7.16531 7.83562C6.97781 8.02812 6.82687 8.25094 6.7125 8.50406C6.41062 9.67125 7.97813 9.765 8.34 8.93156C8.38375 8.85156 8.45031 8.76281 8.53969 8.66531C8.62969 8.56844 8.74906 8.45594 8.89781 8.32781C9.27713 8.01191 9.65032 7.68872 10.0172 7.35844C10.2247 7.16719 10.4038 6.93906 10.5544 6.67406C10.71 6.39193 10.7882 6.07368 10.7812 5.75156C10.7812 5.30656 10.6488 4.89406 10.3837 4.51406C10.1194 4.13344 9.74438 3.83281 9.25875 3.61219C8.77313 3.39156 8.21312 3.28125 7.57875 3.28125C6.89625 3.28125 6.29906 3.41344 5.78719 3.67781C5.27531 3.94219 4.88594 4.27625 4.61906 4.67812ZM6.62531 11.3156C6.62531 11.5643 6.72408 11.8027 6.8999 11.9785C7.07572 12.1544 7.31417 12.2531 7.56281 12.2531C7.81145 12.2531 8.04991 12.1544 8.22573 11.9785C8.40154 11.8027 8.50031 11.5643 8.50031 11.3156C8.50031 11.067 8.40154 10.8285 8.22573 10.6527C8.04991 10.4769 7.81145 10.3781 7.56281 10.3781C7.31417 10.3781 7.07572 10.4769 6.8999 10.6527C6.72408 10.8285 6.62531 11.067 6.62531 11.3156Z" fill="currentColor"/></svg>
@@ -2158,65 +2158,252 @@
         </div>
     </div>
 
-    <div class="modal callnow" wire:ignore.self data-backdrop="static">
-      <div class="modal-md  modal-dialog">
+    @php
+        $__appSet = \App\Models\Setting::first();
+        $__appName = $__appSet->app_name ?? 'evoory';
+    @endphp
+    <div class="modal callnow callnow-v2" wire:ignore.self data-backdrop="static">
+      <style>
+        /* Redesigned call modal — scoped to .callnow-v2 so the new look
+           doesn't bleed into any other .callnow usages elsewhere. */
+        .callnow-v2 .modal-dialog { max-width: 600px; margin: 40px auto; }
+        .callnow-v2 .modal-content {
+            background: #14141A !important;
+            border: 1px solid #5E6365 !important;
+            border-radius: 5px !important;
+            color: #fff;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+        }
+        .callnow-v2 .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 12px;
+            border-bottom: none !important;
+            background: transparent;
+        }
+        .callnow-v2 .modal-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .callnow-v2 .cn-close {
+            background: #14141A;
+            border: 1px solid #5E6365;
+            color: #d7dadc;
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0;
+            margin: 0 0 0 auto;
+            opacity: 1;
+            float: none;
+            text-shadow: none;
+            flex-shrink: 0;
+        }
+        .callnow-v2 .cn-close:hover { background: #1d2124; color: #fff; }
+        .callnow-v2 .cn-close svg { width: 14px; height: 14px; display: block; }
+        .callnow-v2 .modal-body { padding: 8px 24px 20px; background: transparent; }
+
+        /* Highlighted "Direct Call" card */
+        .cn-direct {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 14px 14px 18px;
+            background: #C1F11D14;
+            border: none;
+            border-radius: 12px;
+            margin-bottom: 18px;
+        }
+        .cn-direct-icon {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: #C1F11D;
+            color: #0a0a0a;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .cn-direct-icon svg { width: 20px; height: 20px; }
+        .cn-direct-text { flex: 1; min-width: 0; }
+        .cn-direct-title { color: #fff; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .cn-direct-title .cn-brand { color: #C1F11D; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .cn-direct-title .cn-brand img { height: 16px; width: auto; display: block; }
+        .cn-direct-sub { color: #8c9196; font-size: 12px; margin-top: 2px; }
+        .cn-direct-btn {
+            background: #C1F11D;
+            color: #0a0a0a !important;
+            border: none;
+            border-radius: 999px;
+            padding: 9px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            text-decoration: none !important;
+            flex-shrink: 0;
+            transition: background 150ms;
+        }
+        .cn-direct-btn:hover { background: #b1dc1a; color: #0a0a0a !important; }
+        .cn-direct-btn svg { width: 14px; height: 14px; }
+
+        /* Contact rows (WhatsApp / Phone / Telegram / Signal) */
+        .cn-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 2px;
+        }
+        .cn-row + .cn-row { border-top: 1px solid #1a1d20; }
+        .cn-row-ico {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .cn-row-ico svg { display: block; }
+        .cn-row-ico.wa { background: #25D366; color: #fff; }
+        .cn-row-ico.tg { background: #26A5E4; color: #fff; }
+        .cn-row-ico.sg { background: #3A76F0; color: #fff; }
+        .cn-row-ico.ph { background: #2a2d30; color: #fff; }
+        .cn-row-num {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 500;
+            text-decoration: none !important;
+            flex-shrink: 0;
+        }
+        .cn-row-num:hover { color: #C1F11D; }
+        .cn-row-note {
+            color: #fff;
+            font-size: 12px;
+            margin-left: 10px;
+            text-align: left;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Disclaimer footer */
+        .callnow-v2 .modal-footer {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 14px 18px;
+            background: #15181b;
+            border-top: 1px solid #1f2224 !important;
+            border-radius: 0 0 14px 14px;
+        }
+        .callnow-v2 .modal-footer svg { flex-shrink: 0; margin-top: 1px; }
+        .callnow-v2 .modal-footer p {
+            margin: 0;
+            color: #a6b4b8;
+            font-size: 12px;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        @media (max-width: 500px) {
+            .callnow-v2 .modal-dialog { margin: 16px 10px; max-width: none; }
+            .cn-direct { flex-wrap: wrap; }
+            .cn-direct-btn { width: 100%; justify-content: center; }
+            .cn-row-note { font-size: 11px; }
+        }
+      </style>
+
+      <div class="modal-md modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-              <i class="fa fa-times" aria-hidden="true"></i>
-            </button>
             <h2 class="modal-title">Call me now</h2>
+            <button type="button" class="cn-close" data-dismiss="modal" aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-          <div class="modal-body modal-call">
-            <ul class="list-unstyled pull-left no-margin">
-              <li> 
-                <span class="lead phone-number">
-                  @if($user->iswhatsapp)
-                  <a class="icon-whatsapp phone-icon whatsapp-rotation-link"
-   data-toggle="tooltip"
-   data-profile-id="{{ $user->id }}"
-   data-phone="{{ $phoneForLink }}"
-   data-profile-url="{{ url()->current() }}"
-   href="https://wa.me/{{ $phoneForLink }}?text=Hi, I found your profile on evoory: {{ url()->current() }}"
-   title="WhatsApp"
-   target="_blank"
-   onclick="handleWhatsAppClick(event, this)">
-</a>
-                  @endif
-
-                  @if($user->istelegram)
-                  <a class="icon-telegram phone-icon" data-toggle="tooltip"
-                    href="https://t.me/{{ $phoneForLink }}" title="Telegram" target="_blank">
-                  </a>
-                  @endif
-
-                  @if($user->issignal)
-                  <a class="icon-signal phone-icon" data-toggle="tooltip"
-                    href="https://signal.me/#p/{{ $phoneE164 }}" title=""
-                    data-original-title="Signal"></a>
-                  @endif
-
-                  {{-- WeChat intentionally removed: uses a separate WeChat
-                       username as its identifier, not the phone number, so
-                       showing the icon without a wechat_id column is
-                       misleading. Re-enable only when a dedicated ID field
-                       and scraper detection are wired up. --}}
-
-                  @if(!$user->iswhatsapp && !$user->istelegram && !$user->issignal)
-                  <i class="phone-icon fa fa-phone"></i>
-                  @endif
-                  <span>
-                    <a class="tel" href="tel:{{ $phoneE164 }}">{{ $phoneDisplay }}</a>
+          <div class="modal-body">
+            {{-- Direct in-site WebRTC call. Uses the same data-rtc-call
+                 hook the chat header uses, so it rides the existing
+                 WebRTC pipeline (coturn + CallSignal), no phone number
+                 or external app needed. --}}
+            <div class="cn-direct">
+              <div class="cn-direct-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <div class="cn-direct-text">
+                <div class="cn-direct-title">
+                  Direct Call on
+                  <span class="cn-brand" aria-label="{{ $__appName }}">
+                    {{-- Inline SVG wordmark so the lime colour stays
+                         consistent regardless of the Setting->app_logo
+                         upload format/path. --}}
+                    <svg width="72" height="18" viewBox="0 0 84 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M15.1939 11.314C13.9944 11.2847 12.8233 11.1185 11.7587 10.5153C10.9903 10.0813 10.8075 9.614 11.1077 8.80456C11.7841 6.98332 14.3698 4.67818 16.6623 4.62735C17.6565 4.60584 18.5676 4.8346 19.3389 5.49642C20.5179 6.51017 20.5511 8.19846 19.4112 9.5573C18.3105 10.8682 16.8627 11.358 15.1939 11.314Z" fill="#D584D0"/>
+                      <path d="M3.47661 15.4242C2.63664 15.4177 1.81846 15.1563 1.13041 14.6744C0.0971048 13.9608 -0.255804 12.8473 0.188018 11.6684C0.391947 11.0979 0.718617 10.5791 1.14496 10.1488C1.57131 9.71835 2.08693 9.38679 2.65544 9.17747C4.59105 8.43256 6.50027 8.64469 8.34106 9.51083C9.28345 9.95465 9.46918 10.4972 8.99212 11.4161C8.03214 13.2647 6.61269 14.6197 4.58029 15.2395C4.22543 15.348 3.84418 15.3656 3.47661 15.4242Z" fill="#D584D0"/>
+                      <path d="M8.81445 14.6593C8.94349 14.0981 9.10773 13.0169 9.45086 11.9934C9.84189 10.8203 10.5878 10.5925 11.67 11.2113C13.2341 12.1039 14.505 13.2936 15.1834 15.0044C15.6429 16.1647 15.6096 17.333 15.0358 18.4562C14.2801 19.9392 12.8128 20.4192 11.321 19.6674C9.48703 18.7377 8.87897 17.1159 8.81445 14.6593Z" fill="#D584D0"/>
+                      <path d="M11.4025 4.98389C11.3419 6.02892 11.1581 7.19518 10.6136 8.28029C10.1678 9.16696 9.55583 9.41429 8.69556 8.94896C6.87334 7.9616 5.47736 6.57441 4.86637 4.53517C4.52421 3.39336 4.73537 2.30335 5.35516 1.30915C6.16166 0.0187452 7.35334 -0.332205 8.72977 0.320819C10.6331 1.21726 11.3692 2.82245 11.4025 4.98389Z" fill="#D584D0"/>
+                      <path d="M82.0595 5.17234H83.9507C83.9753 5.3345 83.9916 5.49781 83.9996 5.66164C83.9996 9.10461 83.9996 12.5476 83.9996 15.9906C83.9996 17.6713 83.3831 19.0413 81.8369 19.807C81.0954 20.2051 80.2611 20.3984 79.4201 20.367C78.579 20.3357 77.7615 20.0807 77.0517 19.6285C76.6371 19.3733 76.2807 19.0339 76.0055 18.6323C75.7303 18.2306 75.5424 17.7757 75.4541 17.297C76.0413 17.297 76.5819 17.2701 77.1177 17.3141C77.2718 17.3141 77.4431 17.5245 77.5458 17.6762C77.8049 18.0964 78.1904 18.4236 78.6472 18.6109C79.1039 18.7981 79.6082 18.8358 80.0877 18.7184C80.5602 18.6186 80.9916 18.3784 81.3252 18.0291C81.6587 17.6798 81.8789 17.2378 81.9568 16.7612C82.0595 15.9588 82.0498 15.1416 82.0914 14.3147C81.9592 14.3147 81.8883 14.3147 81.8467 14.3319C79.1214 16.3331 75.7306 14.9924 75.393 11.653C75.1801 9.61757 75.3122 7.54297 75.3098 5.4855C75.3278 5.40878 75.3651 5.33795 75.4182 5.27972C75.4713 5.22149 75.5384 5.1778 75.6131 5.15278C76.1318 5.11853 76.6553 5.13811 77.2449 5.13811C77.2449 5.6274 77.2449 6.05797 77.2449 6.48121C77.2449 8.04938 77.2302 9.61756 77.2596 11.1857C77.289 12.6291 78.2651 13.5931 79.6327 13.5931C81.0002 13.5931 82.0277 12.5973 82.0498 11.1466C82.0767 9.39494 82.062 7.64326 82.062 5.8916C82.062 5.67631 82.0595 5.45613 82.0595 5.17234Z" fill="#C1F11D"/>
+                      <path d="M24.5352 10.8358C24.5841 11.9587 25.1345 12.6877 26.003 13.2088C26.6311 13.5958 27.3639 13.7783 28.1001 13.7309C28.8363 13.6836 29.5397 13.4088 30.1131 12.9446C30.2537 12.832 30.4233 12.7615 30.6024 12.7415C31.2091 12.7171 31.8256 12.7415 32.4861 12.7415C32.4537 12.8684 32.4078 12.9914 32.3491 13.1085C31.28 14.7819 28.8752 15.6724 26.6734 15.2149C24.4715 14.7574 22.9425 13.2357 22.5951 11.1244C22.2012 8.71712 23.2581 6.49574 25.2862 5.46823C27.3755 4.41136 30.1082 4.84439 31.7204 6.5251C32.7503 7.59909 33.1271 8.92018 33.0733 10.3929C33.0562 10.9018 32.7185 10.8455 32.3981 10.8455H24.5449L24.5352 10.8358ZM31.0794 9.36788C31.0661 8.88289 30.9257 8.40987 30.6725 7.99605C30.4192 7.58223 30.0618 7.24206 29.636 7.00949C29.0744 6.64915 28.4206 6.45903 27.7534 6.46207C27.0862 6.46511 26.4341 6.66118 25.8758 7.02662C25.464 7.26408 25.1214 7.60504 24.8819 8.01572C24.6425 8.42639 24.5145 8.89251 24.5107 9.36788H31.0794Z" fill="#C1F11D"/>
+                      <path d="M49.5647 4.90286C52.6008 4.90286 54.8686 7.14137 54.8662 10.1187C54.8637 13.096 52.5983 15.2954 49.5354 15.2978C46.4333 15.2978 44.2266 13.1205 44.2266 10.0575C44.2241 7.07532 46.4846 4.90286 49.5647 4.90286ZM49.5501 6.66431C47.4901 6.66431 46.0076 8.09549 46.0149 10.0722C46.0149 12.1272 47.4583 13.5462 49.5403 13.556C51.5488 13.556 53.0436 12.0881 53.0509 10.1138C53.0583 8.13952 51.5757 6.66186 49.5525 6.66186L49.5501 6.66431Z" fill="#C1F11D"/>
+                      <path d="M56.1113 10.1018C56.1113 7.12449 58.3278 4.908 61.3418 4.89821C64.4758 4.88598 66.6776 7.04621 66.6776 10.1018C66.6776 13.0987 64.4758 15.2859 61.4544 15.303C58.3596 15.3226 56.1211 13.1599 56.1113 10.1018ZM57.9217 10.0847C57.9217 12.1079 59.3504 13.5293 61.3859 13.5391C63.4213 13.5489 64.9039 12.103 64.9112 10.07C64.9112 8.11286 63.414 6.64499 61.3957 6.64499C59.3773 6.64499 57.9193 8.06393 57.9217 10.0847Z" fill="#C1F11D"/>
+                      <path d="M43.3411 5.14744C42.8811 6.4514 42.4628 7.65749 42.0347 8.8587C41.357 10.7547 40.6598 12.6458 39.9992 14.5467C39.8573 14.9479 39.6787 15.1216 39.2286 15.1167C37.7607 15.0996 37.7607 15.1167 37.2543 13.7663C36.2757 11.0752 35.3216 8.36697 34.3577 5.66608C34.3112 5.53642 34.2892 5.39697 34.2305 5.15966C34.8421 5.15966 35.4023 5.12786 35.943 5.17924C36.0824 5.19392 36.2488 5.46059 36.31 5.64162C37.0439 7.88258 37.7778 10.1284 38.4922 12.3743C38.5485 12.5455 38.6121 12.7143 38.7197 13.0201C38.8105 12.8618 38.8922 12.6984 38.9644 12.5308C39.6983 10.2874 40.4322 8.04894 41.1344 5.79575C41.2983 5.26732 41.5454 5.06181 42.0836 5.13521C42.5022 5.16344 42.922 5.16752 43.3411 5.14744Z" fill="#C1F11D"/>
+                      <path d="M73.5622 5.18717C73.5622 5.70582 73.5817 6.23181 73.545 6.75046C73.545 6.86055 73.3273 7.01957 73.1878 7.04649C71.49 7.38899 70.6778 8.33332 70.6484 10.0874C70.6264 11.5553 70.6215 13.0232 70.6484 14.491C70.6484 14.9803 70.4967 15.132 70.0246 15.1173C68.4858 15.0709 68.6864 15.362 68.6741 13.8134C68.6619 12.2648 68.635 10.677 68.7451 9.11863C68.8322 7.9988 69.3508 6.95658 70.1915 6.21173C71.0322 5.46687 72.1293 5.0776 73.2514 5.12601C73.3564 5.13832 73.4603 5.15877 73.5622 5.18717Z" fill="#C1F11D"/>
+                    </svg>
                   </span>
+                </div>
+                <div class="cn-direct-sub">Call me now from this site (Free &amp; Secure)</div>
+              </div>
+              <button type="button" class="cn-direct-btn"
+                      data-rtc-call="audio"
+                      data-peer-id="{{ $user->id }}"
+                      data-peer-name="{{ $user->name ?? $user->email ?? 'User' }}"
+                      data-peer-avatar="{{ $user->avatar ? user_avatar_url($user) : '' }}"
+                      data-dismiss="modal">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                Call Now
+              </button>
+            </div>
+
+            {{-- WhatsApp row — only when the profile has flagged WhatsApp
+                 as available. Links straight into wa.me with a rotation
+                 message. Telegram/Signal rows are intentionally NOT
+                 rendered because the DB only stores one phone number
+                 per profile, so they would just repeat the same digits
+                 three times which was confusing. If a profile needs a
+                 separate messaging-app number later, add dedicated
+                 columns (wa_number / tg_handle / signal_handle). --}}
+            @if($user->iswhatsapp)
+              <a class="cn-row whatsapp-rotation-link"
+                 href="https://wa.me/{{ $phoneForLink }}?text=Hi, I found your profile on {{ $__appName }}: {{ url()->current() }}"
+                 target="_blank"
+                 data-profile-id="{{ $user->id }}"
+                 data-phone="{{ $phoneForLink }}"
+                 data-profile-url="{{ url()->current() }}"
+                 onclick="handleWhatsAppClick(event, this)"
+                 style="text-decoration:none;">
+                <span class="cn-row-ico wa">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413"/></svg>
                 </span>
-              </li>
-            </ul>
-            <p style="clear:both;font-size:12px" class="text-muted pull-left">Please tell me you found me on evoory.</p>
-            <div class="clearfix"></div>
+                <span class="cn-row-num">{{ $phoneDisplay }}</span>
+                <span class="cn-row-note">Please tell me you found me on {{ $__appName }}.</span>
+              </a>
+            @endif
+
+            {{-- Plain phone row — always shown so tapping/clicking the
+                 number opens the OS dialer. --}}
+            <a class="cn-row tel" href="tel:{{ $phoneE164 }}" style="text-decoration:none;">
+              <span class="cn-row-ico ph">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </span>
+              <span class="cn-row-num">{{ $phoneDisplay }}</span>
+            </a>
           </div>
+
           <div class="modal-footer modal-footer__disclaimer">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="21" viewBox="0 0 24 21" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M23.1939 14.2762L15.9794 2.4494C15.0272 0.888508 13.5868 0 11.9998 0C10.4128 0 8.97238 0.888508 8.02021 2.43739L0.805683 14.2762C0.268561 15.1527 0 16.0652 0 16.9297C0 17.6141 0.170902 18.2864 0.512707 18.8748C1.29398 20.2196 2.80768 21 4.67541 21H19.3242C21.1919 21 22.7056 20.2196 23.4869 18.8748C23.8287 18.2864 23.9996 17.6501 23.9996 16.9777C24.0118 16.0892 23.7432 15.1647 23.1939 14.2762ZM11.9998 5.93139C13.0374 5.93139 13.8919 6.77187 13.8919 7.79245C13.8919 8.81304 13.0496 9.65352 11.9998 9.65352C10.9622 9.65352 10.1077 8.81304 10.1077 7.79245C10.1077 6.75986 10.95 5.93139 11.9998 5.93139ZM14.0628 16.0892C14.0262 16.1372 13.0863 17.1938 11.5359 17.1938H11.3528C10.7302 17.1578 10.2175 16.8937 9.91235 16.4374C9.53392 15.8731 9.47289 15.1046 9.76586 14.2521L10.2664 12.7873C10.5471 11.9708 10.2786 11.8388 10.1321 11.7667L9.96118 11.7427C9.65599 11.7427 9.22874 11.9228 9.09446 11.9949C8.97238 12.0549 8.81369 12.0309 8.71603 11.9108C8.63058 11.7907 8.63058 11.6346 8.72824 11.5266C8.76486 11.4786 9.79027 10.3379 11.4383 10.434C12.0608 10.47 12.5735 10.7341 12.8787 11.1904C13.2694 11.7547 13.3182 12.5232 13.0252 13.3876L12.5247 14.8525C12.2439 15.669 12.5125 15.801 12.659 15.8731L12.8299 15.8971C13.1351 15.8971 13.5623 15.717 13.6966 15.6569C13.8309 15.5849 13.9774 15.6209 14.075 15.741C14.1605 15.825 14.1605 15.9811 14.0628 16.0892Z" fill="#A6B4B8"/></svg>
-            <p class="mb-0 text-left">Do not pay anyone in advance, as this is often used by scammers. Please report any suspicious profiles to us. For your safety, we recommend booking verified escorts.</p>
+            <svg width="24" height="21" viewBox="0 0 24 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M23.1939 14.2762L15.9794 2.4494C15.0272 0.888508 13.5868 0 11.9998 0C10.4128 0 8.97238 0.888508 8.02021 2.43739L0.805683 14.2762C0.268561 15.1527 0 16.0652 0 16.9297C0 17.6141 0.170902 18.2864 0.512707 18.8748C1.29398 20.2196 2.80768 21 4.67541 21H19.3242C21.1919 21 22.7056 20.2196 23.4869 18.8748C23.8287 18.2864 23.9996 17.6501 23.9996 16.9777C24.0118 16.0892 23.7432 15.1647 23.1939 14.2762ZM11.9998 5.93139C13.0374 5.93139 13.8919 6.77187 13.8919 7.79245C13.8919 8.81304 13.0496 9.65352 11.9998 9.65352C10.9622 9.65352 10.1077 8.81304 10.1077 7.79245C10.1077 6.75986 10.95 5.93139 11.9998 5.93139ZM14.0628 16.0892C14.0262 16.1372 13.0863 17.1938 11.5359 17.1938H11.3528C10.7302 17.1578 10.2175 16.8937 9.91235 16.4374C9.53392 15.8731 9.47289 15.1046 9.76586 14.2521L10.2664 12.7873C10.5471 11.9708 10.2786 11.8388 10.1321 11.7667L9.96118 11.7427C9.65599 11.7427 9.22874 11.9228 9.09446 11.9949C8.97238 12.0549 8.81369 12.0309 8.71603 11.9108C8.63058 11.7907 8.63058 11.6346 8.72824 11.5266C8.76486 11.4786 9.79027 10.3379 11.4383 10.434C12.0608 10.47 12.5735 10.7341 12.8787 11.1904C13.2694 11.7547 13.3182 12.5232 13.0252 13.3876L12.5247 14.8525C12.2439 15.669 12.5125 15.801 12.659 15.8731L12.8299 15.8971C13.1351 15.8971 13.5623 15.717 13.6966 15.6569C13.8309 15.5849 13.9774 15.6209 14.075 15.741C14.1605 15.825 14.1605 15.9811 14.0628 16.0892Z" fill="#A6B4B8"/>
+            </svg>
+            <p>Do not pay anyone in advance, as this is often used by scammers. Please report any suspicious profiles to us. For your safety, we recommend booking verified escorts.</p>
           </div>
         </div>
       </div>
