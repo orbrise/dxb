@@ -732,6 +732,10 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 clearTimeout(S.ringTimeout);
                 clearTimeout(S.reconnectTimer); S.reconnectTimer = null;
                 clearTimeout(S.reconnectHardTimer); S.reconnectHardTimer = null;
+                // Transport recovered — clear the "Reconnecting…" label.
+                // The next stats-sampling tick will downgrade to "Low signal"
+                // / "Weak signal" or hide the pill entirely as appropriate.
+                try { setReconnectingState(false); } catch (_) {}
                 // Switch button only makes sense once media is flowing.
                 updateSwitchBtn();
             }
@@ -741,6 +745,9 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             // stabilization; give them time to recover before restarting.
             if (st === 'disconnected' || st === 'failed') {
                 setState('Reconnecting…');
+                // Flash the WhatsApp-style "Reconnecting…" pill instantly —
+                // don't wait for the next 2s stats-sampling tick.
+                try { setReconnectingState(true); } catch (_) {}
                 clearTimeout(S.reconnectTimer);
                 // Longer grace for 'disconnected' — cross-country calls
                 // often recover on their own within 10-15 seconds.
@@ -1251,15 +1258,27 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (lbl) lbl.textContent = 'Share';
     }
 
-    // --- Connection quality indicator ---------------------------------
+    // --- Connection quality indicator (WhatsApp-style) ----------------
+    // Hidden when the connection is good — only surfaces when something
+    // is wrong. Three states:
+    //   good       → pill hidden entirely
+    //   fair       → "Low signal"
+    //   poor       → "Weak signal"
+    //   (disconnected/failed → "Reconnecting…" — set from the pc
+    //    connectionState handler, not from here, so it reflects transport
+    //    reality instantly instead of waiting for the next 2s stats tick.)
+    // The reconnecting state has priority over quality tiers — if
+    // S._reconnecting is true we leave the label alone.
     function startStatsSampling() {
         if (!S.pc || S.statsTicker) return;
         const quality = document.getElementById('rtcQuality');
         const label = document.getElementById('rtcQualityLabel');
-        if (quality) quality.style.display = 'inline-flex';
 
         S.statsTicker = setInterval(async () => {
             if (!S.pc) return;
+            // Don't overwrite "Reconnecting…" while the pc transport is down.
+            if (S._reconnecting) return;
+
             let rttMs = null, lossPct = null;
             try {
                 const stats = await S.pc.getStats();
@@ -1278,23 +1297,21 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 }
             } catch (_) {}
 
-            let tier = 'good', text = 'Good';
+            let tier = 'good', text = '';
             if ((rttMs != null && rttMs > 700) || (lossPct != null && lossPct > 10)) {
-                tier = 'poor'; text = 'Poor connection';
+                tier = 'poor'; text = 'Weak signal';
             } else if ((rttMs != null && rttMs > 300) || (lossPct != null && lossPct > 3)) {
-                tier = 'fair'; text = 'Fair';
+                tier = 'fair'; text = 'Low signal';
             }
             if (quality) {
                 quality.classList.remove('good', 'fair', 'poor');
                 quality.classList.add(tier);
+                quality.style.display = (tier === 'good') ? 'none' : 'inline-flex';
             }
             if (label) label.textContent = text;
 
-            // WhatsApp-style weak-connection alert. We only pop the toast
-            // on the first transition into "poor" so a sustained bad
-            // network doesn't spam a toast every 2 seconds. The toast
-            // self-dismisses after ~4s; when the connection recovers to
-            // "good"/"fair" we reset the latch so a future dip alerts again.
+            // Weak-connection toast (unchanged latching behavior) — only
+            // once per bad spell, resets when quality recovers.
             if (tier === 'poor') {
                 if (!S._weakAlertShown) {
                     S._weakAlertShown = true;
@@ -1304,6 +1321,23 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 S._weakAlertShown = false;
             }
         }, 2000);
+    }
+
+    // Called from the pc.onconnectionstatechange handler so UX reacts the
+    // instant the transport blips, not on the next 2s stats tick.
+    function setReconnectingState(isReconnecting) {
+        S._reconnecting = isReconnecting;
+        const quality = document.getElementById('rtcQuality');
+        const label = document.getElementById('rtcQualityLabel');
+        if (!quality || !label) return;
+        if (isReconnecting) {
+            quality.classList.remove('good', 'fair');
+            quality.classList.add('poor');
+            quality.style.display = 'inline-flex';
+            label.textContent = 'Reconnecting…';
+        }
+        // When recovered, let the next stats-sampling tick decide whether
+        // to re-hide or downgrade to Low/Weak signal.
     }
 
     // --- Timer --------------------------------------------------------
@@ -2004,16 +2038,16 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         } catch (_) {}
     }
     // Adaptive polling. Idle poll is a *safety net* for incoming calls when
-    // the Reverb WebSocket drops a frame; real-time delivery is Reverb's job.
-    // 500ms idle was murdering an 8-worker LiteSpeed pool — 2 requests per
-    // second per authenticated tab, forever, on EVERY page (not just chat).
-    // With 5 logged-in users browsing the site that's 10 req/s of pure
-    // polling, which was starving the pool and making guest page loads
-    // queue 3+ seconds behind the pollers. 15s idle gives a worst-case
-    // 15s "missed call" delay on WebSocket-dropped environments, which is
-    // acceptable; the active-handshake rate stays tight so in-progress
-    // ICE exchanges still feel instant.
-    const POLL_IDLE_MS   = 15000;
+    // the Reverb WebSocket drops a frame; real-time delivery is Reverb's job
+    // (see the Echo listener wired further down — fires on every page via
+    // the layout, so pages other than /my-chat also get instant calls).
+    // 500ms idle killed an 8-worker LiteSpeed pool (2 req/s/tab forever);
+    // 15s was tolerable server-side but gave users a 15s "missed call"
+    // feel when Echo wasn't connected. 5s is the compromise — 3× the
+    // original 15s server load (still 30× less than 500ms), with worst-
+    // case 5s latency when the WebSocket path fails. Active polling
+    // (during a handshake) stays at 120ms so ICE still feels instant.
+    const POLL_IDLE_MS   = 5000;
     const POLL_ACTIVE_MS = 120;
     function pollIntervalMs() {
         // "Active" = any point from an incoming/outgoing call being
@@ -2042,6 +2076,55 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         tick();
     }
     startPolling();
+
+    // --- Global Echo listener for CallSignal --------------------------
+    // Was previously ONLY wired in chat.blade.php. If the callee was on
+    // any other page (listings, profile, home) they had no WebSocket
+    // listener and relied purely on the polling fallback — hence the
+    // multi-second delay before the incoming-call UI appeared. Wire it
+    // here (inside webrtc-scripts.blade.php, which the layout includes
+    // on every page) so instant delivery works site-wide. Dedup is
+    // handled via the same S.pollSeen set the polling path uses, so a
+    // signal arriving over BOTH channels isn't processed twice.
+    @auth
+    (function wireEchoCallListener() {
+        const myUserId = {{ (int) auth()->id() }};
+        if (!myUserId) return;
+        let attempts = 0;
+        const bind = () => {
+            if (!window.Echo || !window.Echo.private) {
+                if (++attempts > 50) return; // ~10s with 200ms ticks
+                return setTimeout(bind, 200);
+            }
+            try {
+                const channel = window.Echo.private('chat.' + myUserId);
+                const forward = (e) => {
+                    try {
+                        const key = `${e.callId}:${e.type}:${e.from}`;
+                        if (S.pollSeen.has(key)) return; // already handled via poll
+                        S.pollSeen.add(key);
+                        if (S.pollSeen.size > 500) {
+                            S.pollSeen = new Set(Array.from(S.pollSeen).slice(-250));
+                        }
+                        if (typeof window.rtcHandleSignal === 'function') {
+                            window.rtcHandleSignal(e);
+                        }
+                    } catch (_) {}
+                };
+                // Triple-fallback event names — Echo/Reverb version
+                // mismatches deliver either the broadcastAs() short name
+                // or the fully-qualified class name. Register all three.
+                channel.listen('.CallSignal',           forward);
+                channel.listen('CallSignal',            forward);
+                channel.listen('.App\\Events\\CallSignal', forward);
+                console.log('[rtc] global CallSignal listener bound on chat.' + myUserId);
+            } catch (err) {
+                console.warn('[rtc] global Echo bind failed:', err);
+            }
+        };
+        bind();
+    })();
+    @endauth
 
     // --- wire:navigate resilience ------------------------------------
     // When the user browses via `wire:navigate` mid-call, Livewire morphs

@@ -604,8 +604,12 @@
              timer, and the Add-participant chip. The chip is a placeholder
              for the group-call feature — click currently just shows a toast. --}}
         <div class="rtc-topbar-right">
-            <span class="rtc-quality good" id="rtcQuality" style="display:none;">
-                <span class="dot"></span> <span id="rtcQualityLabel">Good</span>
+            {{-- WhatsApp-style status: hidden while the connection is good,
+                 shows "Low signal" when quality drops, "Reconnecting…" when
+                 the peer connection flips to disconnected/failed. No colored
+                 dot — text-only, same as WhatsApp's audio-call UI. --}}
+            <span class="rtc-quality" id="rtcQuality" style="display:none;">
+                <span id="rtcQualityLabel"></span>
             </span>
             <span class="rtc-timer" id="rtcTimer" style="display:none;">00:00</span>
             {{-- Add-participant removed — requires an SFU for group calls,
