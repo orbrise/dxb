@@ -344,7 +344,12 @@ class CallController extends Controller
                     'callId' => $r->call_id,
                     'from' => $r->from_user_id,
                     'fromName' => $u?->name ?? $u?->email ?? 'Someone',
-                    'fromAvatar' => $u?->avatar ? asset('storage/' . $u->avatar) : null,
+                    // Must match CallSignal::broadcastWith() — the raw
+                    // asset('storage/'.$u->avatar) concat broke avatars
+                    // for every user whose file wasn't under /storage.
+                    // user_avatar_url() routes through user.avatar when
+                    // an id is known and passes absolute URLs unchanged.
+                    'fromAvatar' => $u ? user_avatar_url($u) : null,
                     'type' => $r->type,
                     'callType' => $r->call_type,
                     'payload' => $r->payload ?: [],

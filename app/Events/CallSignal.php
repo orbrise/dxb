@@ -56,11 +56,19 @@ class CallSignal implements ShouldBroadcastNow
         // incoming-call banner shows "John" instead of the fallback "Someone".
         // Cached on the event instance so repeat calls (broadcast + polling)
         // hit the DB at most once per event.
+        //
+        // Avatar MUST go through user_avatar_url(). Previously we did
+        // `asset('storage/' . $u->avatar)` which broke for every user
+        // whose avatar wasn't stored under /storage — absolute URLs got
+        // double-prefixed, nested paths (avatars/, profile-pics/, etc.)
+        // 404'd, and the incoming-call banner fell back to the lime
+        // initial-letter chip even though the sidebar showed the real
+        // image fine (because the sidebar uses this same helper).
         if (!isset($this->_fromMeta)) {
             $u = \App\Models\User::find($this->fromUserId);
             $this->_fromMeta = [
                 'fromName'   => $u?->name ?? $u?->email ?? 'Someone',
-                'fromAvatar' => $u?->avatar ? asset('storage/' . $u->avatar) : null,
+                'fromAvatar' => $u ? user_avatar_url($u) : null,
             ];
         }
 
