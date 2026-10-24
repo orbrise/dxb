@@ -2628,7 +2628,103 @@
     });
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" defer></script>
+{{-- Vanilla $.fn.modal plugin — defines everything the profile-details
+     modals need (show/hide, backdrop click, close button, Escape key) in
+     ~60 lines, with ZERO external dependency. Previous iterations loaded
+     Bootstrap 3 from jsdelivr (CDN-blocked in prod), then from a local
+     file inside @push('js') (works on hard refresh but soft wire:navigate
+     silently skipped the script tag re-execution, so popups only worked
+     after a hard refresh in production). Defining the plugin inline
+     eliminates both failure modes — it's part of the pushed script
+     stack that Livewire re-executes on every navigation, so $.fn.modal
+     is guaranteed to exist the instant any trigger is clicked. --}}
+<script>
+(function ($) {
+    if (typeof $ !== 'function') return;
+    if ($.fn.modal && $.fn.modal.__vanilla) return;
+
+    function openBackdrop() {
+        if (document.querySelector('.modal-backdrop')) return;
+        var bd = document.createElement('div');
+        bd.className = 'modal-backdrop fade in show';
+        document.body.appendChild(bd);
+    }
+    function closeBackdrop() {
+        var bd = document.querySelector('.modal-backdrop');
+        if (bd && bd.parentNode) bd.parentNode.removeChild(bd);
+    }
+    function anyOpen() {
+        return !!document.querySelector('.modal.in, .modal.show');
+    }
+
+    var impl = function (action) {
+        return this.each(function () {
+            var el = this;
+            var opts = (action && typeof action === 'object') ? action : {};
+            var cmd  = (typeof action === 'string') ? action : 'show';
+            if (opts && opts.show === false) cmd = 'hide';
+
+            if (cmd === 'show') {
+                el.style.display = 'block';
+                el.classList.add('in', 'show', 'fade');
+                el.setAttribute('aria-modal', 'true');
+                el.removeAttribute('aria-hidden');
+                document.body.classList.add('modal-open');
+                openBackdrop();
+                var $el = $(el);
+                $el.data('vm.backdrop', (opts.backdrop !== undefined) ? opts.backdrop : true);
+                $el.data('vm.keyboard', (opts.keyboard !== undefined) ? opts.keyboard : true);
+                $el.trigger('shown.bs.modal');
+            } else if (cmd === 'hide') {
+                el.style.display = 'none';
+                el.classList.remove('in', 'show');
+                el.setAttribute('aria-hidden', 'true');
+                el.removeAttribute('aria-modal');
+                if (!anyOpen()) {
+                    closeBackdrop();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                }
+                $(el).trigger('hidden.bs.modal');
+            } else if (cmd === 'toggle') {
+                if (el.classList.contains('in') || el.classList.contains('show')) {
+                    $(el).modal('hide');
+                } else {
+                    $(el).modal('show');
+                }
+            }
+        });
+    };
+    impl.__vanilla = true;
+    $.fn.modal = impl;
+
+    // Close button + any element with data-dismiss="modal" inside a modal.
+    $(document).off('click.vmodalDismiss').on('click.vmodalDismiss',
+        '.modal [data-dismiss="modal"], .modal .close',
+        function (e) {
+            e.preventDefault();
+            var m = e.target.closest ? e.target.closest('.modal') : $(e.target).closest('.modal')[0];
+            if (m) $(m).modal('hide');
+        }
+    );
+    // Backdrop click (click on the .modal element itself, not its children).
+    $(document).off('click.vmodalBg').on('click.vmodalBg', '.modal', function (e) {
+        if (e.target !== this) return;
+        if ($(this).data('vm.backdrop') === 'static') return;
+        $(this).modal('hide');
+    });
+    // Escape key closes the top-most open modal, unless keyboard:false.
+    $(document).off('keydown.vmodal').on('keydown.vmodal', function (e) {
+        if (e.key !== 'Escape') return;
+        var open = document.querySelectorAll('.modal.in, .modal.show');
+        if (!open.length) return;
+        var m = open[open.length - 1];
+        if ($(m).data('vm.keyboard') === false) return;
+        $(m).modal('hide');
+    });
+})(window.jQuery);
+</script>
 <script>
 /* Inject SVG close icons into all modal close buttons */
 document.querySelectorAll('.modal .close').forEach(function(btn) {
@@ -2658,33 +2754,14 @@ document.querySelectorAll('.report-link').forEach(function(link) {
         clearInterval(checkJQuery);
         const $ = window.jQuery;
 
-        // Bootstrap 3 is loaded via a `defer` <script src> below. On a
-        // hard refresh the CDN race is tiny and the plugin lands before
-        // any user click. On a wire:navigate the inline init re-executes
-        // immediately but the browser is still fetching bootstrap from
-        // the CDN — in production the latency is enough that user clicks
-        // land BEFORE `$.fn.modal` is defined, so the delegated handlers
-        // call .modal("show") on undefined and the popup silently fails.
-        // safeShowModal() waits (up to 5s, polling every 50ms) for the
-        // plugin to attach before invoking it. No-op if the plugin never
-        // loads (e.g. CDN blocked) — logs a warning instead of throwing.
+        // $.fn.modal is defined inline above (vanilla, no CDN). It is
+        // attached synchronously the moment jQuery loads, so we no longer
+        // need the retry loop that polled for the Bootstrap plugin.
         window._safeShowModal = function (sel, arg) {
-            const $$ = window.jQuery;
-            if (!$$) return;
-            const start = Date.now();
-            const open = () => {
-                if ($$.fn && typeof $$.fn.modal === 'function') {
-                    try { $$(sel).modal(arg === undefined ? 'show' : arg); }
-                    catch (e) { console.warn('[profile] safeShowModal error', sel, e); }
-                    return;
-                }
-                if (Date.now() - start > 5000) {
-                    console.warn('[profile] bootstrap modal plugin never loaded for', sel);
-                    return;
-                }
-                setTimeout(open, 50);
-            };
-            open();
+            var $$ = window.jQuery;
+            if (!$$ || !$$.fn || typeof $$.fn.modal !== 'function') return;
+            try { $$(sel).modal(arg === undefined ? 'show' : arg); }
+            catch (e) { console.warn('[profile] showModal error', sel, e); }
         };
 
         // Star rating click handler - uses existing CSS classes
@@ -2862,23 +2939,17 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             e.preventDefault();
             e.stopPropagation();
 
-            // Use mobile bottom sheet on small screens
-            if (window.innerWidth < 768) {
-                var overlay = document.getElementById('evMobileCallOverlay');
-                if (overlay) {
-                    overlay.style.display = 'flex';
-                    document.body.style.overflow = 'hidden';
-                }
-                return false;
-            }
-
-            setTimeout(function() {
-              window._safeShowModal("div.callnow", {
-                backdrop: 'static',
-                keyboard: false,
-                show: true
-              });
-            }, 100);
+            // Use the same redesigned Bootstrap modal on BOTH desktop
+            // and mobile — previously mobile branched to the old
+            // evMobileCallOverlay bottom-sheet (now obsolete) which
+            // meant redesigning .callnow had no effect on phones. The
+            // new .callnow modal has its own mobile CSS so one modal
+            // works everywhere.
+            window._safeShowModal("div.callnow", {
+              backdrop: 'static',
+              keyboard: false,
+              show: true
+            });
 
             return false;
           });
@@ -3389,9 +3460,18 @@ document.querySelectorAll('.report-link').forEach(function(link) {
             // still open the popup. Direct `$('.pb-photo-link').on(...)`
             // pointed at element refs that get morphed away on soft nav,
             // leaving every thumb click dead until a hard refresh.
+            //
+            // Selector is scoped to `.profile-details-page .pb-photo-link`
+            // because the listing + home pages ALSO use .pb-photo-link on
+            // their profile cards (as wire:navigate anchors). Without the
+            // ancestor filter, the handler stays attached on `document`
+            // after you leave profile-details and intercepts every card
+            // click on the listing, opening the lightbox with the card's
+            // profile URL (not an image) and then letting wire:navigate
+            // redirect — a "slideshow then redirect" flash.
             $(document)
-              .off('click.customGallery', '.pb-photo-link')
-              .on('click.customGallery', '.pb-photo-link', function(e) {
+              .off('click.customGallery', '.profile-details-page .pb-photo-link')
+              .on('click.customGallery', '.profile-details-page .pb-photo-link', function(e) {
                 e.preventDefault();
                 const clickedIndex = galleryImages.indexOf($(this).attr('href'));
                 console.log('Opening gallery at index:', clickedIndex);
@@ -3509,12 +3589,23 @@ document.querySelectorAll('.report-link').forEach(function(link) {
   document.addEventListener('livewire:init', initProfileDetails);
   document.addEventListener('livewire:navigated', initProfileDetails);
   document.addEventListener('DOMContentLoaded', initProfileDetails);
-  
+
   // Try Livewire events only if Livewire is available
   if (typeof window.Livewire !== 'undefined') {
     window.Livewire.on('profile-loaded', initProfileDetails);
   }
-  
+
+  // Immediate call. All the listeners above only fire for FUTURE events.
+  // On a soft wire:navigate TO this page, Livewire re-executes this
+  // pushed <script> AFTER its own livewire:navigated event has already
+  // dispatched and AFTER DOMContentLoaded + window load have fired for
+  // the full-page lifecycle — so none of those listeners would ever run
+  // and the modal click handlers would never bind, leaving every popup
+  // dead until a hard refresh. Calling initProfileDetails() here runs
+  // it synchronously under the current execution (DOM is already parsed
+  // since this script sits at the bottom of the pushed stack).
+  initProfileDetails();
+
   // Additional fallback initialization
   window.addEventListener('load', function() {
     console.log('Window load event - initializing profile details');
