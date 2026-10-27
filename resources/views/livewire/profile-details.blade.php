@@ -346,6 +346,82 @@
         <article data-listing="">
           <div class="row">
             <div class="col-xs-12 col-sm-9 col-sm-push-3 col-md-9 col-lg-7 col-lg-push-5" id="listing-content">
+              {{-- ═══════════════════════════════════════════════════════════
+                   Videos — rendered FIRST (above all image galleries) so
+                   they're the primary visual the user sees. Each tile shows
+                   the client-captured first-frame thumbnail + a play glyph;
+                   clicking opens the lightbox (handled by the delegated
+                   .profile-video-tile click handler below). Reuses one
+                   lightbox DOM/CSS pattern for a consistent playback UX.
+                   ═══════════════════════════════════════════════════════════ --}}
+              @if(isset($videos) && $videos->count() > 0)
+                  <div class="profile-videos-wrap" style="margin-bottom:24px;">
+                      <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;color:#fff;">Videos</h3>
+                      <div class="profile-videos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;">
+                          @foreach($videos as $pv)
+                              <button type="button"
+                                      class="profile-video-tile"
+                                      data-video-url="{{ $pv->video_url }}"
+                                      data-video-title="{{ $userName }} - {{ $userCityField }}"
+                                      style="position:relative;aspect-ratio:1/1;border:none;padding:0;background:#000;border-radius:8px;overflow:hidden;cursor:pointer;">
+                                  @if($pv->thumbnail_url)
+                                      <img src="{{ $pv->thumbnail_url }}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
+                                  @else
+                                      {{-- No poster saved — use metadata-only video so browser
+                                           decodes just enough bytes to show frame 0 as the tile. --}}
+                                      <video src="{{ $pv->video_url }}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+                                  @endif
+                                  <span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;display:inline-flex;align-items:center;justify-content:center;">
+                                      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                  </span>
+                              </button>
+                          @endforeach
+                      </div>
+                  </div>
+
+                  {{-- Lightweight lightbox — appended once, reused for every tile. --}}
+                  @once
+                  <div id="profileVideoLightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10050;align-items:center;justify-content:center;padding:16px;">
+                      <button type="button" id="pvlCloseBtn" aria-label="Close" style="position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;border:none;font-size:22px;cursor:pointer;">&times;</button>
+                      <video id="pvlVideo" controls playsinline style="max-width:100%;max-height:100%;background:#000;"></video>
+                  </div>
+                  <script>
+                  (function () {
+                      if (window.__profileVideoLightboxWired) return;
+                      window.__profileVideoLightboxWired = true;
+
+                      const open = (url) => {
+                          const lb = document.getElementById('profileVideoLightbox');
+                          const v  = document.getElementById('pvlVideo');
+                          if (!lb || !v) return;
+                          v.src = url;
+                          lb.style.display = 'flex';
+                          v.play().catch(() => {});
+                      };
+                      const close = () => {
+                          const lb = document.getElementById('profileVideoLightbox');
+                          const v  = document.getElementById('pvlVideo');
+                          if (!lb || !v) return;
+                          try { v.pause(); } catch (_) {}
+                          v.removeAttribute('src');
+                          v.load();
+                          lb.style.display = 'none';
+                      };
+
+                      document.addEventListener('click', (e) => {
+                          const tile = e.target.closest('.profile-video-tile[data-video-url]');
+                          if (tile) { e.preventDefault(); open(tile.getAttribute('data-video-url')); return; }
+                          if (e.target.id === 'pvlCloseBtn') { close(); return; }
+                          if (e.target.id === 'profileVideoLightbox') { close(); }
+                      });
+                      document.addEventListener('keydown', (e) => {
+                          if (e.key === 'Escape') close();
+                      });
+                  })();
+                  </script>
+                  @endonce
+              @endif
+
               <div class="visible-xs pb-thumbnails">
                 <div class="listing-photos-xs">
                   @foreach($images as $img)

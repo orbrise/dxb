@@ -5,7 +5,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\On;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use App\Models\{Listing, Service, Country, City, User, ProfileImage, UserService,
+use App\Models\{Listing, Service, Country, City, User, ProfileImage, ProfileVideo, UserService,
     Gender, Currency, Ethnicity, Bust, HairColor, Language, UserLanguage, UsersProfile};
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -100,6 +100,18 @@ class NewProfile extends Component
     public $mainImage = 0;
     public $tempImages = [];
 
+    /**
+     * Video uploads — mirrors $mphoto / $tempImages. Cap of 10 videos per
+     * profile enforced in updatedMvideo() + addUploadedTempVideo(). Each
+     * tempVideo gets a client-captured first-frame thumbnail in the
+     * $videoThumbnails array (indexed-matched), stored as base64 JPEG data
+     * URL so it survives Livewire request serialization — we decode it to
+     * a real JPEG on save (saveProfileWithPackage) and store beside the MP4.
+     */
+    public $mvideo;
+    public $tempVideos = [];
+    public $videoThumbnails = []; // base64 data URLs keyed by tempVideos index
+
     protected $rules = [
         'name' => 'required|min:3|max:40',
         'city' => 'required', // Add this rule
@@ -113,7 +125,13 @@ class NewProfile extends Component
         'mphoto' => 'nullable|array',
         'mphoto.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192',
         'tempImages' => 'array',
-        'tempImages.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192'
+        'tempImages.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192',
+        // 50 MB per video, mp4/webm/mov accepted. Count-cap (10) enforced
+        // in updatedMvideo() so we can show a specific friendly error.
+        'mvideo' => 'nullable|array',
+        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+        'tempVideos' => 'array|max:10',
+        'tempVideos.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
     ];
 
     protected $messages = [
@@ -161,21 +179,130 @@ class NewProfile extends Component
 
     public function updatedMphoto()
 {
-    $this->validate([
-        'mphoto.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192'
-    ]);
+    // Unified picker: `#mphoto` now accepts both images AND videos. We route
+    // each file by its sniffed mime type so the user can drop a mix of
+    // photos and clips through one button. Images go to tempImages (8 MB cap,
+    // image mimes); videos go to tempVideos (50 MB cap, video mimes with the
+    // 10-count limit enforced in the same way as updatedMvideo).
+    $incoming = is_array($this->mphoto) ? $this->mphoto : [$this->mphoto];
 
-    // Handle multiple files
-    if (is_array($this->mphoto)) {
-        foreach ($this->mphoto as $photo) {
-            $this->tempImages[] = $photo;
+    foreach ($incoming as $file) {
+        if (!$file) continue;
+        $mime = $file->getMimeType() ?: '';
+        $isVideo = str_starts_with($mime, 'video/');
+
+        try {
+            if ($isVideo) {
+                // Validate as a video and enforce the 10-cap.
+                if (count($this->tempVideos) >= 10) {
+                    $this->addError('mphoto', 'You can upload a maximum of 10 videos per profile.');
+                    continue;
+                }
+                validator(
+                    ['file' => $file],
+                    ['file' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200']
+                )->validate();
+                $this->tempVideos[] = $file;
+            } else {
+                // Validate as an image.
+                validator(
+                    ['file' => $file],
+                    ['file' => 'image|mimes:jpeg,png,jpg,gif,webp|max:8192']
+                )->validate();
+                $this->tempImages[] = $file;
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->addError('mphoto', $file->getClientOriginalName() . ': ' . ($e->validator->errors()->first() ?? 'rejected'));
         }
-    } else {
-        $this->tempImages[] = $this->mphoto;
     }
 
-    $this->mphoto = null; // Reset the input
+    $this->mphoto = null;
     $this->dispatch('fileUploaded');
+}
+
+/**
+ * Mirror of updatedMphoto() for videos. Validates mime + size, then
+ * appends to $tempVideos. Hard-caps at 10 per profile with a user-visible
+ * error so they don't silently lose the 11th-and-on uploads.
+ */
+public function updatedMvideo()
+{
+    $this->validate([
+        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+    ]);
+
+    $incoming = is_array($this->mvideo) ? $this->mvideo : [$this->mvideo];
+    foreach ($incoming as $vid) {
+        if (count($this->tempVideos) >= 10) {
+            $this->addError('mvideo', 'You can upload a maximum of 10 videos per profile.');
+            break;
+        }
+        $this->tempVideos[] = $vid;
+    }
+
+    $this->mvideo = null;
+    $this->dispatch('fileUploaded');
+}
+
+/**
+ * Called by the client-side thumbnail capture JS once the <canvas>
+ * finishes drawing the first frame of each video. Payload is a base64
+ * JPEG data URL ("data:image/jpeg;base64,...").
+ *
+ * We decode and write to disk IMMEDIATELY (storage/app/livewire-tmp/vt_*.jpg),
+ * then only keep the small temp FILENAME in Livewire state. Prior version
+ * kept the full base64 blob in the component property → serialized into
+ * every subsequent Livewire payload AND into session on form submit, so a
+ * profile with 10 clips carried ~5 MB of base64 on every request. That
+ * triggered Cloudflare 520s on the submit (nginx body-size + PHP memory
+ * limits) and bloated Redis/file sessions. Keeping only the filename makes
+ * each video "cost" ~40 bytes in state regardless of thumbnail size.
+ *
+ * Guarded: index must exist in tempVideos (prevents stale events from a
+ * removed video overwriting an unrelated slot after re-indexing).
+ */
+#[On('setVideoThumbnail')]
+public function setVideoThumbnail($index, $dataUrl)
+{
+    $i = (int) $index;
+    if (!array_key_exists($i, $this->tempVideos)) return;
+    if (!is_string($dataUrl) || !str_starts_with($dataUrl, 'data:image/')) return;
+    // Reject thumbnails > 500 KB — a 1280x720 JPEG is ~80 KB; anything
+    // larger is likely a bug or malicious payload stuffed into the field.
+    if (strlen($dataUrl) > 500 * 1024) return;
+
+    if (!preg_match('#^data:image/\w+;base64,(.+)$#', $dataUrl, $m)) return;
+    $bytes = base64_decode($m[1], true);
+    if ($bytes === false || strlen($bytes) === 0) return;
+
+    // Remove any previous temp thumbnail for this slot so we don't orphan
+    // files on disk if the user swaps a video out and in.
+    $this->deleteTempThumbnail($this->videoThumbnails[$i] ?? null);
+
+    $filename = 'vt_' . bin2hex(random_bytes(16)) . '.jpg';
+    Storage::disk('local')->put('livewire-tmp/' . $filename, $bytes);
+    $this->videoThumbnails[$i] = $filename;
+}
+
+/** Delete a livewire-tmp thumbnail file by basename. Safe no-op on null / missing. */
+private function deleteTempThumbnail(?string $filename): void
+{
+    if (!$filename) return;
+    $safe = basename($filename);
+    if ($safe !== $filename) return;
+    try { Storage::disk('local')->delete('livewire-tmp/' . $safe); } catch (\Throwable $e) {}
+}
+
+public function removeTemporaryVideo($index)
+{
+    // Clean up the on-disk thumbnail for this slot.
+    $this->deleteTempThumbnail($this->videoThumbnails[$index] ?? null);
+
+    unset($this->tempVideos[$index]);
+    unset($this->videoThumbnails[$index]);
+    // Re-index both arrays so they stay in lockstep (same numeric keys).
+    $this->tempVideos      = array_values($this->tempVideos);
+    $this->videoThumbnails = array_values($this->videoThumbnails);
 }
 
 
@@ -345,6 +472,22 @@ public function updateProfile()
     }
     $sessionData['tempImagePaths'] = $imagePaths;
 
+    // Same for videos — real paths + original filenames + mime + size, plus
+    // the parallel array of client-captured thumbnails (base64 data URLs).
+    // saveProfileWithPackage() reads this to persist both the MP4 and the
+    // decoded JPEG beside it in /uservideos/{user_id}/{profile_id}/.
+    $videoPaths = [];
+    foreach ($this->tempVideos as $key => $vid) {
+        $videoPaths[$key] = [
+            'path'      => $vid->getRealPath(),
+            'original'  => $vid->getClientOriginalName(),
+            'mime'      => $vid->getMimeType() ?: 'video/mp4',
+            'size'      => $vid->getSize(),
+        ];
+    }
+    $sessionData['tempVideoPaths']  = $videoPaths;
+    $sessionData['videoThumbnails'] = $this->videoThumbnails;
+
     // Store in session with user-specific key
     session(['new_profile_data_' . auth()->id() => $sessionData]);
     
@@ -501,6 +644,69 @@ public function saveProfileWithPackage($packageId, $duration)
                 'image_webp' => $fileName.'.webp',
                 'is_main' => $key == $sessionData['mainImage'] || ($sessionData['mainImage'] == 0 && $key == 0)
             ]);
+        }
+
+        // ─── Videos ──────────────────────────────────────────────────────────
+        // Same disk, parallel directory tree: uservideos/{user_id}/{profile_id}
+        // Thumbnails (base64-captured client-side) decoded to JPEG and stored
+        // beside the MP4 so the profile grid has a poster without the browser
+        // having to decode frame 0 of every clip on first paint.
+        $videoBasePath = "uservideos/{$profile->user_id}/{$profile->id}";
+        if (!empty($sessionData['tempVideoPaths'])) {
+            foreach (['uservideos', "uservideos/{$profile->user_id}", $videoBasePath] as $dir) {
+                if (!$externalDisk->exists($dir)) {
+                    $externalDisk->makeDirectory($dir, 0755, true);
+                }
+            }
+
+            $vThumbs = $sessionData['videoThumbnails'] ?? [];
+            foreach ($sessionData['tempVideoPaths'] as $vKey => $vMeta) {
+                if (empty($vMeta['path']) || !file_exists($vMeta['path'])) {
+                    continue; // Livewire temp file gone — skip rather than erroring the whole transaction
+                }
+                // Pick extension from mime; default .mp4 for anything odd.
+                $ext = match ($vMeta['mime']) {
+                    'video/webm'      => 'webm',
+                    'video/quicktime' => 'mov',
+                    default           => 'mp4',
+                };
+                $uuid     = (string) \Illuminate\Support\Str::uuid();
+                $vidName  = $uuid . '.' . $ext;
+                $thumbName = null;
+
+                $externalDisk->put("{$videoBasePath}/{$vidName}", file_get_contents($vMeta['path']));
+
+                // Thumbnail (optional — fall back to <video poster-less> if missing).
+                // $vThumbs[$vKey] is now a FILENAME in storage/app/livewire-tmp,
+                // not a base64 data URL (see setVideoThumbnail). Read, upload,
+                // then delete the temp file so livewire-tmp doesn't accumulate
+                // orphaned frame captures.
+                if (!empty($vThumbs[$vKey])) {
+                    $tmpName = basename($vThumbs[$vKey]);
+                    if ($tmpName === $vThumbs[$vKey]) {
+                        $tmpPath = storage_path('app/livewire-tmp/' . $tmpName);
+                        if (is_file($tmpPath)) {
+                            $thumbBytes = @file_get_contents($tmpPath);
+                            if ($thumbBytes !== false && strlen($thumbBytes) > 0) {
+                                $thumbName = $uuid . '.jpg';
+                                $externalDisk->put("{$videoBasePath}/{$thumbName}", $thumbBytes);
+                            }
+                            @unlink($tmpPath);
+                        }
+                    }
+                }
+
+                ProfileVideo::create([
+                    'user_id'         => $profile->user_id,
+                    'profile_id'      => $profile->id,
+                    'video'           => $vidName,
+                    'video_thumbnail' => $thumbName,
+                    'mime'            => $vMeta['mime'],
+                    'size_bytes'      => $vMeta['size'] ?? null,
+                    'is_main'         => false,
+                    'video_order'     => $vKey,
+                ]);
+            }
         }
         
         // Attach languages

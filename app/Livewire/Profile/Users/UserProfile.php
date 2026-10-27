@@ -11,6 +11,7 @@ use App\Models\Service;
 use App\Models\Country;
 use App\Models\User;
 use App\Models\ProfileImage;
+use App\Models\ProfileVideo;
 use App\Models\UserService;
 use App\Models\Gender;
 use App\Models\Currency;
@@ -41,6 +42,14 @@ class UserProfile extends Component
     public $mainImage = 0;
     public $tempImages = [];
     public $imagePositions = [];
+
+    // Video upload state — mirrors tempImages exactly, 10-cap enforced in
+    // updatedMvideo(). videoThumbnails = index-matched base64 data URLs
+    // captured client-side via <canvas> drawing the first frame.
+    public $mvideo;
+    public $tempVideos = [];
+    public $videoThumbnails = [];
+
     protected $listeners = ['clearLanguage'];
     protected $rules = [
         'name' => 'required|min:3|max:40',
@@ -50,7 +59,12 @@ class UserProfile extends Component
         'mphoto' => 'nullable|array',
         'mphoto.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         'tempImages' => 'array',
-        'tempImages.*' => 'image|mimes:jpeg,png,jpg|max:5120'
+        'tempImages.*' => 'image|mimes:jpeg,png,jpg|max:5120',
+        // 50 MB per video, mp4/webm/mov. 10-cap enforced in updatedMvideo.
+        'mvideo' => 'nullable|array',
+        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+        'tempVideos' => 'array|max:10',
+        'tempVideos.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
     ];
 
 
@@ -192,6 +206,13 @@ class UserProfile extends Component
             ->orderBy('image_order', 'asc')
             ->orderBy('id', 'asc')
             ->get();
+        // Saved videos for this profile — mirrors $pimgs. View renders these
+        // above the pending-upload previews so the user sees everything at
+        // once (saved + queued) when adding more.
+        $pvids = ProfileVideo::where(['user_id' => Auth::user()->id, 'profile_id' => $this->id])
+            ->orderBy('video_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
         $currencies = Currency::select('id', 'code', 'symbol')
             ->get()
             ->unique('code')
@@ -204,7 +225,7 @@ class UserProfile extends Component
         $uservices = UserService::where(["user_id" =>  Auth::user()->id, 'profile_id' => $this->id])->pluck("service_id")->toArray();
        $userlangs = UserLanguage::where(["user_id" =>  Auth::user()->id, 'profile_id' => $this->id])->get();
       
-        return view('livewire.profile.users.user-profile', compact('listings','services', 'countries', 'user', 'pimgs', 'genders',
+        return view('livewire.profile.users.user-profile', compact('listings','services', 'countries', 'user', 'pimgs', 'pvids', 'genders',
         'currencies','ethnicities','busts', 'hairs', 'languages', 'uservices', 'userlangs'));
     }
 
@@ -386,6 +407,72 @@ class UserProfile extends Component
             }
         }
 
+        // ─── Videos ──────────────────────────────────────────────────────────
+        // Append any newly-uploaded videos. Existing ProfileVideo rows are
+        // untouched (editing is additive for videos). Removals happen via
+        // removeVideo() which fires on the delete button directly, not here.
+        if (!empty($this->tempVideos)) {
+            $videoBasePath = "uservideos/{$profile->user_id}/{$profile->id}";
+            foreach (['uservideos', "uservideos/{$profile->user_id}", $videoBasePath] as $dir) {
+                if (!$externalDisk->exists($dir)) {
+                    $externalDisk->makeDirectory($dir, 0755, true);
+                }
+            }
+
+            // Highest video_order already in use → so new videos append cleanly.
+            $nextOrder = (int) (ProfileVideo::where('profile_id', $profile->id)->max('video_order') ?? -1) + 1;
+
+            foreach ($this->tempVideos as $vKey => $video) {
+                if (!$video || !$video->getRealPath() || !file_exists($video->getRealPath())) {
+                    continue;
+                }
+                $mime = $video->getMimeType() ?: 'video/mp4';
+                $ext  = match ($mime) {
+                    'video/webm'      => 'webm',
+                    'video/quicktime' => 'mov',
+                    default           => 'mp4',
+                };
+                $uuid      = (string) \Illuminate\Support\Str::uuid();
+                $vidName   = $uuid . '.' . $ext;
+                $thumbName = null;
+
+                $externalDisk->put("{$videoBasePath}/{$vidName}", file_get_contents($video->getRealPath()));
+
+                // Read the client-captured thumbnail from storage/app/livewire-tmp
+                // (filename stored in setVideoThumbnail) and upload it beside the MP4.
+                // Delete the temp afterwards so livewire-tmp doesn't accumulate frames.
+                if (!empty($this->videoThumbnails[$vKey])) {
+                    $tmpName = basename($this->videoThumbnails[$vKey]);
+                    if ($tmpName === $this->videoThumbnails[$vKey]) {
+                        $tmpPath = storage_path('app/livewire-tmp/' . $tmpName);
+                        if (is_file($tmpPath)) {
+                            $thumbBytes = @file_get_contents($tmpPath);
+                            if ($thumbBytes !== false && strlen($thumbBytes) > 0) {
+                                $thumbName = $uuid . '.jpg';
+                                $externalDisk->put("{$videoBasePath}/{$thumbName}", $thumbBytes);
+                            }
+                            @unlink($tmpPath);
+                        }
+                    }
+                }
+
+                ProfileVideo::create([
+                    'user_id'         => $profile->user_id,
+                    'profile_id'      => $profile->id,
+                    'video'           => $vidName,
+                    'video_thumbnail' => $thumbName,
+                    'mime'            => $mime,
+                    'size_bytes'      => $video->getSize(),
+                    'is_main'         => false,
+                    'video_order'     => $nextOrder++,
+                ]);
+            }
+
+            // Clear temp state so a form resubmit doesn't double-save.
+            $this->tempVideos = [];
+            $this->videoThumbnails = [];
+        }
+
         DB::commit();
         session()->flash('success', 'Profile updated successfully');
         return redirect()->route('user.dashboard');
@@ -404,18 +491,45 @@ class UserProfile extends Component
 
 public function updatedMphoto()
 {
-    $this->validate([
-        'mphoto.*' => 'image|mimes:jpeg,png,jpg|max:5120'
-    ]);
+    // Unified picker — accepts images AND videos, routes by mime type.
+    // Videos count against the 10-per-profile cap (combined with existing
+    // saved rows + any queued tempVideos). See updatedMvideo for the same
+    // logic — this duplicate exists so the user can pick anything through
+    // either button.
+    $incoming = is_array($this->mphoto) ? $this->mphoto : [$this->mphoto];
 
-    if (is_array($this->mphoto)) {
-        foreach ($this->mphoto as $photo) {
-            $this->tempImages[] = $photo;
+    $existingVideoCount = ProfileVideo::where('user_id', Auth::id())
+        ->where('profile_id', $this->id)
+        ->count();
+
+    foreach ($incoming as $file) {
+        if (!$file) continue;
+        $mime = $file->getMimeType() ?: '';
+        $isVideo = str_starts_with($mime, 'video/');
+
+        try {
+            if ($isVideo) {
+                if (($existingVideoCount + count($this->tempVideos)) >= 10) {
+                    $this->addError('mphoto', 'This profile already has the maximum 10 videos.');
+                    continue;
+                }
+                validator(
+                    ['file' => $file],
+                    ['file' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200']
+                )->validate();
+                $this->tempVideos[] = $file;
+            } else {
+                validator(
+                    ['file' => $file],
+                    ['file' => 'image|mimes:jpeg,png,jpg|max:5120']
+                )->validate();
+                $this->tempImages[] = $file;
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->addError('mphoto', $file->getClientOriginalName() . ': ' . ($e->validator->errors()->first() ?? 'rejected'));
         }
-    } else {
-        $this->tempImages[] = $this->mphoto;
     }
-    
+
     $this->mphoto = null;
     $this->dispatch('fileUploaded');
 }
@@ -424,6 +538,110 @@ public function removeTemporaryImage($index)
 {
     unset($this->tempImages[$index]);
     $this->tempImages = array_values($this->tempImages);
+}
+
+/**
+ * Mirror of updatedMphoto() for videos. Enforces the per-profile cap by
+ * counting both already-saved videos (ProfileVideo rows) and the pending
+ * $tempVideos — the user shouldn't be able to push a 10-row profile over
+ * the limit by uploading one more in the edit screen.
+ */
+public function updatedMvideo()
+{
+    $this->validate([
+        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+    ]);
+
+    $existingCount = ProfileVideo::where('user_id', Auth::id())
+        ->where('profile_id', $this->id)
+        ->count();
+
+    $incoming = is_array($this->mvideo) ? $this->mvideo : [$this->mvideo];
+    foreach ($incoming as $vid) {
+        $total = $existingCount + count($this->tempVideos);
+        if ($total >= 10) {
+            $this->addError('mvideo', 'This profile already has the maximum 10 videos.');
+            break;
+        }
+        $this->tempVideos[] = $vid;
+    }
+
+    $this->mvideo = null;
+    $this->dispatch('fileUploaded');
+}
+
+/**
+ * See NewProfile::setVideoThumbnail for rationale — in short, we decode the
+ * base64 and write to storage/app/livewire-tmp/vt_*.jpg immediately so the
+ * component property (and subsequent Livewire payloads) only carries the
+ * filename, not the full 80-500 KB blob. Required to keep multi-video edits
+ * under PHP post_max_size / nginx client_max_body_size on prod.
+ */
+#[On('setVideoThumbnail')]
+public function setVideoThumbnail($index, $dataUrl)
+{
+    $i = (int) $index;
+    if (!array_key_exists($i, $this->tempVideos)) return;
+    if (!is_string($dataUrl) || !str_starts_with($dataUrl, 'data:image/')) return;
+    if (strlen($dataUrl) > 500 * 1024) return;
+
+    if (!preg_match('#^data:image/\w+;base64,(.+)$#', $dataUrl, $m)) return;
+    $bytes = base64_decode($m[1], true);
+    if ($bytes === false || strlen($bytes) === 0) return;
+
+    $this->deleteTempThumbnail($this->videoThumbnails[$i] ?? null);
+
+    $filename = 'vt_' . bin2hex(random_bytes(16)) . '.jpg';
+    Storage::disk('local')->put('livewire-tmp/' . $filename, $bytes);
+    $this->videoThumbnails[$i] = $filename;
+}
+
+/** Delete a livewire-tmp thumbnail file by basename. Safe no-op on null / missing. */
+private function deleteTempThumbnail(?string $filename): void
+{
+    if (!$filename) return;
+    $safe = basename($filename);
+    if ($safe !== $filename) return;
+    try { Storage::disk('local')->delete('livewire-tmp/' . $safe); } catch (\Throwable $e) {}
+}
+
+public function removeTemporaryVideo($index)
+{
+    $this->deleteTempThumbnail($this->videoThumbnails[$index] ?? null);
+    unset($this->tempVideos[$index]);
+    unset($this->videoThumbnails[$index]);
+    $this->tempVideos      = array_values($this->tempVideos);
+    $this->videoThumbnails = array_values($this->videoThumbnails);
+}
+
+/**
+ * Delete an already-saved ProfileVideo. Mirrors removeImg() — removes
+ * both the MP4 and the thumbnail JPEG from the assets_external disk, then
+ * drops the DB row. Soft on filesystem errors so a missing file (manual
+ * cleanup, migrated storage, etc.) doesn't block the user from removing
+ * the orphaned DB row.
+ */
+public function removeVideo($id)
+{
+    $video = ProfileVideo::where('id', $id)
+        ->where('user_id', Auth::id())
+        ->where('profile_id', $this->id)
+        ->first();
+    if (!$video) return;
+
+    try {
+        $base = "uservideos/{$video->user_id}/{$video->profile_id}";
+        $disk = Storage::disk('assets_external');
+        if ($video->video)           $disk->delete("{$base}/{$video->video}");
+        if ($video->video_thumbnail) $disk->delete("{$base}/{$video->video_thumbnail}");
+    } catch (\Throwable $e) {
+        Log::warning('ProfileVideo file delete failed', [
+            'video_id' => $video->id, 'error' => $e->getMessage()
+        ]);
+    }
+
+    $video->delete();
+    session()->flash('success', 'Video removed.');
 }
 
 /**

@@ -125,6 +125,17 @@ class UsersProfile extends Model
             ->orderBy('image_order', 'asc');
     }
 
+    /**
+     * Profile videos — mirrors multipleimgs(). Cap of 10 is enforced in
+     * NewProfile / UserProfile at upload time; no DB cap. Ordered the same
+     * way as images (manual drag-drop order via video_order column).
+     */
+    public function videos() {
+        return $this->hasMany(ProfileVideo::class, 'profile_id', 'id')
+            ->orderBy('video_order', 'asc')
+            ->orderBy('id', 'asc');
+    }
+
     public function languages(){
         return $this->hasMany(UserLanguage::class, 'profile_id', 'id');
     }

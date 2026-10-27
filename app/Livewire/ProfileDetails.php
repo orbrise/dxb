@@ -131,6 +131,14 @@ public $reportDescription;
         $images = CacheService::getProfileImages($this->profileid);
         $this->images = $images;
 
+        // Videos — not cached (yet). Small table, 1 query per profile view,
+        // only ever returns ≤10 rows. If the public profile view starts
+        // getting hot we can mirror getProfileImages() with a cache wrapper.
+        $videos = \App\Models\ProfileVideo::where('profile_id', $this->profileid)
+            ->orderBy('video_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
         // idx_reviews_user_profile (user_id, profile_id) makes this a 1-row indexed lookup.
         // Fetch the row itself so we can distinguish pending (status=0) from
         // approved (status=1). Without this the review modal keeps showing
@@ -174,7 +182,7 @@ public $reportDescription;
             view()->share('pageDescription', $pageDescription);
         }
 
-        return view('livewire.profile-details', compact('user', 'images', 'rev', 'revApproved', 'countries', 'reviews', 'questions', 'profile', 'profileClaimed'));
+        return view('livewire.profile-details', compact('user', 'images', 'videos', 'rev', 'revApproved', 'countries', 'reviews', 'questions', 'profile', 'profileClaimed'));
     }
 
     public function postreview()

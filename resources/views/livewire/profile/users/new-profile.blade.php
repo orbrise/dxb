@@ -1899,16 +1899,18 @@ div#basic {
                                   <p class="m-0 font-weight-bold drag-drop-text-main ev-photos-desktop-only" style="font-size: 12px; color: #ffffff; font-weight:400; margin-bottom:20px">Drop files here</p>
                                   <p class="m-1 drag-drop-text ev-photos-desktop-only" style="color: #6c757d;padding-top:10px; padding-bottom:15px">or</p>
                                   <button class="m-1 mb-3 btn btn-primary ev-photos-choose-btn" type="button" onclick="document.getElementById('mphoto').click(); return false;" style="background:#c8ff00;color:#000;border:none;border-radius:50px;font-weight:600;padding:8px 24px;">Choose file</button>
-                                  <p class="m-0 mt-3 drag-drop-text ev-photos-desktop-only" style="font-size: 13px; color: #6c757d;">Pick a file up to 8MB and at least 400×400 px</p>
-                                  <p class="m-0 drag-drop-text ev-photos-desktop-only" style="font-size: 13px; color: #6c757d;">Allowed file formats: jpg, jpeg, gif, png, webp</p>
-                                  <p class="ev-photos-mobile-hint" style="display:none;">JPG, PNG up to 8MB each. <br>Min 3 photos required.</p>
+                                  <p class="m-0 mt-3 drag-drop-text ev-photos-desktop-only" style="font-size: 13px; color: #6c757d;">Images up to 8 MB · Videos up to 50 MB (max 10)</p>
+                                  <p class="m-0 drag-drop-text ev-photos-desktop-only" style="font-size: 13px; color: #6c757d;">jpg, jpeg, gif, png, webp &nbsp;·&nbsp; mp4, webm, mov</p>
+                                  <p class="ev-photos-mobile-hint" style="display:none;">Photos + videos up to 50MB. <br>Min 3 photos required.</p>
                                 </div>
                                 <div class="upload-disabled">
                                   <p class="m-0 drag-drop-text" style="color: #dc3545; font-weight: 500;">You have reached the limit of 30 images. Remove one to add a new image.</p>
                                 </div>
                               </div>
                             </label>
-                            <input class="file optional" wire:model='mphoto' type="file" accept="image/*" id="mphoto" multiple style="display: none;">
+                            {{-- accept now covers videos too; routing to tempImages
+                                 vs tempVideos happens server-side in updatedMphoto(). --}}
+                            <input class="file optional" wire:model='mphoto' type="file" accept="image/*,video/mp4,video/webm,video/quicktime" id="mphoto" multiple style="display: none;">
                           </div>
                         </div>
 
@@ -1921,6 +1923,78 @@ div#basic {
 
                       </div>
 
+                    </div>
+                  </div>
+
+                  {{-- ═══════════════════════════════════════════════════════════
+                       Videos — mirrors the Photos section above. 10 videos per
+                       profile, 50 MB each, MP4/WebM/MOV. First-frame thumbnail
+                       captured client-side (profileVideoThumbnailer in @push('js')
+                       below) and sent back via Livewire.dispatch('setVideoThumbnail').
+                       ═══════════════════════════════════════════════════════════ --}}
+                  <div class="row  mb-5">
+                    <h2 class="h3 title-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        Videos
+                    </h2>
+                    <div class="ad-images string optional">
+                      <div class="multi-image-uploader1">
+                        <p class="ev-photos-disclaimer">Up to 10 videos per profile, 50 MB each. MP4, WebM, or MOV. No sexually explicit content, no minors.</p>
+
+                        <div wire:loading.flex wire:target="mvideo" style="align-items:center;justify-content:center;gap:10px;color:#0a0b0d;background:#c8ff00;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:14px;font-weight:600;">
+                            <i class="fas fa-spinner fa-spin"></i> Uploading video…
+                        </div>
+
+                        <div id="video-container">
+                        @if($tempVideos)
+                            @foreach($tempVideos as $vKey => $vid)
+                                <div class="record image" data-video-index="{{ $vKey }}" style="position:relative;">
+                                    <i wire:click="removeTemporaryVideo({{ $vKey }})" class="fa fa-times fa-lg delete"></i>
+                                    {{-- Preview uses the Livewire temp URL just like images. Muted +
+                                         playsinline so iOS Safari renders the first frame without
+                                         requiring user tap. The hidden <canvas> next to it is where
+                                         the thumbnailer draws the first frame to send back as base64. --}}
+                                    <video src="{{ $vid->temporaryUrl() }}"
+                                           class="profile-video-preview"
+                                           data-video-index="{{ $vKey }}"
+                                           muted playsinline preload="metadata"
+                                           style="width:100%;height:100%;object-fit:cover;background:#000;"></video>
+                                    <span class="profile-video-play-overlay" aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;display:inline-flex;align-items:center;justify-content:center;pointer-events:none;">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                    </span>
+                                </div>
+                            @endforeach
+                        @endif
+                        </div>
+
+                        <div class="record image-input new-img">
+                          <div class="file optional add-img">
+                            <label class="modern-upload-label" for="mvideo" style="cursor: pointer;">
+                              <div class="text-center mb-4 drag-drop">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="65" height="65" viewBox="0 0 24 24" fill="none" stroke="#727B7E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                                <div class="upload-available">
+                                  <p class="m-0 font-weight-bold drag-drop-text-main ev-photos-desktop-only" style="font-size: 12px; color: #ffffff; font-weight:400; margin-bottom:20px">Drop videos here</p>
+                                  <p class="m-1 drag-drop-text ev-photos-desktop-only" style="color: #6c757d;padding-top:10px; padding-bottom:15px">or</p>
+                                  <button class="m-1 mb-3 btn btn-primary ev-photos-choose-btn" type="button" onclick="document.getElementById('mvideo').click(); return false;" style="background:#c8ff00;color:#000;border:none;border-radius:50px;font-weight:600;padding:8px 24px;">Choose video</button>
+                                  <p class="m-0 mt-3 drag-drop-text ev-photos-desktop-only" style="font-size: 13px; color: #6c757d;">Up to 50 MB per clip</p>
+                                  <p class="m-0 drag-drop-text ev-photos-desktop-only" style="font-size: 13px; color: #6c757d;">Formats: MP4, WebM, MOV &nbsp;·&nbsp; max 10 videos</p>
+                                </div>
+                              </div>
+                            </label>
+                            <input class="file optional" wire:model='mvideo' type="file" accept="video/mp4,video/webm,video/quicktime" id="mvideo" multiple style="display: none;">
+                          </div>
+                        </div>
+
+                        @error('mvideo')
+                            <div class="alert alert-danger field-error" style="margin-top:10px;">{{ $message }}</div>
+                        @enderror
+                        @error('mvideo.*')
+                            <div class="alert alert-danger" style="margin-top:10px;">{{ $message }}</div>
+                        @enderror
+                        @error('tempVideos')
+                            <div class="alert alert-danger" style="margin-top:10px;">{{ $message }}</div>
+                        @enderror
+                      </div>
                     </div>
                   </div>
 
@@ -5462,4 +5536,6 @@ Livewire.on('validation-failed', () => {
               console.log('[evTouchDrag] delegated touch listeners attached');
           })();
           </script>
+
+@include('livewire.partials._profile-video-thumbnailer')
 </div>{{-- /single-root --}}
