@@ -472,14 +472,41 @@ public function updateProfile()
     }
     $sessionData['tempImagePaths'] = $imagePaths;
 
-    // Same for videos — real paths + original filenames + mime + size, plus
-    // the parallel array of client-captured thumbnails (base64 data URLs).
-    // saveProfileWithPackage() reads this to persist both the MP4 and the
-    // decoded JPEG beside it in /uservideos/{user_id}/{profile_id}/.
+    // Same for videos — but DON'T rely on Livewire's temp file surviving the
+    // user's trip to the package-selection page. Copy each video to a stable
+    // location we own (storage/app/livewire-tmp/pv_*.ext) and store THAT path
+    // in session. Livewire's own cleanup won't touch our `pv_` files, and
+    // saveProfileWithPackage() unlinks them after the final upload.
+    //
+    // Also log every step so if a video still fails to persist we can see
+    // whether it was the copy, the mime detection, or something else.
     $videoPaths = [];
     foreach ($this->tempVideos as $key => $vid) {
+        $srcPath = $vid->getRealPath();
+        if (!$srcPath || !is_file($srcPath)) {
+            \Log::warning('NewProfile: temp video unreachable at submit', [
+                'user_id' => auth()->id(), 'key' => $key,
+                'original' => $vid->getClientOriginalName(),
+                'realpath' => $srcPath,
+            ]);
+            continue;
+        }
+
+        $ext = strtolower($vid->getClientOriginalExtension()) ?: 'mp4';
+        if (!in_array($ext, ['mp4', 'webm', 'mov'], true)) $ext = 'mp4';
+
+        $stableName = 'pv_' . bin2hex(random_bytes(16)) . '.' . $ext;
+        $stablePath = storage_path('app/livewire-tmp/' . $stableName);
+
+        if (!@copy($srcPath, $stablePath)) {
+            \Log::error('NewProfile: failed to copy temp video to stable path', [
+                'user_id' => auth()->id(), 'src' => $srcPath, 'dest' => $stablePath,
+            ]);
+            continue;
+        }
+
         $videoPaths[$key] = [
-            'path'      => $vid->getRealPath(),
+            'path'      => $stablePath,          // stable, under our control
             'original'  => $vid->getClientOriginalName(),
             'mime'      => $vid->getMimeType() ?: 'video/mp4',
             'size'      => $vid->getSize(),
@@ -487,6 +514,13 @@ public function updateProfile()
     }
     $sessionData['tempVideoPaths']  = $videoPaths;
     $sessionData['videoThumbnails'] = $this->videoThumbnails;
+
+    \Log::info('NewProfile: video submit summary', [
+        'user_id'            => auth()->id(),
+        'temp_videos_count'  => count($this->tempVideos),
+        'persisted_paths'    => count($videoPaths),
+        'thumbnails_count'   => count($this->videoThumbnails),
+    ]);
 
     // Store in session with user-specific key
     session(['new_profile_data_' . auth()->id() => $sessionData]);
@@ -652,6 +686,12 @@ public function saveProfileWithPackage($packageId, $duration)
         // beside the MP4 so the profile grid has a poster without the browser
         // having to decode frame 0 of every clip on first paint.
         $videoBasePath = "uservideos/{$profile->user_id}/{$profile->id}";
+        \Log::info('NewProfile: video processing start', [
+            'profile_id'       => $profile->id,
+            'video_paths'      => count($sessionData['tempVideoPaths'] ?? []),
+            'thumbnail_count'  => count($sessionData['videoThumbnails'] ?? []),
+            'base_path'        => $videoBasePath,
+        ]);
         if (!empty($sessionData['tempVideoPaths'])) {
             foreach (['uservideos', "uservideos/{$profile->user_id}", $videoBasePath] as $dir) {
                 if (!$externalDisk->exists($dir)) {
@@ -662,7 +702,15 @@ public function saveProfileWithPackage($packageId, $duration)
             $vThumbs = $sessionData['videoThumbnails'] ?? [];
             foreach ($sessionData['tempVideoPaths'] as $vKey => $vMeta) {
                 if (empty($vMeta['path']) || !file_exists($vMeta['path'])) {
-                    continue; // Livewire temp file gone — skip rather than erroring the whole transaction
+                    // Temp copy gone — log so we can see this on prod and skip
+                    // rather than erroring the whole transaction.
+                    \Log::warning('NewProfile: pending video file missing at save', [
+                        'profile_id' => $profile->id,
+                        'key'        => $vKey,
+                        'path'       => $vMeta['path'] ?? null,
+                        'original'   => $vMeta['original'] ?? null,
+                    ]);
+                    continue;
                 }
                 // Pick extension from mime; default .mp4 for anything odd.
                 $ext = match ($vMeta['mime']) {
@@ -674,13 +722,28 @@ public function saveProfileWithPackage($packageId, $duration)
                 $vidName  = $uuid . '.' . $ext;
                 $thumbName = null;
 
-                $externalDisk->put("{$videoBasePath}/{$vidName}", file_get_contents($vMeta['path']));
+                try {
+                    $put = $externalDisk->put("{$videoBasePath}/{$vidName}", file_get_contents($vMeta['path']));
+                    \Log::info('NewProfile: video put result', [
+                        'profile_id' => $profile->id,
+                        'key'        => $vKey,
+                        'file'       => "{$videoBasePath}/{$vidName}",
+                        'size'       => $vMeta['size'] ?? null,
+                        'put_ok'     => (bool) $put,
+                    ]);
+                } catch (\Throwable $e) {
+                    \Log::error('NewProfile: video put threw', [
+                        'profile_id' => $profile->id,
+                        'key'        => $vKey,
+                        'error'      => $e->getMessage(),
+                    ]);
+                    @unlink($vMeta['path']); // clean up pv_ stable copy
+                    continue;
+                }
 
                 // Thumbnail (optional — fall back to <video poster-less> if missing).
                 // $vThumbs[$vKey] is now a FILENAME in storage/app/livewire-tmp,
-                // not a base64 data URL (see setVideoThumbnail). Read, upload,
-                // then delete the temp file so livewire-tmp doesn't accumulate
-                // orphaned frame captures.
+                // not a base64 data URL (see setVideoThumbnail).
                 if (!empty($vThumbs[$vKey])) {
                     $tmpName = basename($vThumbs[$vKey]);
                     if ($tmpName === $vThumbs[$vKey]) {
@@ -706,6 +769,10 @@ public function saveProfileWithPackage($packageId, $duration)
                     'is_main'         => false,
                     'video_order'     => $vKey,
                 ]);
+
+                // Clean up our stable pv_ copy — we've successfully uploaded
+                // to the external disk + created the DB row.
+                @unlink($vMeta['path']);
             }
         }
         

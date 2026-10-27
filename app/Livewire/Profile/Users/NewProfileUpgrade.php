@@ -5,6 +5,7 @@ namespace App\Livewire\Profile\Users;
 use Livewire\Component;
 use App\Models\Package;
 use App\Models\ProfileImage;
+use App\Models\ProfileVideo;
 use App\Models\UserLanguage;
 use App\Models\UserService;
 use App\Models\UsersProfile;
@@ -947,13 +948,102 @@ class NewProfileUpgrade extends Component
         
         // Attach services
         if (isset($sessionData['services']) && is_array($sessionData['services'])) {
-            collect($sessionData['services'])->each(fn($service) => 
+            collect($sessionData['services'])->each(fn($service) =>
                 UserService::create([
                     'user_id' => auth()->id(),
                     'service_id' => $service,
                     'profile_id' => $profile->id
                 ])
             );
+        }
+
+        // ─── Videos ──────────────────────────────────────────────────────────
+        // The new-profile flow stages videos in the session as pv_* stable
+        // copies (see NewProfile::updateProfile). This method is where the
+        // final persist actually happens — mirrors the image block above.
+        // Previously missing: created profiles via NewProfileUpgrade dropped
+        // every uploaded video silently because this block didn't exist.
+        $videoBasePath = "uservideos/{$profile->user_id}/{$profile->id}";
+        \Log::info('NewProfileUpgrade: video processing start', [
+            'profile_id'       => $profile->id,
+            'video_paths'      => count($sessionData['tempVideoPaths'] ?? []),
+            'thumbnail_count'  => count($sessionData['videoThumbnails'] ?? []),
+            'base_path'        => $videoBasePath,
+        ]);
+        if (!empty($sessionData['tempVideoPaths'])) {
+            foreach (['uservideos', "uservideos/{$profile->user_id}", $videoBasePath] as $dir) {
+                if (!$externalDisk->exists($dir)) {
+                    $externalDisk->makeDirectory($dir, 0755, true);
+                }
+            }
+
+            $vThumbs = $sessionData['videoThumbnails'] ?? [];
+            foreach ($sessionData['tempVideoPaths'] as $vKey => $vMeta) {
+                if (empty($vMeta['path']) || !file_exists($vMeta['path'])) {
+                    \Log::warning('NewProfileUpgrade: pending video file missing at save', [
+                        'profile_id' => $profile->id,
+                        'key'        => $vKey,
+                        'path'       => $vMeta['path'] ?? null,
+                        'original'   => $vMeta['original'] ?? null,
+                    ]);
+                    continue;
+                }
+                $ext = match ($vMeta['mime']) {
+                    'video/webm'      => 'webm',
+                    'video/quicktime' => 'mov',
+                    default           => 'mp4',
+                };
+                $uuid      = (string) Str::uuid();
+                $vidName   = $uuid . '.' . $ext;
+                $thumbName = null;
+
+                try {
+                    $put = $externalDisk->put("{$videoBasePath}/{$vidName}", file_get_contents($vMeta['path']));
+                    \Log::info('NewProfileUpgrade: video put result', [
+                        'profile_id' => $profile->id,
+                        'key'        => $vKey,
+                        'file'       => "{$videoBasePath}/{$vidName}",
+                        'size'       => $vMeta['size'] ?? null,
+                        'put_ok'     => (bool) $put,
+                    ]);
+                } catch (\Throwable $e) {
+                    \Log::error('NewProfileUpgrade: video put threw', [
+                        'profile_id' => $profile->id,
+                        'key'        => $vKey,
+                        'error'      => $e->getMessage(),
+                    ]);
+                    @unlink($vMeta['path']);
+                    continue;
+                }
+
+                if (!empty($vThumbs[$vKey])) {
+                    $tmpName = basename($vThumbs[$vKey]);
+                    if ($tmpName === $vThumbs[$vKey]) {
+                        $tmpPath = storage_path('app/livewire-tmp/' . $tmpName);
+                        if (is_file($tmpPath)) {
+                            $thumbBytes = @file_get_contents($tmpPath);
+                            if ($thumbBytes !== false && strlen($thumbBytes) > 0) {
+                                $thumbName = $uuid . '.jpg';
+                                $externalDisk->put("{$videoBasePath}/{$thumbName}", $thumbBytes);
+                            }
+                            @unlink($tmpPath);
+                        }
+                    }
+                }
+
+                ProfileVideo::create([
+                    'user_id'         => $profile->user_id,
+                    'profile_id'      => $profile->id,
+                    'video'           => $vidName,
+                    'video_thumbnail' => $thumbName,
+                    'mime'            => $vMeta['mime'],
+                    'size_bytes'      => $vMeta['size'] ?? null,
+                    'is_main'         => false,
+                    'video_order'     => $vKey,
+                ]);
+
+                @unlink($vMeta['path']);
+            }
         }
 
         // Clear session data

@@ -8,9 +8,15 @@
      against the double-emit case where a page accidentally includes it
      twice (e.g. from a parent + a child partial).
 
-     Keyed off `data-video-index` + `data-vt-captured` so a preview that
-     already produced a thumbnail doesn't re-capture on every Livewire
-     re-render. The whole system is safe to retrigger as often as we like. --}}
+     De-dup key is the video's SRC URL stored in a module-level Set, NOT a
+     dataset attribute on the element. Reason: Livewire morph can replace
+     the <video> node when $tempVideos re-renders (there's no wire:key on
+     the preview tiles), which wipes any data-* attributes. If we tracked
+     "already captured" on the element, the fresh element would re-capture,
+     dispatch setVideoThumbnail, trigger another morph, which creates a new
+     element, which re-captures again — an infinite render loop that
+     disables every form field on the page every ~1-2s. The URL set
+     survives morphs and gives us a stable identity per clip. --}}
 @once
 <script>
 (function () {
@@ -20,15 +26,20 @@
     const MAX_W = 720; // scale down big portrait clips so the JPEG stays small
     const MAX_H = 720;
 
+    // Stable dedup set across Livewire morphs. Keys are object-URL strings
+    // (same URL = same temp file = don't re-capture).
+    const capturedSrcs = new Set();
+
     function captureOne(video) {
-        if (!video || video.dataset.vtCaptured === '1') return;
+        if (!video) return;
+        const src = video.currentSrc || video.src || '';
+        if (!src || capturedSrcs.has(src)) return;
         const idx = video.getAttribute('data-video-index');
         if (idx === null) return;
 
-        // Already seeked past 0? still fine; draw whatever's currently decoded.
         try {
             const vw = video.videoWidth, vh = video.videoHeight;
-            if (!vw || !vh) return; // metadata not ready yet; try again later
+            if (!vw || !vh) return; // metadata not ready yet; loadedmetadata will retry
             const scale = Math.min(1, MAX_W / vw, MAX_H / vh);
             const tw = Math.max(1, Math.round(vw * scale));
             const th = Math.max(1, Math.round(vh * scale));
@@ -37,39 +48,34 @@
             canvas.height = th;
             canvas.getContext('2d').drawImage(video, 0, 0, tw, th);
             const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
-            // Ship it to Livewire. Scoped dispatch to the component that owns
-            // the <video> so we don't accidentally hit another Livewire
-            // instance on the same page.
+            // Mark captured BEFORE dispatching so Livewire's resulting morph
+            // can't race us into a second capture of the same clip.
+            capturedSrcs.add(src);
             if (window.Livewire && typeof window.Livewire.dispatch === 'function') {
                 window.Livewire.dispatch('setVideoThumbnail', { index: Number(idx), dataUrl });
             }
-            video.dataset.vtCaptured = '1';
         } catch (err) {
-            // CORS / decode failure — nothing we can do, server will store
-            // the video without a poster. Browser's <video poster-less>
-            // fallback kicks in on display.
+            // CORS / decode failure — mark captured anyway so we don't keep
+            // retrying every morph. Browser's <video> poster-less fallback
+            // kicks in on display.
             console.warn('[profileVideoThumbnailer] capture failed', err);
-            video.dataset.vtCaptured = '1';
+            capturedSrcs.add(src);
         }
     }
 
     function captureAll() {
         document.querySelectorAll('video.profile-video-preview').forEach(v => {
-            if (v.dataset.vtCaptured === '1') return;
-            // Hook per-video so we fire the second metadata is decoded.
+            const src = v.currentSrc || v.src || '';
+            if (src && capturedSrcs.has(src)) return;
             if (v.readyState >= 1 /* HAVE_METADATA */ && v.videoWidth) {
                 captureOne(v);
             } else {
                 v.addEventListener('loadedmetadata', () => captureOne(v), { once: true });
-                // Fallback — some browsers (iOS) need an explicit seek-to-0
-                // kick before they decode frame 0 for canvas drawing.
-                v.addEventListener('loadeddata', () => captureOne(v), { once: true });
+                v.addEventListener('loadeddata',     () => captureOne(v), { once: true });
             }
         });
     }
 
-    // Run on initial page load, after each Livewire morph (newly-added
-    // tempVideos get fresh <video> elements), and on client-side nav.
     document.addEventListener('DOMContentLoaded', captureAll);
     document.addEventListener('livewire:navigated', captureAll);
     document.addEventListener('livewire:initialized', () => {

@@ -336,9 +336,14 @@ class UserProfile extends Component
             }
         }
 
+        // Shared across both image + video blocks below — defined unconditionally
+        // so the video block can still write when editing a profile that only
+        // uploads a new video (no new images). Earlier bug: this lived inside
+        // the images `if` and the video block exploded with Undefined variable,
+        // which DB::rollBack() silently swallowed.
+        $externalDisk = Storage::disk('assets_external');
+
         if (!empty($this->tempImages)) {
-            // Use external disk for storing user images
-            $externalDisk = Storage::disk('assets_external');
             $basePath = "userimages/{$profile->user_id}/{$profile->id}";
             
             // Create directory structure on external disk
@@ -411,6 +416,12 @@ class UserProfile extends Component
         // Append any newly-uploaded videos. Existing ProfileVideo rows are
         // untouched (editing is additive for videos). Removals happen via
         // removeVideo() which fires on the delete button directly, not here.
+        \Log::info('UserProfile: video block entry', [
+            'profile_id'           => $profile->id,
+            'temp_videos_count'    => count($this->tempVideos ?? []),
+            'temp_thumbs_count'    => count($this->videoThumbnails ?? []),
+        ]);
+
         if (!empty($this->tempVideos)) {
             $videoBasePath = "uservideos/{$profile->user_id}/{$profile->id}";
             foreach (['uservideos', "uservideos/{$profile->user_id}", $videoBasePath] as $dir) {
@@ -424,6 +435,12 @@ class UserProfile extends Component
 
             foreach ($this->tempVideos as $vKey => $video) {
                 if (!$video || !$video->getRealPath() || !file_exists($video->getRealPath())) {
+                    \Log::warning('UserProfile: skipping video with missing temp file', [
+                        'profile_id' => $profile->id,
+                        'v_key'      => $vKey,
+                        'has_video'  => (bool) $video,
+                        'real_path'  => $video?->getRealPath(),
+                    ]);
                     continue;
                 }
                 $mime = $video->getMimeType() ?: 'video/mp4';
@@ -436,7 +453,12 @@ class UserProfile extends Component
                 $vidName   = $uuid . '.' . $ext;
                 $thumbName = null;
 
-                $externalDisk->put("{$videoBasePath}/{$vidName}", file_get_contents($video->getRealPath()));
+                $putOk = $externalDisk->put("{$videoBasePath}/{$vidName}", file_get_contents($video->getRealPath()));
+                \Log::info('UserProfile: video uploaded to external disk', [
+                    'path'  => "{$videoBasePath}/{$vidName}",
+                    'bytes' => $video->getSize(),
+                    'put_ok'=> $putOk,
+                ]);
 
                 // Read the client-captured thumbnail from storage/app/livewire-tmp
                 // (filename stored in setVideoThumbnail) and upload it beside the MP4.
@@ -480,9 +502,12 @@ class UserProfile extends Component
     } catch (\Exception $e) {
         DB::rollBack();
         Log::error('Profile update failed', [
-            'error' => $e->getMessage(),
-            'user_id' => Auth::id(),
-            'profile_id' => $this->id
+            'error'      => $e->getMessage(),
+            'file'       => $e->getFile(),
+            'line'       => $e->getLine(),
+            'trace'      => $e->getTraceAsString(),
+            'user_id'    => Auth::id(),
+            'profile_id' => $this->id,
         ]);
         session()->flash('error', 'Failed to update profile. Please try again.');
         return null;
