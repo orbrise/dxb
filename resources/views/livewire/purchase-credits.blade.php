@@ -439,8 +439,62 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
         inset: 0;
         z-index: 9999;
         overflow-y: auto;
-        padding: 16px !important;
+        padding: 0px 16px !important;
         background: #000;
+    }
+    /* Sheet header — matches the /my-wallet sub-header (.uw-back-wrap) so
+       both pages share one dark bar / lime Back / white title treatment.
+       Full-bleed strip at top (break out of the sheet's 16px side padding
+       with negative margins), centered title, 60px spacer on the right so
+       the title truly centers. */
+    .pc-v2-sheet-header {
+        display: none;
+    }
+    body:has(.pc-v2-active) .purchase-credits-page.pc-v2-sheet-open .pc-v2-sheet-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: block;
+        background: #131616;
+        padding: 7px 0;
+        margin: -16px -16px 30px;   /* break out of the sheet's 16px padding */
+    }
+    .pc-v2-sheet-header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+    .pc-v2-sheet-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #C1F11D;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        background: transparent;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+    }
+    .pc-v2-sheet-back:hover { color: #d9ff4a; }
+    .pc-v2-sheet-back svg { width: 14px; height: 14px; }
+    .pc-v2-sheet-title {
+        color: #fff;
+        font-size: 15px;
+        font-weight: 500;
+        margin: 0;
+    }
+    .pc-v2-sheet-header-spacer { width: 60px; }
+
+    /* Keep the legacy pc-v2-sheet-close rule only for its original (non-sheet)
+       usages; inside the sheet it's hidden in favour of the back arrow above. */
+    body:has(.pc-v2-active) .purchase-credits-page.pc-v2-sheet-open .pc-v2-sheet-close {
+        display: none !important;
     }
     .pc-v2-sheet-close {
         position: sticky;
@@ -804,9 +858,243 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
     }
 }
 
-/* Desktop: hide v2 wrapper — legacy view keeps its full desktop layout. */
+/* ═══════════════════════════════════════════
+   UNIFIED PURCHASE CREDITS DESIGN
+   One card layout shared across desktop + mobile. Previous build used a
+   mobile card view AND a legacy wide desktop view that looked completely
+   different ("Purchase Credits" h1 crammed into the left half of the viewport,
+   no sticky header). Now both breakpoints use the same WhatsApp-style sticky
+   header + balance hero card + payment form, just centered on desktop. The
+   mobile @media block above still owns the full-screen sheet overlay; this
+   block defines the shared visual language on top of that. All rules scoped
+   under body:has(.pc-v2-active) so they can't leak to any other page.
+   ═══════════════════════════════════════════ */
+
+/* Mobile ONLY: hide the site-wide header + back bar — on phones the
+   custom sticky "Buy Credits" bar is the primary nav and showing both
+   would double-stack headers.
+
+   Desktop: keep the site header visible (logo + Chat & Calls + user menu
+   + "+ Add Profile"); the custom sticky bar is hidden by the min-width
+   rule at the bottom of this block so it doesn't duplicate the nav. */
+@media (max-width: 768px) {
+    body:has(.pc-v2-active) #header,
+    body:has(.pc-v2-active) .ev-header,
+    body:has(.pc-v2-active) .ev-header-account,
+    body:has(.pc-v2-active) .ev-back-bar {
+        display: none !important;
+    }
+}
+
+/* Desktop sub-header strip — mirrors /my-wallet's .uw-back-wrap so both
+   pages share the same "<lime Back  ·  centered title>" crumb bar below
+   the main site header. Hidden on mobile where the sticky sheet header
+   already handles navigation. */
+.pc-sub-header-wrap {
+    background: #131616;
+    padding: 7px 0;
+    margin-bottom: 24px;
+}
+.pc-sub-header-wrap .ev-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.pc-sub-back-link {
+    color: #C1F11D;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+.pc-sub-back-link:hover { color: #d9ff4a; text-decoration: none; }
+.pc-sub-crumb-title {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0;
+}
+.pc-sub-crumb-spacer { width: 60px; }
+@media (max-width: 768px) {
+    .pc-sub-header-wrap { display: none; }
+}
+
+/* Full-bleed black page bg — matches /my-wallet. */
+body:has(.pc-v2-active) {
+    background: #000;
+}
+
+/* Reset the legacy page container so the centered column rule below wins.
+   Keep desktop breathing room (30px top from the inline padding) and let the
+   mobile sheet overlay keep its own 0-top rule — we only strip the outer
+   container's background flashes here, not the paddings. */
+body:has(.pc-v2-active) .purchase-credits-page {
+    display: block !important;
+    background: #000;
+    min-height: 100vh;
+    /* reset left/right padding — content padding handled by .ev-container */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+/* Desktop: the sub-header strip above the page already provides visual
+   separation + 24px margin-bottom, so no extra top padding needed on the
+   page itself. Mobile sheet keeps padding-top:0 (handled by the existing
+   mobile @media sheet rule). */
 @media (min-width: 769px) {
-    .pc-v2 { display: none !important; }
+    body:has(.pc-v2-active) .purchase-credits-page { padding-top: 0 !important; }
+}
+/* Center the content column — balance + amount + payment methods — in a
+   560px gutter at all breakpoints. Overrides the legacy inline
+   `max-width: 48%` that cramped the form to the left half of the desktop
+   viewport, and the mobile `max-width: 100%` override. */
+body:has(.pc-v2-active) .purchase-credits-page .ev-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+body:has(.pc-v2-active) .purchase-credits-page .ev-container > div {
+    max-width: 560px !important;
+    width: 100%;
+    margin: 0 auto !important;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+/* Hide the legacy "Purchase Credits" h1 + description — the sticky header
+   already says "Buy Credits", and the balance card doubles as context. */
+body:has(.pc-v2-active) .purchase-credits-page .mb-2 h1,
+body:has(.pc-v2-active) .purchase-credits-page .mb-2 { display: none !important; }
+
+/* Sticky header — same dark bar / lime Back / white title at all breakpoints.
+   This REPLACES the mobile-only rule inside the @media block, since the
+   base `.pc-v2-sheet-header { display: none }` there would otherwise hide
+   it on desktop.
+
+   Mobile: parent sheet has 16px side padding, so negative margins pull the
+   header out to the viewport edges. Desktop: parent has no side padding,
+   so no negative margin needed. */
+body:has(.pc-v2-active) .pc-v2-sheet-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: block;
+    background: #131616;
+    padding: 10px 0;
+    margin: 0 -16px 24px;
+}
+@media (min-width: 769px) {
+    body:has(.pc-v2-active) .pc-v2-sheet-header { margin: 0 0 24px; }
+}
+body:has(.pc-v2-active) .pc-v2-sheet-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+body:has(.pc-v2-active) .pc-v2-sheet-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #C1F11D;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+body:has(.pc-v2-active) .pc-v2-sheet-back:hover { color: #d9ff4a; }
+body:has(.pc-v2-active) .pc-v2-sheet-back svg { width: 14px; height: 14px; }
+body:has(.pc-v2-active) .pc-v2-sheet-title {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0;
+}
+body:has(.pc-v2-active) .pc-v2-sheet-header-spacer { width: 60px; }
+
+/* Balance hero card — always visible, lime-tinted gradient like /my-wallet. */
+body:has(.pc-v2-active) .ev-balance-card {
+    display: flex !important;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, #1f2d11, #131c08);
+    border: 1px solid #2a3a1a;
+    border-radius: 14px;
+    padding: 20px 20px;
+    margin-bottom: 20px;
+}
+body:has(.pc-v2-active) .ev-balance-icon {
+    background: #283813;
+    border: 1px solid #3a4a2a;
+    border-radius: 10px;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+body:has(.pc-v2-active) .ev-balance-icon svg { width: 28px; height: 28px; }
+body:has(.pc-v2-active) .ev-balance-info { flex: 1 1 auto; min-width: 0; }
+body:has(.pc-v2-active) .ev-balance-label {
+    color: #b8b8b8;
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+body:has(.pc-v2-active) .ev-balance-amount {
+    color: #fff;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+body:has(.pc-v2-active) .ev-balance-history-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(193, 241, 29, 0.12);
+    border: 1px solid rgba(193, 241, 29, 0.45);
+    color: #C1F11D;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+body:has(.pc-v2-active) .ev-balance-history-btn:hover {
+    background: #C1F11D;
+    color: #000;
+    text-decoration: none;
+}
+body:has(.pc-v2-active) .ev-balance-history-btn i { font-size: 12px; }
+
+/* Short descriptive paragraph above the amount input — the legacy p
+   lived inside .mb-2 which we hide above, so re-expose just the description
+   using a dedicated class on the markup. */
+body:has(.pc-v2-active) .pc-v2-intro {
+    color: #999;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 20px;
+}
+
+/* Desktop: hide the custom sticky "Buy Credits" bar — the main site header
+   handles navigation. Also hide the legacy close X + any lingering v2 wallet
+   markup. On mobile these all stay visible (that bar is the only header). */
+@media (min-width: 769px) {
+    .pc-v2,
+    .pc-v2-sheet-close,
+    body:has(.pc-v2-active) .pc-v2-sheet-header { display: none !important; }
 }
 </style>
 
@@ -823,15 +1111,27 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
         </div>
     </div>
 @else
-<div class="pc-v2-active" x-data="{ showBuy: false, txFilter: 'all' }" x-cloak>
+{{-- /purchase-credits is now a single-purpose page: the Buy Credits form,
+     nothing else. The previous "pc-v2-active" wallet landing (balance card,
+     "+ Buy Credits" button, transaction history) was a duplicate of /my-wallet
+     — the user had to click Buy Credits twice to actually reach the form,
+     which was confusing. All wallet-landing concerns live in /my-wallet now.
+     The form itself is unchanged; just the chrome around it is new.
 
-{{-- ═══════════════════════════════════════════
-     Wallet v2 (mobile-only, hidden on desktop via CSS).
-     Renders alongside the legacy .purchase-credits-page below.
-     "+ Buy Credits" flips `showBuy`, which promotes the legacy
-     view into a full-screen sheet so all payment gateway/PayPal/
-     Livewire wiring stays intact — we don't fork the form.
-     ═══════════════════════════════════════════ --}}
+     .pc-v2-active wrapper is kept (empty) so the body:has(.pc-v2-active)
+     CSS rules continue to hide the layout's top header + back bar on this
+     page. Alpine x-data stays as `showBuy: true` so any lingering CSS
+     selectors scoped to .pc-v2-sheet-open keep matching. --}}
+<div class="pc-v2-active" x-data="{ showBuy: true }">
+
+{{-- DISABLED — pc-v2 wallet landing lived here before. The landing was a
+     duplicate of /my-wallet (balance + Buy Credits button + transactions),
+     so visiting /purchase-credits made the user see "the same page" twice
+     before reaching the actual payment form. Wallet landing responsibilities
+     moved to /my-wallet; /purchase-credits now goes directly to the form.
+     Kept inside @if(false) rather than deleted so the markup is one revert
+     away if we ever want it back. --}}
+@if(false)
 <div class="pc-v2">
     {{-- Header --}}
     <div class="pc-v2-header">
@@ -1070,13 +1370,44 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
         @endforeach
     @endif
 </div>
+@endif {{-- /pc-v2 wallet landing disabled block --}}
 
-<div class="purchase-credits-page" :class="{ 'pc-v2-sheet-open': showBuy }" style="background: #000; min-height: 100vh; padding: 30px 16px;">
-    {{-- Sheet close button — only visible on mobile when this view is
-         acting as the "+ Buy Credits" bottom sheet. On desktop the
-         legacy page is always shown, so a floating close button would
-         be nonsense; the CSS keeps it display:none by default and lets
-         .pc-v2-sheet-open flip it back. --}}
+{{-- Desktop-only sub-header strip. Mirrors /my-wallet's .uw-back-wrap so
+     both pages share the same "< Back · Buy Credits" crumb below the main
+     site header. Hidden on mobile (the sticky sheet header below covers it). --}}
+<div class="pc-sub-header-wrap">
+    <div class="ev-container">
+        <a href="{{ url('/my-wallet') }}" wire:navigate class="pc-sub-back-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+        </a>
+        <h1 class="pc-sub-crumb-title">Buy Credits</h1>
+        <div class="pc-sub-crumb-spacer"></div>
+    </div>
+</div>
+
+<div class="purchase-credits-page pc-v2-sheet-open" :class="{ 'pc-v2-sheet-open': showBuy }" style="background: #000; min-height: 100vh; padding: 30px 16px;">
+    {{-- WhatsApp-style sticky header shown ONLY when the view is in sheet mode
+         (showBuy = true). Back arrow closes the sheet; the title matches the
+         pattern used across the other mobile pages (/my-wallet, /my-chat,
+         status viewer, etc.) so the user has a predictable way back. The old
+         floating lime X is now hidden by CSS when the sheet is open. --}}
+    {{-- Sticky WhatsApp-style header for the purchase form. Back goes to
+         /my-wallet via wire:navigate — the pc-v2 wallet landing that used
+         to live inside this component is gone, so there's no in-page state
+         to toggle back to. --}}
+    <div class="pc-v2-sheet-header">
+        <div class="pc-v2-sheet-header-inner">
+            <a href="{{ url('/my-wallet') }}" wire:navigate class="pc-v2-sheet-back" aria-label="Back to wallet">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+            </a>
+            <h1 class="pc-v2-sheet-title">Buy Credits</h1>
+            <div class="pc-v2-sheet-header-spacer"></div>
+        </div>
+    </div>
+    {{-- Legacy close button kept for backwards compatibility (desktop + any
+         non-sheet usage); hidden inside the sheet by the CSS rule above. --}}
     <button type="button" class="pc-v2-sheet-close" @click="showBuy = false" x-show="showBuy" style="display:none;" aria-label="Close">&times;</button>
   {{-- Match the header's `.ev-container` (max-width 1300px, margin 0 auto)
        so the page body sits flush with the evoory logo above. Inside that
@@ -1127,11 +1458,18 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
                 </a>
             </div>
 
-            <!-- Page Header -->
+            <!-- Legacy page header (hidden by the unified CSS — the sticky
+                 header + balance card together carry the context now). Kept
+                 in the markup for backwards-compatibility with any scripts
+                 that query .mb-2. -->
             <div class="mb-2">
               <h1 class="mt-2" style="color: #fff; font-size: 28px; font-weight: 700;">Purchase Credits</h1>
               <p style="color: #999; font-size: 15px;">Once you have credits in your account, Account Balance will be available as a payment method for upgrading your profiles.</p>
             </div>
+
+            {{-- Short intro, re-exposed outside .mb-2 so the user still sees
+                 the explanation line between the balance hero and the amount input. --}}
+            <p class="pc-v2-intro">Once you have credits in your account, Account Balance will be available as a payment method for upgrading your profiles.</p>
 
             @include('livewire.partials._purchase-credits-form')
         </div>
@@ -1149,16 +1487,20 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
     if (window.purchaseCreditsInitialized) return;
     window.purchaseCreditsInitialized = true;
     
-    var selectedAmount = {{ $amount }};
+    {{-- `?: 0` guards against $amount being null (new default so the field
+         starts blank). Without this, `{{ $amount }}` interpolates to the
+         empty string, producing JS `var selectedAmount = ;` which is a
+         syntax error that killed the whole payment-init script. --}}
+    var selectedAmount = {{ (float) ($amount ?? 0) }};
     var selectedPaymentMethod = null;
-    
+
     function initPurchaseCreditsPage() {
         console.log('=== initPurchaseCreditsPage CALLED ===');
-        
+
         // Update amount from input
         var amountInput = document.getElementById('amount');
         if (amountInput) {
-            selectedAmount = parseFloat(amountInput.value) || {{ $amount }};
+            selectedAmount = parseFloat(amountInput.value) || {{ (float) ($amount ?? 0) }};
         }
         
         // Payment method selection — document-level delegation so the
@@ -1206,7 +1548,7 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             selectedAmount = parseFloat(e.target.value) || 0;
             updateAmountDisplay(selectedAmount);
 
-            if (selectedAmount >= 5) {
+            if (selectedAmount >= 10) {
                 if (selectedPaymentMethod === 'primary') {
                     clearTimeout(window.primaryInitTimeout);
                     window.primaryInitTimeout = setTimeout(initPrimaryGatewayIframe, 500);
@@ -1299,10 +1641,10 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             selectedAmount = parseFloat(amountInput.value) || 0;
         }
 
-        if (selectedAmount < 5) {
+        if (selectedAmount < 10) {
             $iframe.style.display = 'none';
             $loading.style.display = 'block';
-            $loading.innerHTML = '<p class="text-danger">Please enter an amount of at least $5.</p>';
+            $loading.innerHTML = '<p class="text-danger">Please enter an amount of at least $10.</p>';
             return;
         }
 
@@ -1348,8 +1690,8 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
             selectedAmount = parseFloat(amountInput.value) || 0;
         }
         
-        if (selectedAmount < 5) {
-            $container.innerHTML = '<p class="text-danger">Please enter an amount of at least $5.</p>';
+        if (selectedAmount < 10) {
+            $container.innerHTML = '<p class="text-danger">Please enter an amount of at least $10.</p>';
             return;
         }
         

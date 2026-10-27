@@ -62,6 +62,11 @@ class ChatMediaController extends Controller
             // preview modal lets the user type a line before uploading).
             // Trimmed + length-capped so it can't blow up the message column.
             'message'         => 'nullable|string|max:1000',
+            // batch_id groups N images sent as one album; the client sends
+            // the same UUID with every upload in the batch so the chat UI
+            // can render them as one grid instead of N separate bubbles.
+            // UUIDs are 36 chars with dashes; length-capped to be safe.
+            'batch_id'        => 'nullable|string|max:36',
         ];
         if ($isVoice) {
             $rules['duration'] = 'nullable|integer|min:1|max:600';
@@ -106,6 +111,17 @@ class ChatMediaController extends Controller
             if ($type === 'video') {
                 return $this->storeVideo($request, $conversation, $user, $upload, $mime, $size);
             }
+            if ($type === 'image') {
+                return $this->storeImage(
+                    $conversation,
+                    $user,
+                    $upload,
+                    $mime,
+                    $size,
+                    trim((string)($data['message'] ?? '')),
+                    trim((string)($data['batch_id'] ?? '')) ?: null,
+                );
+            }
             return $this->storeOnLocalDisk($conversation, $user, $upload, $mime, $type, $isVoice, (int)($data['duration'] ?? 0), trim((string)($data['message'] ?? '')));
         } catch (\Throwable $e) {
             Log::error('Media upload failed', [
@@ -123,7 +139,7 @@ class ChatMediaController extends Controller
      * Behaviour unchanged from before R2 was added so existing rows
      * (and the voice-recorder flow) keep working.
      */
-    protected function storeOnLocalDisk(Conversation $conversation, $user, $upload, string $mime, string $type, bool $isVoice, int $duration, string $caption = '')
+    protected function storeOnLocalDisk(Conversation $conversation, $user, $upload, string $mime, string $type, bool $isVoice, int $duration, string $caption = '', ?string $batchId = null)
     {
         if ($isVoice) {
             $ext = str_contains($mime, 'mp4') ? 'm4a' : 'webm';
@@ -157,6 +173,84 @@ class ChatMediaController extends Controller
             'attachment_size' => filesize($absTargetDir . DIRECTORY_SEPARATOR . $filename) ?: null,
             'attachment_duration' => $isVoice ? max(1, $duration) : null,
             'attachment_original_name' => $originalName,
+            'batch_id'        => $batchId,
+            'expires_at' => Message::ttlToExpiry($user->pref_disappearing_default ?? 'never'),
+        ]);
+
+        $this->finaliseMessage($conversation, $user, $message);
+
+        return response()->json([
+            'ok'         => true,
+            'message_id' => $message->id,
+            'url'        => route('chat.media.serve', $message->id),
+        ]);
+    }
+
+    /**
+     * Image path — upload to Cloudflare R2 so images stop filling the VPS
+     * disk alongside videos. Same key layout as everything else
+     * (chat-media/{convId}/{random}.ext). If R2 isn't configured, fall
+     * back to the local path so dev without creds still works.
+     *
+     * Caption is the optional text from the WhatsApp-style preview modal.
+     *
+     * batchId is a shared UUID (one per multi-image send) that the chat UI
+     * uses to collapse the row into a WhatsApp-style album grid instead of
+     * rendering each image as its own bubble. Single-image sends pass null.
+     */
+    protected function storeImage(Conversation $conversation, $user, $upload, string $mime, $size, string $caption = '', ?string $batchId = null)
+    {
+        if (!$this->r2Available()) {
+            return $this->storeOnLocalDisk($conversation, $user, $upload, $mime, 'image', false, 0, $caption, $batchId);
+        }
+
+        $ext = $upload->getClientOriginalExtension() ?: $upload->guessExtension() ?: 'jpg';
+        $filename = Str::random(24) . '.' . strtolower($ext);
+        $originalName = $upload->getClientOriginalName() ?: $filename;
+        $dir = "chat-media/{$conversation->id}";
+        $key = "{$dir}/{$filename}";
+
+        // Resolve the upload's on-disk path. getRealPath() returns false on
+        // some Windows/Laragon setups when the PHP tmp file isn't visible
+        // through the realpath cache yet (common when multiple parallel
+        // uploads arrive on the same worker); fall back to getPathname().
+        // If BOTH fail, fall through to the local-disk path instead of
+        // blowing up with a cryptic "Path cannot be empty" from Flysystem.
+        $sourcePath = $upload->getRealPath() ?: $upload->getPathname();
+        if (!$sourcePath || !is_file($sourcePath)) {
+            Log::warning('storeImage: unresolvable upload path, falling back to local disk', [
+                'real' => $upload->getRealPath(),
+                'name' => $upload->getPathname(),
+            ]);
+            return $this->storeOnLocalDisk($conversation, $user, $upload, $mime, 'image', false, 0, $caption, $batchId);
+        }
+
+        // file_get_contents + put(string) avoids the fopen/stream chain that
+        // Flysystem's S3 adapter uses — for images (<= 20 MB) the memory cost
+        // is trivial and this path is robust against any realpath weirdness.
+        $contents = @file_get_contents($sourcePath);
+        if ($contents === false) {
+            Log::warning('storeImage: file_get_contents failed, falling back to local disk', ['path' => $sourcePath]);
+            return $this->storeOnLocalDisk($conversation, $user, $upload, $mime, 'image', false, 0, $caption);
+        }
+
+        Storage::disk('r2')->put($key, $contents, [
+            'ContentType' => $mime,
+            'visibility'  => 'private',
+        ]);
+
+        $message = Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id'       => $user->id,
+            'message'         => $caption,
+            'status'          => 'sent',
+            'attachment_path' => $key,
+            'attachment_disk' => 'r2',
+            'attachment_type' => 'image',
+            'attachment_mime' => $mime,
+            'attachment_size' => $size ?: null,
+            'attachment_original_name' => $originalName,
+            'batch_id'        => $batchId,
             'expires_at' => Message::ttlToExpiry($user->pref_disappearing_default ?? 'never'),
         ]);
 
@@ -184,10 +278,30 @@ class ChatMediaController extends Controller
         $dir = "chat-media/{$conversation->id}";
         $key = "{$dir}/{$filename}";
 
+        // Resolve the upload's on-disk path with the same realpath-fallback
+        // guard storeImage uses. getRealPath() returns false on Windows /
+        // Laragon when PHP's realpath cache hasn't seen the tmp file yet
+        // (common on fast or parallel uploads); fopen(false) then blows up
+        // with Flysystem's cryptic "Path cannot be empty". Falling back to
+        // getPathname() + is_file() keeps us safe without memory-loading
+        // the whole video (which can be 100 MB).
+        $sourcePath = $upload->getRealPath() ?: $upload->getPathname();
+        if (!$sourcePath || !is_file($sourcePath)) {
+            Log::warning('storeVideo: unresolvable upload path', [
+                'real' => $upload->getRealPath(),
+                'name' => $upload->getPathname(),
+            ]);
+            return response()->json(['ok' => false, 'detail' => 'Upload path could not be resolved. Please retry.'], 500);
+        }
+
         // Stream the uploaded file to the target disk. For 'public' the
         // Storage::putFileAs call writes under storage/app/public; for
         // 'r2' it pushes straight to the bucket.
-        $stream = fopen($upload->getRealPath(), 'rb');
+        $stream = fopen($sourcePath, 'rb');
+        if (!is_resource($stream)) {
+            Log::warning('storeVideo: fopen failed', ['path' => $sourcePath]);
+            return response()->json(['ok' => false, 'detail' => 'Could not open uploaded video.'], 500);
+        }
         try {
             Storage::disk($disk)->put($key, $stream, [
                 'ContentType' => $mime,
@@ -205,14 +319,39 @@ class ChatMediaController extends Controller
         if ($thumbnail && $thumbnail->isValid() && str_starts_with((string) $thumbnail->getMimeType(), 'image/')) {
             $thumbExt = $thumbnail->getClientOriginalExtension() ?: 'jpg';
             $thumbKey = "{$dir}/" . Str::random(24) . '-thumb.' . strtolower($thumbExt);
-            $tstream = fopen($thumbnail->getRealPath(), 'rb');
-            try {
-                Storage::disk($disk)->put($thumbKey, $tstream, [
-                    'ContentType' => $thumbnail->getMimeType() ?: 'image/jpeg',
-                    'visibility'  => 'private',
+            // Same realpath-fallback for the thumbnail. Thumb is tiny (~20 KB
+            // JPEG), so if the path is unresolvable we read it into memory
+            // and push the bytes directly — matches storeImage's approach.
+            $thumbPath = $thumbnail->getRealPath() ?: $thumbnail->getPathname();
+            if ($thumbPath && is_file($thumbPath)) {
+                $tstream = fopen($thumbPath, 'rb');
+                if (is_resource($tstream)) {
+                    try {
+                        Storage::disk($disk)->put($thumbKey, $tstream, [
+                            'ContentType' => $thumbnail->getMimeType() ?: 'image/jpeg',
+                            'visibility'  => 'private',
+                        ]);
+                    } finally {
+                        fclose($tstream);
+                    }
+                } else {
+                    $bytes = @file_get_contents($thumbPath);
+                    if ($bytes !== false) {
+                        Storage::disk($disk)->put($thumbKey, $bytes, [
+                            'ContentType' => $thumbnail->getMimeType() ?: 'image/jpeg',
+                            'visibility'  => 'private',
+                        ]);
+                    } else {
+                        Log::warning('storeVideo: thumb read failed, skipping poster', ['path' => $thumbPath]);
+                        $thumbKey = null;
+                    }
+                }
+            } else {
+                Log::warning('storeVideo: unresolvable thumbnail path, skipping poster', [
+                    'real' => $thumbnail->getRealPath(),
+                    'name' => $thumbnail->getPathname(),
                 ]);
-            } finally {
-                if (is_resource($tstream)) fclose($tstream);
+                $thumbKey = null;
             }
         }
 

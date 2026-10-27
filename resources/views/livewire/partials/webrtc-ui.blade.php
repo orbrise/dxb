@@ -728,14 +728,12 @@
             <span class="rtc-ctrl-label">Mute</span>
         </div>
 
-        {{-- "More" removed — the actions it would hold aren't built yet. --}}
-
-        <div class="rtc-ctrl">
-            <button type="button" class="rtc-btn" id="rtcShareBtn" title="Share screen" aria-label="Share screen">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"></rect><polyline points="8 10 12 6 16 10"></polyline><line x1="12" y1="6" x2="12" y2="16"></line></svg>
-            </button>
-            <span class="rtc-ctrl-label" id="rtcShareLabel">Share</span>
-        </div>
+        {{-- "More" removed — the actions it would hold aren't built yet.
+             Share-screen button also removed per product — screen share
+             not needed for the phone-style call UX. The underlying
+             #rtcShareBtn logic in webrtc-scripts.blade.php silently
+             no-ops because getElementById returns null for the removed
+             DOM id (no listeners ever bind). --}}
 
         <div class="rtc-ctrl">
             <button type="button" class="rtc-btn hangup" id="rtcHangupBtn" title="Hang up" aria-label="End call">

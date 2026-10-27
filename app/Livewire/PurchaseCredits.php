@@ -11,7 +11,12 @@ use Livewire\Attributes\On;
 #[Layout('components.layouts.app-evoory')]
 class PurchaseCredits extends Component
 {
-    public $amount = 10;
+    /**
+     * Blank by default — the user must type their own amount (min $10).
+     * Previously pre-filled with 10, which users were submitting without
+     * reading, often paying for amounts they didn't actually intend.
+     */
+    public $amount = null;
 
     /**
      * Set to true when this component is embedded in the Wallet modal
@@ -41,13 +46,13 @@ class PurchaseCredits extends Component
     }
 
     protected $rules = [
-        'amount' => 'required|numeric|min:5',
+        'amount' => 'required|numeric|min:10',
     ];
 
     protected $messages = [
         'amount.required' => 'Amount is required.',
         'amount.numeric' => 'Amount must be a number.',
-        'amount.min' => 'Minimum amount is $5.',
+        'amount.min' => 'Minimum amount is $10.',
     ];
     
     public function updated($propertyName)
@@ -157,10 +162,10 @@ class PurchaseCredits extends Component
     #[On('processPrimaryPayment')]
     public function processPrimaryPayment($amount, $referenceId)
     {
-        if ($amount < 5) {
+        if ($amount < 10) {
             $this->dispatch('showMessage', [
                 'type' => 'error',
-                'message' => 'Invalid amount. Minimum amount is $5.'
+                'message' => 'Invalid amount. Minimum amount is $10.'
             ]);
             return;
         }

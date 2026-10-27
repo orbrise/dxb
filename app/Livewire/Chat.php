@@ -267,6 +267,83 @@ class Chat extends Component
     }
 
     /**
+     * Forward the currently-selected message to up to 5 target conversations
+     * in one go. Server-side cap matches the client-side selection cap, so
+     * even a crafted payload can't flood more than 5 inboxes per click.
+     *
+     * Each target gets a fresh Message row with the same body/attachment
+     * metadata; attachment files are referenced, not copied (messages are
+     * append-only, so this is safe). Skips any target the user isn't a
+     * participant in, or where the peer is blocked.
+     */
+    public function forwardToMany(array $convIds): void
+    {
+        $userId = auth()->id();
+        if (!$userId || !$this->forwardingMessageId) return;
+
+        $convIds = array_slice(array_values(array_unique(array_map('intval', $convIds))), 0, 5);
+        if (!$convIds) { $this->cancelForward(); return; }
+
+        $src = Message::find($this->forwardingMessageId);
+        if (!$src) { $this->cancelForward(); return; }
+
+        $touchedCurrent = false;
+
+        foreach ($convIds as $targetConvId) {
+            $target = Conversation::find($targetConvId);
+            if (!$target || !$target->hasUser($userId)) continue;
+
+            // Block guard — skip without aborting the batch.
+            if (!$target->is_support) {
+                $peerId = $target->getOtherUserId($userId);
+                if ($peerId && auth()->user()->isBlockRelationWith($peerId)) continue;
+            }
+
+            $new = Message::create([
+                'conversation_id'          => $target->id,
+                'sender_id'                => $userId,
+                'message'                  => $src->message ?: '',
+                'status'                   => 'sent',
+                'attachment_path'          => $src->attachment_path,
+                'attachment_type'          => $src->attachment_type,
+                'attachment_mime'          => $src->attachment_mime,
+                'attachment_size'          => $src->attachment_size,
+                'attachment_duration'      => $src->attachment_duration,
+                'attachment_original_name' => $src->attachment_original_name,
+                'expires_at'               => Message::ttlToExpiry(auth()->user()->pref_disappearing_default ?? 'never'),
+            ]);
+
+            $target->update(['last_message_at' => now()]);
+
+            $isSupport = (bool) $target->is_support;
+            $peerId = $isSupport ? null : $target->getOtherUserId($userId);
+            app()->terminating(function () use ($new, $isSupport, $peerId) {
+                try {
+                    if ($isSupport) {
+                        broadcast(new NewChatMessage($new, 0))->toOthers();
+                    } elseif ($peerId) {
+                        broadcast(new NewChatMessage($new, $peerId))->toOthers();
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Forward broadcast failed: ' . $e->getMessage());
+                }
+            });
+
+            $this->invalidateChatCache($peerId);
+
+            if ((int) $this->selectedConversationId === $target->id) {
+                $touchedCurrent = true;
+            }
+        }
+
+        $this->cancelForward();
+
+        if ($touchedCurrent) {
+            $this->loadConversationMessages();
+        }
+    }
+
+    /**
      * Forward the currently-selected message into $targetConvId. Creates a
      * fresh Message row with the same body/attachment metadata (attachment
      * file is referenced, not copied — safe because messages are
@@ -898,7 +975,7 @@ class Chat extends Component
                 ->pluck('message_id')
                 ->flip();
 
-        $this->conversationMessages = $messages->map(function ($msg) use ($userId, $isSupport, $starredIds) {
+        $rows = $messages->map(function ($msg) use ($userId, $isSupport, $starredIds) {
             $isMine = $msg->sender_id === $userId;
             $senderName = $isSupport && !$isMine
                 ? 'Support'
@@ -945,10 +1022,93 @@ class Chat extends Component
                 'attachment_size' => $msg->attachment_size,
                 'attachment_duration' => $msg->attachment_duration,
                 'attachment_original_name' => $msg->attachment_original_name,
+                'batch_id' => $msg->batch_id,
                 'reply_to' => $replyTo,
                 'is_starred' => $starredIds->has($msg->id),
             ];
-        })->toArray();
+        });
+
+        // Collapse consecutive image rows sharing a batch_id into one virtual
+        // "album" row so the Blade view can render them as a WhatsApp-style
+        // grid instead of N stacked bubbles. Walks the already-sorted (ASC)
+        // list; if a non-batch message slips between two batch rows (unlikely
+        // since uploads are serialised, but possible if the peer sends while
+        // we're mid-batch), the album is broken and resumes as a new album —
+        // this preserves chronological order.
+        //
+        // Album status rolls up to the LOWEST state across items (sent <
+        // delivered < read), so one tick becomes two becomes blue only when
+        // every image in the album has been delivered/read.
+        $this->conversationMessages = $this->collapseAlbums($rows)->toArray();
+    }
+
+    /**
+     * Walk the chronological message list and merge consecutive rows that
+     * share a non-null batch_id into one album row. Items keep their own
+     * caption / url / id so the lightbox can walk them one-by-one.
+     */
+    protected function collapseAlbums($rows)
+    {
+        $out = [];
+        $statusRank = ['sent' => 0, 'delivered' => 1, 'read' => 2];
+
+        foreach ($rows as $row) {
+            $bid = $row['batch_id'] ?? null;
+
+            // Non-batched rows (text, video, voice, legacy image) pass straight through.
+            if (!$bid || ($row['attachment_type'] ?? '') !== 'image') {
+                $out[] = $row;
+                continue;
+            }
+
+            // Merge into the previous album if it matches this batch.
+            $prev = end($out);
+            if ($prev && ($prev['is_album'] ?? false) && ($prev['batch_id'] ?? null) === $bid) {
+                $idx = array_key_last($out);
+                $out[$idx]['album_items'][] = $this->albumItemFromRow($row);
+                // Status rollup — lowest wins.
+                $cur = $out[$idx]['status'] ?? 'sent';
+                if (($statusRank[$row['status']] ?? 0) < ($statusRank[$cur] ?? 0)) {
+                    $out[$idx]['status'] = $row['status'];
+                }
+                // Keep the FIRST non-empty caption as the album caption; the
+                // rest surface as per-item captions in the lightbox.
+                if (empty(trim((string) ($out[$idx]['message'] ?? ''))) && !empty(trim((string) ($row['message'] ?? '')))) {
+                    $out[$idx]['message'] = $row['message'];
+                }
+                continue;
+            }
+
+            // First row of a new album — stash it as the seed and convert
+            // in place to album shape.
+            $album = $row;
+            $album['is_album'] = true;
+            $album['attachment_type'] = 'album';
+            $album['album_items'] = [$this->albumItemFromRow($row)];
+            $out[] = $album;
+        }
+
+        return collect($out);
+    }
+
+    /**
+     * Shape a single image row into the per-item slot used inside album_items.
+     * Captures only the fields the grid tile + lightbox need; everything else
+     * (ticks, time) comes from the parent album row.
+     */
+    protected function albumItemFromRow(array $row): array
+    {
+        return [
+            'id'                       => $row['id'],
+            'url'                      => $row['attachment_url'] ?? null,
+            'thumbnail_url'            => $row['attachment_thumbnail_url'] ?? null,
+            'mime'                     => $row['attachment_mime'] ?? null,
+            'size'                     => $row['attachment_size'] ?? null,
+            'original_name'            => $row['attachment_original_name'] ?? null,
+            'caption'                  => $row['message'] ?? '',
+            'created_at'               => $row['created_at'] ?? null,
+            'is_starred'               => $row['is_starred'] ?? false,
+        ];
     }
 
     /**

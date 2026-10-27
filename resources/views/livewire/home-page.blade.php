@@ -3124,6 +3124,23 @@ document.addEventListener('livewire:load', function() {
     setTimeout(() => initCitySearch(), 500);
 });
 
+// Re-init on every wire:navigate TO the home page. Covers the case where
+// the user comes back from a listing/profile via a wire:navigate link —
+// DOMContentLoaded / window load / livewire:load never fire again for
+// the lifetime of the tab, so without this hook the city search input
+// has no listeners attached and typing does nothing until a hard refresh.
+document.addEventListener('livewire:navigated', function() {
+    setTimeout(initCitySearch, 50);
+});
+
+// Immediate call. On a soft wire:navigate TO this page, Livewire
+// re-executes this pushed <script> AFTER its own livewire:navigated
+// event has already dispatched (same soft-nav gotcha as profile-details).
+// Calling initCitySearch synchronously here binds the input the moment
+// the script runs — the three listeners above are retained as belt-and-
+// braces for first-load timing and future navigations away and back.
+initCitySearch();
+
 // Fallback
 setTimeout(() => {
     if (!initCitySearch()) {

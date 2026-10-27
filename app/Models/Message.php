@@ -29,6 +29,7 @@ class Message extends Model
         'attachment_size',
         'attachment_duration',
         'attachment_original_name',
+        'batch_id',
         'expires_at',
     ];
 

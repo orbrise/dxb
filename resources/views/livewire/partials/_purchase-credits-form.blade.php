@@ -11,7 +11,11 @@
     <div class="d-flex align-items-center">
         <div class="amount-input-group">
             <span class="dollar-sign">$</span>
-            <input type="number" wire:model.live="amount" min="5" step="1" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" value="10" id="amount" />
+            {{-- Blank by default (no value=""). Users must type their own amount;
+                 min $10 enforced client-side (HTML5 min) + server-side (Livewire
+                 rules). Placeholder shows "0" as a visual cue that the field
+                 starts empty, mirroring WhatsApp/Stripe-style amount inputs. --}}
+            <input type="number" wire:model.live="amount" min="10" step="1" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" placeholder="0" id="amount" />
         </div>
         <span class="choose-amount-label">Choose amount</span>
     </div>

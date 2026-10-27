@@ -577,7 +577,88 @@
             white-space: nowrap;
         }
     }
+
+    /* Scroll-and-load sentinel + end-of-list marker. Both sit under the
+       transaction list and share the same muted text treatment. */
+    .uw-tx-sentinel,
+    .uw-tx-end {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 18px 12px 10px;
+        color: var(--ev-text-3, rgba(255,255,255,0.4));
+        font-size: 13px;
+    }
+    .uw-tx-end { color: rgba(255,255,255,0.3); font-style: italic; }
+    .uw-tx-loading-spinner {
+        width: 16px; height: 16px;
+        border: 2px solid rgba(193,241,29,0.2);
+        border-top-color: #C1F11D;
+        border-radius: 50%;
+        animation: uwTxSpin 0.8s linear infinite;
+    }
+    @keyframes uwTxSpin { to { transform: rotate(360deg); } }
 </style>
+@endpush
+
+@push('js')
+<script>
+    /* Scroll-and-load transaction history. One IntersectionObserver watches
+       the sentinel; when it crosses into view we call loadMoreTransactions()
+       on the Livewire component. Re-wired on every Livewire morph because
+       the sentinel element is replaced each time the list grows.
+
+       - rootMargin "200px 0" fires the load slightly before the sentinel
+         enters the viewport, so the user doesn't see the "Loading more…"
+         pill flash before the fresh rows arrive.
+       - A "loading" guard prevents duplicate loadMore calls while a round
+         trip is already in flight. */
+    (function () {
+        if (window.__uwTxWired) return;
+        window.__uwTxWired = true;
+
+        let observer = null;
+        let currentSentinel = null;
+        let loading = false;
+
+        const findComponent = () => {
+            const anchor = document.querySelector('.uw-tx-sentinel');
+            if (!anchor) return null;
+            const root = anchor.closest('[wire\\:id]');
+            if (!root || !window.Livewire) return null;
+            return window.Livewire.find(root.getAttribute('wire:id'));
+        };
+
+        const attach = () => {
+            const sentinel = document.querySelector('.uw-tx-sentinel');
+            if (sentinel === currentSentinel) return;
+            // Sentinel changed (filter switched, more rows loaded) — rebind.
+            if (observer) observer.disconnect();
+            currentSentinel = sentinel;
+            if (!sentinel) return;
+
+            observer = new IntersectionObserver((entries) => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting || loading) continue;
+                    const comp = findComponent();
+                    if (!comp) return;
+                    loading = true;
+                    Promise.resolve(comp.call('loadMoreTransactions'))
+                        .finally(() => { loading = false; });
+                }
+            }, { rootMargin: '200px 0px', threshold: 0 });
+            observer.observe(sentinel);
+        };
+
+        attach();
+        document.addEventListener('livewire:navigated', attach);
+        document.addEventListener('livewire:initialized', () => {
+            attach();
+            window.Livewire.hook('morph.updated', attach);
+        });
+    })();
+</script>
 @endpush
 
 <div>
@@ -624,6 +705,9 @@
                         <div class="uw-balance-amount">${{ number_format($balance, 0) }}</div>
                         <div class="uw-balance-sub">Your current balance</div>
                     </div>
+                    {{-- /purchase-credits now renders the Buy Credits form
+                         directly (the duplicate wallet landing was removed),
+                         so no #buy hash trickery needed. --}}
                     <a href="{{ url('/purchase-credits') }}" wire:navigate class="uw-buy-btn">
                         <i class="fa fa-plus"></i> Buy Credits
                     </a>
@@ -809,6 +893,22 @@
                             </tbody>
                         </table>
                     </div>
+
+                    {{-- Scroll-and-load sentinel. The IntersectionObserver in
+                         the <script> at the bottom of this file watches this
+                         node; when it enters the viewport we call
+                         loadMoreTransactions() on the Livewire component to
+                         grow the window by PAGE_SIZE. Hidden once we've
+                         loaded every row (hasMoreTx = false) so the observer
+                         doesn't keep firing against an empty tail. --}}
+                    @if($hasMoreTx)
+                        <div class="uw-tx-sentinel" wire:key="tx-sentinel-{{ $txFilter }}">
+                            <span class="uw-tx-loading-spinner" aria-hidden="true"></span>
+                            <span>Loading more…</span>
+                        </div>
+                    @elseif($transactions->isNotEmpty())
+                        <div class="uw-tx-end">You've reached the end of your transaction history.</div>
+                    @endif
                 </div>
             </div>
 

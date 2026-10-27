@@ -758,6 +758,76 @@
         .conv-kebab-menu button.danger { color: var(--ev-danger); }
         .conv-kebab-menu button.danger:hover { background: rgba(239,68,68,0.12); }
         .conv-kebab-menu button.danger i { color: var(--ev-danger); }
+
+        /* Long-press bottom sheet — desktop keeps the dropdown look, mobile
+           turns the same markup into a WhatsApp-style sheet. The handle +
+           title rows are hidden on desktop so the dropdown stays tight. */
+        .conv-lp-handle,
+        .conv-lp-title { display: none; }
+        .conv-lp-backdrop { display: none; }
+
+        @media (max-width: 900px) {
+            /* Dim the app underneath so the sheet reads as a modal. */
+            .conv-lp-backdrop {
+                display: block;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.55);
+                z-index: 1100;
+            }
+            /* Re-skin the kebab dropdown as a bottom sheet. position:fixed
+               detaches it from the row, left/right pin it to the viewport. */
+            .conv-kebab { position: static; opacity: 1; margin-left: 0; }
+            .conv-kebab-btn { display: none; } /* mobile has long-press, no button */
+            .conv-kebab-menu {
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                top: auto !important;
+                margin: 0 !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                border-radius: 20px 20px 0 0;
+                padding: 8px 6px calc(env(safe-area-inset-bottom, 0px) + 10px);
+                background: var(--ev-panel-2);
+                z-index: 1101;
+                box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.45);
+                animation: convLpSheetUp 180ms ease-out;
+            }
+            .conv-lp-handle {
+                display: block;
+                width: 44px;
+                height: 4px;
+                border-radius: 2px;
+                background: var(--ev-border);
+                margin: 2px auto 10px;
+            }
+            .conv-lp-title {
+                display: block;
+                padding: 0 14px 10px;
+                color: var(--ev-text-2);
+                font-size: 13px;
+                font-weight: 600;
+                border-bottom: 1px solid var(--ev-border);
+                margin-bottom: 6px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .conv-kebab-menu button {
+                padding: 14px 16px;
+                font-size: 15px;
+                border-radius: 10px;
+            }
+            .conv-kebab-menu button i { width: 20px; font-size: 16px; }
+        }
+        @keyframes convLpSheetUp {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
+        }
+
         .conversation-item.active {
             background: var(--ev-panel-3);
         }
@@ -1745,7 +1815,7 @@
         .chat-sidebar-tab:hover { color: var(--ev-text); background: var(--ev-panel-3); }
         .chat-sidebar-tab.active {
             background: #000;
-            color: var(--ev-text);
+            color: var(--ev-lime);
         }
         .chat-sidebar-tab svg {
             width: 19px;
@@ -2540,7 +2610,11 @@
             font-size: 12.5px;
             line-height: 1.3;
             overflow: hidden;
+            cursor: pointer;
+            transition: background 120ms;
         }
+        .msg-quote:hover { background: rgba(6, 207, 156, 0.20); }
+        .message-wrapper.received .msg-quote:hover { background: rgba(52, 211, 153, 0.22); }
         .message-wrapper.received .msg-quote {
             border-left-color: #34d399;
             background: rgba(52, 211, 153, 0.14);
@@ -2653,6 +2727,59 @@
             font-family: inherit; font-size: 14px; text-align: left;
         }
         .fwd-item:hover { background: var(--ev-hover); }
+        .fwd-item.selected { background: rgba(193,241,29,0.08); }
+        .fwd-item.selected:hover { background: rgba(193,241,29,0.14); }
+        /* Round checkbox indicator on the right of each row.
+           Hollow by default, filled lime when selected. */
+        .fwd-check {
+            margin-left: auto;
+            flex: 0 0 auto;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--ev-border-strong);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: transparent;
+            transition: background 120ms, border-color 120ms, color 120ms;
+        }
+        .fwd-item.selected .fwd-check {
+            background: var(--ev-lime);
+            border-color: var(--ev-lime);
+            color: var(--ev-lime-ink);
+        }
+        .fwd-check svg { width: 12px; height: 12px; display: block; }
+        /* Footer with counter + Send button; hidden when nothing selected. */
+        .fwd-footer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--ev-border);
+            background: var(--ev-panel-2);
+        }
+        .fwd-footer-count {
+            color: var(--ev-text-2);
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+        }
+        .fwd-footer-send {
+            margin-left: auto;
+            padding: 9px 18px;
+            border-radius: var(--ev-r-pill);
+            border: none;
+            background: var(--ev-lime);
+            color: var(--ev-lime-ink);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: filter 120ms;
+        }
+        .fwd-footer-send:hover:not(:disabled) { filter: brightness(1.08); }
+        .fwd-footer-send:disabled { opacity: 0.4; cursor: not-allowed; }
         .fwd-avatar {
             width: 40px; height: 40px; border-radius: 50%;
             background: var(--ev-panel-3);
@@ -2720,6 +2847,86 @@
             max-height: 380px;
             border-radius: 14px;
             cursor: zoom-in;
+            /* touch-action: manipulation prevents iOS Safari from double-tap
+               zooming the page when the user taps a chat image. Without it,
+               iOS waits ~300ms for a possible second tap before firing the
+               click, and inside a scrollable+fixed shell the click can get
+               swallowed outright — the user sees "nothing happens on tap". */
+            touch-action: manipulation;
+            -webkit-user-select: none;
+        }
+
+        /* WhatsApp-style image album — fixed-aspect tile grid.
+           Layout per count:
+             2  → side by side (1x2)
+             3  → one big left, two stacked right
+             4  → 2x2
+             5+ → 2x2 with "+N" overlay on the 4th tile
+           Each tile fills its cell; a 2-px gap acts as a divider. */
+        .msg-album {
+            display: grid;
+            width: 320px;
+            max-width: 100%;
+            height: 320px;
+            border-radius: 14px;
+            overflow: hidden;
+            gap: 2px;
+            background: #000; /* shows between tiles as the divider */
+            cursor: pointer;
+        }
+        .msg-album[data-count="2"] {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr;
+        }
+        .msg-album[data-count="3"] {
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+        .msg-album[data-count="3"] .msg-album-tile:first-child { grid-row: span 2; }
+        .msg-album[data-count="4"],
+        .msg-album[data-count="5"],
+        .msg-album[data-count="6"],
+        .msg-album[data-count="7"],
+        .msg-album[data-count="8"],
+        .msg-album[data-count="9"] {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+        .msg-album-tile {
+            position: relative;
+            overflow: hidden;
+            background: #000 center/cover no-repeat;
+        }
+        .msg-album-tile img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 120ms;
+        }
+        .msg-album-tile:hover img { transform: scale(1.02); }
+        /* +N overlay on the last visible tile when there are 5+ images. */
+        .msg-album-tile.has-more::after {
+            content: attr(data-more);
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Album caption below the grid — same look as a plain text message. */
+        .msg-album-caption {
+            margin: 6px 2px 0;
+            font-size: 14px;
+            color: inherit;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+        /* Compact album on narrow phones so it leaves room beside the time. */
+        @media (max-width: 480px) {
+            .msg-album { width: 260px; height: 260px; }
         }
         .msg-audio {
             display: flex;
@@ -2900,10 +3107,13 @@
             background: var(--ev-panel-3);
             border-radius: var(--ev-r-pill);
             padding: 6px 8px 6px 14px;
+            min-width: 0;
+            box-sizing: border-box;
         }
         .chat-input-form input,
         .chat-input-form textarea {
-            flex: 1;
+            flex: 1 1 0;
+            min-width: 0;
             background: transparent;
             border: none;
             outline: none;
@@ -2921,6 +3131,9 @@
         .chat-input-form .emoji-btn,
         .chat-input-form .mic-btn {
             width: 36px; height: 36px;
+            min-width: 36px; min-height: 36px;
+            flex: 0 0 36px;
+            aspect-ratio: 1 / 1;
             border-radius: 50%;
             display: inline-flex; align-items: center; justify-content: center;
             background: transparent;
@@ -2943,6 +3156,9 @@
         .chat-input-form button[type="submit"],
         .send-btn {
             width: 40px; height: 40px;
+            min-width: 40px; min-height: 40px;
+            flex: 0 0 40px;
+            aspect-ratio: 1 / 1;
             border-radius: 50%;
             background: #C1F11D;
             color: #0D1011;
@@ -2952,6 +3168,7 @@
             font-size: 15px;
             transition: transform 120ms, background 120ms;
             padding: 0;
+            box-sizing: border-box;
         }
         .chat-input-form button[type="submit"]:hover,
         .send-btn:hover { background: #d4f84d; transform: scale(1.05); }
@@ -3271,19 +3488,21 @@
             align-items: center;
             justify-content: center;
             z-index: 10050;
-            padding: 20px;
+            padding: 12px;
             animation: cvlFadeIn 150ms ease-out;
         }
         .chat-video-lightbox.open { display: flex; }
         @keyframes cvlFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* The inner sheet — fixed max-width/height so landscape AND
-           portrait clips sit comfortably in the centre instead of
-           stretching from edge to edge. */
+        /* The inner sheet — fills most of the viewport so videos read big,
+           WhatsApp-Web style. The flex column lets the <video> body expand
+           to all leftover space between the head and reply bars; min-height
+           0 on .cvl-body is what makes `flex: 1` actually honour the cap. */
         .chat-video-lightbox .cvl-sheet {
             width: 100%;
-            max-width: 520px;
-            max-height: 85vh;
+            max-width: min(1100px, 96vw);
+            max-height: 96vh;
+            min-height: 0;
             background: #0b0d10;
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 14px;
@@ -3345,7 +3564,7 @@
         .chat-video-lightbox .cvl-share:hover { background: rgba(255,255,255,0.08); }
         .chat-video-lightbox .cvl-body {
             flex: 1 1 auto;
-            min-height: 0;
+            min-height: 60vh;
             background: #000;
             display: flex;
             align-items: center;
@@ -3422,16 +3641,204 @@
         .chat-video-lightbox .cvl-reply-send:hover { filter: brightness(1.08); }
         .chat-video-lightbox .cvl-reply-send:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Mobile: full-width sheet with rounded top corners, kept
-           within safe-area insets so iOS home indicator doesn't overlap. */
+        /* Mobile: edge-to-edge sheet so the video eats the whole screen.
+           Safe-area insets handled on the reply bar's padding below (so
+           the iOS home indicator doesn't overlap the Send button). */
         @media (max-width: 640px) {
-            .chat-video-lightbox { padding: 10px; }
+            .chat-video-lightbox { padding: 0; }
             .chat-video-lightbox .cvl-sheet {
                 max-width: 100%;
-                max-height: 90vh;
-                border-radius: 12px;
+                max-height: 100vh;
+                max-height: 100dvh;
+                border-radius: 0;
+                height: 100%;
             }
         }
+
+        /* -------- Simple image lightbox (single OR album) --------
+           Opened by tapping a .msg-image bubble (single) OR a .msg-album
+           tile (album, with prev/next walk through items). Click outside
+           the image, Esc, or the X closes it. */
+        .chat-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 10080;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: cvlFadeIn 150ms ease-out;
+        }
+        .chat-lightbox.open { display: flex; }
+        .chat-lightbox img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 6px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .chat-lightbox .lb-close,
+        .chat-lightbox .lb-prev,
+        .chat-lightbox .lb-next {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: none;
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: background 120ms;
+        }
+        .chat-lightbox .lb-close { top: 16px; right: 16px; }
+        .chat-lightbox .lb-prev  { left: 12px; top: 50%; transform: translateY(-50%); }
+        .chat-lightbox .lb-next  { right: 12px; top: 50%; transform: translateY(-50%); }
+        .chat-lightbox .lb-close:hover,
+        .chat-lightbox .lb-prev:hover,
+        .chat-lightbox .lb-next:hover { background: rgba(255,255,255,0.2); }
+        /* Position counter + caption at the bottom so they don't fight the image. */
+        .chat-lightbox .lb-caption {
+            position: absolute;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            max-width: 80%;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            font-size: 13px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-lightbox .lb-count {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-variant-numeric: tabular-nums;
+        }
+        /* Hide prev/next for single-image mode. */
+        .chat-lightbox.single .lb-prev,
+        .chat-lightbox.single .lb-next,
+        .chat-lightbox.single .lb-count { display: none; }
+
+        /* Top header strip — sender name + sent time, matches the
+           cvl-head pattern used by the video lightbox so both media
+           types feel identical to the user. Gradient backdrop so the
+           text stays readable over any image. The strip itself is
+           pointer-events: none so the image behind it is still
+           tappable; the X close button sits on top of it. */
+        .chat-lightbox .lb-head {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 70px 14px 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0));
+            z-index: 2;
+            pointer-events: none;
+        }
+        .chat-lightbox .lb-head-info {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+            color: #fff;
+        }
+        .chat-lightbox .lb-sender {
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-lightbox .lb-time {
+            color: rgba(255,255,255,0.65);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        /* Reply bar at the bottom — mirrors cvl-reply. Submitting it
+           sends an inline reply with reply_to_id set to the image
+           message, then closes the lightbox. Hidden when the lightbox
+           is opened without a messageId (e.g. the media gallery). */
+        .chat-lightbox .lb-reply {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+            background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0));
+            z-index: 2;
+        }
+        .chat-lightbox .lb-reply-input {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            background: rgba(21,24,28,0.95);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 999px;
+            padding: 4px 4px 4px 14px;
+        }
+        .chat-lightbox .lb-reply-input input {
+            flex: 1 1 auto;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 16px; /* 16px keeps iOS Safari from zooming on focus */
+            padding: 8px 4px;
+            min-width: 0;
+        }
+        .chat-lightbox .lb-reply-input input::placeholder { color: rgba(255,255,255,0.4); }
+        .chat-lightbox .lb-reply-emoji {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.65);
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex: 0 0 auto;
+        }
+        .chat-lightbox .lb-reply-emoji:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .chat-lightbox .lb-reply-send {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: #22c55e;
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex: 0 0 auto;
+            transition: filter 120ms;
+        }
+        .chat-lightbox .lb-reply-send:hover { filter: brightness(1.08); }
+        .chat-lightbox .lb-reply-send:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* When the lightbox was opened without a messageId (e.g. the
+           profile media gallery) we hide the reply bar entirely. */
+        .chat-lightbox.no-reply .lb-reply { display: none; }
+        /* Bump the caption pill up so it clears the reply bar. */
+        .chat-lightbox .lb-caption { bottom: 90px; }
+        .chat-lightbox.no-reply .lb-caption { bottom: 20px; }
+        /* Push the counter badge down so it clears the header strip. */
+        .chat-lightbox .lb-count { top: 72px; }
 
         /* -------- WhatsApp-style image preview modal -------- */
         /* Fullscreen overlay shown AFTER the user picks an image but BEFORE
@@ -3526,6 +3933,49 @@
         }
         .ipm-send-btn:hover { background: #16a34a; transform: scale(1.05); }
         .ipm-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* WhatsApp-style thumbnail strip for multi-image sends. Shows every
+           selected image as a small square; the active one gets a lime
+           border. A trailing "+" tile re-opens the picker so the user can
+           keep adding until they hit the 20-image cap. Hidden entirely when
+           only one image is queued. */
+        .ipm-thumbs {
+            flex: 0 0 auto;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #15191b;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .ipm-thumbs.open { display: flex; }
+        .ipm-thumbs::-webkit-scrollbar { height: 4px; }
+        .ipm-thumbs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+        .ipm-thumb {
+            position: relative;
+            flex: 0 0 auto;
+            width: 52px; height: 52px;
+            border-radius: 6px;
+            background: #000 center/cover no-repeat;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: border-color 120ms, transform 120ms;
+        }
+        .ipm-thumb:hover { transform: scale(1.05); }
+        .ipm-thumb.active { border-color: #C1F11D; }
+        .ipm-thumb-add {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.65);
+            font-size: 22px;
+            font-weight: 300;
+            line-height: 1;
+        }
+        .ipm-thumb-add:hover { background: rgba(255,255,255,0.16); color: #fff; }
 
         /* Optimistic "sending image" bubble — same pattern as video. The
            local object URL is pinned as the tile background; a translucent
@@ -4018,6 +4468,11 @@
             }
             .chat-sidebar-tab svg [stroke] { stroke: #fff; }
             .chat-sidebar-tab svg [fill]:not([fill="none"]) { fill: #fff; }
+            /* Active tab icon follows the lime theme colour. These rules
+               must sit AFTER the forced-white ones above (same specificity)
+               so they win for `.active` while non-active tabs stay white. */
+            .chat-sidebar-tab.active svg [stroke] { stroke: var(--ev-lime); }
+            .chat-sidebar-tab.active svg [fill]:not([fill="none"]) { fill: var(--ev-lime); }
             .chat-sidebar-tab .tab-badge {
                 top: 2px; right: 4px;
                 min-width: 18px; height: 18px;
@@ -5394,7 +5849,9 @@
                                             // Audio is included so the voice-message pill (self-contained
                                             // dark bubble with waveform + timer) stands alone instead of
                                             // sitting inside a mint/panel bubble that fights its own styling.
-                                            $isMediaOnly = in_array($attType, ['image', 'video', 'audio'], true) && !$hasText;
+                                            // 'album' is also media-only — the caption (if any) renders INSIDE
+                                            // the album block via .msg-album-caption, not in a separate text pill.
+                                            $isMediaOnly = in_array($attType, ['image', 'video', 'audio', 'album'], true) && !$hasText;
                                         @endphp
                                         @if($showSeparator)
                                             <div class="chat-date-sep" wire:key="sep-{{ $msgDate }}">
@@ -5437,9 +5894,14 @@
                                                     </div>
                                                 </div>
                                                 @if(!empty($message['reply_to']))
-                                                    {{-- Quoted parent snapshot: name + excerpt. Shown above the
-                                                         bubble content. Click-to-scroll could be added later. --}}
-                                                    <div class="msg-quote">
+                                                    {{-- Quoted parent snapshot: name + excerpt. Clicking it
+                                                         scrolls the parent message into view and flashes the
+                                                         same gallery-highlight pulse used by the Gallery
+                                                         tab's "jump to message" behavior. --}}
+                                                    <div class="msg-quote"
+                                                         data-jump-to="{{ $message['reply_to']['id'] }}"
+                                                         role="button" tabindex="0"
+                                                         aria-label="Jump to replied message">
                                                         <div class="msg-quote-name">{{ $message['reply_to']['sender_name'] }}</div>
                                                         <div class="msg-quote-text">{{ $message['reply_to']['excerpt'] }}</div>
                                                     </div>
@@ -5481,11 +5943,59 @@
                                                         @endif
                                                     </div>
                                                 @elseif(!empty($message['attachment_url']))
-                                                    @if($message['attachment_type'] === 'image')
+                                                    @if(($message['attachment_type'] ?? '') === 'album' && !empty($message['album_items']))
+                                                        {{-- WhatsApp-style image album. The whole grid is one
+                                                             clickable surface; we also give each tile its own
+                                                             index so the lightbox opens on the tapped image.
+                                                             Max 4 visible tiles — if 5+ images, the 4th gets a
+                                                             "+N" overlay showing remaining count. --}}
+                                                        @php
+                                                            $items   = $message['album_items'];
+                                                            $count   = count($items);
+                                                            $visible = min($count, 4);
+                                                            $extra   = max(0, $count - $visible);
+                                                            // Serialise once so the lightbox knows every item in the
+                                                            // album; JSON-encoded + attr-escaped on the data attribute
+                                                            // keeps it compact and safe.
+                                                            $albumPayload = json_encode([
+                                                                'messageId' => $message['id'],
+                                                                'items'     => $items,
+                                                            ], JSON_UNESCAPED_SLASHES);
+                                                        @endphp
+                                                        <div class="msg-album"
+                                                             data-count="{{ $visible }}"
+                                                             data-album='{{ $albumPayload }}'
+                                                             data-message-id="{{ $message['id'] }}"
+                                                             data-sender-name="{{ $message['is_mine'] ? 'You' : ($message['sender_name'] ?? 'User') }}"
+                                                             data-sent-at="{{ \Carbon\Carbon::parse($message['created_at'])->format('M j, g:i A') }}"
+                                                             role="button" tabindex="0"
+                                                             aria-label="Image album, {{ $count }} images">
+                                                            @for($i = 0; $i < $visible; $i++)
+                                                                <div class="msg-album-tile {{ ($i === $visible - 1 && $extra > 0) ? 'has-more' : '' }}"
+                                                                     @if($i === $visible - 1 && $extra > 0) data-more="+{{ $extra }}" @endif
+                                                                     data-idx="{{ $i }}">
+                                                                    <img src="{{ $items[$i]['url'] }}" alt="" loading="lazy">
+                                                                </div>
+                                                            @endfor
+                                                        </div>
+                                                        @if(!empty($message['message']))
+                                                            {{-- Album caption lives inside the bubble, under the grid, so
+                                                                 it's visually tied to the album even when non-empty. --}}
+                                                            <p class="msg-album-caption">{{ $message['message'] }}</p>
+                                                        @endif
+                                                    @elseif($message['attachment_type'] === 'image')
+                                                        {{-- No inline onclick — a document-level delegated click
+                                                             handler (see albumLightboxWired below) opens the
+                                                             lightbox for both albums AND single images. The
+                                                             delegation path is more reliable on mobile Safari,
+                                                             where inline <img onclick="…"> inside a scrollable +
+                                                             position:fixed shell can silently drop taps. --}}
                                                         <img src="{{ $message['attachment_url'] }}"
                                                              alt="Image"
                                                              class="msg-image"
-                                                             onclick="openLightbox('{{ $message['attachment_url'] }}')">
+                                                             data-message-id="{{ $message['id'] }}"
+                                                             data-sender-name="{{ $message['is_mine'] ? 'You' : ($message['sender_name'] ?? 'User') }}"
+                                                             data-sent-at="{{ \Carbon\Carbon::parse($message['created_at'])->format('M j, g:i A') }}">
                                                     @elseif($message['attachment_type'] === 'audio')
                                                         <div class="msg-voice" data-vp-duration="{{ $message['attachment_duration'] ?? 0 }}">
                                                             {{-- WebM blobs from MediaRecorder ship without a duration header,
@@ -5542,7 +6052,10 @@
                                                         </a>
                                                     @endif
                                                 @endif
-                                                @if(!empty($message['message']))
+                                                @if(!empty($message['message']) && ($message['attachment_type'] ?? '') !== 'album')
+                                                    {{-- Album captions are rendered inline inside .msg-album-caption
+                                                         above, so skip the trailing text pill for album rows to
+                                                         avoid showing the caption twice. --}}
                                                     <p class="message-text">{{ $message['message'] }}</p>
                                                 @endif
                                             </div>
@@ -5610,6 +6123,10 @@
                                     <div class="img-preview-body">
                                         <img id="ipmImage" alt="">
                                     </div>
+                                    {{-- Thumbnail strip — shown only when 2+ images are queued.
+                                         Each tile switches the preview; trailing "+" re-opens
+                                         the picker. --}}
+                                    <div class="ipm-thumbs" id="ipmThumbs" aria-label="Selected images"></div>
                                     <div class="img-preview-footer">
                                         <input type="text" id="ipmCaption" class="ipm-caption" placeholder="Add a caption..." autocomplete="off">
                                         <button type="button" class="ipm-send-btn" id="ipmSendBtn" title="Send" aria-label="Send">
@@ -5706,7 +6223,7 @@
                                         {{-- Hidden file inputs — one per kind so each has the right accept filter.
                                              Camera also sets `capture="environment"` which on mobile launches the
                                              camera app directly instead of the gallery. --}}
-                                        <input type="file" id="attachInputPhotos"  accept="image/*,video/*" style="display:none">
+                                        <input type="file" id="attachInputPhotos"  accept="image/*,video/*" multiple style="display:none">
                                         <input type="file" id="attachInputCamera"  accept="image/*" capture="environment" style="display:none">
                                         <input type="file" id="attachInputAudio"   accept="audio/*" style="display:none">
                                         <input type="file" id="attachInputDocs"    accept="application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" style="display:none">
@@ -5821,7 +6338,21 @@
                                                 $curConv2 = collect($conversations)->firstWhere('id', $selectedConversationId);
                                                 $isArchived2 = $curConv2['is_archived'] ?? false;
                                                 $disappearingLabel2 = ['never'=>'Never','24h'=>'24 hours','1w'=>'1 week','1m'=>'1 month'][$prefDisappearingDefault ?? 'never'] ?? 'Never';
+                                                // Flatten albums back to their individual image rows so the
+                                                // Media panel shows every picture, not one "album" placeholder.
+                                                // Non-album rows pass through unchanged.
                                                 $convMedia = collect($this->conversationMessages ?? [])
+                                                    ->flatMap(function ($m) {
+                                                        if (($m['attachment_type'] ?? '') === 'album' && !empty($m['album_items'])) {
+                                                            return collect($m['album_items'])->map(fn($it) => [
+                                                                'attachment_url'           => $it['url'] ?? null,
+                                                                'attachment_thumbnail_url' => $it['thumbnail_url'] ?? null,
+                                                                'attachment_type'          => 'image',
+                                                                'attachment_duration'      => null,
+                                                            ])->all();
+                                                        }
+                                                        return [$m];
+                                                    })
                                                     ->filter(fn($m) => !empty($m['attachment_url']) && in_array($m['attachment_type'] ?? '', ['image','video','audio']))
                                                     ->values();
                                             @endphp
@@ -5995,9 +6526,22 @@
 
             @if($forwardPickerOpen)
                 {{-- Forward picker modal: lists the user's other conversations.
-                     Click a row → forwardTo($convId) duplicates the message there. --}}
+                     Multi-select up to 5 → Send button at the bottom fires
+                     one $wire.forwardToMany([...ids]) call that fans the
+                     message out server-side. Alpine owns the selection
+                     state so toggling rows feels instant with no round-trip. --}}
                 <div class="fwd-overlay" wire:click="cancelForward">
-                    <div class="fwd-modal" wire:click.stop>
+                    <div class="fwd-modal" wire:click.stop
+                         x-data="{ selected: [], MAX: 5,
+                                   toggle(id) {
+                                       const i = this.selected.indexOf(id);
+                                       if (i >= 0) { this.selected.splice(i, 1); return; }
+                                       if (this.selected.length >= this.MAX) {
+                                           alert(`You can forward to a maximum of ${this.MAX} chats at once.`);
+                                           return;
+                                       }
+                                       this.selected.push(id);
+                                   } }">
                         <div class="fwd-header">
                             <h3>Forward to…</h3>
                             <button type="button" class="fwd-close" wire:click="cancelForward" aria-label="Close">
@@ -6007,7 +6551,9 @@
                         <div class="fwd-list">
                             @foreach($conversations as $conv)
                                 @if(empty($conv['is_support']) && (int)$conv['id'] !== (int)$selectedConversationId)
-                                    <button type="button" class="fwd-item" wire:click="forwardTo({{ $conv['id'] }})">
+                                    <button type="button" class="fwd-item"
+                                            :class="selected.includes({{ (int) $conv['id'] }}) ? 'selected' : ''"
+                                            @click="toggle({{ (int) $conv['id'] }})">
                                         <div class="fwd-avatar">
                                             @if(!empty($conv['other_user_avatar_url']))
                                                 <img src="{{ $conv['other_user_avatar_url'] }}" alt="" onerror="this.style.display='none'">
@@ -6016,6 +6562,9 @@
                                             @endif
                                         </div>
                                         <div class="fwd-name">{{ $conv['other_user_name'] ?? 'Unknown' }}</div>
+                                        <span class="fwd-check" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </span>
                                     </button>
                                 @endif
                             @endforeach
@@ -6026,6 +6575,18 @@
                                 <div class="fwd-empty">No other conversations to forward to.</div>
                             @endif
                         </div>
+                        @if($forwardable->isNotEmpty())
+                            <div class="fwd-footer">
+                                <span class="fwd-footer-count"
+                                      x-text="selected.length ? `${selected.length}/${MAX} selected` : `Select up to ${MAX} chats`"></span>
+                                <button type="button" class="fwd-footer-send"
+                                        :disabled="selected.length === 0"
+                                        @click="$wire.forwardToMany(selected)">
+                                    <i class="fa fa-paper-plane"></i>
+                                    <span x-text="selected.length > 1 ? `Send (${selected.length})` : 'Send'"></span>
+                                </button>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -6713,13 +7274,30 @@
             // One listener covers every attach kind — each hidden input has
             // its own id but the upload path is identical: ChatMediaController
             // detects type from the MIME on the server side.
+            //
+            // #attachInputPhotos is `multiple`; the others only ever yield
+            // one file. When a batch arrives we split images from videos:
+            // images go through the WhatsApp-style multi-image preview
+            // modal (up to 20 at once), videos still go one-at-a-time
+            // through their own upload flow afterwards.
             document.addEventListener('change', (e) => {
                 const t = e.target;
                 if (!t.matches || !t.matches('#attachInput, #attachInputPhotos, #attachInputCamera, #attachInputAudio, #attachInputDocs')) return;
-                const file = t.files && t.files[0];
-                if (!file) return;
-                uploadAttachmentFile(file);
+                const files = Array.from(t.files || []);
                 t.value = ''; // allow picking the same file twice in a row
+                if (!files.length) return;
+
+                if (t.id === 'attachInputPhotos' && files.length > 1) {
+                    const images = files.filter(f => (f.type || '').startsWith('image/'));
+                    const videos = files.filter(f => (f.type || '').startsWith('video/'));
+                    if (images.length) openImagePreviewModal(images);
+                    // Videos go through the normal single-video flow sequentially.
+                    // Each openVideoUploadFlow() drops its own pending bubble + XHR,
+                    // so the user can watch them progress independently.
+                    videos.forEach(v => uploadAttachmentFile(v));
+                    return;
+                }
+                uploadAttachmentFile(files[0]);
             }, true);
 
             // Send button while recording: stop-and-upload the voice note
@@ -7049,60 +7627,198 @@
         }
 
         /**
-         * WhatsApp-style image send flow:
-         *   1. User picks an image → this modal opens with a full preview.
-         *   2. User can add an optional caption and tap Send.
-         *   3. Modal closes → openImageUploadFlow() drops an optimistic
-         *      bubble into the thread with a progress overlay.
-         *   4. Discard button or Esc / Close returns the user to the chat
-         *      without sending.
-         * One pending file at a time — modal is modal.
+         * WhatsApp-style multi-image send flow.
+         *
+         *   1. User picks 1-20 images → this modal opens with a full preview
+         *      of the first one.
+         *   2. For 2+ images, a thumbnail strip appears above the caption
+         *      so the user can switch between pictures.
+         *   3. Each image carries its own caption (saved on-the-fly as the
+         *      user types + switches).
+         *   4. The trailing "+" tile in the strip re-opens the picker so
+         *      more images can be added up to the 20 cap.
+         *   5. The topbar Discard button removes only the CURRENT image;
+         *      if that was the last one, the modal closes.
+         *   6. On Send, each image is handed off to openImageUploadFlow()
+         *      with its own caption; each gets a pending bubble in the
+         *      thread and uploads independently.
+         *
+         * Accepts a File OR an array of File. One pending batch at a time;
+         * calling again while open merges the new files into the existing
+         * queue (that's how the "+" tile works).
          */
-        function openImagePreviewModal(file) {
+        const IPM_MAX_IMAGES = 20;
+
+        function openImagePreviewModal(fileOrArray) {
             const modal   = document.getElementById('imgPreviewModal');
             const img     = document.getElementById('ipmImage');
             const caption = document.getElementById('ipmCaption');
             const sendBtn = document.getElementById('ipmSendBtn');
             const closeBtn= document.getElementById('ipmCloseBtn');
             const delBtn  = document.getElementById('ipmDeleteBtn');
-            if (!modal || !img || !sendBtn) return;
+            const thumbs  = document.getElementById('ipmThumbs');
+            const countEl = modal?.querySelector('.ipm-count');
+            if (!modal || !img || !sendBtn || !thumbs) return;
 
-            const objectUrl = URL.createObjectURL(file);
-            img.src = objectUrl;
-            caption.value = '';
+            const incoming = Array.isArray(fileOrArray) ? fileOrArray : [fileOrArray];
+            const imageFiles = incoming.filter(f => f && (f.type || '').startsWith('image/'));
+            if (!imageFiles.length) return;
+
+            // Merge-mode: modal already open (user clicked "+" to add more).
+            // Append to the existing state instead of recreating it.
+            if (modal.__ipmState) {
+                const st = modal.__ipmState;
+                const roomLeft = IPM_MAX_IMAGES - st.files.length;
+                if (roomLeft <= 0) {
+                    alert(`You can send a maximum of ${IPM_MAX_IMAGES} images at once.`);
+                    return;
+                }
+                const toAdd = imageFiles.slice(0, roomLeft);
+                if (imageFiles.length > roomLeft) {
+                    alert(`Only ${roomLeft} more image${roomLeft === 1 ? '' : 's'} can be added (${IPM_MAX_IMAGES} max).`);
+                }
+                toAdd.forEach(f => {
+                    st.files.push(f);
+                    st.captions.push('');
+                    st.urls.push(URL.createObjectURL(f));
+                });
+                st.render();
+                return;
+            }
+
+            // Fresh open: cap to the first 20 images.
+            if (imageFiles.length > IPM_MAX_IMAGES) {
+                alert(`Only the first ${IPM_MAX_IMAGES} images will be used (${imageFiles.length} selected).`);
+            }
+            const files    = imageFiles.slice(0, IPM_MAX_IMAGES);
+            const captions = files.map(() => '');
+            const urls     = files.map(f => URL.createObjectURL(f));
+            let currentIdx = 0;
+
+            const state = {
+                files, captions, urls,
+                get idx() { return currentIdx; },
+                set idx(v) { currentIdx = v; },
+                render() { renderAll(); },
+            };
+            modal.__ipmState = state;
+
+            const render = () => {
+                // Preview + caption follow the active index.
+                const i = currentIdx;
+                img.src = urls[i];
+                caption.value = captions[i] || '';
+                if (countEl) countEl.textContent = `${i + 1}/${files.length}`;
+                // Thumbnail strip only when 2+ files are queued.
+                if (files.length > 1) thumbs.classList.add('open');
+                else thumbs.classList.remove('open');
+                // Rebuild the strip. Cheap — max 21 nodes.
+                thumbs.innerHTML = '';
+                files.forEach((_, idx) => {
+                    const t = document.createElement('button');
+                    t.type = 'button';
+                    t.className = 'ipm-thumb' + (idx === i ? ' active' : '');
+                    t.style.backgroundImage = `url('${urls[idx]}')`;
+                    t.setAttribute('aria-label', `Image ${idx + 1}`);
+                    t.addEventListener('click', () => {
+                        // Save the current caption before switching away.
+                        captions[currentIdx] = caption.value;
+                        currentIdx = idx;
+                        render();
+                    });
+                    thumbs.appendChild(t);
+                });
+                // Trailing "+" to add more, while under the cap.
+                if (files.length < IPM_MAX_IMAGES) {
+                    const add = document.createElement('button');
+                    add.type = 'button';
+                    add.className = 'ipm-thumb ipm-thumb-add';
+                    add.textContent = '+';
+                    add.setAttribute('aria-label', 'Add more images');
+                    add.addEventListener('click', () => {
+                        // Reuse the hidden file input so the native picker opens.
+                        // Saved captions survive because we never clear state here.
+                        captions[currentIdx] = caption.value;
+                        document.getElementById('attachInputPhotos')?.click();
+                    });
+                    thumbs.appendChild(add);
+                }
+            };
+            const renderAll = render;
+
+            // Save caption as the user types so switching tabs doesn't lose it.
+            const onCaptionInput = () => { captions[currentIdx] = caption.value; };
+
             modal.classList.add('open');
             modal.setAttribute('aria-hidden', 'false');
-            // Give the caption a tick to settle before focusing — avoids
-            // scroll-jumps on iOS when the keyboard opens too fast.
+            render();
+            // iOS: delay focus so the keyboard opens after the modal paint.
             setTimeout(() => { try { caption.focus(); } catch (_) {} }, 100);
 
-            // Teardown: revoke the blob URL, hide modal, and detach the
-            // one-shot button listeners we just attached. Called by Send,
-            // Close, and Discard.
             const close = () => {
                 modal.classList.remove('open');
                 modal.setAttribute('aria-hidden', 'true');
-                URL.revokeObjectURL(objectUrl);
+                urls.forEach(u => { try { URL.revokeObjectURL(u); } catch (_) {} });
                 sendBtn.removeEventListener('click', onSend);
                 closeBtn.removeEventListener('click', onClose);
-                delBtn.removeEventListener('click', onClose);
+                delBtn.removeEventListener('click', onDiscardCurrent);
+                caption.removeEventListener('input', onCaptionInput);
                 document.removeEventListener('keydown', onKey);
+                delete modal.__ipmState;
             };
             const onClose = () => close();
             const onKey = (e) => { if (e.key === 'Escape') close(); };
+
+            // Discard removes ONLY the current image (not the whole batch).
+            // If it was the last one, the modal closes.
+            const onDiscardCurrent = () => {
+                try { URL.revokeObjectURL(urls[currentIdx]); } catch (_) {}
+                files.splice(currentIdx, 1);
+                captions.splice(currentIdx, 1);
+                urls.splice(currentIdx, 1);
+                if (!files.length) { close(); return; }
+                if (currentIdx >= files.length) currentIdx = files.length - 1;
+                render();
+            };
+
             const onSend = () => {
-                const cap = (caption.value || '').trim();
-                // Hand off to the uploader. We keep the object URL alive
-                // past close() by snapshotting a fresh one for the bubble;
-                // the preview's URL is revoked immediately.
-                const bubbleUrl = URL.createObjectURL(file);
+                // Capture the latest caption before firing.
+                captions[currentIdx] = caption.value;
+                // When the user picked 2+ images, mint ONE batch_id and
+                // ship it with every upload in the batch. The server stores
+                // it on each row; Chat::loadConversationMessages then
+                // collapses them into a single WhatsApp-style album grid.
+                // Single-image sends get null → render as a plain bubble.
+                const batchId = files.length > 1 ? makeUuid() : null;
+                const snapshot = files.map((f, i) => ({
+                    file: f,
+                    caption: (captions[i] || '').trim(),
+                    // Fresh object URL for the pending bubble so close() can
+                    // revoke the preview URLs without breaking the bubbles.
+                    bubbleUrl: URL.createObjectURL(f),
+                    batchId,
+                }));
                 close();
-                openImageUploadFlow(file, cap, bubbleUrl);
+                // Serialize uploads: fire one at a time instead of all in
+                // parallel. Parallel XHRs can collide with PHP's session
+                // lock and (on Windows) realpath cache, causing some uploads
+                // to fail with "Path cannot be empty" from Flysystem. The
+                // pending bubbles are inserted immediately inside
+                // openImageUploadFlow so the user still sees all N bubbles
+                // the moment they hit Send — only the actual byte transfer
+                // is sequential.
+                (async () => {
+                    for (const { file, caption, bubbleUrl, batchId } of snapshot) {
+                        try { await openImageUploadFlow(file, caption, bubbleUrl, batchId); }
+                        catch (err) { console.error('[imgSend] upload failed', err); }
+                    }
+                })();
             };
 
             sendBtn.addEventListener('click', onSend);
             closeBtn.addEventListener('click', onClose);
-            delBtn.addEventListener('click', onClose);
+            delBtn.addEventListener('click', onDiscardCurrent);
+            caption.addEventListener('input', onCaptionInput);
             document.addEventListener('keydown', onKey);
         }
 
@@ -7117,51 +7833,74 @@
          *   4. On failure → flip bubble to a red/failed state (auto-removes
          *      after 5s).
          */
-        function openImageUploadFlow(file, caption, bubbleUrl) {
-            const convInput = document.getElementById('chatReplyInput');
-            const conversationId = convInput?.getAttribute('data-conversation-id');
-            if (!conversationId) { alert('No conversation open.'); return; }
-
-            const pending = insertPendingImageBubble(bubbleUrl);
-
-            const fd = new FormData();
-            fd.append('conversation_id', conversationId);
-            fd.append('attachment', file);
-            if (caption) fd.append('message', caption);
-
-            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/chat/attachment-upload', true);
-            xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhr.setRequestHeader('Accept', 'application/json');
-            xhr.withCredentials = true;
-
-            xhr.upload.onprogress = (ev) => {
-                if (!ev.lengthComputable) return;
-                const pct = Math.round((ev.loaded / ev.total) * 100);
-                if (pending?.setProgress) pending.setProgress(pct);
-            };
-            xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    if (bubbleUrl) URL.revokeObjectURL(bubbleUrl);
-                    if (pending?.remove) pending.remove();
-                    const anchor = document.getElementById('chatReplyInput') || document.getElementById('attachBtn');
-                    const root = anchor?.closest('[wire\\:id]');
-                    if (root) Livewire.find(root.getAttribute('wire:id'))?.call('refreshChat');
-                } else {
-                    let msg = 'Upload failed (' + xhr.status + ')';
-                    try {
-                        const body = JSON.parse(xhr.responseText || '{}');
-                        if (body.detail) msg = body.detail;
-                    } catch (_) {}
-                    if (pending?.markFailed) pending.markFailed(msg);
+        // Cheap UUID helper. Prefers the native crypto.randomUUID() when
+        // available (all current browsers over https / localhost); falls
+        // back to a timestamp-plus-random string for older WebViews. We
+        // only use it to group N image uploads into one album server-side,
+        // so uniqueness guarantees aren't security-critical.
+        function makeUuid() {
+            try {
+                if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                    return window.crypto.randomUUID();
                 }
-            };
-            xhr.onerror = () => {
-                if (pending?.markFailed) pending.markFailed('Upload failed');
-            };
-            xhr.send(fd);
+            } catch (_) {}
+            return 'b-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+        }
+
+        function openImageUploadFlow(file, caption, bubbleUrl, batchId) {
+            return new Promise((resolve) => {
+                const convInput = document.getElementById('chatReplyInput');
+                const conversationId = convInput?.getAttribute('data-conversation-id');
+                if (!conversationId) { alert('No conversation open.'); resolve({ ok: false }); return; }
+
+                const pending = insertPendingImageBubble(bubbleUrl);
+
+                const fd = new FormData();
+                fd.append('conversation_id', conversationId);
+                fd.append('attachment', file);
+                if (caption) fd.append('message', caption);
+                // Album grouping — all images in one send share this UUID; the
+                // server persists it and the chat loader collapses matching
+                // rows into a single WhatsApp-style grid bubble.
+                if (batchId) fd.append('batch_id', batchId);
+
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/chat/attachment-upload', true);
+                xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.withCredentials = true;
+
+                xhr.upload.onprogress = (ev) => {
+                    if (!ev.lengthComputable) return;
+                    const pct = Math.round((ev.loaded / ev.total) * 100);
+                    if (pending?.setProgress) pending.setProgress(pct);
+                };
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        if (bubbleUrl) URL.revokeObjectURL(bubbleUrl);
+                        if (pending?.remove) pending.remove();
+                        const anchor = document.getElementById('chatReplyInput') || document.getElementById('attachBtn');
+                        const root = anchor?.closest('[wire\\:id]');
+                        if (root) Livewire.find(root.getAttribute('wire:id'))?.call('refreshChat');
+                        resolve({ ok: true });
+                    } else {
+                        let msg = 'Upload failed (' + xhr.status + ')';
+                        try {
+                            const body = JSON.parse(xhr.responseText || '{}');
+                            if (body.detail) msg = body.detail;
+                        } catch (_) {}
+                        if (pending?.markFailed) pending.markFailed(msg);
+                        resolve({ ok: false, status: xhr.status, message: msg });
+                    }
+                };
+                xhr.onerror = () => {
+                    if (pending?.markFailed) pending.markFailed('Upload failed');
+                    resolve({ ok: false });
+                };
+                xhr.send(fd);
+            });
         }
 
         /**
@@ -7694,18 +8433,33 @@
         // audio.duration is Infinity until the browser scans the whole file.
         // Seeking to +∞ triggers that scan; we rewind to 0 on the first
         // durationchange with a finite value.
+        //
+        // iOS Safari quirk: durationchange sometimes never fires with a
+        // finite value for a short WebM, which leaves currentTime stuck at
+        // 1e101 — the timestamp then prints as "1.666...e+99:08" and
+        // playback can't resume because the audio thinks it's past the end.
+        // Guard with a 2 s safety timeout that resets currentTime back to 0
+        // regardless, so playback is always usable.
         window.fixAudioDuration = function (audio) {
             if (!audio || audio.__durationFixed) return;
             audio.__durationFixed = true;
             if (audio.duration === Infinity || isNaN(audio.duration)) {
+                let safetyTimer = null;
                 const onChange = () => {
                     if (audio.duration !== Infinity && !isNaN(audio.duration)) {
                         audio.removeEventListener('durationchange', onChange);
-                        audio.currentTime = 0;
+                        clearTimeout(safetyTimer);
+                        try { audio.currentTime = 0; } catch (_) {}
                     }
                 };
                 audio.addEventListener('durationchange', onChange);
                 try { audio.currentTime = 1e101; } catch (_) {}
+                // iOS fallback — rewind unconditionally after 2 s so the
+                // player never shows the 1e101 artifact or refuses to play.
+                safetyTimer = setTimeout(() => {
+                    audio.removeEventListener('durationchange', onChange);
+                    try { audio.currentTime = 0; } catch (_) {}
+                }, 2000);
             }
         };
 
@@ -7719,15 +8473,28 @@
         const PAUSE_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
         const WAVE_BARS  = 32;
 
+        // Any value above this is treated as "the audio element hasn't settled
+        // its duration yet" and we fall back to the server-provided value.
+        // 24 h is a safe cap — the server itself rejects voice notes >5 min.
+        const VOICE_MAX_SECONDS = 86400;
+
         function fmtTime(sec) {
-            if (!isFinite(sec) || sec < 0) sec = 0;
+            // Guard against NaN, Infinity, negatives, AND the 1e101 artifact
+            // iOS Safari leaves behind after fixAudioDuration seeks to EOF.
+            // Without the upper cap the number formats as scientific notation
+            // ("1.666...e+99:08") in the timestamp slot.
+            if (!isFinite(sec) || sec < 0 || sec > VOICE_MAX_SECONDS) sec = 0;
             const m = Math.floor(sec / 60);
             const s = Math.floor(sec % 60);
             return m + ':' + (s < 10 ? '0' + s : s);
         }
 
         function voiceDuration(audio, wrap) {
-            if (isFinite(audio.duration) && audio.duration > 0) return audio.duration;
+            // Reject bogus durations the same way as fmtTime — iOS's seek-to-EOF
+            // hack can leave audio.duration itself unreasonably large on short
+            // WebM blobs. Server fallback is always the trustworthy source.
+            const d = audio.duration;
+            if (isFinite(d) && d > 0 && d <= VOICE_MAX_SECONDS) return d;
             const fallback = parseFloat(wrap.getAttribute('data-vp-duration') || '0');
             return isFinite(fallback) && fallback > 0 ? fallback : 0;
         }
@@ -7777,7 +8544,15 @@
             const time = wrap.querySelector('.vp-time');
             if (!wave) return;
 
-            const pct = dur > 0 ? Math.min(1, audio.currentTime / dur) : 0;
+            // Sanitize currentTime the same way voiceDuration sanitizes
+            // audio.duration — iOS's seek-to-EOF trick can leave it at 1e101
+            // on short WebM blobs. Anything beyond the known duration (or the
+            // 24 h cap) is treated as "not yet positioned" → 0.
+            let ct = audio.currentTime;
+            if (!isFinite(ct) || ct < 0 || ct > VOICE_MAX_SECONDS) ct = 0;
+            if (dur > 0 && ct > dur) ct = 0;
+
+            const pct = dur > 0 ? Math.min(1, ct / dur) : 0;
             const bars = wave.children;
             // Which index is "played" up to? Compare against each bar's
             // position inside the row rather than count — cheaper and
@@ -7792,7 +8567,7 @@
             if (time) {
                 // Show elapsed while playing / after seek, remaining duration
                 // when idle at the start — WhatsApp-style.
-                const show = (audio.paused && audio.currentTime === 0) ? dur : audio.currentTime;
+                const show = (audio.paused && ct === 0) ? dur : ct;
                 time.textContent = fmtTime(show);
             }
         }
@@ -7821,6 +8596,8 @@
             window.fixAudioDuration(audio);
             const wrap = audio.closest('.msg-voice');
             if (!wrap) return;
+            // Waveform was likely already drawn by paintAllVoiceWaveforms()
+            // on first render — buildWaveform() is a no-op when bars exist.
             buildWaveform(wrap, audio);
             // Rebuild the waveform once we actually know the src — in case
             // the hashed value above was computed before `src` resolved on
@@ -7842,6 +8619,30 @@
             });
             paintProgress(wrap, audio);
         };
+
+        // Build waveforms immediately on render — don't wait for the audio
+        // element's loadedmetadata event. R2-hosted MP3/WebM blobs can take
+        // 1-3s to return a metadata response, during which the pill shows
+        // only the play button + duration with no bars. The hash seed only
+        // needs the src URL (available in the DOM from first paint), not the
+        // actual audio data, so we can draw a stable waveform shape right
+        // away. Runs on initial page load + after every Livewire morph.
+        function paintAllVoiceWaveforms() {
+            document.querySelectorAll('.msg-voice').forEach(wrap => {
+                const audio = wrap.querySelector('audio');
+                if (!audio) return;
+                buildWaveform(wrap, audio);
+            });
+        }
+        paintAllVoiceWaveforms();
+        document.addEventListener('livewire:navigated', paintAllVoiceWaveforms);
+        if (window.Livewire) {
+            Livewire.hook('morph.updated', paintAllVoiceWaveforms);
+        } else {
+            document.addEventListener('livewire:initialized', () => {
+                Livewire.hook('morph.updated', paintAllVoiceWaveforms);
+            });
+        }
 
         // Delegated: play/pause toggle + seek on the waveform. Attached once
         // at script load; survives Livewire morphs because it lives on
@@ -7870,6 +8671,14 @@
                             }
                         }
                     });
+                    // iOS leftover from fixAudioDuration's seek-to-EOF: if
+                    // currentTime is still a nonsense value when the user
+                    // taps Play, rewind to 0 first — otherwise play() either
+                    // fires 'ended' immediately or seeks to a frame past the
+                    // end and the clip appears unplayable.
+                    if (!isFinite(audio.currentTime) || audio.currentTime < 0 || audio.currentTime > VOICE_MAX_SECONDS) {
+                        try { audio.currentTime = 0; } catch (_) {}
+                    }
                     audio.play().then(() => {
                         btn.innerHTML = PAUSE_ICON;
                         btn.classList.add('is-playing');
@@ -7910,25 +8719,239 @@
             });
         }
 
-        // Simple lightbox for message images.
-        function openLightbox(url) {
+        // Lightbox for message images — handles both a single picture
+        // (openLightbox(url)) and an album array walked with ◀ / ▶ arrows
+        // and ← / → keys. Album items can be a plain URL list, a mixed
+        // list of strings, or [{ url, caption }, ...] objects.
+        function ensureLightbox() {
             let lb = document.getElementById('chatLightbox');
-            if (!lb) {
-                lb = document.createElement('div');
-                lb.id = 'chatLightbox';
-                lb.className = 'chat-lightbox';
-                lb.innerHTML = '<button class="lb-close">&times;</button><img alt="">';
-                lb.addEventListener('click', (e) => {
-                    if (e.target === lb || e.target.classList.contains('lb-close')) {
-                        lb.classList.remove('open');
-                    }
-                });
-                document.body.appendChild(lb);
-            }
-            lb.querySelector('img').src = url;
-            lb.classList.add('open');
+            if (lb) return lb;
+            lb = document.createElement('div');
+            lb.id = 'chatLightbox';
+            lb.className = 'chat-lightbox';
+            lb.innerHTML = `
+                <div class="lb-head">
+                    <div class="lb-head-info">
+                        <div class="lb-sender"></div>
+                        <div class="lb-time"></div>
+                    </div>
+                </div>
+                <button type="button" class="lb-close" aria-label="Close">&times;</button>
+                <button type="button" class="lb-prev"  aria-label="Previous">&lsaquo;</button>
+                <button type="button" class="lb-next"  aria-label="Next">&rsaquo;</button>
+                <span class="lb-count"></span>
+                <img alt="">
+                <span class="lb-caption"></span>
+                <form class="lb-reply" autocomplete="off">
+                    <div class="lb-reply-input">
+                        <input type="text" placeholder="Reply">
+                        <button type="button" class="lb-reply-emoji" aria-label="Emoji" tabindex="-1">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                        </button>
+                    </div>
+                    <button type="submit" class="lb-reply-send" aria-label="Send" disabled>
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+                    </button>
+                </form>
+            `;
+            // State lives on the element so we survive Livewire DOM morphs
+            // elsewhere on the page (the lightbox is appended to body).
+            lb.__items = [];
+            lb.__idx   = 0;
+            lb.__ctx   = null;   // { messageId, senderName, sentAt }
+
+            const render = () => {
+                if (!lb.__items.length) return;
+                const n = lb.__items.length;
+                const i = ((lb.__idx % n) + n) % n;   // safe wrap
+                lb.__idx = i;
+                const item = lb.__items[i];
+                const url     = typeof item === 'string' ? item : (item.url || '');
+                const caption = typeof item === 'string' ? '' : (item.caption || '');
+                lb.querySelector('img').src = url;
+                lb.querySelector('.lb-caption').textContent = caption;
+                lb.querySelector('.lb-caption').style.display = caption ? '' : 'none';
+                lb.querySelector('.lb-count').textContent = `${i + 1}/${n}`;
+                lb.classList.toggle('single', n === 1);
+            };
+
+            const replyInput = lb.querySelector('.lb-reply input');
+            const replyBtn   = lb.querySelector('.lb-reply-send');
+
+            const close = () => {
+                lb.classList.remove('open');
+                lb.__items = [];
+                lb.__ctx   = null;
+                replyInput.value = '';
+                replyBtn.disabled = true;
+            };
+            const next  = () => { lb.__idx++; render(); };
+            const prev  = () => { lb.__idx--; render(); };
+
+            lb.addEventListener('click', (e) => {
+                if (e.target.closest('.lb-close')) { close(); return; }
+                if (e.target.closest('.lb-next'))  { next();  return; }
+                if (e.target.closest('.lb-prev'))  { prev();  return; }
+                // Click on the dark backdrop (not the image or controls) closes.
+                if (e.target === lb) close();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (!lb.classList.contains('open')) return;
+                // Don't swallow ← / → while typing a reply.
+                if (document.activeElement === replyInput) {
+                    if (e.key === 'Escape') { replyInput.blur(); }
+                    return;
+                }
+                if (e.key === 'Escape')     close();
+                else if (e.key === 'ArrowRight') next();
+                else if (e.key === 'ArrowLeft')  prev();
+            });
+
+            // Enable/disable Send based on input content.
+            replyInput.addEventListener('input', () => {
+                replyBtn.disabled = replyInput.value.trim().length === 0;
+            });
+
+            // Reply submit → send inline reply with reply_to_id set to the
+            // image message, then close the lightbox. Same 3-call pattern
+            // as the video lightbox so Livewire 3's request queue bundles
+            // them in a single round-trip.
+            lb.querySelector('.lb-reply').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = replyInput.value.trim();
+                const mid  = lb.__ctx && lb.__ctx.messageId;
+                if (!text || !mid) return;
+                const anchor = document.getElementById('chatSidebar');
+                const root = anchor?.closest('[wire\\:id]');
+                const comp = root ? Livewire.find(root.getAttribute('wire:id')) : null;
+                if (!comp) { close(); return; }
+                try {
+                    comp.call('startReply', mid);
+                    comp.set('reply', text);
+                    comp.call('sendReply');
+                } catch (err) {
+                    console.warn('[lb] inline reply failed', err);
+                }
+                close();
+            });
+
+            lb.__open = (items, startIdx = 0, ctx = null) => {
+                lb.__items = items;
+                lb.__idx   = Math.max(0, Math.min(items.length - 1, startIdx | 0));
+                lb.__ctx   = ctx;
+                // Populate header + toggle reply bar based on whether we
+                // have a messageId to attach the reply to.
+                const senderEl = lb.querySelector('.lb-sender');
+                const timeEl   = lb.querySelector('.lb-time');
+                const hasCtx   = !!(ctx && ctx.messageId);
+                lb.classList.toggle('no-reply', !hasCtx);
+                senderEl.textContent = (ctx && ctx.senderName) ? ctx.senderName : '';
+                timeEl.textContent   = (ctx && ctx.sentAt)     ? ctx.sentAt     : '';
+                lb.querySelector('.lb-head').style.display = (ctx && (ctx.senderName || ctx.sentAt)) ? '' : 'none';
+                replyInput.value = '';
+                replyBtn.disabled = true;
+                render();
+                lb.classList.add('open');
+            };
+
+            document.body.appendChild(lb);
+            return lb;
+        }
+
+        function openLightbox(urlOrItems, startIdx = 0, ctx = null) {
+            const lb = ensureLightbox();
+            const items = Array.isArray(urlOrItems) ? urlOrItems : [urlOrItems];
+            lb.__open(items, startIdx, ctx);
         }
         window.openLightbox = openLightbox;
+
+        // Delegated: tapping any .msg-album tile opens the lightbox at that
+        // image. The whole album is pre-serialised on the parent via
+        // data-album='{"messageId":..., "items":[{url, caption}, ...]}' so
+        // we have everything we need without a round-trip.
+        //
+        // The same handler also catches .msg-image (single-image bubbles).
+        // On mobile — especially iOS Safari — the inline `onclick` attribute
+        // on an <img> inside a scrollable + position:fixed shell is
+        // unreliable: taps are sometimes dropped entirely, so the desktop-
+        // only inline handler isn't enough. A document-level delegated
+        // handler fires via browser-synthesised click from touchend and
+        // is bulletproof across every mobile browser we test.
+        // Reply-quote → jump to the parent message. Reuses the same
+        // scrollIntoView + gallery-highlight pulse that the Gallery tab's
+        // "open from thumbnail" flow uses, so the behaviour feels consistent
+        // across the app. Document-delegated so it survives Livewire DOM
+        // morphs. If the parent message isn't in the DOM (older than the
+        // currently-loaded window), we silently no-op — a future enhancement
+        // could ask the server to extend the window.
+        if (!window.__chatState.replyQuoteJumpWired) {
+            window.__chatState.replyQuoteJumpWired = true;
+            const jumpToMessage = (msgId) => {
+                if (!msgId) return;
+                const target = document.querySelector(`.message-wrapper[data-message-id="${msgId}"]`);
+                if (!target) return;
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.classList.add('gallery-highlight');
+                setTimeout(() => target.classList.remove('gallery-highlight'), 2200);
+            };
+            document.addEventListener('click', (e) => {
+                const quote = e.target.closest('.msg-quote[data-jump-to]');
+                if (!quote) return;
+                e.preventDefault();
+                e.stopPropagation();
+                jumpToMessage(quote.getAttribute('data-jump-to'));
+            });
+            // Keyboard a11y — Enter / Space on a focused quote jumps too.
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                const quote = e.target.closest?.('.msg-quote[data-jump-to]');
+                if (!quote) return;
+                e.preventDefault();
+                jumpToMessage(quote.getAttribute('data-jump-to'));
+            });
+        }
+
+        if (!window.__chatState.albumLightboxWired) {
+            window.__chatState.albumLightboxWired = true;
+            document.addEventListener('click', (e) => {
+                // Album tile → open at the tapped index.
+                const tile = e.target.closest('.msg-album .msg-album-tile');
+                if (tile) {
+                    const album = tile.closest('.msg-album');
+                    if (!album) return;
+                    let payload;
+                    try { payload = JSON.parse(album.getAttribute('data-album') || '{}'); }
+                    catch (_) { return; }
+                    const items = (payload.items || []).map(it => ({
+                        url: it.url, caption: it.caption || '',
+                    }));
+                    if (!items.length) return;
+                    const startIdx = parseInt(tile.getAttribute('data-idx') || '0', 10) || 0;
+                    // All images in an album belong to one message, so the
+                    // reply bar attaches to a single messageId regardless
+                    // of which tile was tapped.
+                    const ctx = {
+                        messageId:  album.getAttribute('data-message-id'),
+                        senderName: album.getAttribute('data-sender-name'),
+                        sentAt:     album.getAttribute('data-sent-at'),
+                    };
+                    openLightbox(items, startIdx, ctx);
+                    return;
+                }
+                // Single image bubble.
+                const img = e.target.closest('.msg-image');
+                if (img) {
+                    const url = img.getAttribute('src');
+                    if (!url) return;
+                    const ctx = {
+                        messageId:  img.getAttribute('data-message-id'),
+                        senderName: img.getAttribute('data-sender-name'),
+                        sentAt:     img.getAttribute('data-sent-at'),
+                    };
+                    openLightbox(url, 0, ctx);
+                }
+            });
+        }
 
         // Enter-to-send + disappearing-message countdown wiring.
         // Both are lightweight, so we wire them at module scope and rely on
