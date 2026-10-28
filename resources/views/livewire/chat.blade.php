@@ -4485,8 +4485,31 @@
                 gap: 8px;
             }
             .chat-header-avatar { width: 38px; height: 38px; }
-            .chat-header-name { font-size: 14px; }
+            .chat-header-name {
+                font-size: 14px;
+                /* Long names (e.g. imported MR agency listings — "Aura Agency
+                   20+ Models – Russian escort agency in Dubai") wrap to 3-4
+                   lines on a 393px viewport and shove the call/menu icons off
+                   the row. Clamp to one line + ellipsis so the header stays
+                   compact. The flex ancestors need min-width:0 for the
+                   ellipsis to actually kick in; without that, flex children
+                   refuse to shrink below their content width. */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                min-width: 0;
+            }
             .chat-header-email { font-size: 11px; }
+            /* The inner <div> (name + email stack) and the outer peer-info
+               wrapper both need min-width:0 so their flex basis can be the
+               shrunk width rather than the intrinsic content width. */
+            .chat-header-name,
+            .chat-header-email,
+            .chat-header .chat-header-avatar + div,
+            .chat-header-peer {
+                min-width: 0;
+            }
             .chat-call-buttons button,
             .chat-header-actions > button,
             .chat-header-menu > button {
@@ -5724,7 +5747,7 @@
                                                 @if($selectedIsSupport)
                                                     Support <span class="support-badge">HELP</span>
                                                 @else
-                                                    {{ $selectedUser->name ?? $selectedUser->email }}
+                                                    {{ Str::limit($selectedUser->name ?? $selectedUser->email, 12, '...') }}
                                                 @endif
                                             </div>
                                             <div class="chat-header-email">
@@ -6679,6 +6702,120 @@
             scrollToBottom();
         });
 
+        /* Long-press on a chat message bubble opens the per-message
+           Reply/Star/Forward/Delete menu — mirrors the WhatsApp UX we
+           already use on the conversation list items. The menu DOM
+           already exists inside each .message-wrapper (Alpine-scoped
+           `{ menuOpen }`); we just flip menuOpen=true from here so no
+           duplicate markup / wire plumbing is needed.
+
+           Delegated at document level + module guard so neither a
+           wire:navigate DOM swap nor a Livewire morph on new messages
+           can drop the binding. Mouse-down (desktop) + touch-start
+           (mobile/tablet) both participate; a 450ms timer fires the
+           open. Movement > ~10px or an early pointer-up cancels, so
+           scrolling the chat list doesn't accidentally open menus. */
+        (function () {
+            if (window.__chatBubbleLongPressWired) return;
+            window.__chatBubbleLongPressWired = true;
+
+            var HOLD_MS = 450;
+            var MOVE_CANCEL_PX = 10;
+            var pressTimer = null;
+            var startX = 0, startY = 0;
+            var pressWrapper = null;
+            var suppressNextClick = false;
+
+            function cancelPress() {
+                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                pressWrapper = null;
+            }
+
+            function openMenuFor(wrapper) {
+                if (!wrapper) return;
+                // Alpine stores component state via Alpine.$data(el).
+                // Fall back to toggling the menu list's visibility if
+                // Alpine isn't available for any reason.
+                try {
+                    if (window.Alpine && typeof window.Alpine.$data === 'function') {
+                        var data = window.Alpine.$data(wrapper);
+                        if (data) { data.menuOpen = true; return; }
+                    }
+                } catch (e) {}
+                var list = wrapper.querySelector('.msg-menu-list');
+                if (list) {
+                    list.style.display = 'block';
+                    list.removeAttribute('x-cloak');
+                }
+            }
+
+            function schedule(e, pageX, pageY) {
+                // Ignore presses that originate on the menu itself —
+                // user is interacting with the dropdown, not holding
+                // the bubble. Also ignore interactive children (links,
+                // buttons inside media, etc.).
+                if (e.target.closest('.msg-menu-list')) return;
+                if (e.target.closest('.msg-menu-btn')) return;
+                if (e.target.closest('a[href], button, input, textarea, [data-rtc-call]')) return;
+
+                var wrapper = e.target.closest('.message-wrapper');
+                if (!wrapper) return;
+
+                cancelPress();
+                pressWrapper = wrapper;
+                startX = pageX;
+                startY = pageY;
+                pressTimer = setTimeout(function () {
+                    openMenuFor(pressWrapper);
+                    suppressNextClick = true;
+                    // Reset the suppress flag shortly after so later
+                    // real clicks aren't eaten.
+                    setTimeout(function () { suppressNextClick = false; }, 400);
+                    pressTimer = null;
+                    pressWrapper = null;
+                }, HOLD_MS);
+            }
+
+            document.addEventListener('mousedown', function (e) {
+                if (e.button !== 0) return; // left click only
+                schedule(e, e.pageX, e.pageY);
+            });
+            document.addEventListener('mousemove', function (e) {
+                if (!pressTimer) return;
+                if (Math.abs(e.pageX - startX) > MOVE_CANCEL_PX || Math.abs(e.pageY - startY) > MOVE_CANCEL_PX) {
+                    cancelPress();
+                }
+            });
+            document.addEventListener('mouseup', cancelPress);
+            document.addEventListener('mouseleave', cancelPress);
+
+            document.addEventListener('touchstart', function (e) {
+                var t = e.touches && e.touches[0];
+                if (!t) return;
+                schedule(e, t.pageX, t.pageY);
+            }, { passive: true });
+            document.addEventListener('touchmove', function (e) {
+                if (!pressTimer) return;
+                var t = e.touches && e.touches[0];
+                if (!t) return;
+                if (Math.abs(t.pageX - startX) > MOVE_CANCEL_PX || Math.abs(t.pageY - startY) > MOVE_CANCEL_PX) {
+                    cancelPress();
+                }
+            }, { passive: true });
+            document.addEventListener('touchend', cancelPress);
+            document.addEventListener('touchcancel', cancelPress);
+
+            // Swallow the click that follows a long-press so we don't
+            // immediately trigger an image/album open under the menu.
+            document.addEventListener('click', function (e) {
+                if (!suppressNextClick) return;
+                if (!e.target.closest('.message-wrapper')) return;
+                e.preventDefault();
+                e.stopPropagation();
+                suppressNextClick = false;
+            }, true);
+        })();
+
         /* iOS Safari keyboard-safe focus guard.
            Problem: when the user taps #chatReplyInput, iOS auto-scrolls the
            document to try to bring the input into view. Even though html/body
@@ -6908,26 +7045,92 @@
 
                         chatChannel
                             .listen('.NewChatMessage', (e) => {
+                                // Single re-render path. Previous version called
+                                // BOTH refreshChat() AND $refresh() — the first
+                                // already triggers loadConversationMessages +
+                                // markConversationAsRead + re-render, so the
+                                // $refresh() was duplicate work (two round-trips,
+                                // two morphs) that noticeably slowed every push.
                                 const chatComponent = document.querySelector('[wire\\:id]');
                                 if (chatComponent) {
                                     const wireId = chatComponent.getAttribute('wire:id');
                                     Livewire.find(wireId).call('refreshChat');
-                                    Livewire.find(wireId).$refresh();
                                     scrollToBottom();
                                 }
-                                // Fire the global badge refresh immediately
-                                // on message push — don't wait for the next
-                                // 8s poll tick to update the top-header +
-                                // mobile-nav chat/call icons.
+                                // Fire the global badge refresh immediately on
+                                // message push — don't wait for the next poll tick
+                                // to update the top-header + mobile-nav badges.
                                 if (typeof window.__refreshChatBadges === 'function') {
                                     window.__refreshChatBadges();
                                 }
+                                // WhatsApp-style instant delivery ack. Scoped to
+                                // the specific conversation that received the
+                                // push (payload carries conversation_id), so the
+                                // UPDATE touches one conv instead of scanning
+                                // all of this user's chats. Server flips
+                                // 'sent' → 'delivered' and broadcasts
+                                // .MessageStatusUpdated back to the sender,
+                                // whose UI shows two ticks within a few hundred ms.
+                                try {
+                                    const token = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+                                    const url = {!! json_encode(route('chat.ack.delivered')) !!};
+                                    const convId = (e && e.message && e.message.conversation_id)
+                                        ? Number(e.message.conversation_id)
+                                        : 0;
+                                    const body = new FormData();
+                                    if (convId > 0) body.append('conversation_id', convId);
+                                    fetch(url, {
+                                        method: 'POST',
+                                        credentials: 'same-origin',
+                                        keepalive: true,
+                                        headers: {
+                                            'X-CSRF-TOKEN': token,
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'Accept': 'application/json',
+                                        },
+                                        body: body,
+                                    }).catch(() => { /* best-effort — poll tick is the safety net */ });
+                                } catch (ackErr) {
+                                    console.warn('[chat] ack-delivered failed', ackErr);
+                                }
                             })
                             .listen('.MessageStatusUpdated', (e) => {
-                                const chatComponent = document.querySelector('[wire\\:id]');
-                                if (chatComponent) {
-                                    const wireId = chatComponent.getAttribute('wire:id');
-                                    Livewire.find(wireId).call('loadConversationMessages');
+                                // Fast path: patch the tick markup directly in the
+                                // currently-open thread. Previously this called
+                                // loadConversationMessages() which refetched the
+                                // last 100 msgs + remorphed the whole list just to
+                                // flip a single tick glyph — noticeable lag on
+                                // every receipt change. Now a DOM-only swap.
+                                try {
+                                    const incoming = (e && e.status) || '';
+                                    if (incoming !== 'delivered' && incoming !== 'read') return;
+                                    const RANK = { sent: 0, delivered: 1, read: 2 };
+                                    const next = RANK[incoming];
+                                    const open = document.querySelector('#chatMessages');
+                                    if (!open) return;
+                                    const bubbles = open.querySelectorAll('.message-wrapper.sent[data-message-id]');
+                                    bubbles.forEach((wrap) => {
+                                        const ticks = wrap.querySelector('.message-ticks');
+                                        if (!ticks) return;
+                                        const cur = ticks.querySelector('.tick');
+                                        const curRank = cur && cur.classList.contains('read') ? 2
+                                                      : cur && cur.classList.contains('double-tick') ? 1
+                                                      : 0;
+                                        if (next <= curRank) return; // never downgrade
+                                        if (incoming === 'read') {
+                                            ticks.innerHTML = '<span class="tick read double-tick">✓✓</span>';
+                                        } else {
+                                            ticks.innerHTML = '<span class="tick double-tick">✓✓</span>';
+                                        }
+                                    });
+                                } catch (patchErr) {
+                                    // Fallback to the server refetch if anything
+                                    // in the DOM patch path blows up.
+                                    const chatComponent = document.querySelector('[wire\\:id]');
+                                    if (chatComponent) {
+                                        const wireId = chatComponent.getAttribute('wire:id');
+                                        Livewire.find(wireId).call('loadConversationMessages');
+                                    }
                                 }
                             })
                             .listen('.CallSignal', (e) => {

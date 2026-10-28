@@ -9,18 +9,29 @@
 <div id="credits_purchase_form">
     <!-- Amount Input -->
     <div class="d-flex align-items-center">
-        <div class="amount-input-group">
+        <div class="amount-input-group" style="position:relative;">
             <span class="dollar-sign">$</span>
             {{-- Blank by default (no value=""). Users must type their own amount;
                  min $10 enforced client-side (HTML5 min) + server-side (Livewire
                  rules). Placeholder shows "0" as a visual cue that the field
-                 starts empty, mirroring WhatsApp/Stripe-style amount inputs. --}}
-            <input type="number" wire:model.live="amount" min="10" step="1" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" placeholder="0" id="amount" />
+                 starts empty, mirroring WhatsApp/Stripe-style amount inputs.
+                 debounce.500ms stops the min-10 error from flashing on
+                 every keystroke while the user is still typing a 2-digit
+                 amount like "15" (would fire "min 10" at "1" otherwise). --}}
+            <input type="number" wire:model.live.debounce.500ms="amount" min="10" step="1" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" placeholder="0" id="amount"
+                   @error('amount') style="border:1px solid #ff4d4d;" @enderror />
         </div>
         <span class="choose-amount-label">Choose amount</span>
     </div>
+    {{-- Field-level error — renders directly under the input + label row,
+         right where the user is looking. Was previously a toast-at-bottom
+         for the "Pay with less than $10" path (processPrimaryPayment); both
+         flows now funnel into this one block via addError('amount', …). --}}
     @error('amount')
-        <div class="mt-2" style="color: #ff4d4d; font-size: 14px;">{{ $message }}</div>
+        <div class="mt-2" style="color:#ff4d4d; font-size:13px; display:flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>{{ $message }}</span>
+        </div>
     @enderror
 
     <!-- Payment Method -->

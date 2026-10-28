@@ -381,6 +381,70 @@ Route::group(['middleware'=>'auth'], function(){
         }
         return response()->json(\App\Support\ChatBadges::for(auth()->id()));
     })->name('chat.badges');
+
+    /**
+     * Mark-delivered ack. Called by the recipient's browser the moment it
+     * receives a .NewChatMessage Echo push, so the sender's UI gets the
+     * second tick within milliseconds — not on the next 8s poll tick.
+     *
+     * WhatsApp-style flow:
+     *   1 tick  = reached server (set when sender saves the message)
+     *   2 ticks = reached recipient device (set here — this endpoint fires
+     *             on recipient receiving the Echo broadcast)
+     *   2 blue  = recipient actually opened the chat (handled elsewhere)
+     *
+     * Lightweight on purpose: no Livewire boot, just a direct update + a
+     * broadcast back to the sender's private channel.
+     */
+    Route::post("chat/ack-delivered", function (\Illuminate\Http\Request $request) {
+        if (!auth()->check()) return response()->json(['ok' => false], 401);
+        $userId = auth()->id();
+
+        // Caller may pass the specific conversation_id that just received a
+        // new message (fast path — the Echo listener always knows). Falls
+        // back to "all my conversations" when the caller doesn't know (e.g.
+        // page just loaded and we're sweeping backlog). Scoping the common
+        // case to one conversation turns an N-row scan across every chat
+        // the user owns into a single-conversation UPDATE.
+        $scopedConvId = (int) $request->input('conversation_id');
+
+        $query = \App\Models\Message::where('sender_id', '!=', $userId)
+            ->where('status', 'sent');
+
+        if ($scopedConvId > 0) {
+            // Verify ownership before trusting the client-supplied id.
+            $owns = \App\Models\Conversation::where('id', $scopedConvId)
+                ->where(fn ($q) => $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId))
+                ->exists();
+            if (!$owns) return response()->json(['ok' => false], 403);
+            $query->where('conversation_id', $scopedConvId);
+        } else {
+            $convIds = \App\Models\Conversation::forUser($userId)->pluck('id');
+            if ($convIds->isEmpty()) return response()->json(['ok' => true, 'updated' => 0]);
+            $query->whereIn('conversation_id', $convIds);
+        }
+
+        // Grab {conv_id, sender_id} for the broadcast step BEFORE the
+        // single-shot update, so we know who to notify.
+        $rows = (clone $query)->get(['conversation_id', 'sender_id']);
+        if ($rows->isEmpty()) return response()->json(['ok' => true, 'updated' => 0]);
+
+        $query->update(['status' => 'delivered']);
+
+        // Fan out one broadcast per (conversation, sender) pair so each
+        // sender's UI knows to flip the ticks for the messages they own.
+        try {
+            foreach ($rows->groupBy('conversation_id') as $convId => $msgs) {
+                foreach ($msgs->pluck('sender_id')->filter()->unique() as $senderId) {
+                    broadcast(new \App\Events\MessageStatusUpdated((int) $convId, 'delivered', (int) $senderId))->toOthers();
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('ack-delivered broadcast failed: ' . $e->getMessage());
+        }
+
+        return response()->json(['ok' => true, 'updated' => $rows->count()]);
+    })->name('chat.ack.delivered');
     Route::get("call/history", [\App\Http\Controllers\CallController::class, 'history'])->name('call.history');
     Route::post("rtc/ping-user/{targetUserId}", [\App\Http\Controllers\CallController::class, 'pingUser'])
         ->whereNumber('targetUserId')

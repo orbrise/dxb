@@ -163,10 +163,12 @@ class PurchaseCredits extends Component
     public function processPrimaryPayment($amount, $referenceId)
     {
         if ($amount < 10) {
-            $this->dispatch('showMessage', [
-                'type' => 'error',
-                'message' => 'Invalid amount. Minimum amount is $10.'
-            ]);
+            // Surface this inline, next to the amount input via the
+            // existing @error('amount') block in _purchase-credits-form.
+            // The old showMessage toast rendered at the viewport corner,
+            // far from the field the user needs to correct — which users
+            // didn't tie back to the amount they just entered.
+            $this->addError('amount', 'Minimum amount is $10.');
             return;
         }
 

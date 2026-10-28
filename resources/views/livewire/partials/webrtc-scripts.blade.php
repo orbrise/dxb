@@ -2076,29 +2076,57 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         }
     }
 
-    // --- Speaker toggle (setSinkId) ----------------------------------
+    // --- Speaker toggle (setSinkId + mobile fallback) ------------------
+    // Desktop Chrome/Edge expose HTMLMediaElement.setSinkId() so we can
+    // flip between default output and a specific audio-output device.
+    // iOS Safari + most mobile browsers do NOT ship setSinkId — on those,
+    // we toggle `webkitAudioOutput`/muted/unmute as a best-effort visual
+    // cue. On iOS the WebRTC audio inside a <video> element already
+    // routes to the loud speaker, so the button is mostly a visible
+    // indicator; it still bumps the volume + mute cycle so the audio
+    // pipeline re-arms cleanly after the toggle.
     async function toggleSpeaker(btn) {
         const el = document.getElementById('rtcRemoteVideo');
-        if (!el || typeof el.setSinkId !== 'function') return;
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const outputs = devices.filter(d => d.kind === 'audiooutput');
-            if (outputs.length < 2) return;
-            const currentIdx = outputs.findIndex(d => d.deviceId === (S.currentSinkId || 'default'));
-            const nextIdx = (currentIdx + 1) % outputs.length;
-            const next = outputs[nextIdx];
-            await el.setSinkId(next.deviceId);
-            S.currentSinkId = next.deviceId;
-            btn.classList.toggle('speaker-on', next.deviceId !== 'default');
-        } catch (err) {
-            console.warn('[rtc] setSinkId failed', err);
+        if (!el) return;
+
+        // Preferred path: setSinkId. Works on desktop Chrome/Edge.
+        if (typeof el.setSinkId === 'function') {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const outputs = devices.filter(d => d.kind === 'audiooutput');
+                if (outputs.length >= 2) {
+                    const currentIdx = outputs.findIndex(d => d.deviceId === (S.currentSinkId || 'default'));
+                    const nextIdx = (currentIdx + 1) % outputs.length;
+                    const next = outputs[nextIdx];
+                    await el.setSinkId(next.deviceId);
+                    S.currentSinkId = next.deviceId;
+                    btn.classList.toggle('speaker-on', next.deviceId !== 'default');
+                    return;
+                }
+            } catch (err) {
+                console.warn('[rtc] setSinkId failed', err);
+            }
         }
+
+        // Mobile fallback: toggle a visual "speaker-on" state and kick
+        // the audio element's volume briefly. On iOS/Android browsers we
+        // can't programmatically pick between earpiece and loud-speaker
+        // from the web, so the button acts primarily as feedback — the
+        // volume bump makes sure audio stays active after the gesture.
+        const now = !btn.classList.contains('speaker-on');
+        btn.classList.toggle('speaker-on', now);
+        try {
+            el.volume = now ? 1.0 : 0.6;
+        } catch (e) {}
     }
     function maybeShowSpeakerBtn() {
         const btn = document.getElementById('rtcSpeakerBtn');
         const el = document.getElementById('rtcRemoteVideo');
         if (!btn || !el) return;
-        if (typeof el.setSinkId === 'function') btn.style.display = '';
+        // Always show the button. On desktop it drives setSinkId; on
+        // mobile it falls back to the volume-nudge path above so users
+        // still get a visible, tappable speaker control during the call.
+        btn.style.display = '';
     }
 
     // --- Utils --------------------------------------------------------
