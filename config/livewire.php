@@ -65,7 +65,16 @@ return [
 
     'temporary_file_upload' => [
         'disk' => null,        // Example: 'local', 's3'              | Default: 'default'
-        'rules' => null,       // Example: ['file', 'mimes:png,jpg']  | Default: ['required', 'file', 'max:12288'] (12MB)
+        // Overridden from the Livewire default (12 MB) because profile uploads
+        // accept videos up to 100 MB via the same temp pipeline images use.
+        // Without this, the per-field max:102400 rule in NewProfile / UserProfile
+        // never runs — Livewire rejects the upload at the global temp stage
+        // first with "The mphoto.0 field must not be greater than 12288
+        // kilobytes." Keep this >= the largest field-specific max; the real
+        // field-level limit (image vs video) is enforced in the component rules.
+        // Users with videos > 100 MB are routed through a client-side trim
+        // modal (see new-profile.blade.php) so this cap is a hard ceiling.
+        'rules' => ['required', 'file', 'max:102400'],
         'directory' => null,   // Example: 'tmp'                      | Default: 'livewire-tmp'
         'middleware' => null,  // Example: 'throttle:5,1'             | Default: 'throttle:60,1'
         'preview_mimes' => [   // Supported file types for temporary pre-signed file URLs...

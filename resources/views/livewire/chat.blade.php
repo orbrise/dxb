@@ -2482,6 +2482,15 @@
             width: 100%;
             /* No gap between bubble and time — the time row already has
                margin-top of its own. */
+            /* Suppress the browser's native text-selection + callout on
+               long-press. Without this, iOS Safari / Chrome Android show
+               a "Copy / Lookup / Share" sheet on top of our custom
+               Reply/Star/Forward/Delete menu after the hold timer fires,
+               hiding our UI and confusing the user. Scoped to the bubble
+               wrapper so selection still works everywhere else on the page. */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .message-wrapper.sent     { align-items: flex-end; }
         .message-wrapper.received { align-items: flex-start; }
@@ -6719,8 +6728,13 @@
             if (window.__chatBubbleLongPressWired) return;
             window.__chatBubbleLongPressWired = true;
 
-            var HOLD_MS = 450;
-            var MOVE_CANCEL_PX = 10;
+            // Hold tuning. 350ms matches WhatsApp's own tap-and-hold feel —
+            // was 450ms which felt sluggish on real phones. The move cancel
+            // was bumped from 10px → 24px because fingers naturally wiggle
+            // during a hold; the old threshold was swallowing legitimate
+            // long-presses as "the user started scrolling".
+            var HOLD_MS = 350;
+            var MOVE_CANCEL_PX = 24;
             var pressTimer = null;
             var startX = 0, startY = 0;
             var pressWrapper = null;
@@ -6733,6 +6747,10 @@
 
             function openMenuFor(wrapper) {
                 if (!wrapper) return;
+                // Short haptic buzz so the user feels the hold registered —
+                // matches native iOS / Android long-press feedback. Silent
+                // no-op on desktops and browsers without the API.
+                try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
                 // Alpine stores component state via Alpine.$data(el).
                 // Fall back to toggling the menu list's visibility if
                 // Alpine isn't available for any reason.
@@ -6804,6 +6822,17 @@
             }, { passive: true });
             document.addEventListener('touchend', cancelPress);
             document.addEventListener('touchcancel', cancelPress);
+
+            // Suppress the browser's native context menu that fires after a
+            // long-press on mobile — otherwise iOS Safari / Chrome Android
+            // show their own "copy / lookup / share" sheet on top of our
+            // custom menu, hiding it and confusing the user. Scoped to
+            // bubbles so right-click still works everywhere else.
+            document.addEventListener('contextmenu', function (e) {
+                if (e.target.closest('.message-wrapper')) {
+                    e.preventDefault();
+                }
+            });
 
             // Swallow the click that follows a long-press so we don't
             // immediately trigger an image/album open under the menu.

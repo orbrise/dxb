@@ -62,9 +62,9 @@ class UserProfile extends Component
         'tempImages.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         // 50 MB per video, mp4/webm/mov. 10-cap enforced in updatedMvideo.
         'mvideo' => 'nullable|array',
-        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:102400',
         'tempVideos' => 'array|max:10',
-        'tempVideos.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+        'tempVideos.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:102400',
     ];
 
 
@@ -540,7 +540,7 @@ public function updatedMphoto()
                 }
                 validator(
                     ['file' => $file],
-                    ['file' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200']
+                    ['file' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:102400']
                 )->validate();
                 $this->tempVideos[] = $file;
             } else {
@@ -574,7 +574,7 @@ public function removeTemporaryImage($index)
 public function updatedMvideo()
 {
     $this->validate([
-        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:102400',
     ]);
 
     $existingCount = ProfileVideo::where('user_id', Auth::id())

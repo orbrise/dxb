@@ -129,9 +129,9 @@ class NewProfile extends Component
         // 50 MB per video, mp4/webm/mov accepted. Count-cap (10) enforced
         // in updatedMvideo() so we can show a specific friendly error.
         'mvideo' => 'nullable|array',
-        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:102400',
         'tempVideos' => 'array|max:10',
-        'tempVideos.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+        'tempVideos.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:102400',
     ];
 
     protected $messages = [
@@ -200,7 +200,7 @@ class NewProfile extends Component
                 }
                 validator(
                     ['file' => $file],
-                    ['file' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200']
+                    ['file' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:102400']
                 )->validate();
                 $this->tempVideos[] = $file;
             } else {
@@ -228,7 +228,7 @@ class NewProfile extends Component
 public function updatedMvideo()
 {
     $this->validate([
-        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:51200',
+        'mvideo.*' => 'file|mimetypes:video/mp4,video/webm,video/quicktime|max:102400',
     ]);
 
     $incoming = is_array($this->mvideo) ? $this->mvideo : [$this->mvideo];

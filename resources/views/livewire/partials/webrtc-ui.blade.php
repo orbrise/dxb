@@ -748,7 +748,15 @@
             <div class="callee-sub" id="rtcAudioSub">Voice call</div>
         </div>
         <video class="rtc-remote" id="rtcRemoteVideo" autoplay playsinline></video>
-        <video class="rtc-local"  id="rtcLocalVideo"  autoplay playsinline muted></video>
+        {{-- Local self-view starts with .audio-only (which the CSS maps to
+             display:none) so voice calls NEVER flash the empty black
+             preview box in the top-right. For video calls, attachLocalPreview()
+             and the voice→video switch flow both remove the class the moment
+             the camera stream is ready. Before this fix, the element rendered
+             visible-by-default and the class was added async by JS, so there
+             was a visible-then-hidden flash at the top of every outgoing
+             voice call. --}}
+        <video class="rtc-local audio-only" id="rtcLocalVideo" autoplay playsinline muted></video>
         {{-- Switch-in-progress overlay. Shown while we're waiting for the
              SDP renegotiation + camera acquisition after a mid-call voice↔
              video switch, so the user sees a spinner instead of a frozen
