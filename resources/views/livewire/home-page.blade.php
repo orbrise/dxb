@@ -127,6 +127,34 @@
             100% { background-position: -200% 0; }
         }
 
+        /* Listing-card media badges — top-left pill cluster showing photo
+           count and a "Video" chip when the profile has clips. Positioned
+           inside the .img-wrapper (which is already position:relative). */
+        .ev-media-badges {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            display: flex;
+            gap: 6px;
+            z-index: 3;
+            pointer-events: none;
+        }
+        .ev-media-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: rgba(0, 0, 0, 0.72);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .ev-media-badge svg { display: block; }
+        .ev-media-badge--video { background: rgba(0, 0, 0, 0.78); }
+
         /* === Auction winner cards — match Daisy design reference ===
            Solid dark-olive/lime background that hugs the card content only.
            Applied ONLY when the .spot contains a winner profile card (not
@@ -2149,6 +2177,7 @@
             <div class="main-thumbs">
               <a wire:navigate class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper premium">
+                  @include('livewire.partials._profile-media-badges')
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
@@ -2157,9 +2186,9 @@
                   @endif
                   <div class="image-wrapper">
                     @if(!empty($profile->coverimg->image))
-                    <img alt="{{ $profile->name }} - escort in {{ $cityname }}" 
-                         class="img-responsive" 
-                         height="208" 
+                    <img alt="{{ $profile->name }} - escort in {{ $cityname }}"
+                         class="img-responsive"
+                         height="208"
                          width="200"
                          loading="{{ $loadingAttr }}"
                          fetchpriority="{{ $fetchPriority }}"
@@ -2259,6 +2288,7 @@
             <div class="main-thumbs">
               <a wire:navigate class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper featured">
+                  @include('livewire.partials._profile-media-badges')
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
@@ -2332,6 +2362,7 @@
             <div class="main-thumbs">
               <a wire:navigate class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
+                  @include('livewire.partials._profile-media-badges')
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>
@@ -2380,6 +2411,7 @@
             <div class="main-thumbs">
               <a wire:navigate class="img pb-photo-link" href="{{url($profilePathPrefix.'/'.$profile->id.'/'.$profile->slug)}}">
                 <span class="img-wrapper basic">
+                  @include('livewire.partials._profile-media-badges')
                   @if($profile->is_verified)
                   <span class="verified-image text-left small" title="Photos Verified by Evoory">
                     <i class="fa fa-check"></i>

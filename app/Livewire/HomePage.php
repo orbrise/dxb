@@ -821,11 +821,29 @@ public function checkIfFavorited($profileId)
             ->get()
             ->groupBy('profile_id');
 
+        // Total image + video counts per profile, used by the listing card
+        // badges (e.g. "24 photos", "Video" chip). One grouped query each
+        // rather than a withCount() on the main paginator so the already-cached
+        // paginator cache doesn't need busting.
+        $imageCounts = \App\Models\ProfileImage::query()
+            ->whereIn('profile_id', $profileIds)
+            ->selectRaw('profile_id, COUNT(*) as c')
+            ->groupBy('profile_id')
+            ->pluck('c', 'profile_id');
+
+        $videoCounts = \App\Models\ProfileVideo::query()
+            ->whereIn('profile_id', $profileIds)
+            ->selectRaw('profile_id, COUNT(*) as c')
+            ->groupBy('profile_id')
+            ->pluck('c', 'profile_id');
+
         foreach ($profiles as $profile) {
             $thumbs = $imagesByProfile->get($profile->id, collect())->take(3)->values();
             // Both relationship names are referenced in the blade — set both to the same collection.
             $profile->setRelation('multipleimgs', $thumbs);
             $profile->setRelation('multipleimgss', $thumbs);
+            $profile->images_count = (int) ($imageCounts[$profile->id] ?? 0);
+            $profile->videos_count = (int) ($videoCounts[$profile->id] ?? 0);
         }
     }
 

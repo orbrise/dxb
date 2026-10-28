@@ -2,6 +2,116 @@
 @if(isset($images) && $images->count() > 0)
     <link rel="preload" as="image" href="{{ webp_asset('userimages/'.$images->first()->user_id.'/'.$images->first()->profile_id.'/'.$images->first()->image) }}" fetchpriority="high">
 @endif
+<style>
+/* Video tile play-glyph. Same tile shell as the image tiles so the grid
+   stays visually consistent — we only paint a round black play button in
+   the centre so the user knows this one plays instead of opening a photo. */
+.pb-video-link { display: block; position: relative; }
+.pb-video-link .pb-video-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    z-index: 2;
+}
+.pb-video-link .pb-video-play::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 56%;
+    transform: translate(-50%, -50%);
+    border-left: 16px solid #fff;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+}
+.pb-video-link .image-wrapper img,
+.pb-video-link .image-wrapper video { width: 100%; display: block; }
+@media (max-width: 767px) {
+    .pb-video-link .pb-video-play { width: 44px; height: 44px; }
+    .pb-video-link .pb-video-play::after { border-left-width: 13px; border-top-width: 8px; border-bottom-width: 8px; }
+}
+
+/* Shared video lightbox used by both galleries. */
+#profileVideoLightbox {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 10060;
+    align-items: center; justify-content: center;
+    padding: 16px;
+}
+#profileVideoLightbox.is-open { display: flex; }
+#profileVideoLightbox video {
+    max-width: 100%;
+    max-height: 100%;
+    background: #000;
+    border-radius: 6px;
+}
+#pvlCloseBtn {
+    position: absolute; top: 16px; right: 16px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff; border: none;
+    font-size: 22px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Verified-photos badge on the profile-details galleries. The base
+   `.verified-image` uses a lime→gold diagonal gradient — the gold
+   stop made the whole badge read as olive instead of brand lime, and
+   on hover it expanded to a chunky "VERIFIED PHOTOS" ribbon in the
+   same olive tone. Repaint as a solid lime corner triangle, and on
+   hover expand to a clean lime pill with "Verified photos" text in
+   black (no gradient). */
+.profile-details-page .pb-thumbnails .verified-image,
+.profile-details-page .listing-photos-xs .verified-image,
+.profile-details-page .listing-photos-sm-plus .verified-image {
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    background: linear-gradient(to top right, #C1F11D 49%, transparent 51%) !important;
+    overflow: hidden !important;
+}
+.profile-details-page .pb-thumbnails .verified-image i,
+.profile-details-page .listing-photos-xs .verified-image i,
+.profile-details-page .listing-photos-sm-plus .verified-image i {
+    line-height: 32px !important;
+    font-size: 1.3em !important;
+    color: #000 !important;
+    text-shadow: none !important;
+    margin: 0 0 0 3px !important;
+}
+/* Hover: widen to a lime pill and reveal the label. We swap the diagonal
+   lime→transparent gradient for a solid lime fill so the whole pill reads
+   as one brand-coloured chip, not a half-transparent triangle. */
+.profile-details-page .pb-thumbnails .verified-image:hover,
+.profile-details-page .listing-photos-xs .verified-image:hover,
+.profile-details-page .listing-photos-sm-plus .verified-image:hover {
+    width: 150px !important;
+    background: #C1F11D !important;
+    padding: 0 10px 0 0 !important;
+}
+.profile-details-page .pb-thumbnails .verified-image span,
+.profile-details-page .listing-photos-xs .verified-image span,
+.profile-details-page .listing-photos-sm-plus .verified-image span {
+    display: inline-block !important;
+    visibility: hidden !important;
+    color: #000 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+    vertical-align: middle !important;
+    text-shadow: none !important;
+}
+.profile-details-page .pb-thumbnails .verified-image:hover span,
+.profile-details-page .listing-photos-xs .verified-image:hover span,
+.profile-details-page .listing-photos-sm-plus .verified-image:hover span {
+    visibility: visible !important;
+}
+</style>
 {{-- evoory-profile.css + profile-details-inline.css are declared permanently
      in the app-evoory layout <head> with media="print"/"all" toggled on
      wire:navigate. Previously pushed from here, which caused a FOUC race on
@@ -346,84 +456,40 @@
         <article data-listing="">
           <div class="row">
             <div class="col-xs-12 col-sm-9 col-sm-push-3 col-md-9 col-lg-7 col-lg-push-5" id="listing-content">
-              {{-- ═══════════════════════════════════════════════════════════
-                   Videos — rendered FIRST (above all image galleries) so
-                   they're the primary visual the user sees. Each tile shows
-                   the client-captured first-frame thumbnail + a play glyph;
-                   clicking opens the lightbox (handled by the delegated
-                   .profile-video-tile click handler below). Reuses one
-                   lightbox DOM/CSS pattern for a consistent playback UX.
-                   ═══════════════════════════════════════════════════════════ --}}
-              @if(isset($videos) && $videos->count() > 0)
-                  <div class="profile-videos-wrap" style="margin-bottom:24px;">
-                      <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;color:#fff;">Videos</h3>
-                      <div class="profile-videos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;">
-                          @foreach($videos as $pv)
-                              <button type="button"
-                                      class="profile-video-tile"
-                                      data-video-url="{{ $pv->video_url }}"
-                                      data-video-title="{{ $userName }} - {{ $userCityField }}"
-                                      style="position:relative;aspect-ratio:1/1;border:none;padding:0;background:#000;border-radius:8px;overflow:hidden;cursor:pointer;">
-                                  @if($pv->thumbnail_url)
-                                      <img src="{{ $pv->thumbnail_url }}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
-                                  @else
-                                      {{-- No poster saved — use metadata-only video so browser
-                                           decodes just enough bytes to show frame 0 as the tile. --}}
-                                      <video src="{{ $pv->video_url }}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
-                                  @endif
-                                  <span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;display:inline-flex;align-items:center;justify-content:center;">
-                                      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                                  </span>
-                              </button>
-                          @endforeach
-                      </div>
-                  </div>
-
-                  {{-- Lightweight lightbox — appended once, reused for every tile. --}}
-                  @once
-                  <div id="profileVideoLightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10050;align-items:center;justify-content:center;padding:16px;">
-                      <button type="button" id="pvlCloseBtn" aria-label="Close" style="position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;border:none;font-size:22px;cursor:pointer;">&times;</button>
-                      <video id="pvlVideo" controls playsinline style="max-width:100%;max-height:100%;background:#000;"></video>
-                  </div>
-                  <script>
-                  (function () {
-                      if (window.__profileVideoLightboxWired) return;
-                      window.__profileVideoLightboxWired = true;
-
-                      const open = (url) => {
-                          const lb = document.getElementById('profileVideoLightbox');
-                          const v  = document.getElementById('pvlVideo');
-                          if (!lb || !v) return;
-                          v.src = url;
-                          lb.style.display = 'flex';
-                          v.play().catch(() => {});
-                      };
-                      const close = () => {
-                          const lb = document.getElementById('profileVideoLightbox');
-                          const v  = document.getElementById('pvlVideo');
-                          if (!lb || !v) return;
-                          try { v.pause(); } catch (_) {}
-                          v.removeAttribute('src');
-                          v.load();
-                          lb.style.display = 'none';
-                      };
-
-                      document.addEventListener('click', (e) => {
-                          const tile = e.target.closest('.profile-video-tile[data-video-url]');
-                          if (tile) { e.preventDefault(); open(tile.getAttribute('data-video-url')); return; }
-                          if (e.target.id === 'pvlCloseBtn') { close(); return; }
-                          if (e.target.id === 'profileVideoLightbox') { close(); }
-                      });
-                      document.addEventListener('keydown', (e) => {
-                          if (e.key === 'Escape') close();
-                      });
-                  })();
-                  </script>
-                  @endonce
-              @endif
+              {{-- One shared video lightbox for the whole page. Both the
+                   mobile (.listing-photos-xs) and desktop
+                   (.listing-photos-sm-plus) galleries dispatch into it
+                   via the delegated .pb-video-link click handler at the
+                   bottom of @push('js'). --}}
+              @once
+              <div id="profileVideoLightbox" role="dialog" aria-modal="true">
+                  <button type="button" id="pvlCloseBtn" aria-label="Close">&times;</button>
+                  <video id="pvlVideo" controls playsinline></video>
+              </div>
+              @endonce
 
               <div class="visible-xs pb-thumbnails">
                 <div class="listing-photos-xs">
+                  {{-- Videos first — rendered as image-style tiles that
+                       play in a lightbox when tapped. Poster = captured
+                       first-frame thumbnail; falls back to a muted
+                       metadata-only video so the browser can decode frame 0. --}}
+                  @if(isset($videos))
+                    @foreach($videos as $pv)
+                    <a class="pb-video-link" href="javascript:void(0)" data-video-url="{{ $pv->video_url }}">
+                      <span class="img-wrapper listing">
+                        <div class="image-wrapper" style="position:relative;background:#000;">
+                          @if($pv->thumbnail_url)
+                            <img alt="Video" class="img-responsive" loading="lazy" decoding="async" src="{{ $pv->thumbnail_url }}">
+                          @else
+                            <video src="{{ $pv->video_url }}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+                          @endif
+                          <span class="pb-video-play" aria-hidden="true"></span>
+                        </div>
+                      </span>
+                    </a>
+                    @endforeach
+                  @endif
                   @foreach($images as $img)
                   <a class=" pb-photo-link" href="{{webp_asset("userimages/".$img->user_id."/".$img->profile_id."/".$img->image)}}">
                     <span class="img-wrapper listing">
@@ -1835,6 +1901,27 @@
             
             <div class="hidden-xs pb-thumbnails col-sm-3 col-sm-pull-9 col-lg-5 col-lg-pull-7">
               <div class="row listing-photos-sm-plus">
+                {{-- Videos first (same column sizing as photos) so the
+                     grid reads: videos → photos. Click opens the shared
+                     video lightbox defined further down the page. --}}
+                @if(isset($videos))
+                  @foreach($videos as $pv)
+                  <div class="col-lg-6">
+                    <a class="pb-video-link" href="javascript:void(0)" data-video-url="{{ $pv->video_url }}">
+                      <span class="img-wrapper listing">
+                        <div class="image-wrapper" style="position:relative;background:#000;">
+                          @if($pv->thumbnail_url)
+                            <img alt="Video" class="img-responsive uniform-image" loading="lazy" decoding="async" src="{{ $pv->thumbnail_url }}">
+                          @else
+                            <video src="{{ $pv->video_url }}" muted playsinline preload="metadata" class="img-responsive uniform-image" style="object-fit:cover;display:block;background:#000;"></video>
+                          @endif
+                          <span class="pb-video-play" aria-hidden="true"></span>
+                        </div>
+                      </span>
+                    </a>
+                  </div>
+                  @endforeach
+                @endif
                 @foreach($images as $img)
                 <div class="col-lg-6">
                   <a class="pb-photo-link"
@@ -2652,6 +2739,45 @@
 </div>
 
 @push('js')
+<script>
+/* Shared video-tile lightbox. Delegated so a wire:navigate DOM morph
+   doesn't drop the binding; wired once per window with the module-level
+   guard so re-executing this pushed script on soft nav doesn't double-bind. */
+(function () {
+    if (window.__profileVideoLightboxWired) return;
+    window.__profileVideoLightboxWired = true;
+
+    function openLightbox(url) {
+        var lb = document.getElementById('profileVideoLightbox');
+        var v  = document.getElementById('pvlVideo');
+        if (!lb || !v) return;
+        v.src = url;
+        lb.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        try { v.play().catch(function () {}); } catch (e) {}
+    }
+    function closeLightbox() {
+        var lb = document.getElementById('profileVideoLightbox');
+        var v  = document.getElementById('pvlVideo');
+        if (!lb || !v) return;
+        try { v.pause(); } catch (e) {}
+        v.removeAttribute('src');
+        v.load();
+        lb.classList.remove('is-open');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('click', function (e) {
+        var tile = e.target.closest && e.target.closest('.pb-video-link[data-video-url]');
+        if (tile) { e.preventDefault(); openLightbox(tile.getAttribute('data-video-url')); return; }
+        if (e.target && e.target.id === 'pvlCloseBtn') { closeLightbox(); return; }
+        if (e.target && e.target.id === 'profileVideoLightbox') { closeLightbox(); }
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeLightbox();
+    });
+})();
+</script>
 <script>
 /* Async profile-view tracker — fires once per page load, survives page caching.
    sendBeacon is preferred (won't block page unload); fetch is a fallback. */
