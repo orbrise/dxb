@@ -445,6 +445,89 @@ Route::group(['middleware'=>'auth'], function(){
 
         return response()->json(['ok' => true, 'updated' => $rows->count()]);
     })->name('chat.ack.delivered');
+
+    /**
+     * Mark-read ack. Fires when a NewChatMessage push arrives AND the matching
+     * conversation is already open in the recipient's chat view (detected
+     * client-side via `#chatReplyInput[data-conversation-id]`).
+     *
+     * Why a dedicated endpoint instead of relying on Livewire refreshChat →
+     * markConversationAsRead: the Livewire path was intermittently failing to
+     * flip blue ticks when the recipient already had the conversation open —
+     * requests queue/batch, and the Echo-triggered refresh was not reliably
+     * running the read-mark branch. This endpoint is HTTP-direct and mirrors
+     * the ack-delivered pattern — no Livewire boot, just UPDATE + broadcast.
+     *
+     * Only runs the read-flip when the client confirms the conversation is
+     * actively on-screen; otherwise we'd be lying about read receipts.
+     */
+    Route::post("chat/ack-read", function (\Illuminate\Http\Request $request) {
+        if (!auth()->check()) return response()->json(['ok' => false], 401);
+        $userId = auth()->id();
+
+        $convId = (int) $request->input('conversation_id');
+        if ($convId <= 0) return response()->json(['ok' => false, 'reason' => 'missing conversation_id'], 400);
+
+        $owns = \App\Models\Conversation::where('id', $convId)
+            ->where(fn ($q) => $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId))
+            ->exists();
+        if (!$owns) return response()->json(['ok' => false], 403);
+
+        $query = \App\Models\Message::where('conversation_id', $convId)
+            ->where('sender_id', '!=', $userId)
+            ->whereIn('status', ['sent', 'delivered']);
+
+        $senderIds = (clone $query)->pluck('sender_id')->filter()->unique();
+        if ($senderIds->isEmpty()) return response()->json(['ok' => true, 'updated' => 0]);
+
+        $updated = $query->update(['status' => 'read']);
+
+        try {
+            foreach ($senderIds as $senderId) {
+                broadcast(new \App\Events\MessageStatusUpdated($convId, 'read', (int) $senderId))->toOthers();
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('ack-read broadcast failed: ' . $e->getMessage());
+        }
+
+        return response()->json(['ok' => true, 'updated' => $updated]);
+    })->name('chat.ack.read');
+
+    /**
+     * Lightweight tick-status poll. The sender's chat page hits this every
+     * 3s for the currently-open conversation and gets back a minimal
+     * {id => status} map of their own outgoing messages. The client then
+     * patches tick DOM directly — no Livewire morph, no broadcast dependency.
+     *
+     * Why: the broadcast path (ack-delivered/ack-read → MessageStatusUpdated)
+     * was fragile on real setups — WebSocket drops, Cloudflare quirks, or
+     * recipient's Echo not firing all left senders stuck on single-tick
+     * even after the recipient had clearly seen the message. This endpoint
+     * is a correctness backstop: as long as the DB has the right status
+     * (which the recipient's own pollRefresh guarantees within 8s), the
+     * sender's view will reflect it within 3s regardless of broadcast health.
+     */
+    Route::get("chat/sent-statuses/{convId}", function (int $convId) {
+        if (!auth()->check()) return response()->json(['ok' => false], 401);
+        $userId = auth()->id();
+
+        $owns = \App\Models\Conversation::where('id', $convId)
+            ->where(fn ($q) => $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId))
+            ->exists();
+        if (!$owns) return response()->json(['ok' => false], 403);
+
+        $rows = \App\Models\Message::where('conversation_id', $convId)
+            ->where('sender_id', $userId)
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get(['id', 'status']);
+
+        return response()->json([
+            'ok' => true,
+            'statuses' => $rows->mapWithKeys(fn ($m) => [(string) $m->id => (string) ($m->status ?? 'sent')]),
+        ])->header('Cache-Control', 'no-store, private');
+    })->whereNumber('convId')->name('chat.sent.statuses');
+
     Route::get("call/history", [\App\Http\Controllers\CallController::class, 'history'])->name('call.history');
     Route::post("rtc/ping-user/{targetUserId}", [\App\Http\Controllers\CallController::class, 'pingUser'])
         ->whereNumber('targetUserId')

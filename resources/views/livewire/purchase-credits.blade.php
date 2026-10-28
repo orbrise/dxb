@@ -1549,6 +1549,12 @@ body:has(.pc-v2-active) .pc-v2-intro {
             updateAmountDisplay(selectedAmount);
 
             if (selectedAmount >= 10) {
+                // Valid amount — drop the inline "min $10" warning instantly
+                // so the field doesn't keep an error marker after the user
+                // typed a second digit (e.g. 1 → 10). Won't fight the server
+                // Blade error block (addError on amount): that one only
+                // renders when Livewire validation fails on a round-trip.
+                if (typeof clearAmountInlineError === 'function') clearAmountInlineError();
                 if (selectedPaymentMethod === 'primary') {
                     clearTimeout(window.primaryInitTimeout);
                     window.primaryInitTimeout = setTimeout(initPrimaryGatewayIframe, 500);
@@ -1632,6 +1638,24 @@ body:has(.pc-v2-active) .pc-v2-intro {
         });
     }
     
+    // Show / hide the inline amount-error element rendered under the Choose
+    // amount input (see _purchase-credits-form.blade.php). The error used to
+    // appear at the bottom of the Package card — far from the field the user
+    // actually needs to correct — which users didn't tie back to the amount
+    // they'd just typed. This keeps the message right next to the input.
+    function showAmountInlineError(msg) {
+        var $err = document.getElementById('credits-amount-inline-error');
+        var $txt = document.getElementById('credits-amount-inline-error-text');
+        if (!$err || !$txt) return;
+        $txt.textContent = msg;
+        $err.style.display = 'flex';
+    }
+    function clearAmountInlineError() {
+        var $err = document.getElementById('credits-amount-inline-error');
+        if (!$err) return;
+        $err.style.display = 'none';
+    }
+
     function initPrimaryGatewayIframe() {
         var $loading = document.getElementById('primary-gateway-loading');
         var $iframe = document.getElementById('primary-gateway-iframe');
@@ -1643,10 +1667,13 @@ body:has(.pc-v2-active) .pc-v2-intro {
 
         if (selectedAmount < 10) {
             $iframe.style.display = 'none';
-            $loading.style.display = 'block';
-            $loading.innerHTML = '<p class="text-danger">Please enter an amount of at least $10.</p>';
+            $loading.style.display = 'none';
+            $loading.innerHTML = '';
+            showAmountInlineError('Please enter an amount of at least $10.');
             return;
         }
+
+        clearAmountInlineError();
 
         var $existingCta = document.getElementById('primary-gateway-cta');
         if ($existingCta) $existingCta.remove();
@@ -1691,9 +1718,12 @@ body:has(.pc-v2-active) .pc-v2-intro {
         }
         
         if (selectedAmount < 10) {
-            $container.innerHTML = '<p class="text-danger">Please enter an amount of at least $10.</p>';
+            $container.innerHTML = '';
+            showAmountInlineError('Please enter an amount of at least $10.');
             return;
         }
+
+        clearAmountInlineError();
         
         // Load PayPal SDK if not already loaded
         if (typeof paypal !== 'undefined' && paypal.Buttons) {

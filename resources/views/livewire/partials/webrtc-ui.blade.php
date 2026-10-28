@@ -37,6 +37,13 @@
     .rtc-incoming .btn-accept { background: #22c55e; color: #fff; }
     .rtc-incoming .btn-decline { background: #ef4444; color: #fff; }
 
+    /* Desktop: hide all the mobile-only chrome (brand bar, icon-vs-label
+       wrappers). The mobile media query below unhides and restyles them.
+       Keeps the compact top-right desktop card intact. */
+    .rtc-incoming .rtc-incoming-brandbar,
+    .rtc-incoming .rtc-incoming-btn-icon,
+    .rtc-incoming .rtc-incoming-btn-label { display: none; }
+
     /* Floating call window (default) — small card in bottom-right, similar
        to WhatsApp Web's minimized call. Toggle `.rtc-call.maximized` for the
        old full-screen layout. */
@@ -259,6 +266,17 @@
     .rtc-ctrl:not(:has(> button:not([style*="display:none"]):not([style*="display: none"]))) {
         display: none;
     }
+    /* Force the Audio (speaker) cell visible on real phones no matter what.
+       The generic `:has()` collapse-rule above has spotty support on older
+       Samsung Internet / iOS Safari (support only landed in Chrome 105 /
+       Safari 15.4), and any Livewire morph could re-stamp a `display:none`
+       on the inner button. Pinning this specific cell visible via a
+       dedicated .rtc-ctrl--speaker class — targeted without `:has()` so
+       even ancient mobile browsers honour it — guarantees users on mobile
+       always have a speaker control, which is the one on-call affordance
+       there's no OS-level fallback for. */
+    .rtc-ctrl.rtc-ctrl--speaker { display: flex !important; }
+    .rtc-ctrl.rtc-ctrl--speaker #rtcSpeakerBtn { display: inline-flex !important; }
     .rtc-ctrl-label {
         color: rgba(255,255,255,0.85);
         font-size: 12px;
@@ -508,66 +526,119 @@
     }
 
     @media (max-width: 640px) {
-        /* Full-screen incoming call UI on mobile — WhatsApp-style.
-           Replaces the previous small-top-banner so the user can see the
-           caller clearly and tap the big Accept/Decline buttons without
-           needing to hunt for a tiny banner at the top of the screen. */
+        /* Full-screen incoming call UI on mobile — matches WhatsApp iOS.
+           Layout from top → bottom:
+             1. Branded header (small brand mark + "Evoory Voice call…")
+             2. Caller name (big)
+             3. Flexible spacer
+             4. Message + Remind Me secondary row
+             5. Decline (red X)   +   Accept (blue ✓)   with labels under
+           NO large avatar — WhatsApp's incoming screen is intentionally
+           text-forward so the caller name is the hero element. */
         .rtc-incoming {
             top: 0; right: 0; left: 0; bottom: 0;
             min-width: unset;
-            padding: 0;
+            padding: 48px 24px calc(32px + env(safe-area-inset-bottom, 0px));
             border: none;
             border-radius: 0;
-            background: linear-gradient(180deg, #10151A 0%, #050709 100%);
+            background: #1C2024; /* neutral dark grey — same tone WhatsApp uses */
             box-shadow: none;
             animation: none; /* kill the lime pulse — too busy at full-screen */
         }
-        .rtc-incoming.open { display: flex; flex-direction: column; }
-        .rtc-incoming .who {
-            flex: 1;
-            flex-direction: column;
-            justify-content: center;
+        .rtc-incoming.open { display: flex; flex-direction: column; align-items: center; }
+
+        /* Branded header — tiny icon + "Evoory Voice call…" in muted grey. */
+        .rtc-incoming .rtc-incoming-brandbar {
+            display: inline-flex;
             align-items: center;
-            gap: 24px;
-            margin: 0;
-            padding: 48px 24px 32px;
+            gap: 6px;
+            color: #9aa0a4;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        .rtc-incoming .rtc-incoming-brandmark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #9aa0a4;
+        }
+
+        /* Caller name block — hide the small desktop avatar, flatten the
+           .who row so only the name sits under the brand bar. */
+        .rtc-incoming .who {
+            flex: 0 0 auto;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            margin: 10px 0 0;
+            padding: 0;
             text-align: center;
         }
-        .rtc-incoming .avatar {
-            width: 140px;
-            height: 140px;
-            font-size: 56px;
-            box-shadow: 0 0 0 6px rgba(193, 241, 29, 0.15),
-                        0 10px 40px rgba(0, 0, 0, 0.5);
-            animation: rtcIncomingAvatarPulse 1.8s ease-in-out infinite;
-        }
-        .rtc-incoming .name { font-size: 26px; font-weight: 600; }
-        .rtc-incoming .sub { font-size: 15px; margin-top: 4px; }
+        .rtc-incoming .avatar { display: none; }
+        .rtc-incoming .name { font-size: 32px; font-weight: 700; color: #fff; letter-spacing: 0.2px; }
+        .rtc-incoming .sub { display: none; } /* brand bar already carries the call type */
+
+        /* Action container stretches to fill remaining space so the main
+           buttons anchor to the bottom-safe area. Decline hugs the left
+           edge, Accept hugs the right — matches WhatsApp iOS where the two
+           buttons live at the far sides, not clustered in the middle.
+           max-width removed so the row spans the full viewport width. */
         .rtc-incoming .actions {
-            gap: 70px;
-            padding: 0 24px calc(48px + env(safe-area-inset-bottom, 0px));
-            justify-content: center;
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 0;
+            margin: 0;
+            padding: 0 32px;
+            width: 100%;
+            max-width: none;
+            box-sizing: border-box;
         }
-        .rtc-incoming .btn-accept,
-        .rtc-incoming .btn-decline {
-            flex: 0 0 72px;
-            width: 72px; height: 72px;
-            border-radius: 50%;
+
+        /* Main buttons: Decline (red X) + Accept (blue ✓) stacked icon-over-
+           label. Override the base .btn-accept/.btn-decline fill-colour from
+           the desktop styles — on mobile the colour lives on the inner
+           .rtc-incoming-btn-icon circle. */
+        .rtc-incoming .actions .btn-accept,
+        .rtc-incoming .actions .btn-decline {
+            flex: 0 0 auto;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: auto;
             padding: 0;
-            font-size: 26px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            background: transparent;
+            box-shadow: none;
+            font-size: 0; /* strip any accidental text whitespace */
+            animation: none;
         }
-        .rtc-incoming .btn-accept  { animation: rtcAcceptNudge 1.6s ease-in-out infinite; }
-        .rtc-incoming .btn-decline { animation: rtcDeclineShake 1.6s ease-in-out infinite; }
+        .rtc-incoming .rtc-incoming-btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+        }
+        .rtc-incoming .btn-decline .rtc-incoming-btn-icon { background: #ef3b3b; }
+        .rtc-incoming .btn-accept  .rtc-incoming-btn-icon { background: #2b7cff; }
+        .rtc-incoming .rtc-incoming-btn-label {
+            display: inline-block;
+            font-size: 13px;
+            color: #d7dadd;
+            font-weight: 500;
+        }
+        /* Old <i class="fa fa-phone"> icons inside the buttons from the
+           desktop layout — suppress on mobile; the SVG inside
+           .rtc-incoming-btn-icon is what we actually render here. */
         .rtc-incoming .btn-accept i,
-        .rtc-incoming .btn-decline i { font-size: 24px; }
-        /* Hide the "Accept" / "Decline" text labels on the buttons —
-           icon-only matches WhatsApp. The screen-reader name is covered
-           by the button's own semantics. */
-        .rtc-incoming .btn-accept,
-        .rtc-incoming .btn-decline { font-size: 0; }
-        .rtc-incoming .btn-accept i,
-        .rtc-incoming .btn-decline i { font-size: 24px; }
+        .rtc-incoming .btn-decline i { display: none; }
 
         /* Push the toast below the call topbar on phone screens so the
            "Asking … to switch to video" pill clears the peer name header. */
@@ -578,23 +649,24 @@
             font-size: 13px;
         }
     }
-    @keyframes rtcIncomingAvatarPulse {
-        0%, 100% { box-shadow: 0 0 0 6px rgba(193, 241, 29, 0.15),  0 10px 40px rgba(0,0,0,0.5); }
-        50%      { box-shadow: 0 0 0 18px rgba(193, 241, 29, 0.05), 0 10px 40px rgba(0,0,0,0.5); }
-    }
-    @keyframes rtcAcceptNudge {
-        0%, 100% { transform: translateY(0); }
-        50%      { transform: translateY(-6px); }
-    }
-    @keyframes rtcDeclineShake {
-        0%, 100% { transform: rotate(0); }
-        25%      { transform: rotate(-12deg); }
-        75%      { transform: rotate(12deg); }
-    }
 </style>
 
-{{-- Incoming call banner --}}
+{{-- Incoming call banner. Desktop keeps the compact top-right card
+     (first .who/.actions block); the mobile media query flips the whole
+     thing to a full-screen WhatsApp-iOS-style layout and swaps in the
+     branded header via `.rtc-incoming-brandbar`, which is hidden on
+     desktop by CSS. --}}
 <div class="rtc-incoming" id="rtcIncoming" role="dialog" aria-label="Incoming call">
+    {{-- Mobile-only branded header: small brand mark + "Evoory Voice/Video call…"
+         Matches the "WhatsApp Audio…" line at the top of WhatsApp's iOS
+         incoming screen. Hidden on desktop via CSS. --}}
+    <div class="rtc-incoming-brandbar">
+        <span class="rtc-incoming-brandmark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57a1 1 0 0 0-1.02.24l-2.2 2.2a15.05 15.05 0 0 1-6.59-6.58l2.2-2.21a1 1 0 0 0 .25-1.02A11.36 11.36 0 0 1 8.5 4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1 17 17 0 0 0 17 17 1 1 0 0 0 1-1v-3.5a1 1 0 0 0-1-1z"/></svg>
+        </span>
+        <span class="rtc-incoming-brandtext">Evoory <span id="rtcIncomingBrandType">Voice</span> call…</span>
+    </div>
+
     <div class="who">
         <div class="avatar" id="rtcIncomingAvatar">?</div>
         <div>
@@ -602,12 +674,19 @@
             <div class="sub"><span id="rtcIncomingType">Voice</span> call…</div>
         </div>
     </div>
+
     <div class="actions">
-        <button type="button" class="btn-accept" id="rtcAcceptBtn">
-            <i class="fa fa-phone"></i> Accept
-        </button>
         <button type="button" class="btn-decline" id="rtcDeclineBtn">
-            <i class="fa fa-phone-slash"></i> Decline
+            <span class="rtc-incoming-btn-icon">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            </span>
+            <span class="rtc-incoming-btn-label">Decline</span>
+        </button>
+        <button type="button" class="btn-accept" id="rtcAcceptBtn">
+            <span class="rtc-incoming-btn-icon">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 12 10 17 19 7"/></svg>
+            </span>
+            <span class="rtc-incoming-btn-label">Accept</span>
         </button>
     </div>
 </div>
@@ -691,8 +770,18 @@
          are irrelevant to the current call state (voice-only vs video,
          pre-connect vs connected) are hidden by JS via style.display. --}}
     <div class="rtc-controls">
-        <div class="rtc-ctrl">
-            <button type="button" class="rtc-btn" id="rtcSpeakerBtn" title="Toggle speaker" style="display:none;">
+        {{-- Speaker toggle. Hard-coded inline style="display:flex!important"
+             on the cell and style="display:inline-flex!important" on the
+             button because every prior CSS-only fix (:has() rule, .rtc-ctrl
+             --speaker class with !important) kept failing to render on real
+             phones — Samsung Internet / mobile Safari were somehow still
+             hiding this cell. Inline-!important sits above every other
+             source in the CSS cascade, so even a cached stylesheet or a
+             Livewire morph can't override it. This is the one on-call
+             control there's no OS-level fallback for, so correctness beats
+             elegance here. --}}
+        <div class="rtc-ctrl rtc-ctrl--speaker" style="display: flex !important;">
+            <button type="button" class="rtc-btn" id="rtcSpeakerBtn" title="Toggle speaker" style="display: inline-flex !important;">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M3 10v4a1 1 0 0 0 1 1h3l5 4V5L7 9H4a1 1 0 0 0-1 1z"/><path d="M16 7.5c1.8 1 3 2.8 3 4.9s-1.2 3.9-3 4.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 4c3 1.5 5 4.7 5 8.4s-2 6.9-5 8.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             </button>
             <span class="rtc-ctrl-label">Audio</span>

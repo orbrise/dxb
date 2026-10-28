@@ -1898,6 +1898,10 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (nm) nm.textContent = S.peer.name;
         const tp = document.getElementById('rtcIncomingType');
         if (tp) tp.textContent = S.callType === 'video' ? 'Video' : 'Voice';
+        // Mobile WhatsApp-style brand header ("Evoory Voice call…") lives
+        // in a separate span so the desktop compact card isn't affected.
+        const btp = document.getElementById('rtcIncomingBrandType');
+        if (btp) btp.textContent = S.callType === 'video' ? 'Video' : 'Voice';
         const av = document.getElementById('rtcIncomingAvatar');
         if (av) {
             if (S.peer.avatar) av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
@@ -1959,8 +1963,13 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (timer) { timer.style.display = 'none'; timer.textContent = '00:00'; }
         const maxBtn = document.getElementById('rtcMaximizeBtn');
         if (maxBtn) { maxBtn.title = 'Maximize'; maxBtn.innerHTML = '<i class="fa fa-expand"></i>'; }
+        // Don't force the speaker button hidden between calls — it's now
+        // always rendered (template no longer carries style="display:none").
+        // Just clear the "speaker-on" active state so the next call starts
+        // with the earpiece/default output rather than inheriting the last
+        // call's loudspeaker state.
         const speakerBtn = document.getElementById('rtcSpeakerBtn');
-        if (speakerBtn) { speakerBtn.style.display = 'none'; speakerBtn.classList.remove('speaker-on'); }
+        if (speakerBtn) speakerBtn.classList.remove('speaker-on');
         S.currentSinkId = null;
     }
     function setState(txt) {
@@ -2120,13 +2129,13 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         } catch (e) {}
     }
     function maybeShowSpeakerBtn() {
-        const btn = document.getElementById('rtcSpeakerBtn');
-        const el = document.getElementById('rtcRemoteVideo');
-        if (!btn || !el) return;
-        // Always show the button. On desktop it drives setSinkId; on
-        // mobile it falls back to the volume-nudge path above so users
-        // still get a visible, tappable speaker control during the call.
-        btn.style.display = '';
+        // No-op by design. The speaker cell + button now carry inline
+        // style="display: ... !important" directly in the Blade template
+        // (see webrtc-ui.blade.php #rtcSpeakerBtn block), so there's
+        // nothing to un-hide at runtime. Kept as a function so existing
+        // call-sites (showCallUI, call-restore flows) stay valid without
+        // churn — removing it would require touching several places that
+        // reference it defensively.
     }
 
     // --- Utils --------------------------------------------------------

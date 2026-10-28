@@ -34,6 +34,18 @@
         </div>
     @enderror
 
+    {{-- JS-driven inline error — same slot as the @error block above, but
+         populated by the gateway init functions (initPrimaryGatewayIframe /
+         initPayPalButtons) when the amount is below $10. Previously those
+         wrote their error into #primary-gateway-loading / #paypal-button-
+         container at the bottom of the card, which the user never saw was
+         tied to the amount they'd just typed. Hidden by default; JS flips
+         display + sets the message. --}}
+    <div id="credits-amount-inline-error" class="mt-2" style="display:none; color:#ff4d4d; font-size:13px; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="credits-amount-inline-error-text"></span>
+    </div>
+
     <!-- Payment Method -->
     <div class="payment-methods-card">
         <h2>Payment Method</h2>

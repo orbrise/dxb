@@ -7093,6 +7093,42 @@
                                 } catch (ackErr) {
                                     console.warn('[chat] ack-delivered failed', ackErr);
                                 }
+
+                                // Instant READ ack: if the matching conversation
+                                // is currently open in this user's chat view
+                                // (chatReplyInput carries its id), the message
+                                // was read the moment it arrived. Previously
+                                // only the Livewire refreshChat → markConversation
+                                // AsRead path handled this and it intermittently
+                                // failed to flip ticks blue until the recipient
+                                // re-clicked the conversation. HTTP-direct hit
+                                // is reliable and mirrors the ack-delivered path.
+                                try {
+                                    const convIdForRead = (e && e.message && e.message.conversation_id)
+                                        ? Number(e.message.conversation_id)
+                                        : 0;
+                                    const replyInput = document.getElementById('chatReplyInput');
+                                    const openConvId = replyInput ? Number(replyInput.getAttribute('data-conversation-id') || 0) : 0;
+                                    if (convIdForRead > 0 && openConvId > 0 && convIdForRead === openConvId && document.visibilityState !== 'hidden') {
+                                        const tokenR = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+                                        const urlR = {!! json_encode(route('chat.ack.read')) !!};
+                                        const bodyR = new FormData();
+                                        bodyR.append('conversation_id', convIdForRead);
+                                        fetch(urlR, {
+                                            method: 'POST',
+                                            credentials: 'same-origin',
+                                            keepalive: true,
+                                            headers: {
+                                                'X-CSRF-TOKEN': tokenR,
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'Accept': 'application/json',
+                                            },
+                                            body: bodyR,
+                                        }).catch(() => { /* best-effort */ });
+                                    }
+                                } catch (ackReadErr) {
+                                    console.warn('[chat] ack-read failed', ackReadErr);
+                                }
                             })
                             .listen('.MessageStatusUpdated', (e) => {
                                 // Fast path: patch the tick markup directly in the
@@ -7103,6 +7139,7 @@
                                 // every receipt change. Now a DOM-only swap.
                                 try {
                                     const incoming = (e && e.status) || '';
+                                    console.log('[chat] MessageStatusUpdated received', { status: incoming, conversation_id: e && e.conversation_id });
                                     if (incoming !== 'delivered' && incoming !== 'read') return;
                                     const RANK = { sent: 0, delivered: 1, read: 2 };
                                     const next = RANK[incoming];
@@ -7273,6 +7310,64 @@
                        // dropped broadcasts, so 8s is plenty. Cuts DB
                        // pressure ~60% and stops the whole page feeling
                        // sluggish from constant re-render churn.
+        }
+
+        // Dedicated sender-side tick poll — much lighter than refreshChat.
+        // Every 3s, if the currently-open conversation has any outgoing
+        // bubbles that aren't yet blue-double-tick, ask the server for
+        // their current statuses and patch the DOM directly. Independent
+        // of the broadcast path, which was intermittently failing to flip
+        // ticks on real setups (recipient's Echo not firing / WebSocket
+        // dropping / Cloudflare caching broadcast responses).
+        //
+        // Keeps DB cost near zero: skips entirely when every sent bubble
+        // is already 'read', so a conversation that's caught up doesn't
+        // make any requests.
+        if (!window.__chatState.sentStatusPoll) {
+            window.__chatState.sentStatusPoll = setInterval(() => {
+                if (document.hidden) return;
+                const replyInput = document.getElementById('chatReplyInput');
+                if (!replyInput) return;
+                const convId = Number(replyInput.getAttribute('data-conversation-id') || 0);
+                if (!convId) return;
+
+                const open = document.querySelector('#chatMessages');
+                if (!open) return;
+
+                // Any sent bubble that isn't already blue-read? If not, skip.
+                let needsCheck = false;
+                open.querySelectorAll('.message-wrapper.sent[data-message-id] .message-ticks .tick').forEach((t) => {
+                    if (!t.classList.contains('read')) needsCheck = true;
+                });
+                if (!needsCheck) return;
+
+                const url = {!! json_encode(url('chat/sent-statuses')) !!} + '/' + convId;
+                fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+                    .then((r) => r.ok ? r.json() : null)
+                    .then((data) => {
+                        if (!data || !data.ok || !data.statuses) return;
+                        open.querySelectorAll('.message-wrapper.sent[data-message-id]').forEach((wrap) => {
+                            const id = wrap.getAttribute('data-message-id');
+                            const nextStatus = data.statuses[id];
+                            if (!nextStatus) return;
+                            const ticks = wrap.querySelector('.message-ticks');
+                            if (!ticks) return;
+                            const cur = ticks.querySelector('.tick');
+                            const curRank = cur && cur.classList.contains('read') ? 2
+                                          : cur && cur.classList.contains('double-tick') ? 1
+                                          : 0;
+                            const RANK = { sent: 0, delivered: 1, read: 2 };
+                            const nextRank = RANK[nextStatus] ?? 0;
+                            if (nextRank <= curRank) return;
+                            if (nextStatus === 'read') {
+                                ticks.innerHTML = '<span class="tick read double-tick">✓✓</span>';
+                            } else if (nextStatus === 'delivered') {
+                                ticks.innerHTML = '<span class="tick double-tick">✓✓</span>';
+                            }
+                        });
+                    })
+                    .catch(() => { /* best-effort */ });
+            }, 3000);
         }
 
         // Auto-scroll to the bottom of the message list on new messages, BUT

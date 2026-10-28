@@ -317,17 +317,15 @@ class Chat extends Component
 
             $isSupport = (bool) $target->is_support;
             $peerId = $isSupport ? null : $target->getOtherUserId($userId);
-            app()->terminating(function () use ($new, $isSupport, $peerId) {
-                try {
-                    if ($isSupport) {
-                        broadcast(new NewChatMessage($new, 0))->toOthers();
-                    } elseif ($peerId) {
-                        broadcast(new NewChatMessage($new, $peerId))->toOthers();
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('Forward broadcast failed: ' . $e->getMessage());
+            try {
+                if ($isSupport) {
+                    broadcast(new NewChatMessage($new, 0))->toOthers();
+                } elseif ($peerId) {
+                    broadcast(new NewChatMessage($new, $peerId))->toOthers();
                 }
-            });
+            } catch (\Throwable $e) {
+                Log::warning('Forward broadcast failed: ' . $e->getMessage());
+            }
 
             $this->invalidateChatCache($peerId);
 
@@ -386,20 +384,20 @@ class Chat extends Component
 
         $target->update(['last_message_at' => now()]);
 
-        // Defer broadcast (see note on sendReply above).
+        // Broadcast immediately — see note in sendReply about terminating
+        // callbacks being dropped on prod and leaving senders stuck on
+        // single-tick.
         $isSupport = (bool) $target->is_support;
         $peerId = $isSupport ? null : $target->getOtherUserId($userId);
-        app()->terminating(function () use ($new, $isSupport, $peerId) {
-            try {
-                if ($isSupport) {
-                    broadcast(new NewChatMessage($new, 0))->toOthers();
-                } elseif ($peerId) {
-                    broadcast(new NewChatMessage($new, $peerId))->toOthers();
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Forward broadcast failed: ' . $e->getMessage());
+        try {
+            if ($isSupport) {
+                broadcast(new NewChatMessage($new, 0))->toOthers();
+            } elseif ($peerId) {
+                broadcast(new NewChatMessage($new, $peerId))->toOthers();
             }
-        });
+        } catch (\Throwable $e) {
+            Log::warning('Forward broadcast failed: ' . $e->getMessage());
+        }
 
         $peerId = $target->is_support ? null : $target->getOtherUserId($userId);
         $this->invalidateChatCache($peerId);
@@ -1184,21 +1182,25 @@ class Chat extends Component
         ChatBadges::clear($userId);
         $this->invalidateChatCache();
 
-        // Defer the broadcasts until AFTER the Livewire response is sent to
-        // the browser. Each broadcast() is a blocking HTTP POST to Reverb;
-        // doing N of them synchronously was adding ~1-2s per unique sender
-        // to every chat click in prod. The receipts arrive a beat later but
-        // the user's chat opens instantly.
+        // Broadcast READ receipts IMMEDIATELY — not via app()->terminating().
+        // Terminating callbacks fire after the HTTP response flushes, which
+        // on some PHP-FPM + Cloudflare setups is deferred until the next
+        // request or dropped entirely if the connection closes quickly.
+        // Visible symptom reported by the user: "I saw the message but
+        // sender still shows single tick" — the read broadcast was being
+        // queued and never actually sent to Reverb.
+        //
+        // Trade-off: adds one blocking HTTP call to Reverb per unique sender
+        // in this conversation. Realistically 1-on-1 chats = 1 broadcast,
+        // adding maybe 20-50ms per read-mark. Worth it for correctness.
         $convId = (int) $this->selectedConversationId;
-        app()->terminating(function () use ($senderIds, $convId) {
-            try {
-                foreach ($senderIds as $senderId) {
-                    broadcast(new MessageStatusUpdated($convId, 'read', (int) $senderId))->toOthers();
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Broadcast status update failed: ' . $e->getMessage());
+        try {
+            foreach ($senderIds as $senderId) {
+                broadcast(new MessageStatusUpdated($convId, 'read', (int) $senderId))->toOthers();
             }
-        });
+        } catch (\Throwable $e) {
+            Log::warning('Broadcast read status failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -1248,21 +1250,22 @@ class Chat extends Component
             ->where('status', 'sent')
             ->update(['status' => 'delivered']);
 
-        // Defer broadcasts: this runs on every poll tick (every ~8 seconds)
-        // AND on mount(), so synchronous blocking per sender here was adding
-        // multiple seconds to initial page load + every subsequent action.
+        // Broadcast delivered receipts IMMEDIATELY. Same reasoning as
+        // markConversationAsRead above — terminating callbacks were being
+        // dropped on prod (PHP-FPM behind Cloudflare), leaving senders
+        // stuck on a single tick even after the recipient received the
+        // message. The EXISTS probe at the top of this method ensures
+        // we only pay the broadcast cost when there's actually work to do.
         $grouped = $rows->groupBy('conversation_id');
-        app()->terminating(function () use ($grouped) {
-            try {
-                foreach ($grouped as $convId => $messages) {
-                    foreach ($messages->pluck('sender_id')->filter()->unique() as $senderId) {
-                        broadcast(new MessageStatusUpdated((int) $convId, 'delivered', (int) $senderId))->toOthers();
-                    }
+        try {
+            foreach ($grouped as $convId => $messages) {
+                foreach ($messages->pluck('sender_id')->filter()->unique() as $senderId) {
+                    broadcast(new MessageStatusUpdated((int) $convId, 'delivered', (int) $senderId))->toOthers();
                 }
-            } catch (\Throwable $e) {
-                Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
             }
-        });
+        } catch (\Throwable $e) {
+            Log::warning('Broadcast delivered status failed: ' . $e->getMessage());
+        }
     }
 
     public function sendReply()
@@ -1327,20 +1330,25 @@ class Chat extends Component
 
         $conversation->update(['last_message_at' => now()]);
 
-        // Defer broadcast to after-response so sendReply returns instantly.
+        // Broadcast NewChatMessage IMMEDIATELY. Previously deferred via
+        // app()->terminating() for perceived send-speed, but same symptom
+        // the user reported for status broadcasts: on PHP-FPM + Cloudflare,
+        // terminating callbacks fire after the response flushes and were
+        // being dropped before the Reverb POST completed. Visible symptom:
+        // "I saw the message [via poll] but sender shows single tick" —
+        // the recipient never got .NewChatMessage, so ack-delivered/ack-read
+        // never fired, so sender's ticks never flipped past 1.
         $isSupport = (bool) $conversation->is_support;
         $otherUserId = $isSupport ? null : $conversation->getOtherUserId(auth()->id());
-        app()->terminating(function () use ($message, $isSupport, $otherUserId) {
-            try {
-                if ($isSupport) {
-                    broadcast(new NewChatMessage($message, 0))->toOthers();
-                } elseif ($otherUserId) {
-                    broadcast(new NewChatMessage($message, $otherUserId))->toOthers();
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Broadcast failed: ' . $e->getMessage());
+        try {
+            if ($isSupport) {
+                broadcast(new NewChatMessage($message, 0))->toOthers();
+            } elseif ($otherUserId) {
+                broadcast(new NewChatMessage($message, $otherUserId))->toOthers();
             }
-        });
+        } catch (\Throwable $e) {
+            Log::warning('Broadcast failed: ' . $e->getMessage());
+        }
 
         $this->reply = '';
         $this->attachment = null;
