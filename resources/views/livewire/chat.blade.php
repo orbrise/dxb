@@ -7334,11 +7334,14 @@
                 } catch (err) {
                     console.warn('[chat] refreshChat threw:', err);
                 }
-            }, 8000);  // Was 3000. Reverb WebSocket handles real-time
-                       // delivery/receipts; this poll is a safety net for
-                       // dropped broadcasts, so 8s is plenty. Cuts DB
-                       // pressure ~60% and stops the whole page feeling
-                       // sluggish from constant re-render churn.
+            }, 3000);  // 3s safety net. Reverb WebSocket is the fast path,
+                       // but when it drops (Cloudflare WS tunnel killed /
+                       // Reverb server restarted / client lost socket in a
+                       // background tab), 8s felt like "messages never
+                       // arrive until I refresh" from the recipient's seat.
+                       // 3s is still ~75% cheaper than the pre-WS legacy
+                       // 1s poll but close enough to feel real-time when
+                       // the WebSocket is dead.
         }
 
         // Dedicated sender-side tick poll — much lighter than refreshChat.

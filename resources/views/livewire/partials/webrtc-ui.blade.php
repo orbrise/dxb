@@ -564,32 +564,47 @@
             color: #9aa0a4;
         }
 
-        /* Caller name block — hide the small desktop avatar, flatten the
-           .who row so only the name sits under the brand bar. */
+        /* Caller block — big circular avatar on top, caller name below.
+           flex:1 lets this section claim all the space between the brand
+           bar and the action row so the avatar+name sit near the vertical
+           middle of the screen (matches the user's "middle of screen"
+           request — more WhatsApp Android than iOS, which pins the avatar
+           high). The small desktop initial-bubble is upgraded to a 128px
+           circle. */
         .rtc-incoming .who {
-            flex: 0 0 auto;
+            flex: 1;
             flex-direction: column;
             align-items: center;
-            gap: 0;
-            margin: 10px 0 0;
-            padding: 0;
+            justify-content: center;
+            gap: 22px;
+            margin: 0;
+            padding: 20px 0;
             text-align: center;
         }
-        .rtc-incoming .avatar { display: none; }
+        .rtc-incoming .avatar {
+            display: flex;
+            width: 128px;
+            height: 128px;
+            font-size: 48px;
+            background: linear-gradient(135deg, #3a3f44, #1f2327);
+            color: #fff;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+        }
+        .rtc-incoming .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .rtc-incoming .name { font-size: 32px; font-weight: 700; color: #fff; letter-spacing: 0.2px; }
         .rtc-incoming .sub { display: none; } /* brand bar already carries the call type */
 
-        /* Action container stretches to fill remaining space so the main
-           buttons anchor to the bottom-safe area. Decline hugs the left
-           edge, Accept hugs the right — matches WhatsApp iOS where the two
-           buttons live at the far sides, not clustered in the middle.
-           max-width removed so the row spans the full viewport width. */
+        /* Action row anchored to the bottom-safe area. Decline hugs the
+           left edge, Accept hugs the right — matches WhatsApp iOS where
+           the two buttons live at the far sides, not clustered in the
+           middle. flex:0 so the big centered .who block above owns the
+           free space, not this row. */
         .rtc-incoming .actions {
-            flex: 1;
+            flex: 0 0 auto;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
             gap: 0;
             margin: 0;
             padding: 0 32px;

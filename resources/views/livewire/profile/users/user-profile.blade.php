@@ -1883,7 +1883,12 @@ form.listing textarea#listing_description:focus {
         display: none !important;
     }
     .ev-mobile-title {
-        display: inline !important;
+        /* inline-flex so the paired image/video SVGs line up centered with
+           the heading text and gap applies. Plain `inline` would push the
+           icons to the text baseline and strip gap support. */
+        display: inline-flex !important;
+        align-items: center;
+        gap: 8px;
     }
 
     /* Hide desktop upload text, show mobile version */
@@ -2078,7 +2083,14 @@ form.listing textarea#listing_description:focus {
                   <div id="">
                     <h2 class="h3 title-block">
                         <span class="ev-desktop-title">Upload photos</span>
-                        <span class="ev-mobile-title" style="display:none;">Photos</span>
+                        {{-- Mobile heading pairs an image glyph + video glyph so
+                             the section visually advertises both media types,
+                             matching the New Profile page. --}}
+                        <span class="ev-mobile-title" style="display:none;align-items:center;gap:8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:-4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            Photos &amp; Videos
+                        </span>
                     </h2>
                     <div class="ad-images string optional listing_listing_images">
                       <div class="multi-image-uploader1" >

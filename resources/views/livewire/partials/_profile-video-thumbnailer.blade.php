@@ -30,12 +30,87 @@
     // (same URL = same temp file = don't re-capture).
     const capturedSrcs = new Set();
 
+    // Thumb overlays keyed by data-video-index. Needed because the <video>'s
+    // `poster` attribute only shows BEFORE the browser loads any video
+    // content. With preload="metadata" on the preview tile, the first frame
+    // loads a moment later and REPLACES the poster — which for a trimmed
+    // webm is the black warm-up frame from MediaRecorder, so the tile goes
+    // black after ~1-2s. The overlay is a plain <img> absolutely positioned
+    // on top of the video; it never gets replaced by anything the video
+    // element does. We keep the index→dataUrl map so the overlay can be
+    // re-attached after every Livewire morph (morph wipes the img sibling
+    // along with any data-* flag we put on the parent).
+    const indexToThumb = new Map(); // String(data-video-index) → dataUrl
+
+    function applyOverlay(video, dataUrl) {
+        if (!video || !dataUrl) return;
+        const parent = video.parentElement;
+        if (!parent) return;
+        // Guarantee the overlay has an anchor to position against — the
+        // Blade already sets position:relative on the record tile, but
+        // defensive-set here in case a different caller forgets.
+        if (getComputedStyle(parent).position === 'static') {
+            parent.style.position = 'relative';
+        }
+        let overlay = parent.querySelector('img.user-video-thumb-overlay');
+        if (!overlay) {
+            overlay = document.createElement('img');
+            overlay.className = 'user-video-thumb-overlay';
+            overlay.alt = '';
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.style.cssText =
+                'position:absolute;inset:0;width:100%;height:100%;' +
+                'object-fit:cover;pointer-events:none;z-index:1;' +
+                'display:block;background:#000;';
+            // Insert BEFORE the play-glyph span (last child of the tile)
+            // so the glyph still sits on top of our overlay.
+            parent.insertBefore(overlay, video.nextSibling);
+        }
+        if (overlay.src !== dataUrl) overlay.src = dataUrl;
+    }
+
+    function sweepOverlays() {
+        if (indexToThumb.size === 0) return;
+        document.querySelectorAll('video.profile-video-preview').forEach(v => {
+            const idx = v.getAttribute('data-video-index');
+            if (idx === null) return;
+            const d = indexToThumb.get(String(idx));
+            if (d) applyOverlay(v, d);
+        });
+    }
+
     function captureOne(video) {
         if (!video) return;
         const src = video.currentSrc || video.src || '';
         if (!src || capturedSrcs.has(src)) return;
         const idx = video.getAttribute('data-video-index');
         if (idx === null) return;
+
+        // Prefer a user-captured thumb (from the trim modal's "Capture frame"
+        // button) over a canvas-grab of the first frame. The trim modal pushes
+        // data URLs onto window.__pendingVideoThumbs as a FIFO queue; videos
+        // uploaded via the modal land here in the same order they were
+        // confirmed, so popping the head gives us the matching thumb. Falls
+        // back to the canvas path when the queue is empty (regular video
+        // upload with no trim-modal pick).
+        //
+        // Why this matters: MediaRecorder's trimmed webm starts with 2-3 black
+        // warm-up frames, so the canvas grab is a black rectangle. The user's
+        // captured frame is the actual moment they picked in the trim UI.
+        const q = window.__pendingVideoThumbs;
+        if (q && q.length) {
+            const dataUrl = q.shift();
+            capturedSrcs.add(src);
+            indexToThumb.set(String(idx), dataUrl);
+            applyOverlay(video, dataUrl);
+            // Set poster too for completeness (helps if the overlay is
+            // ever removed by future refactors).
+            try { video.setAttribute('poster', dataUrl); } catch (e) {}
+            if (window.Livewire && typeof window.Livewire.dispatch === 'function') {
+                window.Livewire.dispatch('setVideoThumbnail', { index: Number(idx), dataUrl });
+            }
+            return;
+        }
 
         try {
             const vw = video.videoWidth, vh = video.videoHeight;
@@ -51,6 +126,8 @@
             // Mark captured BEFORE dispatching so Livewire's resulting morph
             // can't race us into a second capture of the same clip.
             capturedSrcs.add(src);
+            indexToThumb.set(String(idx), dataUrl);
+            applyOverlay(video, dataUrl);
             if (window.Livewire && typeof window.Livewire.dispatch === 'function') {
                 window.Livewire.dispatch('setVideoThumbnail', { index: Number(idx), dataUrl });
             }
@@ -64,6 +141,11 @@
     }
 
     function captureAll() {
+        // Re-attach overlays FIRST so any newly-morphed video tile shows the
+        // user's thumb immediately, before the canvas-capture path runs on
+        // whatever's still awaiting metadata.
+        sweepOverlays();
+
         document.querySelectorAll('video.profile-video-preview').forEach(v => {
             const src = v.currentSrc || v.src || '';
             if (src && capturedSrcs.has(src)) return;

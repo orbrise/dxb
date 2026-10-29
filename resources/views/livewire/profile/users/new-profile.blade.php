@@ -468,9 +468,9 @@
             cursor: pointer;
             background: rgba(255, 0, 0, 0.85);
             color: #fff;
-            padding: 4px 7px;
+            padding: 4px 6px;
             border-radius: 50%;
-            font-size: 11px;
+            font-size: 10px !important;
             line-height: 1;
             z-index: 10;
         }
@@ -1844,10 +1844,14 @@ div#basic {
                     </div>
                   </div>
                   <div id="photos">
-                    <h2 class="h3 title-block ev-photos-desktop-title">Upload photos</h2>
+                    <h2 class="h3 title-block ev-photos-desktop-title">Upload photos & Videos</h2>
                     <h2 class="h3 title-block ev-mobile-section-title ev-photos-mobile-title" style="display:none;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        Photos
+                        {{-- Video camera glyph next to the image glyph — this
+                             section accepts both photos and videos, so the
+                             title should visually advertise both. --}}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C1F11D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:-4px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        Photos &amp; Videos
                     </h2>
                     <div class="ad-images string optional listing_listing_images">
                       <div class="multi-image-uploader1" >
@@ -1953,7 +1957,7 @@ div#basic {
                                 <div style="padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
                                     <div>
                                         <h3 style="margin:0 0 4px;font-size:18px;font-weight:700;">Edit ad video</h3>
-                                        <p style="margin:0;font-size:13px;color:#64748b;">Trim, pick a thumbnail, then save under 100 MB</p>
+                                        <p style="margin:0;font-size:13px;color:#64748b;">Trim the clip and pick a thumbnail (max 100 MB)</p>
                                     </div>
                                     <button type="button" id="trimCloseBtn" aria-label="Close" style="background:transparent;border:none;font-size:22px;line-height:1;color:#64748b;cursor:pointer;padding:4px 8px;">&times;</button>
                                 </div>
@@ -5552,13 +5556,34 @@ Livewire.on('validation-failed', () => {
                           var trimmed = await trimViaMediaRecorder(startTime, endTime, currentFile);
                           var dt = new DataTransfer();
                           dt.items.add(trimmed);
+                          // Captured thumbnail is NOT added as a separate file
+                          // (that produced a duplicate tile). Instead we stash
+                          // its data URL in a FIFO queue; the MutationObserver
+                          // further down this script watches #image-container
+                          // for new .profile-video-preview nodes added by the
+                          // Livewire morph and applies the queued thumb as the
+                          // video's `poster` attribute. Without this the tile
+                          // shows black because the trimmed webm's first few
+                          // frames are literally black (MediaRecorder warm-up).
                           if (thumbBlob) {
-                              var base = (currentFile.name || 'video').replace(/\.[^.]+$/, '') || 'video';
-                              dt.items.add(new File([thumbBlob], base + '-thumb.jpg', { type: 'image/jpeg' }));
+                              try {
+                                  var durl = await new Promise(function (resolve, reject) {
+                                      var r = new FileReader();
+                                      r.onload = function () { resolve(r.result); };
+                                      r.onerror = reject;
+                                      r.readAsDataURL(thumbBlob);
+                                  });
+                                  window.__pendingVideoThumbs = window.__pendingVideoThumbs || [];
+                                  window.__pendingVideoThumbs.push(durl);
+                              } catch (e) { /* non-fatal */ }
                           }
                           for (var i = 0; i < otherFiles.length; i++) dt.items.add(otherFiles[i]);
                           fileInput.files = dt.files;
                           closeModal();
+                          // Mark the next change as our own re-dispatch so the
+                          // interceptor skips it (otherwise it would catch the
+                          // trimmed video and re-open the modal in a loop).
+                          fileInput.dataset.trimReentry = '1';
                           fileInput.dispatchEvent(new Event('change', { bubbles: true }));
                       } catch (err) {
                           console.error('[trim] failed', err);
@@ -5571,16 +5596,32 @@ Livewire.on('validation-failed', () => {
 
                   // Interceptor — fires at document level in capture phase, so
                   // it runs BEFORE any listener attached directly to #mphoto
-                  // (the fallback uploader above + Livewire's wire:model). If
-                  // any selected file is a video > 100 MB, swallow the event
-                  // and open the trim modal; otherwise let it pass through.
+                  // (the fallback uploader above + Livewire's wire:model).
+                  // Opens the trim/thumbnail modal for EVERY selected video,
+                  // regardless of size — gives the user a chance to shorten
+                  // the clip and pick a cover frame on every upload. For
+                  // videos already under the 100 MB cap the max-duration
+                  // calc in loadedmetadata leaves the full length selectable
+                  // (sourceDurationSec), so the modal doesn't impose a cut
+                  // unless the user drags the handles. The hint banner only
+                  // appears when the handles are pulled past the byte budget.
+                  //
+                  // Trimmed output is a File written back into #mphoto; the
+                  // fresh `change` event re-dispatched from useBtn.click lets
+                  // Livewire's own wire:model handler pick it up normally.
                   document.addEventListener('change', function (e) {
                       if (e.target !== fileInput) return;
+                      // Skip when the dispatcher is our own re-trigger — the
+                      // trimmed Blob was just written back, don't re-prompt.
+                      if (fileInput.dataset.trimReentry === '1') {
+                          fileInput.dataset.trimReentry = '';
+                          return;
+                      }
                       var files = e.target.files;
                       if (!files || !files.length) return;
                       for (var i = 0; i < files.length; i++) {
                           var f = files[i];
-                          if (f && f.type && f.type.indexOf('video/') === 0 && f.size > MAX_BYTES) {
+                          if (f && f.type && f.type.indexOf('video/') === 0) {
                               e.stopImmediatePropagation();
                               e.preventDefault();
                               var others = [];

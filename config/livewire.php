@@ -77,9 +77,18 @@ return [
         'rules' => ['required', 'file', 'max:102400'],
         'directory' => null,   // Example: 'tmp'                      | Default: 'livewire-tmp'
         'middleware' => null,  // Example: 'throttle:5,1'             | Default: 'throttle:60,1'
+        // Extensions that Livewire's temporaryUrl() will serve a preview URL
+        // for during the preview phase. If an extension is NOT listed here,
+        // temporaryUrl() throws FileNotPreviewableException and the preview
+        // tile in new-profile.blade.php fails to render. `webm` was missing
+        // and the client-side trim modal writes its output as `.webm` on
+        // Chrome / Android (MediaRecorder's default container when the mp4
+        // candidate codec isn't supported), so every trimmed-video preview
+        // was 500ing. `ogg` added for completeness since the modal's codec
+        // candidates include generic `video/webm` which can resolve there.
         'preview_mimes' => [   // Supported file types for temporary pre-signed file URLs...
             'png', 'gif', 'bmp', 'svg', 'wav', 'mp4',
-            'mov', 'avi', 'wmv', 'mp3', 'm4a',
+            'mov', 'avi', 'wmv', 'mp3', 'm4a', 'webm', 'ogg',
             'jpg', 'jpeg', 'mpga', 'webp', 'wma',
         ],
         'max_upload_time' => 5, // Max duration (in minutes) before an upload is invalidated...

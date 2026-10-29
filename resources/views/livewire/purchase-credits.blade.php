@@ -15,8 +15,9 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
     align-items: center;
     background: #1a1a1a;
     border: 1px solid #2a2a2a;
-    border-radius: 8px;
+    border-radius: 4px;
     overflow: hidden;
+    height:36px
 }
 
 .purchase-credits-page .amount-input-group .dollar-sign {
