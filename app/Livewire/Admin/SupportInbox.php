@@ -769,7 +769,9 @@ class SupportInbox extends Component
                     'customer_name' => $customer?->name ?? $customer?->email ?? 'Unknown',
                     'customer_country' => $this->resolveCustomerCountry($customer, $countryLookups),
                     'customer_email' => $customer?->email ?? '',
-                    'customer_avatar' => $customer?->avatar ?? null,
+                    // Served via /u/{id}/avatar — public/storage isn't linked on this host,
+                    // and Google avatars are absolute URLs.
+                    'customer_avatar' => $customer?->avatar ? user_avatar_url($customer) : null,
                     'calls_blocked' => (bool) ($customer?->calls_blocked ?? false),
                     'last_message' => $conv->latestMessage?->message ?? '',
                     'last_message_at' => $conv->last_message_at,

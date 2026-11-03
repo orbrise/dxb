@@ -62,7 +62,11 @@
     font-weight: 600; font-size: 14px;
     margin-right: 10px; overflow: hidden; flex-shrink: 0;
 }
-.s-modern .si-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* The photo sits over the initial; if it fails to load (onerror hides it),
+   the initial shows instead of a broken-image icon. wire:ignore on the
+   <img> keeps that hidden state through re-renders. */
+.s-modern .si-avatar { position: relative; }
+.s-modern .si-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .s-modern .si-info { flex: 1; min-width: 0; }
 .s-modern .si-name { color: var(--sm-slate-800); font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .s-modern .si-country-prefix { margin-left: 5px; color: var(--sm-slate-500); font-size: 10px; font-weight: 500; }
@@ -1173,10 +1177,9 @@
                              wire:click="selectConversation({{ $c['id'] }})"
                              wire:key="si-{{ $c['id'] }}">
                             <div class="si-avatar">
+                                {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
                                 @if(!empty($c['customer_avatar']))
-                                    <img src="{{ asset('storage/' . $c['customer_avatar']) }}" alt="">
-                                @else
-                                    {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
+                                    <img src="{{ $c['customer_avatar'] }}" alt="" wire:key="si-av-{{ md5($c['customer_avatar']) }}" wire:ignore onerror="this.style.display='none'">
                                 @endif
                             </div>
                             <div class="si-info">
@@ -1221,10 +1224,9 @@
                              wire:click="selectConversation({{ $call['conversation_id'] }})"
                              wire:key="si-call-row-{{ $call['id'] }}">
                             <div class="si-avatar">
+                                {{ strtoupper(substr($call['customer_name'], 0, 1)) }}
                                 @if($call['customer_avatar'])
-                                    <img src="{{ $call['customer_avatar'] }}" alt="">
-                                @else
-                                    {{ strtoupper(substr($call['customer_name'], 0, 1)) }}
+                                    <img src="{{ $call['customer_avatar'] }}" alt="" wire:key="si-av-{{ md5($call['customer_avatar']) }}" wire:ignore onerror="this.style.display='none'">
                                 @endif
                             </div>
                             <div class="si-info">
@@ -1321,10 +1323,9 @@
                              wire:click="setMediaConversation({{ $c['id'] }})"
                              wire:key="si-media-conv-{{ $c['id'] }}">
                             <div class="si-avatar">
+                                {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
                                 @if(!empty($c['customer_avatar']))
-                                    <img src="{{ asset('storage/' . $c['customer_avatar']) }}" alt="">
-                                @else
-                                    {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
+                                    <img src="{{ $c['customer_avatar'] }}" alt="" wire:key="si-av-{{ md5($c['customer_avatar']) }}" wire:ignore onerror="this.style.display='none'">
                                 @endif
                             </div>
                             <div class="si-info">
@@ -2027,10 +2028,10 @@
                 <div class="si-head">
                     <div style="display:flex; align-items:center;">
                         <div class="si-avatar" style="width:36px; height:36px; margin-right:10px;">
+                            {{ strtoupper(substr($selectedCustomer->name ?: $selectedCustomer->email, 0, 1)) }}
                             @if($selectedCustomer->avatar)
-                                <img src="{{ asset('storage/' . $selectedCustomer->avatar) }}" alt="">
-                            @else
-                                {{ strtoupper(substr($selectedCustomer->name ?? $selectedCustomer->email, 0, 1)) }}
+                                @php $headAvatar = user_avatar_url($selectedCustomer); @endphp
+                                <img src="{{ $headAvatar }}" alt="" wire:key="si-av-{{ md5($headAvatar) }}" wire:ignore onerror="this.style.display='none'">
                             @endif
                         </div>
                         <div>
