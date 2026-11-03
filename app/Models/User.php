@@ -126,7 +126,11 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isOnline(): bool
     {
-        return $this->last_seen_at && $this->last_seen_at->diffInSeconds(now()) < 120;
+        // 180 s gives a comfortable buffer around the 60 s client heartbeat
+        // in app-evoory layout (/presence-ping): even with one dropped ping
+        // + network latency the user still reads as "online" instead of
+        // flickering offline every minute.
+        return $this->last_seen_at && $this->last_seen_at->diffInSeconds(now()) < 180;
     }
 
     /**

@@ -632,5 +632,49 @@
 
     {{-- Additional page-specific JS --}}
     @stack('js')
+
+    {{-- Universal presence heartbeat. Signed-in users ping once a minute
+         while the tab is visible so their last_seen_at stays fresh no
+         matter which page they're on. Without this the chat sidebar
+         "Online / Offline" chip only tracked people who happened to be
+         on a polling page (chat, profile) and anyone browsing listings
+         would flip to Offline within 2 minutes. --}}
+    @auth
+    <script>
+    (function () {
+        if (window.__presencePingWired) return;
+        window.__presencePingWired = true;
+
+        var url = {!! json_encode(route('presence.ping')) !!};
+        var token = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+
+        function ping() {
+            if (document.hidden) return;
+            // keepalive lets the ping finish even if the user navigates away mid-flight.
+            fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                keepalive: true,
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            }).catch(function () { /* best-effort — next tick retries */ });
+        }
+
+        // Fire once on load so a freshly-opened tab is immediately "online"
+        // instead of waiting a full minute for the first interval tick.
+        ping();
+        setInterval(ping, 60000);
+
+        // When the tab becomes visible again (user returned from another tab)
+        // ping right away rather than waiting for the next interval boundary.
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) ping();
+        });
+    })();
+    </script>
+    @endauth
 </body>
 </html>

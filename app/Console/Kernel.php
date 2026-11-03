@@ -59,6 +59,11 @@ class Kernel extends ConsoleKernel
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/scrape-ivysociete.log'));
 
+        // Support inbox auto reply — acknowledges customers who have waited
+        // past the delay set in Support Inbox → Settings → Business tools.
+        // No-op while the feature is switched off.
+        $schedule->command('support:auto-reply')->everyMinute()->withoutOverlapping(5);
+
         // Send weekly newsletter every Monday at 10:00 AM
         $schedule->command('newsletter:send-weekly')->weekly()->mondays()->at('10:00');
     }

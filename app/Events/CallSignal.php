@@ -17,13 +17,14 @@ class CallSignal implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public int $targetUserId;
+    public int $targetUserId;   // 0 for support-fanout (no specific callee yet)
     public int $fromUserId;
     public string $callId;
     public string $type;        // offer | answer | ice | hangup | decline | ringing
     public string $callType;    // audio | video (only meaningful on offer/ringing)
     public array $payload;      // SDP / ICE candidate / meta
     public ?int $signalId;      // call_signals row id (dedup key client-side)
+    public bool $isSupport;     // fan-out on support-inbox too
 
     public function __construct(
         int $targetUserId,
@@ -32,7 +33,8 @@ class CallSignal implements ShouldBroadcastNow
         string $type,
         string $callType,
         array $payload = [],
-        ?int $signalId = null
+        ?int $signalId = null,
+        bool $isSupport = false
     ) {
         $this->targetUserId = $targetUserId;
         $this->fromUserId   = $fromUserId;
@@ -41,11 +43,22 @@ class CallSignal implements ShouldBroadcastNow
         $this->callType     = $callType;
         $this->payload      = $payload;
         $this->signalId     = $signalId;
+        $this->isSupport    = $isSupport;
     }
 
     public function broadcastOn(): array
     {
-        return [new PrivateChannel('chat.' . $this->targetUserId)];
+        $channels = [];
+        // targetUserId 0 is the "no specific callee" case used by the
+        // initial support offer — fan it out exclusively on the shared
+        // support-inbox so every admin's listener picks it up.
+        if ($this->targetUserId > 0) {
+            $channels[] = new PrivateChannel('chat.' . $this->targetUserId);
+        }
+        if ($this->isSupport) {
+            $channels[] = new PrivateChannel('support-inbox');
+        }
+        return $channels;
     }
 
     public function broadcastAs(): string
@@ -84,6 +97,7 @@ class CallSignal implements ShouldBroadcastNow
             'type' => $this->type,
             'callType' => $this->callType,
             'payload' => $this->payload,
+            'isSupport' => $this->isSupport,
         ];
     }
 

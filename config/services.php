@@ -160,4 +160,20 @@ return [
         'vapid_subject' => env('VAPID_SUBJECT', 'mailto:admin@evoory.com'),
     ],
 
+    // xAI Grok API — used by the Admin → Bots feature to draft support
+    // replies on behalf of the admin. Any OpenAI-compatible client works
+    // against base_url. Leave api_key empty to disable the bots feature
+    // entirely; the UI shows a notice and the Suggest-reply button hides.
+    'grok' => [
+        'api_key'  => env('GROK_API_KEY'),
+        'base_url' => env('GROK_BASE_URL', 'https://api.x.ai/v1'),
+        'model'    => env('GROK_MODEL', 'grok-4-fast'),
+        // Hard cap so an infinite-loop knowledge entry can't rack up
+        // bills — truncates the system prompt + knowledge before send.
+        'max_prompt_chars' => (int) env('GROK_MAX_PROMPT_CHARS', 24000),
+        // Reply length cap in tokens.
+        'max_output_tokens' => (int) env('GROK_MAX_OUTPUT_TOKENS', 600),
+        'request_timeout' => (int) env('GROK_REQUEST_TIMEOUT', 30),
+    ],
+
 ];

@@ -5,7 +5,7 @@
      Alpine state lives at the row level so the per-row kebab (desktop)
      and the long-press bottom sheet (mobile) share one `open` flag. --}}
 <div
-    class="conversation-item {{ $conversation['unread_count'] > 0 ? 'unread' : '' }} {{ !empty($conversation['is_pinned']) ? 'pinned' : '' }} {{ !empty($conversation['missed_calls']) ? 'has-missed' : '' }}"
+    class="conversation-item {{ $conversation['unread_count'] > 0 ? 'unread' : '' }} {{ !empty($conversation['is_pinned']) ? 'pinned' : '' }} {{ !empty($conversation['missed_calls']) ? 'has-missed' : '' }} {{ !empty($conversation['is_support']) ? 'is-support' : '' }}"
     :class="selConv == {{ $conversation['id'] }} ? 'active' : ''"
     wire:key="conv-{{ $conversation['id'] }}"
     x-data="{
@@ -70,25 +70,58 @@
         'isSupport' => !empty($conversation['is_support']),
     ]) }}"
 >
-    <div class="conversation-avatar {{ !empty($conversation['has_status']) ? 'status-ring' : '' }} {{ !empty($conversation['has_status']) && empty($conversation['status_unseen']) ? 'seen' : '' }}">
-        @if(!empty($conversation['is_support']))
-            <i class="fa fa-headset" aria-hidden="true"></i>
-        @elseif(!empty($conversation['other_user_avatar_url']))
-            <img src="{{ $conversation['other_user_avatar_url'] }}" alt="" onerror="this.style.display='none'">
-        @else
-            {{ strtoupper(substr($conversation['other_user_name'] ?? '?', 0, 1)) }}
+    {{-- Avatar wrapper. The green presence dot (span.presence-dot-overlay)
+         sits outside the circular .conversation-avatar so it can bleed over
+         the avatar's rounded corner without being clipped by the avatar's
+         overflow:hidden. Both the dot visibility AND the "Online / Offline"
+         chip next to the name read from the same server-computed
+         $conversation['is_online'] flag, so they are guaranteed to agree —
+         dot visible ⇔ chip says Online. --}}
+    <div class="conversation-avatar-wrap">
+        <div class="conversation-avatar">
+            @if(!empty($conversation['is_support']))
+                <i class="fa fa-headset" aria-hidden="true"></i>
+            @elseif(!empty($conversation['other_user_avatar_url']))
+                <img src="{{ $conversation['other_user_avatar_url'] }}" alt="" onerror="this.style.display='none'">
+            @else
+                {{ strtoupper(substr($conversation['other_user_name'] ?? '?', 0, 1)) }}
+            @endif
+        </div>
+        @if(empty($conversation['is_support']) && !empty($conversation['is_online']))
+            <span class="presence-dot-overlay" aria-label="Online" title="Online"></span>
         @endif
     </div>
     <div class="conversation-info">
         <div class="conversation-name">
             {{ $conversation['other_user_name'] ?? 'Unknown' }}
+            @if(empty($conversation['is_support']))
+                {{-- Inline presence chip beside the name. Server-computed
+                     is_online: last_seen_at within the past 120s. Keeps the
+                     signal explicit (text, not a dot) per user request. --}}
+                <span class="presence-chip {{ !empty($conversation['is_online']) ? 'is-online' : 'is-offline' }}"
+                      title="Last seen: {{ $conversation['last_seen_debug'] ?? 'unknown' }}">
+                    {{ !empty($conversation['is_online']) ? 'Online' : 'Offline' }}
+                </span>
+            @endif
             @if(!empty($conversation['is_support']))
-                <span class="support-badge">SUPPORT</span>
+                {{-- WhatsApp-style blue verified tick — eight-pointed starburst
+                     with a white check inside. Signals "official account" at a
+                     glance so users trust the support row. --}}
+                <span class="support-verified" title="Verified official account" aria-label="Verified">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path fill="#1DA1F2" d="M22.5 12.5c0-1.5-.9-2.8-2.2-3.4.3-1.4-.1-2.9-1.2-3.9s-2.5-1.5-3.9-1.2C14.5 2.7 13.3 2 12 2s-2.5.7-3.1 2c-1.4-.3-2.9.1-3.9 1.2S3.5 7.6 3.8 9.1C2.4 9.7 1.5 10.9 1.5 12.5s.9 2.8 2.3 3.4c-.3 1.4.1 2.9 1.2 3.9s2.5 1.5 3.9 1.2c.6 1.3 1.8 2 3.1 2s2.5-.7 3.1-2c1.4.3 2.9-.1 3.9-1.2s1.5-2.5 1.2-3.9c1.4-.6 2.3-1.9 2.3-3.4z"/>
+                        <path fill="#fff" d="M10.6 15.2 7.8 12.4l1.4-1.4 1.4 1.4 4.2-4.2 1.4 1.4z"/>
+                    </svg>
+                </span>
             @endif
         </div>
         <div class="conversation-preview">
-            @if(empty($conversation['last_message']) && !empty($conversation['is_support']))
-                Send us a message anytime
+            @if(!empty($conversation['is_support']))
+                {{-- Always show the official-account tagline for the support
+                     row, never the last message. Treats the sidebar entry
+                     like a brand/channel header (WhatsApp's "WhatsApp Official"
+                     row works the same way) rather than a chat preview. --}}
+                Official Evoory Support Account
             @else
                 {{ Str::limit($conversation['last_message'], 30) ?: 'No messages yet' }}
             @endif

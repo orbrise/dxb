@@ -9,9 +9,16 @@
                         </a>
                     </li><!--end -->
 
+                    <li class="{{ Route::currentRouteName() == 'admin.bots' ? 'current-page' : '' }}">
+                        <a class="ripple" href="{{route('admin.bots')}}">
+                            <i class="list-icon material-icons">smart_toy</i>
+                            <span class="hide-menu">Bots</span>
+                        </a>
+                    </li>
+
                     <li class="{{ Route::currentRouteName() == 'admin.support.inbox' ? 'current-page' : '' }}">
                         <a class="ripple" href="{{route('admin.support.inbox')}}">
-                            <i class="list-icon material-icons">chat</i>
+                            <i class="list-icon material-icons">headset_mic</i>
                             <span class="hide-menu">Support Inbox</span>
                             @php
                                 $pendingSupport = \App\Models\Conversation::support()
@@ -216,8 +223,8 @@
                     <li class="menu-item-has-children {{ $isSupportSectionOpen ? 'current-page' : '' }}">
                         <a href="javascript:void(0);" class="ripple" aria-expanded="{{ $isSupportSectionOpen ? 'true' : 'false' }}">
                             <span class="color-color-scheme">
-                                <i class="list-icon material-icons">headset_mic</i>
-                                <span class="hide-menu">Support</span>
+                                <i class="list-icon material-icons">share</i>
+                                <span class="hide-menu">Social Support</span>
                             </span>
                         </a>
                         <ul class="list-unstyled sub-menu collapse {{ $isSupportSectionOpen ? 'in' : '' }}" aria-expanded="{{ $isSupportSectionOpen ? 'true' : 'false' }}" style="{{ $isSupportSectionOpen ? '' : 'height: 0px;' }}">

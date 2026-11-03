@@ -831,17 +831,30 @@
         .conversation-item.active {
             background: var(--ev-panel-3);
         }
-        .conversation-item.pinned::before {
-            content: "";
-            position: absolute;
-            left: 4px;
-            top: 12px;
-            width: 4px;
-            height: 4px;
-            background: var(--ev-lime);
-            border-radius: 50%;
-        }
+        /* Pinned-conversation marker removed per product. The pinned state
+           is still exposed via the row's position (favorites sort first)
+           and the kebab menu toggle; no in-row visual marker is needed. */
 
+        /* Avatar + presence-dot wrapper. The dot cannot live inside
+           .conversation-avatar because the avatar has overflow:hidden to
+           clip the inner <img>. Dot sits bottom-right of the circle so
+           both the dot (visual) and the "Online" chip (text) read from
+           the same server flag — they can never disagree. */
+        .conversation-avatar-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .presence-dot-overlay {
+            position: absolute;
+            bottom: 1px;
+            right: 1px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #22c55e;         /* same green family as the Online chip */
+            border: 2px solid var(--ev-panel-2); /* mask into the sidebar bg so it reads as a ring */
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+        }
         .conversation-avatar {
             width: 46px;
             height: 46px;
@@ -889,6 +902,64 @@
             color: var(--ev-text);
             font-weight: 500;
         }
+        /* WhatsApp-style blue verified checkmark next to the Support
+           conversation name. The <svg> inside carries the colored starburst
+           + white tick so no extra background styling is needed — we just
+           give the span a line-height-centering box. */
+        .support-verified {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            line-height: 0;
+        }
+        .support-verified svg { display: block; }
+
+        /* Inline presence chip next to each peer's name in the sidebar list.
+           Replaces the small status dot — users confused the lime status
+           ring with an online indicator, so now we spell it out: a green
+           "Online" when last_seen_at < 120s, a muted "Offline" otherwise. */
+        .presence-chip {
+            font-size: 10.5px;
+            font-weight: 600;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+        }
+        .presence-chip.is-online {
+            color: #15803d;
+            background: rgba(34, 197, 94, 0.14);
+        }
+        .presence-chip.is-offline {
+            color: var(--ev-text-3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Make the Support row visually stand out at the top of the chat
+           list so users notice it (addresses the "need to make more visible"
+           ask). Subtle blue-tinted background + left accent bar — same tone
+           as the verified badge so it reads as a cohesive "official" row,
+           not a loud banner. .is-support is applied by the partial when
+           $conversation['is_support'] is truthy, so this works for every
+           support conv in the list (not just the first). */
+        .conversation-item.is-support {
+            background: rgba(29, 161, 242, 0.06);
+            box-shadow: inset 3px 0 0 #1DA1F2;
+        }
+        .conversation-item.is-support:hover {
+            background: rgba(29, 161, 242, 0.12);
+        }
+        .conversation-item.is-support .conversation-name {
+            color: #fff;
+        }
+        .conversation-item.is-support .conversation-preview {
+            color: var(--ev-text-2);
+            font-size: 12.5px;
+        }
+
         .support-badge {
             background: var(--ev-lime);
             color: var(--ev-lime-ink);
@@ -3070,6 +3141,23 @@
             gap: 12px;
             min-width: 200px;
         }
+        .wallet-receipt-card {
+            min-width: 220px; max-width: 280px; padding: 11px 12px;
+            border: 1px solid rgba(148,163,184,.35); border-radius: 9px;
+            background: var(--ev-panel-2); color: var(--ev-text);
+        }
+        .wallet-receipt-title {
+            display: flex; align-items: center; gap: 7px;
+            padding-bottom: 7px; margin-bottom: 7px;
+            border-bottom: 1px solid var(--ev-border);
+            font-size: 12px; font-weight: 700;
+        }
+        .wallet-receipt-row { margin-top: 3px; color: var(--ev-text-2); font-size: 11px; overflow-wrap: anywhere; }
+        .wallet-receipt-row.amount { color: var(--ev-text); font-size: 15px; font-weight: 700; }
+        .message-wrapper.sent .wallet-receipt-card { background: rgba(255,255,255,.55); color: #0a0a0a; }
+        .message-wrapper.sent .wallet-receipt-title { border-color: rgba(0,0,0,.12); }
+        .message-wrapper.sent .wallet-receipt-row,
+        .message-wrapper.sent .wallet-receipt-row.amount { color: #0a0a0a; }
         .call-msg.missed .call-icon { background: rgba(239,68,68,0.15); color: var(--ev-danger); }
         .call-icon {
             width: 36px; height: 36px;
@@ -5771,7 +5859,33 @@
                                         </div>
                                     </div>
                                     <div class="chat-header-actions">
-                                        @if(!$selectedIsSupport && $selectedUser)
+                                        @if($selectedIsSupport)
+                                            {{-- Support conversation: fan the call out to every
+                                                 admin via /call/signal with is_support=1 and no
+                                                 fixed target. First admin to tap Accept claims it
+                                                 (CallController::supportAccept) and the normal
+                                                 WebRTC flow continues against that admin. --}}
+                                            <div class="chat-call-buttons">
+                                                <button type="button" title="Call Support"
+                                                        data-rtc-call="audio"
+                                                        data-rtc-support="1"
+                                                        data-peer-id="0"
+                                                        data-peer-name="Support"
+                                                        data-peer-avatar=""
+                                                        data-conversation-id="{{ $selectedConversationId }}">
+                                                    <i class="fa fa-phone"></i>
+                                                </button>
+                                                <button type="button" title="Video call Support"
+                                                        data-rtc-call="video"
+                                                        data-rtc-support="1"
+                                                        data-peer-id="0"
+                                                        data-peer-name="Support"
+                                                        data-peer-avatar=""
+                                                        data-conversation-id="{{ $selectedConversationId }}">
+                                                    <i class="fa fa-video"></i>
+                                                </button>
+                                            </div>
+                                        @elseif($selectedUser)
                                             <div class="chat-call-buttons">
                                                 <button type="button" title="Voice call"
                                                         data-rtc-call="audio"
@@ -5938,7 +6052,14 @@
                                                         <div class="msg-quote-text">{{ $message['reply_to']['excerpt'] }}</div>
                                                     </div>
                                                 @endif
-                                                @if(($message['attachment_type'] ?? '') === 'call')
+                                                @if(($message['attachment_type'] ?? '') === 'wallet_receipt')
+                                                    <div class="wallet-receipt-card">
+                                                        <div class="wallet-receipt-title"><i class="fa fa-receipt"></i> Wallet top-up receipt</div>
+                                                        @foreach(array_slice(explode("\n", (string) $message['message']), 1) as $receiptIndex => $receiptLine)
+                                                            <div class="wallet-receipt-row {{ $receiptIndex === 0 ? 'amount' : '' }}">{{ $receiptLine }}</div>
+                                                        @endforeach
+                                                    </div>
+                                                @elseif(($message['attachment_type'] ?? '') === 'call')
                                                     @php
                                                         $callKind   = $message['attachment_mime'] ?? 'audio';       // 'audio' | 'video'
                                                         $callStatus = $message['attachment_original_name'] ?? 'ended';
@@ -6084,7 +6205,7 @@
                                                         </a>
                                                     @endif
                                                 @endif
-                                                @if(!empty($message['message']) && ($message['attachment_type'] ?? '') !== 'album')
+                                                @if(!empty($message['message']) && !in_array(($message['attachment_type'] ?? ''), ['album', 'wallet_receipt'], true))
                                                     {{-- Album captions are rendered inline inside .msg-album-caption
                                                          above, so skip the trailing text pill for album rows to
                                                          avoid showing the caption twice. --}}

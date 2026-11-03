@@ -464,7 +464,15 @@ class Chat extends Component
         if (!$msg) return;
 
         if ($msg->attachment_path) {
-            try { Storage::disk('public')->delete($msg->attachment_path); } catch (\Throwable $e) {}
+            $isSharedAttachment = Message::where('attachment_path', $msg->attachment_path)
+                ->where('id', '!=', $msg->id)
+                ->exists();
+
+            if (!$isSharedAttachment) {
+                try {
+                    Storage::disk($msg->attachment_disk ?: 'public')->delete($msg->attachment_path);
+                } catch (\Throwable $e) {}
+            }
         }
 
         $convId = $msg->conversation_id;
@@ -679,9 +687,40 @@ class Chat extends Component
             $this->prefShowUnanswered ? 1 : 0
         );
 
-        return Cache::remember($cacheKey, 5, function () use ($userId) {
+        $convs = Cache::remember($cacheKey, 5, function () use ($userId) {
             return $this->fetchConversations($userId);
         });
+
+        // Hydrate `is_online` AFTER the cache lookup so the sidebar presence
+        // chip reflects the current moment, not the moment the cache was
+        // built. A single pluck query of (id → last_seen_at) is cheap enough
+        // to run on every render; computing it inside fetchConversations
+        // meant the chip could lag by up to 5 s and users reported seeing
+        // "Offline" next to peers who were actively on the site.
+        $peerIds = $convs->pluck('other_user_id')->filter()->unique()->values();
+        if ($peerIds->isNotEmpty()) {
+            $lastSeens = \App\Models\User::whereIn('id', $peerIds)
+                ->pluck('last_seen_at', 'id');
+            $now = now();
+            $convs = $convs->map(function ($c) use ($lastSeens, $now) {
+                $peerId = $c['other_user_id'] ?? null;
+                if ($peerId && isset($lastSeens[$peerId]) && $lastSeens[$peerId]) {
+                    $seen = \Carbon\Carbon::parse($lastSeens[$peerId]);
+                    $c['is_online'] = $seen->diffInSeconds($now) < 180;
+                    // Diagnostic string for the chip's title tooltip — shows
+                    // the raw timestamp + computed age so we can confirm the
+                    // backend is actually seeing the heartbeat.
+                    $c['last_seen_debug'] = $seen->toDateTimeString()
+                        . ' (' . (int) $seen->diffInSeconds($now) . 's ago)';
+                } else {
+                    $c['is_online'] = false;
+                    $c['last_seen_debug'] = 'never';
+                }
+                return $c;
+            });
+        }
+
+        return $convs;
     }
 
     protected function fetchConversations(int $userId)
@@ -842,6 +881,10 @@ class Chat extends Component
                     // /u/{id}/avatar controller so both symlink-less hosts
                     // and Google-OAuth full URLs render correctly.
                     'other_user_avatar_url' => $otherUser ? user_avatar_url($otherUser) : null,
+                    // Live presence for the sidebar "Online / Offline" chip.
+                    // Uses the already-loaded $otherUser (same relation that
+                    // feeds name/avatar) so no extra queries fire.
+                    'is_online' => $otherUser ? $otherUser->isOnline() : false,
                     'last_message' => $conv->latestMessage?->message ?? '',
                     'last_message_at' => $conv->last_message_at,
                     'unread_count' => (int) ($unreadCounts[$conv->id] ?? 0),

@@ -603,7 +603,7 @@ img.logo-expand {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/2.1.25/daterangepicker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.min.js"></script>
-    <script src="{{smart_asset('admin/assets/js/theme.js')}}"></script>
+    <script src="{{smart_asset('admin/assets/js/theme.js')}}?v=rtc-mediaskip"></script>
     <script src="{{smart_asset('admin/assets/js/custom.js')}}"></script>
 
     <script>
@@ -726,6 +726,11 @@ img.logo-expand {
         });
     })();
     </script>
+
+    {{-- Shared user→support call listener. Admin-only, idempotent across
+         pages. Also loads the WebRTC UI + scripts so an admin can actually
+         take the call from any screen in the panel. --}}
+    @include('admin._support-incoming-call')
 </body>
 
 </html>

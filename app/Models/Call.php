@@ -12,6 +12,7 @@ class Call extends Model
         'callee_id',
         'conversation_id',
         'type',
+        'is_support',
         'status',
         'started_at',
         'connected_at',
@@ -26,6 +27,7 @@ class Call extends Model
         'ended_at' => 'datetime',
         'seen_at' => 'datetime',
         'duration' => 'integer',
+        'is_support' => 'boolean',
     ];
 
     /**

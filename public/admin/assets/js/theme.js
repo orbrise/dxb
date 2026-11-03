@@ -1145,7 +1145,11 @@
     },
 
     enableMedia: function() {
-      var el = $('video, audio');
+      // data-no-player opts an element out of the auto-init. The WebRTC call
+      // UI drives its own <video>/<audio>; wrapping them leaves an orphan
+      // .mejs-container (giant play button + 00:00 timeline) floating in the
+      // call modal even after the inner element is hidden.
+      var el = $('video, audio').not('[data-no-player]');
       if(!el.length) return;
       el.each(function() {
         var $this = $(this);

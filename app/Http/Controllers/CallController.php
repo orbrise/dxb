@@ -8,6 +8,7 @@ use App\Models\Call;
 use App\Models\CallSignal as CallSignalRow;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -54,15 +55,17 @@ class CallController extends Controller
 
         try {
             $data = $request->validate([
-                // Note: don't use Laravel's `different:` rule here — that
-                // compares two REQUEST fields, not against a value. The
-                // self-call check is done manually below.
-                'target_user_id' => 'required|integer|exists:users,id',
+                // target_user_id becomes optional on the initial support-call
+                // offer (is_support=1 + target_user_id missing), because the
+                // call hasn't been claimed by a specific admin yet. All other
+                // signal types still require a concrete target.
+                'target_user_id' => 'nullable|integer|exists:users,id',
                 'call_id'        => 'required|string|min:8|max:40',
                 'type'           => 'required|string|in:offer,answer,ice,hangup,decline,ringing,switch-request,switch-accept,switch-reject',
                 'call_type'      => 'required|string|in:audio,video',
                 'payload'        => 'nullable|array',
                 'conversation_id'=> 'nullable|integer|exists:conversations,id',
+                'is_support'     => 'nullable|boolean',
             ]);
         } catch (\Illuminate\Validation\ValidationException $ve) {
             $rtc->warning('signal.validation_failed', [
@@ -72,8 +75,21 @@ class CallController extends Controller
             throw $ve;
         }
 
-        $targetId = (int) $data['target_user_id'];
-        if ($targetId === $user->id) {
+        $isSupport = (bool) ($data['is_support'] ?? false);
+        $targetId = (int) ($data['target_user_id'] ?? 0);
+
+        // Support-offer validation: on the initial offer the caller doesn't
+        // know which admin will accept, so we accept target_user_id=0 and
+        // broadcast on support-inbox instead. For every other signal (ice,
+        // answer, hangup, …) the admin has already been determined so a
+        // real target is required.
+        if ($data['type'] !== 'offer' || !$isSupport) {
+            if ($targetId <= 0) {
+                return response()->json(['error' => 'target_user_id required'], 422);
+            }
+        }
+
+        if ($targetId > 0 && $targetId === $user->id) {
             $rtc->warning('signal.self_call_rejected', ['auth_id' => $user->id]);
             return response()->json(['error' => 'cannot call yourself'], 422);
         }
@@ -81,9 +97,28 @@ class CallController extends Controller
         // Block guard: silently drop signals in either direction of a block
         // relationship. Only reject on initial offer so late ice/hangup from
         // an in-progress call don't error out if someone blocks mid-call.
-        if ($data['type'] === 'offer' && $user->isBlockRelationWith($targetId)) {
+        // Support offers skip this check — the caller isn't picking a peer.
+        if ($data['type'] === 'offer' && !$isSupport && $user->isBlockRelationWith($targetId)) {
             $rtc->info('signal.blocked_rejected', ['auth_id' => $user->id, 'target' => $targetId]);
             return response()->json(['error' => 'blocked'], 403);
+        }
+
+        // Moderation: support staff can bar a customer from calling at all.
+        // Deliberately NOT gated on !$isSupport like the peer-block guard above
+        // — a support offer is the one path a blocked customer keeps retrying,
+        // and it has no concrete target to check a block relation against.
+        if ($data['type'] === 'offer' && $user->calls_blocked) {
+            $rtc->info('signal.calls_blocked_rejected', [
+                'auth_id' => $user->id,
+                'support' => $isSupport,
+            ]);
+            return response()->json(['error' => 'calls_blocked'], 403);
+        }
+
+        if ($data['type'] === 'offer' && $isSupport
+            && Setting::query()->whereKey(1)->value('support_calls_blocked')) {
+            $rtc->info('signal.support_calls_blocked_rejected', ['auth_id' => $user->id]);
+            return response()->json(['error' => 'support_calls_blocked'], 403);
         }
 
         try {
@@ -93,7 +128,8 @@ class CallController extends Controller
                 $targetId,
                 $data['type'],
                 $data['call_type'],
-                $data['conversation_id'] ?? null
+                $data['conversation_id'] ?? null,
+                $isSupport
             );
         } catch (\Throwable $e) {
             $rtc->error('signal.lifecycle_failed', [
@@ -106,6 +142,9 @@ class CallController extends Controller
         // Always persist the signal to the durable queue. The callee polls
         // this table every ~1.5s from the chat page. This means calls work
         // even if Reverb is unreachable or dropping events.
+        // For support offers, to_user_id is 0 (shared inbox) — the row still
+        // records the lifecycle. Admins don't poll the queue for pending
+        // claims, they rely on the broadcast on support-inbox.
         try {
             $row = CallSignalRow::create([
                 'call_id' => $data['call_id'],
@@ -141,7 +180,9 @@ class CallController extends Controller
 
         // Best-effort real-time broadcast on top of the polling queue —
         // when Reverb works, delivery is near-instant; when it doesn't, the
-        // polling path picks it up a moment later.
+        // polling path picks it up a moment later. Support offers fan out
+        // on the shared support-inbox channel (CallSignal::broadcastOn adds
+        // the extra channel when isSupport=true + targetId=0).
         try {
             broadcast(new CallSignal(
                 $targetId,
@@ -150,7 +191,8 @@ class CallController extends Controller
                 $data['type'],
                 $data['call_type'],
                 $data['payload'] ?? [],
-                $row->id ?? null
+                $row->id ?? null,
+                $isSupport
             ))->toOthers();
             $rtc->info('signal.broadcast_ok', [
                 'call_id' => $data['call_id'],
@@ -168,7 +210,9 @@ class CallController extends Controller
         // Web Push wake-up — only for offers (incoming call). Other signal
         // types (ice/answer/hangup) don't need OS-level notification since
         // by then the callee's browser is already engaged in the handshake.
-        if ($data['type'] === 'offer') {
+        // Skipped for support offers because there's no single callee yet;
+        // the in-browser toast on each admin's screen is sufficient.
+        if ($data['type'] === 'offer' && !$isSupport && $targetId > 0) {
             try {
                 $this->sendCallPush($targetId, $user, $data['call_id'], $data['call_type']);
             } catch (\Throwable $e) {
@@ -467,6 +511,94 @@ class CallController extends Controller
     }
 
     /**
+     * Admin claim-and-accept for a user→support call. Called by an admin
+     * tapping Accept on the support-inbox toast.
+     *
+     * Race-safe via a conditional UPDATE: only the first admin whose UPDATE
+     * matches (callee_id IS NULL + status='ringing') wins. Everyone else
+     * sees 0 affected rows and the client dismisses their toast.
+     *
+     * On success, broadcasts a "claimed" signal on support-inbox so other
+     * admins' toasts auto-dismiss (saves a few seconds of ghost ringing on
+     * their end if Reverb delivery was slower than their Accept tap).
+     * The accepting admin then runs the standard answer flow against the
+     * caller via POST /call/signal with type=answer, which is what fills
+     * in the audio/SDP path from this point forward.
+     */
+    public function supportAccept(Request $request)
+    {
+        $admin = $request->user();
+        abort_unless($admin, 401);
+        abort_unless($admin->is_admin ?? false, 403);
+
+        $data = $request->validate([
+            'call_id' => 'required|string|min:8|max:40',
+        ]);
+
+        $callId = $data['call_id'];
+
+        // Atomic claim: UPDATE only fires if the row is still unclaimed and
+        // still ringing. Returns the number of affected rows (0 or 1).
+        $claimed = Call::where('call_id', $callId)
+            ->where('is_support', true)
+            ->whereNull('callee_id')
+            ->where('status', 'ringing')
+            ->update([
+                'callee_id' => $admin->id,
+            ]);
+
+        if ($claimed !== 1) {
+            // Someone else got there first (or the call is already over).
+            return response()->json([
+                'ok' => false,
+                'reason' => 'already_claimed',
+            ], 409);
+        }
+
+        $call = Call::where('call_id', $callId)->first();
+        if (!$call) {
+            return response()->json(['ok' => false, 'reason' => 'not_found'], 404);
+        }
+
+        // Fan out a "claimed" marker on support-inbox so every other admin's
+        // toast dismisses. We also include the claimant's name so dismiss
+        // UIs can say "Answered by X".
+        try {
+            broadcast(new CallSignal(
+                0,                         // no specific target — support-inbox fanout
+                $admin->id,
+                $callId,
+                'support-claimed',
+                $call->type,
+                [
+                    'claimedBy' => $admin->id,
+                    'claimedByName' => $admin->name ?? $admin->email,
+                ],
+                null,
+                true                       // isSupport → broadcasts on support-inbox
+            ))->toOthers();
+        } catch (\Throwable $e) {
+            // Non-fatal — other toasts will time out on their own.
+            Log::channel('rtc')->warning('support-accept broadcast failed', [
+                'call_id' => $callId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'call_id' => $callId,
+            'caller_id' => $call->caller_id,
+            // Caller name + avatar so the admin's UI can populate the
+            // same incoming-call modal pieces (big avatar, name, etc.)
+            // without a second lookup.
+            'caller_name' => $call->caller->name ?? $call->caller->email ?? 'User',
+            'caller_avatar' => $call->caller ? user_avatar_url($call->caller) : null,
+            'call_type' => $call->type,
+        ]);
+    }
+
+    /**
      * Recent call history for the current user (used by the "missed calls"
      * banner and the future call-log page).
      */
@@ -491,17 +623,21 @@ class CallController extends Controller
         int $targetUserId,
         string $type,
         string $callType,
-        ?int $conversationId
+        ?int $conversationId,
+        bool $isSupport = false
     ): void {
         // Offer creates the row; other signals update it.
         if ($type === 'offer') {
+            // Support offers have no callee at create time — the first admin
+            // to claim the call via /call/support-accept fills it in.
             Call::firstOrCreate(
                 ['call_id' => $callId],
                 [
                     'caller_id' => $fromUserId,
-                    'callee_id' => $targetUserId,
+                    'callee_id' => $isSupport ? null : ($targetUserId ?: null),
                     'conversation_id' => $conversationId,
                     'type' => $callType,
+                    'is_support' => $isSupport,
                     'status' => 'ringing',
                     'started_at' => now(),
                 ]

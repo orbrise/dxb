@@ -762,7 +762,7 @@
             <div class="callee-name" id="rtcAudioName">—</div>
             <div class="callee-sub" id="rtcAudioSub">Voice call</div>
         </div>
-        <video class="rtc-remote" id="rtcRemoteVideo" autoplay playsinline></video>
+        <video class="rtc-remote" id="rtcRemoteVideo" autoplay playsinline data-no-player></video>
         {{-- Local self-view starts with .audio-only (which the CSS maps to
              display:none) so voice calls NEVER flash the empty black
              preview box in the top-right. For video calls, attachLocalPreview()
@@ -771,7 +771,7 @@
              visible-by-default and the class was added async by JS, so there
              was a visible-then-hidden flash at the top of every outgoing
              voice call. --}}
-        <video class="rtc-local audio-only" id="rtcLocalVideo" autoplay playsinline muted></video>
+        <video class="rtc-local audio-only" id="rtcLocalVideo" autoplay playsinline muted data-no-player></video>
         {{-- Switch-in-progress overlay. Shown while we're waiting for the
              SDP renegotiation + camera acquisition after a mid-call voice↔
              video switch, so the user sees a spinner instead of a frozen
@@ -784,7 +784,7 @@
              refuse to autoplay audio through a <video> tag when there's no
              video track (voice-only calls), leaving remote voice silent.
              Routing audio here (see ontrack in webrtc-scripts) fixes it. --}}
-        <audio id="rtcRemoteAudio" autoplay playsinline style="display:none;"></audio>
+        <audio id="rtcRemoteAudio" autoplay playsinline data-no-player style="display:none;"></audio>
     </div>
 
     {{-- Control sheet. Each button lives inside a .rtc-ctrl wrapper that
@@ -875,7 +875,13 @@
 
 <div class="rtc-toast" id="rtcToast">—</div>
 
-{{-- Hidden ringback tones (data URIs kept short to avoid layout bloat) --}}
-<audio id="rtcRingtone" loop preload="auto">
-    <source src="{{ asset('assets/newtheme/ringtone.mp3') }}" type="audio/mpeg">
+{{-- Hidden ringback tones. Inline style keeps the <audio> element truly
+     invisible even if the browser decides to show default controls (which
+     some engines do when the source 404s). The two off-screen positioning
+     rules are belt-and-suspenders — hidden AND off-screen so no layout. --}}
+<audio id="rtcRingtone" loop preload="auto" data-no-player style="display:none;position:absolute;left:-9999px;width:0;height:0;">
+    @php $__rtcRingFile = public_path('assets/newtheme/ringtone.mp3'); @endphp
+    @if(file_exists($__rtcRingFile))
+        <source src="{{ asset('assets/newtheme/ringtone.mp3') }}" type="audio/mpeg">
+    @endif
 </audio>

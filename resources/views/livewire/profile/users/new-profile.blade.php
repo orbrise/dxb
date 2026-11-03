@@ -1957,9 +1957,17 @@ div#basic {
                                 <div style="padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
                                     <div>
                                         <h3 style="margin:0 0 4px;font-size:18px;font-weight:700;">Edit ad video</h3>
-                                        <p style="margin:0;font-size:13px;color:#64748b;">Trim the clip and pick a thumbnail (max 100 MB)</p>
+                                        <p style="margin:0;font-size:13px;color:#64748b;">Trim the clip and pick a thumbnail</p>
                                     </div>
                                     <button type="button" id="trimCloseBtn" aria-label="Close" style="background:transparent;border:none;font-size:22px;line-height:1;color:#64748b;cursor:pointer;padding:4px 8px;">&times;</button>
+                                </div>
+
+                                <div style="margin:16px 22px 0;padding:12px 14px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:10px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    <div>
+                                        <strong style="font-weight:700;">Maximum video size: 100 MB.</strong>
+                                        Larger files must be trimmed below to fit the limit before upload.
+                                    </div>
                                 </div>
 
                                 <div style="padding:16px 22px 0;">
@@ -5472,7 +5480,7 @@ Livewire.on('validation-failed', () => {
                       fileInput.value = '';
                   });
 
-                  async function trimViaMediaRecorder(startTime, endTime, origFile) {
+                  async function trimViaMediaRecorder(startTime, endTime, origFile, onProgress) {
                       // Clone to a hidden <video> so recording doesn't fight the
                       // preview player's user interactions.
                       var hidden = document.createElement('video');
@@ -5520,8 +5528,13 @@ Livewire.on('validation-failed', () => {
                       rec.start(250);
                       try { await hidden.play(); } catch (e) {}
 
+                      var totalDur = Math.max(0.0001, endTime - startTime);
                       await new Promise(function (resolve) {
                           function tick() {
+                              if (typeof onProgress === 'function') {
+                                  var pct = Math.min(100, Math.max(0, Math.round(((hidden.currentTime - startTime) / totalDur) * 100)));
+                                  onProgress(pct);
+                              }
                               if (hidden.currentTime >= endTime - 0.02 || hidden.ended) {
                                   try { hidden.pause(); } catch (e) {}
                                   resolve();
@@ -5532,6 +5545,7 @@ Livewire.on('validation-failed', () => {
                           tick();
                       });
 
+                      if (typeof onProgress === 'function') onProgress(100);
                       try { rec.stop(); } catch (e) {}
                       await stopped;
                       document.body.removeChild(hidden);
@@ -5550,10 +5564,12 @@ Livewire.on('validation-failed', () => {
 
                       useBtn.disabled = true;
                       var origLabel = useBtn.textContent;
-                      useBtn.textContent = 'Trimming…';
+                      useBtn.textContent = 'Trimming… 0%';
 
                       try {
-                          var trimmed = await trimViaMediaRecorder(startTime, endTime, currentFile);
+                          var trimmed = await trimViaMediaRecorder(startTime, endTime, currentFile, function (pct) {
+                              useBtn.textContent = 'Trimming… ' + pct + '%';
+                          });
                           var dt = new DataTransfer();
                           dt.items.add(trimmed);
                           // Captured thumbnail is NOT added as a separate file

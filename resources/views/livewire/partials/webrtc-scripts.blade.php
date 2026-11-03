@@ -89,7 +89,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     }
 
     // --- Public API — start an outbound call ---------------------------
-    window.rtcStartCall = async function ({ userId, name, avatar, type, conversationId }) {
+    window.rtcStartCall = async function ({ userId, name, avatar, type, conversationId, isSupport }) {
         // Self-heal — if a previous call left S.pc lingering after a Livewire
         // morph or tab nav, force-close and start fresh rather than blocking
         // the user with "already in a call" forever.
@@ -104,12 +104,17 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 toast('You are already in a call.'); return;
             }
         }
-        if (!userId) { toast('No peer selected.'); return; }
+        // Support calls skip the userId check — the callee isn't picked yet.
+        if (!userId && !isSupport) { toast('No peer selected.'); return; }
 
         S.callId = uuid();
         S.callType = type;
         S.role = 'caller';
-        S.peer = { id: userId, name: name || 'User', avatar: avatar || null };
+        S.isSupport = !!isSupport;
+        // For support calls, S.peer stays as a placeholder until the first
+        // admin claims the call and sends their answer signal (we patch
+        // S.peer.id/name/avatar in the 'answer' handler when isSupport).
+        S.peer = { id: userId || 0, name: name || (isSupport ? 'Support' : 'User'), avatar: avatar || null };
         S.conversationId = conversationId || null;
         S.startedAt = Date.now();
 
@@ -149,12 +154,31 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                     endCall(true);
                 }
             }, 45000);
+
+            // Support-call specific: dedicated 30 s timeout that fires IF
+            // the peer id is still 0 (no admin claimed yet). Shows a more
+            // informative message than the generic "No answer" so the user
+            // knows the help channel is unmanned right now, not just that
+            // one person missed the call.
+            if (S.isSupport) {
+                S._supportNoAnswerTimer = setTimeout(() => {
+                    if (!S.peer?.id && S.pc && S.pc.connectionState !== 'connected') {
+                        toast('No support agent available right now — please try again later or send a message.');
+                        endCall(true);
+                    }
+                }, 30000);
+            }
         } catch (err) {
             console.error('[rtc] rtcStartCall failed:', err);
             let msg = 'Could not start call.';
             if (err?.name === 'NotAllowedError') msg = 'Camera / mic permission denied.';
             else if (err?.name === 'NotFoundError') msg = 'No microphone / camera detected.';
             else if (err?.name === 'NotReadableError') msg = 'Mic / camera is in use by another app.';
+            // Server refuses the offer outright when support has barred this
+            // account from calling — postSignal() embeds the response body in
+            // the Error message, so match on the marker rather than the status.
+            else if ((err?.message || '').includes('support_calls_blocked')) msg = 'Support is not accepting calls right now. Please send a message instead.';
+            else if ((err?.message || '').includes('calls_blocked')) msg = 'Your calls are disabled by support. You can still send messages.';
             else if (err?.message) msg = 'Call failed: ' + err.message.slice(0, 140);
             toast(msg);
             endCall(false);
@@ -347,6 +371,42 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             }
 
             if (t === 'answer' && S.pc) {
+                // Support-call claim handoff: the admin who answered is now
+                // the concrete peer. Patch S.peer so subsequent signals
+                // (ice, hangup, switch-request) go through chat.{adminId}
+                // instead of staying on the shared support-inbox channel.
+                if (S.isSupport && e.from) {
+                    S.peer = {
+                        id: Number(e.from),
+                        name: e.fromName || 'Support',
+                        avatar: e.fromAvatar || null,
+                    };
+                    // Cancel the no-admin-answered fallback timer — someone
+                    // just picked up.
+                    if (S._supportNoAnswerTimer) {
+                        clearTimeout(S._supportNoAnswerTimer);
+                        S._supportNoAnswerTimer = null;
+                    }
+                    // Flush any ICE candidates we buffered while waiting for
+                    // an admin to claim the call. Each one now has a real
+                    // target and routes through chat.{adminId} normally.
+                    if (S._supportIceBuffer && S._supportIceBuffer.length) {
+                        console.log('[rtc] flushing ' + S._supportIceBuffer.length + ' buffered support ICE');
+                        for (const p of S._supportIceBuffer) {
+                            postSignal('ice', p).catch(() => {});
+                        }
+                        S._supportIceBuffer = [];
+                    }
+                    // Update the in-call UI's displayed peer name so the
+                    // caller sees who they're talking to.
+                    const nameEl = document.getElementById('rtcCallName');
+                    if (nameEl) nameEl.textContent = S.peer.name;
+                    const av = document.getElementById('rtcCallAvatar');
+                    if (av) {
+                        if (S.peer.avatar) av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
+                        else av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
+                    }
+                }
                 await S.pc.setRemoteDescription(new RTCSessionDescription({
                     type: e.payload.sdp.type || 'answer',
                     sdp: sanitizeIncomingSdp(normalizeSdp(e.payload.sdp.sdp)),
@@ -386,8 +446,17 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             }
 
             if (t === 'decline') {
-                toast(S.peer?.name ? `${S.peer.name} declined.` : 'Call declined.');
+                // A peer-side media failure arrives as a decline too — show its
+                // reason so the caller knows the agent could not connect
+                // rather than thinking they were personally rejected.
+                const why = e.payload?.reason;
+                const who = S.peer?.name || 'The other person';
+                const msg = why ? `${who} could not connect: ${why}`
+                                : (S.peer?.name ? `${S.peer.name} declined.` : 'Call declined.');
+                // endCall() tears down S.peer and dismisses any live toast,
+                // so the message has to be painted after it.
                 endCall(false);
+                toast(msg);
                 return;
             }
             if (t === 'hangup') { toast('Call ended.'); endCall(false); return; }
@@ -577,6 +646,38 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         }
     };
 
+    // --- Admin accept for a support call ------------------------------
+    // Called by the admin-layout support-inbox listener after the atomic
+    // claim at /call/support-accept succeeded. Skips the ring-and-prompt
+    // UI (admin already clicked Accept in the toast) and jumps straight
+    // to the answer flow against the caller.
+    //
+    // signal: the raw CallSignal payload that triggered the toast
+    // claim:  the /call/support-accept response (caller name/avatar etc.)
+    window.rtcAcceptSupport = async function (signal, claim) {
+        if (S.pc) {
+            toast('You are already in a call.');
+            return;
+        }
+        S.callId = signal.callId;
+        S.callType = signal.callType || claim.call_type || 'audio';
+        S.role = 'callee';
+        // From the admin's perspective the caller IS the peer we exchange
+        // answer/ice/hangup with. The caller's broadcast carried their id
+        // in `from`; the claim response echoes caller_id as a sanity check.
+        S.peer = {
+            id: Number(claim.caller_id || signal.from),
+            name: claim.caller_name || signal.fromName || 'User',
+            avatar: claim.caller_avatar || signal.fromAvatar || null,
+        };
+        // Admins do NOT set S.isSupport — once claimed, this is just a
+        // 2-party call from the admin's perspective and postSignal routes
+        // normally to chat.{callerId}.
+        S.isSupport = false;
+        S._pendingOffer = signal.payload?.sdp;
+        await acceptIncoming();
+    };
+
     // --- Accept incoming call -----------------------------------------
     async function acceptIncoming() {
         hideIncoming();
@@ -606,10 +707,15 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             if (err?.name === 'NotAllowedError') msg = 'Mic permission denied.';
             else if (err?.name === 'NotFoundError') msg = 'No microphone / camera detected.';
             else if (err?.name === 'NotReadableError') msg = 'Mic / camera in use by another app.';
+            else if (err?.name === 'InsecureContextError') msg = err.message;
             else if (err?.message) msg = 'Accept failed: ' + err.message.slice(0, 140);
-            toast(msg);
-            try { await postSignal('decline', {}); } catch (_) {}
+            // Carry the reason: a local media failure is not the agent
+            // rejecting the caller, and it makes the rtc log self-explanatory.
+            try { await postSignal('decline', { reason: msg }); } catch (_) {}
+            // cleanup() calls dismissToast(), so the reason has to be painted
+            // after teardown or it is erased before anyone can read it.
             endCall(false);
+            toast(msg, { persistent: true, cancelLabel: 'Dismiss' });
         }
     }
 
@@ -896,6 +1002,14 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     // --- Media --------------------------------------------------------
     async function ensureLocalStream(type) {
         if (S.localStream) return S.localStream;
+        // navigator.mediaDevices is undefined outside a secure context, so on
+        // an http:// page this would throw a bare TypeError that reads like a
+        // signalling/socket failure. Name the real cause instead.
+        if (!navigator.mediaDevices?.getUserMedia) {
+            const err = new Error('Microphone unavailable — this page must be opened over HTTPS.');
+            err.name = 'InsecureContextError';
+            throw err;
+        }
         S.localStream = await navigator.mediaDevices.getUserMedia({
             audio: true,
             video: type === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false,
@@ -2056,8 +2170,22 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     // --- Post signal via Laravel endpoint -----------------------------
     async function postSignal(type, payload, opts = {}) {
         const target = opts.targetOverride || S.peer?.id;
-        if (!target) return;
-        console.log('[rtc-sig] OUT ' + type, { to: target, callId: S.callId });
+        // Support offer path: no concrete target yet (first admin claims the
+        // call). Allow target=0 ONLY for the initial support offer.
+        const supportOffer = S.isSupport && type === 'offer' && !target;
+        if (!target && !supportOffer) {
+            // Support-call pre-answer window: the caller's PC starts
+            // trickling ICE before any admin has claimed the call, so
+            // target is still 0. Buffer those candidates and flush them
+            // the moment S.peer.id gets patched by the 'answer' handler.
+            if (S.isSupport && type === 'ice' && !S.peer?.id) {
+                S._supportIceBuffer = S._supportIceBuffer || [];
+                S._supportIceBuffer.push(payload);
+                console.log('[rtc-sig] BUFFERED ice (no admin yet), queue=' + S._supportIceBuffer.length);
+            }
+            return;
+        }
+        console.log('[rtc-sig] OUT ' + type, { to: target, callId: S.callId, isSupport: !!S.isSupport });
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         const res = await fetch('/call/signal', {
             method: 'POST',
@@ -2069,12 +2197,18 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 'Accept': 'application/json',
             },
             body: JSON.stringify({
-                target_user_id: target,
+                // Send null (not 0) when there's no concrete target yet —
+                // Laravel's `exists:users,id` rule rejects 0 because no user
+                // has that id, which would 422 the whole support offer and
+                // close the call UI on the caller's screen. Null satisfies
+                // the `nullable` guard and skips the exists check entirely.
+                target_user_id: target || null,
                 call_id: S.callId,
                 type,
                 call_type: S.callType || 'audio',
                 payload,
                 conversation_id: S.conversationId,
+                is_support: !!S.isSupport,
             }),
         });
         if (!res.ok) {
@@ -2651,6 +2785,10 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 avatar: btn.dataset.peerAvatar || null,
                 type: audioBtn ? 'audio' : 'video',
                 conversationId: parseInt(btn.dataset.conversationId, 10) || null,
+                // Support chat sets data-rtc-support="1" — the button has
+                // no concrete peer id (peerId=0) and the call should fan
+                // out to every admin via support-inbox.
+                isSupport: btn.dataset.rtcSupport === '1',
             });
         }
     });

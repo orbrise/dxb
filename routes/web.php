@@ -370,6 +370,12 @@ Route::group(['middleware'=>'auth'], function(){
     Route::post("call/signal", [\App\Http\Controllers\CallController::class, 'signal'])->name('call.signal');
     Route::get("call/pending", [\App\Http\Controllers\CallController::class, 'pending'])->name('call.pending');
 
+    // Admin-only atomic claim for user→support calls. First admin to POST
+    // wins the call; others get 409 and dismiss their toast. See
+    // CallController::supportAccept for the full race-safety story.
+    Route::post("call/support-accept", [\App\Http\Controllers\CallController::class, 'supportAccept'])
+        ->name('call.support.accept');
+
     // Lightweight badge-counts endpoint — polled by the mobile-nav /
     // top-header client script so the Chat & Calls badge updates in
     // real time instead of only on page refresh. Returns a tiny JSON
@@ -396,6 +402,22 @@ Route::group(['middleware'=>'auth'], function(){
      * Lightweight on purpose: no Livewire boot, just a direct update + a
      * broadcast back to the sender's private channel.
      */
+    /**
+     * Lightweight presence ping. The UpdateLastSeen middleware already
+     * runs on every authenticated request, but a user sitting idle on a
+     * static page (no polling, no navigation) stops touching the server
+     * and goes offline within 3 minutes. This endpoint lets the layout's
+     * JS heartbeat bump last_seen_at every 60 s so "online" works across
+     * the whole site, not just pages that happen to poll.
+     *
+     * Returns 204 with no body — the client only cares that the request
+     * succeeded. Middleware does the actual update; this handler is a
+     * no-op after it runs.
+     */
+    Route::post('/presence-ping', function () {
+        return response()->noContent();
+    })->middleware('auth')->name('presence.ping');
+
     Route::post("chat/ack-delivered", function (\Illuminate\Http\Request $request) {
         if (!auth()->check()) return response()->json(['ok' => false], 401);
         $userId = auth()->id();
@@ -1350,4 +1372,5 @@ Route::get('/test-country-detection', function() {
 // with the admin middleware applied directly.
 Route::middleware(['web', 'admin'])->prefix('admin')->group(function () {
     Route::get('support-inbox', \App\Livewire\Admin\SupportInbox::class)->name('admin.support.inbox');
+    Route::get('bots', \App\Livewire\Admin\Bots::class)->name('admin.bots');
 });

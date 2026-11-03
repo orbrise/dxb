@@ -32,6 +32,11 @@ class Setting extends Model
         'geo_redirect_enabled',
         // Hide profile pics from US visitors
         'hide_us_profile_pics',
+        'support_calls_blocked',
+        'support_auto_reply_enabled',
+        'support_auto_reply_delay',
+        'support_auto_reply_message',
+        'support_auto_reply_sender_id',
     ];
 
     protected $casts = [
@@ -41,5 +46,8 @@ class Setting extends Model
         'auto_delete_inactive_enabled' => 'boolean',
         'geo_redirect_enabled' => 'boolean',
         'hide_us_profile_pics' => 'boolean',
+        'support_calls_blocked' => 'boolean',
+        'support_auto_reply_enabled' => 'boolean',
+        'support_auto_reply_delay' => 'integer',
     ];
 }
