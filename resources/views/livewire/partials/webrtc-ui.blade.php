@@ -24,8 +24,10 @@
         50%     { box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 14px rgba(193,241,29,0); }
     }
     .rtc-incoming .who { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-    .rtc-incoming .avatar { width: 46px; height: 46px; border-radius: 50%; background: #C1F11D; color: #000; display: flex; align-items: center; justify-content: center; font-weight: 700; overflow: hidden; }
-    .rtc-incoming .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .rtc-incoming .avatar { position: relative; width: 46px; height: 46px; border-radius: 50%; background: #C1F11D; color: #000; display: flex; align-items: center; justify-content: center; font-weight: 700; overflow: hidden; }
+    /* Photo sits over the caller's initial; if it fails to load it's removed
+       and the initial shows (was a blank circle). */
+    .rtc-incoming .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .rtc-incoming .name { font-weight: 600; font-size: 15px; }
     .rtc-incoming .sub { font-size: 12px; color: #8b969a; }
     .rtc-incoming .actions { display: flex; gap: 10px; }
@@ -37,12 +39,15 @@
     .rtc-incoming .btn-accept { background: #22c55e; color: #fff; }
     .rtc-incoming .btn-decline { background: #ef4444; color: #fff; }
 
-    /* Desktop: hide all the mobile-only chrome (brand bar, icon-vs-label
-       wrappers). The mobile media query below unhides and restyles them.
-       Keeps the compact top-right desktop card intact. */
-    .rtc-incoming .rtc-incoming-brandbar,
-    .rtc-incoming .rtc-incoming-btn-icon,
-    .rtc-incoming .rtc-incoming-btn-label { display: none; }
+    /* Desktop: hide the mobile-only brand bar. The buttons stay compact
+       "icon + Decline / Accept" pills — the label must stay visible here
+       (hiding it left two blank coloured bars). The mobile media query below
+       turns the icon into a big circle with the label underneath. */
+    .rtc-incoming .rtc-incoming-brandbar { display: none; }
+    @media (min-width: 641px) {
+        .rtc-incoming .rtc-incoming-btn-icon { display: inline-flex; }
+        .rtc-incoming .rtc-incoming-btn-icon svg { width: 15px; height: 15px; }
+    }
 
     /* Floating call window (default) — small card in bottom-right, similar
        to WhatsApp Web's minimized call. Toggle `.rtc-call.maximized` for the

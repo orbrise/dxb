@@ -599,6 +599,67 @@ class CallController extends Controller
     }
 
     /**
+     * Polling fallback for the admin support-call toast: every support offer
+     * still ringing and unclaimed. Same payload shape as the CallSignal
+     * broadcast, so the toast handles both paths identically.
+     *
+     * Customer-to-customer calls already work without Reverb via /call/pending;
+     * support offers can't use that queue because they have no single callee
+     * (to_user_id = 0), so admins poll this instead. A call claimed by another
+     * admin, or hung up by the caller, drops out of the list — the client
+     * dismisses any toast whose call_id disappears.
+     */
+    public function supportPending(Request $request)
+    {
+        $admin = $request->user();
+        abort_unless($admin, 401);
+        abort_unless($admin->is_admin ?? false, 403);
+
+        // Polled every few seconds — don't hold the session lock (see pending()).
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+
+        $ringing = Call::where('is_support', true)
+            ->whereNull('callee_id')
+            ->where('status', 'ringing')
+            ->where('started_at', '>', now()->subMinute())
+            ->pluck('call_id');
+
+        if ($ringing->isEmpty()) {
+            return response()->json(['signals' => []]);
+        }
+
+        $rows = CallSignalRow::where('to_user_id', 0)
+            ->where('type', 'offer')
+            ->whereIn('call_id', $ringing)
+            ->where('created_at', '>', now()->subMinute())
+            ->orderBy('id')
+            ->get();
+
+        $callers = User::whereIn('id', $rows->pluck('from_user_id')->unique())
+            ->get(['id', 'name', 'email', 'avatar'])
+            ->keyBy('id');
+
+        return response()->json([
+            'signals' => $rows->unique('call_id')->values()->map(function ($row) use ($callers) {
+                $caller = $callers[$row->from_user_id] ?? null;
+                return [
+                    'id' => $row->id,
+                    'from' => $row->from_user_id,
+                    'fromName' => $caller?->name ?? $caller?->email ?? 'Someone',
+                    'fromAvatar' => $caller ? user_avatar_url($caller) : null,
+                    'callId' => $row->call_id,
+                    'type' => 'offer',
+                    'callType' => $row->call_type,
+                    'payload' => $row->payload,
+                    'isSupport' => true,
+                ];
+            }),
+        ]);
+    }
+
+    /**
      * Recent call history for the current user (used by the "missed calls"
      * banner and the future call-log page).
      */

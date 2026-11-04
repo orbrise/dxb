@@ -261,13 +261,98 @@
         if (lbl) lbl.textContent = label;
     }
 
+    // Calls reach this screen two ways: the Reverb socket (instant) and the
+    // /call/support-pending poll (fallback). The pill reflects both, so a
+    // dead socket with a working poll still reads as "live".
+    const status = { socket: 'connecting', poll: null, target: '' };
+    function renderStatus() {
+        if (!window.isSecureContext) return; // keep the "HTTPS required" warning
+        const pill = document.getElementById('adminSupportCallStatus');
+        if (status.socket === 'live') {
+            setStatus('#22c55e', 'Support calls: live');
+            if (pill) pill.title = 'Realtime server: ' + status.target;
+        } else if (status.poll === true) {
+            setStatus('#22c55e', 'Support calls: live (polling)');
+            if (pill) pill.title = 'Realtime server ' + status.target + ' is unreachable — checking for calls every few seconds instead.';
+        } else if (status.socket === 'auth') {
+            setStatus('#ef4444', 'Support calls: auth failed');
+        } else if (status.socket === 'unreachable' || status.poll === false) {
+            setStatus('#ef4444', 'Support calls: offline');
+            if (pill) pill.title = 'Cannot reach ' + status.target + ' and polling failed.';
+        } else {
+            setStatus('#f59e0b', 'Support calls: connecting…');
+        }
+    }
+    function setSocket(state) { status.socket = state; renderStatus(); }
+
+    // Shared by the socket listener and the poll — both deliver the same
+    // CallSignal payload shape.
+    function forwardSignal(e) {
+        if (!e || e.type !== 'offer') {
+            // support-claimed signal → dismiss matching pending toast
+            if (e && e.type === 'support-claimed' && e.callId) {
+                dismiss(e.callId);
+            }
+            return;
+        }
+        if (!e.isSupport || !e.callId) return;
+        // De-dupe: the socket (several bindings) and the poll can all
+        // deliver the same offer — ignore if we already have it.
+        if (pending.has(e.callId)) return;
+
+        // Auto-expire the toast after 45 s if nobody answers (matches
+        // the caller's own ringTimeout in webrtc-scripts).
+        const timeoutId = setTimeout(() => dismiss(e.callId), 45000);
+        pending.set(e.callId, { signal: e, timeoutId });
+
+        // Only one toast visible at a time; if another is already up,
+        // keep it visible and show this one when the active clears.
+        if (!activeCallId) show(e);
+    }
+
+    // Polling fallback. Fast while the socket is down, a slow safety net
+    // while it's up (a connected socket can still miss events if the
+    // server fails to publish). Serialized like webrtc-scripts' poller so a
+    // slow server can't pile up requests.
+    const SUPPORT_PENDING_URL = {!! json_encode(route('call.support.pending')) !!};
+    async function pollSupportOffers() {
+        try {
+            const res = await fetch(SUPPORT_PENDING_URL, {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) throw new Error('status ' + res.status);
+            const data = await res.json();
+            const ringing = new Set();
+            for (const signal of (data.signals || [])) {
+                ringing.add(signal.callId);
+                forwardSignal(signal);
+            }
+            // Claimed by another admin or hung up by the caller.
+            for (const callId of Array.from(pending.keys())) {
+                if (!ringing.has(callId)) dismiss(callId);
+            }
+            status.poll = true;
+        } catch (err) {
+            if (status.poll !== false) console.warn('[admin-support-call] support poll failed', err);
+            status.poll = false;
+        }
+        renderStatus();
+    }
+    (function pollLoop() {
+        pollSupportOffers().finally(() => {
+            setTimeout(pollLoop, status.socket === 'live' ? 15000 : 3000);
+        });
+    })();
+
     let echoWaitAttempts = 0;
     function wireChannel() {
         if (!window.Echo) {
             echoWaitAttempts++;
             if (echoWaitAttempts > 20) {
-                setStatus('#ef4444', 'Support calls: Echo not loaded');
                 console.error('[admin-support-call] window.Echo never appeared — Vite is probably not loading app.js on this admin page');
+                status.target = 'Echo (not loaded)';
+                setSocket('unreachable');
                 return;
             }
             console.log('[admin-support-call] waiting for Echo, attempt ' + echoWaitAttempts);
@@ -280,21 +365,32 @@
             // / connection drops in real time instead of guessing.
             if (window.Echo.connector?.pusher?.connection) {
                 const conn = window.Echo.connector.pusher.connection;
+                // The address baked into the Vite build (VITE_REVERB_*). Shown on
+                // hover + in the console so a wrong host/port is obvious.
+                const opts = window.Echo.options || {};
+                status.target = (opts.forceTLS ? 'wss://' : 'ws://') + opts.wsHost + ':' + (opts.forceTLS ? opts.wssPort : opts.wsPort);
+
                 conn.bind('connected', () => {
                     console.log('[admin-support-call] Reverb WS connected');
-                    setStatus('#22c55e', 'Support calls: live');
+                    setSocket('live');
                 });
                 conn.bind('disconnected', () => {
                     console.warn('[admin-support-call] Reverb WS disconnected');
-                    setStatus('#f59e0b', 'Support calls: reconnecting');
+                    setSocket('connecting');
                 });
-                conn.bind('error', (e) => {
-                    console.error('[admin-support-call] Reverb WS error', e);
-                    setStatus('#ef4444', 'Support calls: error');
+                // pusher-js never fires 'error' when the socket simply can't be
+                // reached — it moves to 'unavailable' and keeps retrying, which
+                // used to leave this pill stuck on "connecting…".
+                conn.bind('state_change', ({ current }) => {
+                    if (current === 'unavailable' || current === 'failed') {
+                        console.error('[admin-support-call] cannot reach Reverb at ' + status.target + ' — falling back to polling. Is reverb:start running, and does the web server route /app to it?');
+                        setSocket('unreachable');
+                    } else if (current === 'connecting') {
+                        setSocket('connecting');
+                    }
                 });
-                if (conn.state === 'connected') {
-                    setStatus('#22c55e', 'Support calls: live');
-                }
+                conn.bind('error', (e) => console.error('[admin-support-call] Reverb WS error', e));
+                if (conn.state === 'connected') setSocket('live');
             }
 
             // Subscription success / failure — tells us if channel auth
@@ -302,46 +398,23 @@
             if (typeof ch.subscribed === 'function') {
                 ch.subscribed(() => {
                     console.log('[admin-support-call] subscribed to support-inbox OK');
-                    setStatus('#22c55e', 'Support calls: live');
+                    setSocket('live');
                 });
             }
             if (typeof ch.error === 'function') {
                 ch.error((err) => {
                     console.error('[admin-support-call] subscribe failed', err);
-                    setStatus('#ef4444', 'Support calls: auth failed');
+                    setSocket('auth');
                 });
             }
 
-            const forward = function (e) {
-                console.log('[admin-support-call] event received', e);
-                if (!e || e.type !== 'offer') {
-                    // support-claimed signal → dismiss matching pending toast
-                    if (e && e.type === 'support-claimed' && e.callId) {
-                        dismiss(e.callId);
-                    }
-                    return;
-                }
-                if (!e.isSupport || !e.callId) return;
-                // De-dupe: a signal can arrive multiple times via different
-                // bindings (Pusher/dot-prefix) — ignore if we already have it.
-                if (pending.has(e.callId)) return;
-
-                // Auto-expire the toast after 45 s if nobody answers (matches
-                // the caller's own ringTimeout in webrtc-scripts).
-                const timeoutId = setTimeout(() => dismiss(e.callId), 45000);
-                pending.set(e.callId, { signal: e, timeoutId });
-
-                // Only one toast visible at a time; if another is already up,
-                // keep it visible and show this one when the active clears.
-                if (!activeCallId) show(e);
-            };
-            ch.listen('.CallSignal', forward);
-            ch.listen('CallSignal', forward);
-            ch.listen('.App\\Events\\CallSignal', forward);
+            ch.listen('.CallSignal', forwardSignal);
+            ch.listen('CallSignal', forwardSignal);
+            ch.listen('.App\\Events\\CallSignal', forwardSignal);
             console.log('[admin-support-call] bound to support-inbox');
         } catch (err) {
             console.warn('[admin-support-call] channel bind failed', err);
-            setStatus('#ef4444', 'Support calls: bind failed');
+            setSocket('unreachable');
             setTimeout(wireChannel, 2000);
         }
     }

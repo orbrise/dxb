@@ -338,6 +338,19 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                     }
                     return;
                 }
+                // A leftover peer from an earlier call (UI already closed, or
+                // the connection died) must not count as "busy" — that used
+                // to auto-decline every incoming call with no banner at all.
+                // Same self-heal rtcStartCall() does for outgoing calls.
+                if (S.pc) {
+                    const callVisible = document.getElementById('rtcCall')?.classList.contains('open');
+                    const st = S.pc.connectionState;
+                    if (!callVisible || st === 'failed' || st === 'closed') {
+                        console.warn('[rtc] stale call state on incoming offer — cleaning up', { st, callVisible });
+                        cleanup();
+                        hideCallUI();
+                    }
+                }
                 // Busy — reject the new call
                 if (S.pc) {
                     const prev = S.callId;
@@ -346,14 +359,19 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                     S.callId = prev;
                     return;
                 }
-                // Fresh incoming — show the incoming banner
+                // Fresh incoming — show the banner FIRST. The 'ringing' ack only
+                // flips the caller's "Calling…" to "Ringing…", so it's sent in
+                // the background: if that POST failed (stale CSRF token, etc.)
+                // the old `await` threw and the banner never opened — the callee
+                // only ever saw a missed call.
                 S.callId = e.callId;
                 S.callType = e.callType;
                 S.role = 'callee';
+                S.conversationId = null; // not ours to send; may be stale from our last outgoing call
                 S.peer = { id: e.from, name: e.fromName || 'Someone', avatar: e.fromAvatar || null };
-                await postSignal('ringing', {});
-                showIncoming(e);
                 S._pendingOffer = e.payload.sdp;
+                showIncoming(e);
+                postSignal('ringing', {}).catch(err => console.warn('[rtc] ringing ack failed (caller stays on "Calling…")', err));
                 // Pre-warm mic (and camera for video calls) in parallel with
                 // the ringtone. getUserMedia can eat 300-700ms on first call
                 // while the browser wakes the hardware; kicking it off now
@@ -2018,8 +2036,16 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (btp) btp.textContent = S.callType === 'video' ? 'Video' : 'Voice';
         const av = document.getElementById('rtcIncomingAvatar');
         if (av) {
-            if (S.peer.avatar) av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
-            else av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
+            // Initial underneath, photo on top; drop the photo if it fails to
+            // load so the initial shows instead of an empty circle.
+            av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
+            if (S.peer.avatar) {
+                const img = new Image();
+                img.alt = '';
+                img.onerror = () => img.remove();
+                img.src = S.peer.avatar;
+                av.appendChild(img);
+            }
         }
         el.classList.add('open');
         startIncomingRing();
@@ -2156,6 +2182,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         const lv = document.getElementById('rtcLocalVideo');  if (lv) lv.srcObject = null;
         const ra = document.getElementById('rtcRemoteAudio'); if (ra) ra.srcObject = null;
         S.callId = null; S.callType = null; S.peer = null; S.role = null;
+        S.conversationId = null;
         S.pendingIce = []; S._pendingOffer = null;
         S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
         S._awaitingSwitchOffer = null;
@@ -2186,8 +2213,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             return;
         }
         console.log('[rtc-sig] OUT ' + type, { to: target, callId: S.callId, isSupport: !!S.isSupport });
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        const res = await fetch('/call/signal', {
+        const send = (token) => fetch('/call/signal', {
             method: 'POST',
             credentials: 'same-origin',
             headers: {
@@ -2211,11 +2237,33 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 is_support: !!S.isSupport,
             }),
         });
+        let res = await send(document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
+        if (res.status === 419) {
+            // Stale CSRF token (long-open tab, session rotated in another tab):
+            // fetch a fresh one once and retry, as the layout does for Livewire.
+            const fresh = await refreshCsrfToken();
+            if (fresh) res = await send(fresh);
+        }
         if (!res.ok) {
             let body = '';
             try { body = await res.text(); } catch (_) {}
             console.error('[rtc-sig] OUT ' + type + ' FAILED', res.status, body.slice(0, 200));
             throw new Error('signal ' + type + ' failed: ' + res.status + ' ' + body.slice(0, 200));
+        }
+    }
+
+    async function refreshCsrfToken() {
+        try {
+            const res = await fetch('/csrf-refresh?t=' + Date.now(), {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const token = res.ok ? (await res.json())?.token : null;
+            if (token) document.querySelector('meta[name="csrf-token"]')?.setAttribute('content', token);
+            return token || null;
+        } catch (_) {
+            return null;
         }
     }
 

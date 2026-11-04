@@ -3924,6 +3924,22 @@ function siInit() {
     }, 100);
     setTimeout(() => clearInterval(wait), 5000);
     siScrollBottom();
+
+    // Socket fallback: while Reverb isn't connected, poll for new messages so
+    // the inbox still updates. Stops costing anything once the socket is up.
+    // Skipped while the admin is typing or has a dialog open, so a refresh
+    // can't clobber a half-written reply or form.
+    if (!window.__siState.fallbackPoll) {
+        window.__siState.fallbackPoll = setInterval(() => {
+            if (document.hidden || window.Echo?.connector?.pusher?.connection?.state === 'connected') return;
+            const active = document.activeElement;
+            if (active?.matches?.('input, select, textarea') && !(active.id === 'siReplyInput' && active.value === '')) return;
+            if (document.querySelector('.si-modal.open, .si-stp-overlay, .si-qr-menu.open, .si-msg-actions.open')) return;
+            const comp = siComponent();
+            const tab = comp?.$get?.('inboxTab') ?? comp?.inboxTab;
+            if (comp && (tab === 'chat' || tab === 'calls')) comp.call('pollInbox');
+        }, 6000);
+    }
 }
 
 function siScrollBottom() {

@@ -361,6 +361,25 @@ class SupportInbox extends Component
         }
     }
 
+    /**
+     * Fallback while the Reverb socket is down (polled by the inbox JS):
+     * re-renders the list, and if the open thread got new messages, shows
+     * them, marks them read and scrolls — what handleNewMessage() does when
+     * the socket delivers the event.
+     */
+    public function pollInbox(): void
+    {
+        if (!$this->selectedConversationId) return;
+
+        $lastId = collect($this->conversationMessages)->last()['id'] ?? null;
+        $this->loadMessages();
+
+        if ((collect($this->conversationMessages)->last()['id'] ?? null) !== $lastId) {
+            $this->markAsRead();
+            $this->dispatch('message-received');
+        }
+    }
+
     public function setInboxTab(string $tab): void
     {
         if (in_array($tab, ['chat', 'calls', 'status', 'media', 'settings'], true)) {

@@ -375,6 +375,9 @@ Route::group(['middleware'=>'auth'], function(){
     // CallController::supportAccept for the full race-safety story.
     Route::post("call/support-accept", [\App\Http\Controllers\CallController::class, 'supportAccept'])
         ->name('call.support.accept');
+    // Admin polling fallback for support offers when the Reverb socket is down.
+    Route::get("call/support-pending", [\App\Http\Controllers\CallController::class, 'supportPending'])
+        ->name('call.support.pending');
 
     // Lightweight badge-counts endpoint — polled by the mobile-nav /
     // top-header client script so the Chat & Calls badge updates in
