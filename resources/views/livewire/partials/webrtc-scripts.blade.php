@@ -148,10 +148,12 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             await postSignal('offer', { sdp: { type: offer.type, sdp: sanitizeOutgoingSdp(offer.sdp) } });
 
             startRingback();
+            // endCall() → cleanup() dismisses any toast, so every message in
+            // this function is painted AFTER the teardown or it never shows.
             S.ringTimeout = setTimeout(() => {
                 if (S.pc && S.pc.connectionState !== 'connected') {
-                    toast('No answer.');
                     endCall(true);
+                    toast('No answer.');
                 }
             }, 45000);
 
@@ -163,8 +165,8 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             if (S.isSupport) {
                 S._supportNoAnswerTimer = setTimeout(() => {
                     if (!S.peer?.id && S.pc && S.pc.connectionState !== 'connected') {
-                        toast('No support agent available right now — please try again later or send a message.');
                         endCall(true);
+                        toast('No support agent available right now — please try again later or send a message.');
                     }
                 }, 30000);
             }
@@ -180,8 +182,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             else if ((err?.message || '').includes('support_calls_blocked')) msg = 'Support is not accepting calls right now. Please send a message instead.';
             else if ((err?.message || '').includes('calls_blocked')) msg = 'Your calls are disabled by support. You can still send messages.';
             else if (err?.message) msg = 'Call failed: ' + err.message.slice(0, 140);
-            toast(msg);
+            // Teardown first — cleanup() dismisses toasts, so painting the
+            // reason before endCall() erased it and the call window just
+            // flashed and vanished with no explanation.
             endCall(false);
+            toast(msg, { persistent: true, cancelLabel: 'Dismiss' });
         }
     };
 
@@ -479,7 +484,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 toast(msg);
                 return;
             }
-            if (t === 'hangup') { toast('Call ended.'); endCall(false); return; }
+            if (t === 'hangup') { endCall(false); toast('Call ended.'); return; }
             if (t === 'ringing') {
                 // Peer confirmed delivery — flip from "Calling…" to "Ringing…".
                 S.calleeRinging = true;
@@ -999,8 +1004,8 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                     clearTimeout(S.reconnectHardTimer);
                     S.reconnectHardTimer = setTimeout(() => {
                         if (S.pc && S.pc.connectionState !== 'connected') {
-                            toast('Connection lost.');
                             endCall(false);
+                            toast('Connection lost.');
                         }
                     }, 15000);
                 }, graceMs);
