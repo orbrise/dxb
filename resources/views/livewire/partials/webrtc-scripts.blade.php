@@ -469,7 +469,9 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 // rather than thinking they were personally rejected.
                 const why = e.payload?.reason;
                 const who = S.peer?.name || 'The other person';
-                const msg = why ? `${who} could not connect: ${why}`
+                // An agent declining a support call (CallController::supportDecline).
+                const msg = e.payload?.busy ? 'Support is busy right now. Please send a message and we will get back to you.'
+                          : why ? `${who} could not connect: ${why}`
                                 : (S.peer?.name ? `${S.peer.name} declined.` : 'Call declined.');
                 // endCall() tears down S.peer and dismisses any live toast,
                 // so the message has to be painted after it.

@@ -375,6 +375,8 @@ Route::group(['middleware'=>'auth'], function(){
     // CallController::supportAccept for the full race-safety story.
     Route::post("call/support-accept", [\App\Http\Controllers\CallController::class, 'supportAccept'])
         ->name('call.support.accept');
+    Route::post("call/support-decline", [\App\Http\Controllers\CallController::class, 'supportDecline'])
+        ->name('call.support.decline');
     // Admin polling fallback for support offers when the Reverb socket is down.
     Route::get("call/support-pending", [\App\Http\Controllers\CallController::class, 'supportPending'])
         ->name('call.support.pending');

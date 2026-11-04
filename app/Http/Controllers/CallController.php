@@ -599,6 +599,65 @@ class CallController extends Controller
     }
 
     /**
+     * Admin declines a ringing support call. Ends it for the caller ("support
+     * is busy") and for every other admin's toast — same atomic claim as
+     * supportAccept(), so a decline can't race an accept from someone else.
+     */
+    public function supportDecline(Request $request)
+    {
+        $admin = $request->user();
+        abort_unless($admin, 401);
+        abort_unless($admin->is_admin ?? false, 403);
+
+        $callId = $request->validate(['call_id' => 'required|string|min:8|max:40'])['call_id'];
+
+        $claimed = Call::where('call_id', $callId)
+            ->where('is_support', true)
+            ->whereNull('callee_id')
+            ->where('status', 'ringing')
+            ->update(['callee_id' => $admin->id]);
+
+        if ($claimed !== 1) {
+            // Already answered, declined or hung up — nothing left to end.
+            return response()->json(['ok' => false, 'reason' => 'not_ringing'], 409);
+        }
+
+        $call = Call::where('call_id', $callId)->first();
+
+        // Marks it declined and posts the "Call declined" row in the support chat.
+        $this->recordLifecycle($callId, $admin->id, (int) $call->caller_id, 'decline', $call->type, $call->conversation_id, true);
+
+        // Tell the caller. Queued for their /call/pending poll, plus a best-effort
+        // socket push — mirrors how signal() delivers every other signal.
+        try {
+            $row = CallSignalRow::create([
+                'call_id' => $callId,
+                'from_user_id' => $admin->id,
+                'to_user_id' => $call->caller_id,
+                'type' => 'decline',
+                'call_type' => $call->type,
+                'payload' => ['busy' => true],
+                'created_at' => now(),
+            ]);
+            broadcast(new CallSignal((int) $call->caller_id, $admin->id, $callId, 'decline', $call->type, ['busy' => true], $row->id, false))->toOthers();
+        } catch (\Throwable $e) {
+            Log::channel('rtc')->warning('support-decline delivery failed', ['call_id' => $callId, 'error' => $e->getMessage()]);
+        }
+
+        // Clear the toast on every other admin's screen (the poll catches it too).
+        try {
+            broadcast(new CallSignal(0, $admin->id, $callId, 'support-claimed', $call->type, [
+                'claimedBy' => $admin->id,
+                'claimedByName' => $admin->name ?? $admin->email,
+            ], null, true))->toOthers();
+        } catch (\Throwable $e) {
+            Log::channel('rtc')->warning('support-decline broadcast failed', ['call_id' => $callId, 'error' => $e->getMessage()]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
      * Polling fallback for the admin support-call toast: every support offer
      * still ringing and unclaimed. Same payload shape as the CallSignal
      * broadcast, so the toast handles both paths identically.

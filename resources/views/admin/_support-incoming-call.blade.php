@@ -85,7 +85,7 @@
         </div>
     </div>
     <div class="actions">
-        <button type="button" class="btn-decline" id="adminSupportCallDeclineBtn">Dismiss</button>
+        <button type="button" class="btn-decline" id="adminSupportCallDeclineBtn">Decline</button>
         <button type="button" class="btn-accept"  id="adminSupportCallAcceptBtn">Accept</button>
     </div>
 </div>
@@ -153,6 +153,11 @@
     // a specific toast when a `support-claimed` event tells us another admin
     // won the race (prevents the toast from ringing forever on this screen).
     const pending = new Map(); // call_id → { signal, timeoutId }
+    // Calls this screen is done with (declined, accepted, timed out, claimed
+    // elsewhere). The /call/support-pending poll keeps returning a call until
+    // the server stops calling it "ringing", so without this a closed toast
+    // popped straight back up on the next poll.
+    const handled = new Set();
 
     const toast     = document.getElementById('adminSupportCallToast');
     const avatarEl  = document.getElementById('adminSupportCallAvatar');
@@ -188,6 +193,7 @@
     }
 
     function dismiss(callId) {
+        handled.add(callId);
         const entry = pending.get(callId);
         if (entry && entry.timeoutId) clearTimeout(entry.timeoutId);
         pending.delete(callId);
@@ -248,10 +254,29 @@
         }
     });
 
-    declineBtn.addEventListener('click', function () {
+    declineBtn.addEventListener('click', async function () {
         if (!activeCallId) return;
-        // Local dismiss only — other admins can still answer.
-        dismiss(activeCallId);
+        const callId = activeCallId;
+        // Close it here straight away; the server then ends the call for the
+        // caller ("support is busy") and for every other admin's toast. A 409
+        // just means it was already answered or hung up — nothing to undo.
+        dismiss(callId);
+        try {
+            const token = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+            await fetch({!! json_encode(route('call.support.decline')) !!}, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ call_id: callId }),
+            });
+        } catch (err) {
+            console.warn('[admin-support-call] decline failed', err);
+        }
     });
 
     function setStatus(color, label) {
@@ -297,8 +322,8 @@
         }
         if (!e.isSupport || !e.callId) return;
         // De-dupe: the socket (several bindings) and the poll can all
-        // deliver the same offer — ignore if we already have it.
-        if (pending.has(e.callId)) return;
+        // deliver the same offer — ignore if it's showing or already handled.
+        if (pending.has(e.callId) || handled.has(e.callId)) return;
 
         // Auto-expire the toast after 45 s if nobody answers (matches
         // the caller's own ringTimeout in webrtc-scripts).
