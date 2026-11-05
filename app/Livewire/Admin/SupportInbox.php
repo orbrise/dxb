@@ -1714,7 +1714,7 @@ class SupportInbox extends Component
                 ->orderBy('name')
                 ->get(['id', 'name', 'description']),
             'grokConfigured' => !empty(config('services.grok.api_key')),
-            'videoTrimAvailable' => VideoTrimmer::available(),
+            'videoTrim' => VideoTrimmer::status(),
         ])->layout('admin.layout.master-slot');
     }
 }

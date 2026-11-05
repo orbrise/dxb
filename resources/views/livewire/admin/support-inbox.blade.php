@@ -1171,6 +1171,12 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
     color: rgba(255,255,255,0.6); font-size: 12px; font-variant-numeric: tabular-nums;
 }
 .si-mpm-trim-times strong { color: #fff; font-size: 13px; font-weight: 600; }
+.si-mpm-trim-off {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    width: max-content; max-width: calc(100% - 32px); padding: 7px 12px; border-radius: 8px;
+    background: rgba(239,68,68,0.16); color: #fca5a5; font-size: 12px; line-height: 1.4; text-align: center;
+    overflow-wrap: anywhere;
+}
 .si-mpm-meta {
     position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
     display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px;
@@ -3850,8 +3856,10 @@ function siCaptureVideoThumbnail(file, timeoutMs = 1000, atSeconds = 0.1) {
 // inbox refreshes can't morph it away while it's open.
 const SI_MPM_MAX = 20;
 const SI_VIDEO_MAX_BYTES = 100 * 1024 * 1024;
-// Server has ffmpeg (App\Services\VideoTrimmer) — otherwise no trim bar.
-const SI_CAN_TRIM = @json($videoTrimAvailable);
+// Server has ffmpeg (App\Services\VideoTrimmer) — otherwise no trim bar, and
+// the preview says why so it can be fixed on the server.
+const SI_CAN_TRIM = @json($videoTrim['ok']);
+const SI_TRIM_OFF_REASON = @json($videoTrim['reason']);
 const SI_TRIM_MIN_SECONDS = 1;
 
 function siOpenMediaPreview(files) {
@@ -3964,6 +3972,12 @@ function siCreateMediaPreview() {
             if (SI_CAN_TRIM && item.duration > SI_TRIM_MIN_SECONDS + 0.5) {
                 body.classList.add('has-trim');
                 body.appendChild(siBuildTrimBar(item, media, updateMeta));
+            } else if (!SI_CAN_TRIM) {
+                const note = document.createElement('div');
+                note.className = 'si-mpm-trim-off';
+                note.textContent = 'Trimming is off on this server — '
+                    + (SI_TRIM_OFF_REASON || 'ffmpeg is not available').replace(/\.+\s*$/, '') + '. The video will be sent whole.';
+                body.appendChild(note);
             }
         };
         media.addEventListener('loadedmetadata', setup, { once: true });

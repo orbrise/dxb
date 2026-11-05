@@ -15,21 +15,29 @@ use RuntimeException;
  */
 class VideoTrimmer
 {
-    /**
-     * A working ffmpeg is remembered for a day; a failure only for a minute,
-     * so fixing the server (installing ffmpeg, allowing proc_open) shows up
-     * straight away. Each failure logs why the trim bar is hidden.
-     */
     public static function available(): bool
     {
+        return self::status()['ok'];
+    }
+
+    /**
+     * ['ok' => bool, 'reason' => ?string]. The reason is shown in the send
+     * preview so whoever runs the server can see why trimming is off. A
+     * working ffmpeg is remembered for a day; a failure only for a minute,
+     * so fixing the server (installing ffmpeg, allowing proc_open) shows up
+     * straight away.
+     */
+    public static function status(): array
+    {
         $cached = Cache::get('video-trimmer.available');
-        if ($cached !== null) {
-            return (bool) $cached;
+        if (is_array($cached)) {
+            return $cached;
         }
 
+        $binary = self::binary();
         $error = null;
         try {
-            $result = Process::timeout(10)->run([self::binary(), '-version']);
+            $result = Process::timeout(10)->run([$binary, '-version']);
             if (!$result->successful()) {
                 $error = trim($result->errorOutput()) ?: 'exit code ' . $result->exitCode();
             }
@@ -37,16 +45,15 @@ class VideoTrimmer
             $error = $e->getMessage();
         }
 
+        $status = ['ok' => $error === null, 'reason' => null];
         if ($error !== null) {
-            Log::warning('VideoTrimmer: ffmpeg not usable, trim bar hidden', [
-                'binary' => self::binary(),
-                'error' => mb_substr($error, 0, 500),
-            ]);
+            $status['reason'] = mb_substr("{$binary}: {$error}", 0, 300);
+            Log::warning('VideoTrimmer: ffmpeg not usable, trim bar hidden', ['reason' => $status['reason']]);
         }
 
-        Cache::put('video-trimmer.available', $error === null, $error === null ? now()->addDay() : now()->addMinute());
+        Cache::put('video-trimmer.available', $status, $status['ok'] ? now()->addDay() : now()->addMinute());
 
-        return $error === null;
+        return $status;
     }
 
     /**
@@ -84,6 +91,16 @@ class VideoTrimmer
 
     protected static function binary(): string
     {
-        return (string) config('services.ffmpeg.binary', 'ffmpeg');
+        $binary = (string) config('services.ffmpeg.binary', 'ffmpeg');
+
+        // "~/bin/ffmpeg" in .env: PHP doesn't expand ~ the way a shell does.
+        if (str_starts_with($binary, '~/')) {
+            $home = getenv('HOME') ?: (function_exists('posix_getpwuid') ? (posix_getpwuid(posix_geteuid())['dir'] ?? '') : '');
+            if ($home) {
+                $binary = rtrim($home, '/') . substr($binary, 1);
+            }
+        }
+
+        return $binary;
     }
 }
