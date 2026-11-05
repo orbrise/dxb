@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use RuntimeException;
 
@@ -14,15 +15,38 @@ use RuntimeException;
  */
 class VideoTrimmer
 {
+    /**
+     * A working ffmpeg is remembered for a day; a failure only for a minute,
+     * so fixing the server (installing ffmpeg, allowing proc_open) shows up
+     * straight away. Each failure logs why the trim bar is hidden.
+     */
     public static function available(): bool
     {
-        return Cache::remember('video-trimmer.available', now()->addHour(), function () {
-            try {
-                return Process::timeout(10)->run([self::binary(), '-version'])->successful();
-            } catch (\Throwable $e) {
-                return false;
+        $cached = Cache::get('video-trimmer.available');
+        if ($cached !== null) {
+            return (bool) $cached;
+        }
+
+        $error = null;
+        try {
+            $result = Process::timeout(10)->run([self::binary(), '-version']);
+            if (!$result->successful()) {
+                $error = trim($result->errorOutput()) ?: 'exit code ' . $result->exitCode();
             }
-        });
+        } catch (\Throwable $e) {
+            $error = $e->getMessage();
+        }
+
+        if ($error !== null) {
+            Log::warning('VideoTrimmer: ffmpeg not usable, trim bar hidden', [
+                'binary' => self::binary(),
+                'error' => mb_substr($error, 0, 500),
+            ]);
+        }
+
+        Cache::put('video-trimmer.available', $error === null, $error === null ? now()->addDay() : now()->addMinute());
+
+        return $error === null;
     }
 
     /**
