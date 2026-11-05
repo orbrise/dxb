@@ -176,4 +176,11 @@ return [
         'request_timeout' => (int) env('GROK_REQUEST_TIMEOUT', 30),
     ],
 
+    // ffmpeg trims videos sent from the support inbox (App\Services\VideoTrimmer).
+    // Without a working binary the trim bar is simply hidden. Set an absolute
+    // path when the web server's PATH doesn't include ffmpeg.
+    'ffmpeg' => [
+        'binary' => env('FFMPEG_BINARY', 'ffmpeg'),
+    ],
+
 ];

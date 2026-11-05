@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\NewChatMessage;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\VideoTrimmer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -67,6 +68,9 @@ class ChatMediaController extends Controller
             // can render them as one grid instead of N separate bubbles.
             // UUIDs are 36 chars with dashes; length-capped to be safe.
             'batch_id'        => 'nullable|string|max:36',
+            // Video trim range in seconds, from the send preview's trim bar.
+            'trim_start'      => 'nullable|numeric|min:0|required_with:trim_end',
+            'trim_end'        => 'nullable|numeric|required_with:trim_start|gt:trim_start',
         ];
         if ($isVoice) {
             $rules['duration'] = 'nullable|integer|min:1|max:600';
@@ -109,7 +113,13 @@ class ChatMediaController extends Controller
 
         try {
             if ($type === 'video') {
-                return $this->storeVideo($request, $conversation, $user, $upload, $mime, $size);
+                $trim = isset($data['trim_start'], $data['trim_end'])
+                    ? [(float) $data['trim_start'], (float) $data['trim_end']]
+                    : null;
+                if ($trim && !VideoTrimmer::available()) {
+                    return response()->json(['error' => 'trim_unavailable', 'detail' => "Video trimming isn't available on this server."], 422);
+                }
+                return $this->storeVideo($request, $conversation, $user, $upload, $mime, $size, trim((string)($data['message'] ?? '')), $trim);
             }
             if ($type === 'image') {
                 return $this->storeImage(
@@ -268,7 +278,7 @@ class ChatMediaController extends Controller
      * thumbnail. If R2 isn't configured (missing env vars), fall back to
      * local disk so the feature still works in dev without creds.
      */
-    protected function storeVideo(Request $request, Conversation $conversation, $user, $upload, string $mime, $size)
+    protected function storeVideo(Request $request, Conversation $conversation, $user, $upload, string $mime, $size, string $caption = '', ?array $trim = null)
     {
         $disk = $this->r2Available() ? 'r2' : 'public';
 
@@ -294,12 +304,32 @@ class ChatMediaController extends Controller
             return response()->json(['ok' => false, 'detail' => 'Upload path could not be resolved. Please retry.'], 500);
         }
 
+        // Trim bar in the send preview: store only the chosen range. The cut
+        // is always an MP4, whatever the source container was.
+        $trimmedPath = null;
+        if ($trim) {
+            @set_time_limit(300);
+            try {
+                $trimmedPath = VideoTrimmer::trim($sourcePath, $trim[0], $trim[1]);
+            } catch (\Throwable $e) {
+                Log::warning('storeVideo: trim failed', ['trim' => $trim, 'error' => $e->getMessage()]);
+                return response()->json(['ok' => false, 'detail' => 'The video could not be trimmed. Please try again.'], 500);
+            }
+            $sourcePath = $trimmedPath;
+            $mime = 'video/mp4';
+            $size = filesize($trimmedPath) ?: null;
+            $filename = Str::random(24) . '.mp4';
+            $key = "{$dir}/{$filename}";
+            $originalName = pathinfo($originalName, PATHINFO_FILENAME) . '.mp4';
+        }
+
         // Stream the uploaded file to the target disk. For 'public' the
         // Storage::putFileAs call writes under storage/app/public; for
         // 'r2' it pushes straight to the bucket.
         $stream = fopen($sourcePath, 'rb');
         if (!is_resource($stream)) {
             Log::warning('storeVideo: fopen failed', ['path' => $sourcePath]);
+            if ($trimmedPath) @unlink($trimmedPath);
             return response()->json(['ok' => false, 'detail' => 'Could not open uploaded video.'], 500);
         }
         try {
@@ -309,6 +339,7 @@ class ChatMediaController extends Controller
             ]);
         } finally {
             if (is_resource($stream)) fclose($stream);
+            if ($trimmedPath) @unlink($trimmedPath);
         }
 
         // Client-captured thumbnail is optional — if the browser couldn't
@@ -358,12 +389,13 @@ class ChatMediaController extends Controller
         // Client sends optional duration (seconds, from <video>.duration)
         // so the chat row shows it under the player without having to
         // decode server-side.
-        $duration = (int) $request->input('duration', 0);
+        $duration = $trim ? (int) round($trim[1] - $trim[0]) : (int) $request->input('duration', 0);
 
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id'       => $user->id,
-            'message'         => '',
+            // Caption from the send-preview popup; '' when none was typed.
+            'message'         => $caption,
             'status'          => 'sent',
             'attachment_path' => $key,
             'attachment_disk' => $disk,

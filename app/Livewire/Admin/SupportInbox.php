@@ -21,6 +21,7 @@ use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Services\GrokSupportBot;
 use App\Services\SupportAutoReply;
+use App\Services\VideoTrimmer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -45,6 +46,8 @@ class SupportInbox extends Component
     public string $settingsSection = '';
     public string $mediaType = 'media';
     public ?int $mediaConversationId = null;
+    // Phones show one pane at a time; this is the Media tab's "pane opened".
+    public bool $mediaPaneOpen = false;
     public int $mediaLimit = 60;
     public array $conversationMessages = [];
     public ?int $replyingToMessageId = null;
@@ -386,6 +389,7 @@ class SupportInbox extends Component
             $this->inboxTab = $tab;
             $this->starredViewOpen = false;
             $this->statusComposerOpen = false;
+            $this->mediaPaneOpen = false;
         }
     }
 
@@ -608,7 +612,17 @@ class SupportInbox extends Component
         if ($conversationId !== null && !Conversation::support()->whereKey($conversationId)->exists()) return;
 
         $this->mediaConversationId = $conversationId;
+        $this->mediaPaneOpen = true;
         $this->mediaLimit = 60;
+    }
+
+    /**
+     * Phone back arrow from the Media pane to its customer list. Desktop
+     * shows both panes, so the flag has no effect there.
+     */
+    public function closeMediaPane(): void
+    {
+        $this->mediaPaneOpen = false;
     }
 
     public function loadMoreMedia(): void
@@ -908,6 +922,21 @@ class SupportInbox extends Component
         $this->loadMessages();
         $this->markAsRead();
         $this->dispatch('message-received');
+    }
+
+    /**
+     * Phone back arrow from an open thread to the chat/calls list.
+     */
+    public function closeConversation(): void
+    {
+        $this->selectedConversationId = null;
+        $this->selectedCustomer = null;
+        $this->selectedCustomerCountry = '';
+        $this->conversationMessages = [];
+        $this->cancelReply();
+        $this->closeForward();
+        $this->dismissSuggestion();
+        $this->closeWalletTopup();
     }
 
     public function startReply(int $messageId): void
@@ -1685,6 +1714,7 @@ class SupportInbox extends Component
                 ->orderBy('name')
                 ->get(['id', 'name', 'description']),
             'grokConfigured' => !empty(config('services.grok.api_key')),
+            'videoTrimAvailable' => VideoTrimmer::available(),
         ])->layout('admin.layout.master-slot');
     }
 }

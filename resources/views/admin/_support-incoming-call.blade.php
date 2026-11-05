@@ -280,10 +280,13 @@
     });
 
     function setStatus(color, label) {
+        const pill = document.getElementById('adminSupportCallStatus');
         const dot = document.getElementById('adminSupportCallStatusDot');
         const lbl = document.getElementById('adminSupportCallStatusLabel');
         if (dot) dot.style.background = color;
         if (lbl) lbl.textContent = label;
+        // Lets a page hide the pill while all is well (the support inbox does on phones).
+        if (pill) pill.dataset.state = color === '#22c55e' ? 'live' : 'down';
     }
 
     // Calls reach this screen two ways: the Reverb socket (instant) and the

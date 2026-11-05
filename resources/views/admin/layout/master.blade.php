@@ -288,9 +288,9 @@ img.logo-expand {
     -webkit-overflow-scrolling: touch;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.4);
 }
-#mm-panel.mm-open { transform: translateX(0); }
+/* Shadow only while open — when parked off-screen it bled onto the page's left edge. */
+#mm-panel.mm-open { transform: translateX(0); box-shadow: 2px 0 12px rgba(0,0,0,0.4); }
 #mm-backdrop {
     display: none;
     position: fixed;

@@ -1113,6 +1113,384 @@
     background: none; border: none; color: #fff;
     font-size: 32px; cursor: pointer;
 }
+
+/* ---------- Photos & videos send preview (my-chat's .img-preview-modal) ----------
+   Appended to <body> by siOpenMediaPreview(), so not scoped under .s-modern.
+   Sits below the call UI (100040+) so a ringing call still shows on top. */
+.si-mpm { position: fixed; inset: 0; z-index: 100003; display: none; flex-direction: column; background: #0a0d0e; }
+.si-mpm.open { display: flex; }
+body.si-mpm-open #adminSupportCallStatus { display: none !important; }
+.si-mpm-topbar {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 18px 14px; color: #fff; background: #15191b;
+}
+.si-mpm-icon {
+    width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+    border: none; border-radius: 50%; background: transparent; color: #fff; cursor: pointer; transition: background 120ms;
+}
+.si-mpm-icon:hover { background: rgba(255,255,255,0.08); }
+.si-mpm-count { color: rgba(255,255,255,0.75); font-size: 14px; font-variant-numeric: tabular-nums; }
+.si-mpm-body {
+    position: relative; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center;
+    padding: 16px; overflow: hidden; background: #0a0d0e;
+}
+.si-mpm-stage { flex: 1 1 auto; align-self: stretch; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.si-mpm-stage > img,
+.si-mpm-stage > video { display: block; max-width: 100%; max-height: 100%; border-radius: 8px; object-fit: contain; background: #000; }
+/* Video with a trim bar: stack the player above the bar. */
+.si-mpm-body.has-trim { flex-direction: column; gap: 14px; padding-top: 56px; }
+
+/* ---- Trim bar (filmstrip + start/end handles) ---- */
+.si-mpm-trim { flex: 0 0 auto; width: min(760px, 100%); align-self: center; user-select: none; -webkit-user-select: none; }
+.si-mpm-strip { position: relative; height: 52px; margin: 0 14px; border-radius: 4px; background: #1f2427; touch-action: none; cursor: pointer; }
+.si-mpm-frames { position: absolute; inset: 0; display: flex; overflow: hidden; border-radius: 4px; }
+.si-mpm-frames img { flex: 1 1 0; min-width: 0; height: 100%; object-fit: cover; }
+.si-mpm-shade { position: absolute; top: 0; bottom: 0; background: rgba(6,8,9,.68); pointer-events: none; }
+.si-mpm-shade.start { left: 0; border-radius: 4px 0 0 4px; }
+.si-mpm-shade.end { right: 0; border-radius: 0 4px 4px 0; }
+.si-mpm-window { position: absolute; top: -3px; bottom: -3px; border-top: 3px solid #C1F11D; border-bottom: 3px solid #C1F11D; pointer-events: none; }
+.si-mpm-playhead {
+    position: absolute; top: -6px; bottom: -6px; width: 3px; margin-left: -1.5px;
+    border-radius: 2px; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,.6); pointer-events: none;
+}
+.si-mpm-handle {
+    position: absolute; top: -3px; bottom: -3px; width: 16px; padding: 0;
+    border: 0; background: #C1F11D; cursor: ew-resize; touch-action: none;
+}
+.si-mpm-handle.start { margin-left: -16px; border-radius: 6px 0 0 6px; }
+.si-mpm-handle.end { border-radius: 0 6px 6px 0; }
+/* Grip line in the middle of each handle. */
+.si-mpm-handle::after {
+    content: ""; position: absolute; top: 50%; left: 50%; width: 3px; height: 18px;
+    border-radius: 2px; background: #0a0d0e; transform: translate(-50%, -50%);
+}
+.si-mpm-handle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.si-mpm-handle.dragging { background: #d9ff4a; }
+.si-mpm-trim-times {
+    display: flex; align-items: center; justify-content: space-between; margin: 8px 14px 0;
+    color: rgba(255,255,255,0.6); font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.si-mpm-trim-times strong { color: #fff; font-size: 13px; font-weight: 600; }
+.si-mpm-meta {
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px;
+    background: rgba(21,25,27,0.85); color: rgba(255,255,255,0.85); font-size: 12.5px; font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+.si-mpm-thumbs {
+    flex: 0 0 auto; display: none; align-items: center; gap: 6px; padding: 8px 12px; overflow-x: auto;
+    border-top: 1px solid rgba(255,255,255,0.06); background: #15191b; scrollbar-width: thin;
+}
+.si-mpm-thumbs.open { display: flex; }
+.si-mpm-thumbs::-webkit-scrollbar { height: 4px; }
+.si-mpm-thumbs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.si-mpm-thumb {
+    position: relative; flex: 0 0 auto; width: 52px; height: 52px; padding: 0;
+    border: 2px solid transparent; border-radius: 6px; background: #000 center / cover no-repeat;
+    cursor: pointer; transition: border-color 120ms, transform 120ms;
+}
+.si-mpm-thumb:hover { transform: scale(1.05); }
+.si-mpm-thumb.active { border-color: #C1F11D; }
+/* Small play mark so videos read as videos in the strip. */
+.si-mpm-thumb.is-video::after {
+    content: ""; position: absolute; bottom: 4px; left: 5px;
+    border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid #fff;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,.8));
+}
+.si-mpm-thumb-add {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.65); font-size: 22px; font-weight: 300; line-height: 1;
+}
+.si-mpm-thumb-add:hover { background: rgba(255,255,255,0.16); color: #fff; }
+.si-mpm-footer {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(255,255,255,0.06); background: #15191b;
+}
+.si-mpm-caption {
+    flex: 1 1 auto; min-width: 0; padding: 12px 16px;
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; outline: none;
+    background: #0a0d0e; color: #fff; font-family: inherit; font-size: 14px;
+}
+.si-mpm-caption::placeholder { color: rgba(255,255,255,0.4); }
+.si-mpm-caption:focus { border-color: rgba(193,241,29,0.4); }
+.si-mpm-send {
+    flex: 0 0 auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
+    border: none; border-radius: 50%; background: #22c55e; color: #fff; cursor: pointer;
+    transition: background 120ms, transform 120ms;
+}
+.si-mpm-send:hover { background: #16a34a; transform: scale(1.05); }
+
+/* ---------- Phone-only pieces: hidden on desktop ---------- */
+.s-modern .si-time.is-unread { color: var(--sm-primary); font-weight: 600; }
+.s-modern .si-menu-btn,
+.s-modern .si-bottom-tab-label,
+.s-modern .si-head-more,
+.s-modern .si-wrap .si-mobile-only { display: none; }
+
+/* ---------- Phones: WhatsApp-style single pane ----------
+   The inbox becomes a full-screen app: the list (with a bottom tab bar), or
+   the opened chat / pane with a back arrow. .is-detail on .si-wrap is set by
+   the server render and flipped early by the JS for an instant feel. */
+@media (max-width: 767px) {
+    body { overflow: hidden; }
+    .s-modern > .page-title { display: none; }
+    /* The shell covers the admin chrome; the list header carries the menu button instead. */
+    #mm-btn { display: none !important; }
+    /* Call-listener pill: hidden while live, otherwise a centred "Connecting…" chip above the bars. */
+    #adminSupportCallStatus {
+        left: 50% !important; bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+        transform: translateX(-50%);
+    }
+    #adminSupportCallStatus[data-state="live"] { display: none !important; }
+    .s-modern > .si-broadcast-notice {
+        position: fixed; top: calc(70px + env(safe-area-inset-top, 0px)); right: 12px; left: 12px;
+        z-index: 1050; box-shadow: 0 8px 24px rgba(15, 23, 42, .18);
+    }
+
+    /* iOS Safari zooms into any field under 16px and never zooms back out. */
+    .s-modern input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    .s-modern select,
+    .s-modern textarea,
+    .si-stp-card input,
+    .si-mpm-caption { font-size: 16px !important; }
+    .s-modern .si-status-card textarea { font-size: inherit !important; }
+
+    .s-modern .si-wrap {
+        position: fixed; inset: 0; z-index: 1040;
+        height: auto; min-height: 0; gap: 0; background: #fff;
+    }
+    /* siTrackViewport() follows the visual viewport so the composer rides
+       above the on-screen keyboard instead of hiding behind it. */
+    html.si-vv .s-modern .si-wrap { top: var(--si-vv-top); bottom: auto; height: var(--si-vv-height); }
+    .s-modern .si-side,
+    .s-modern .si-main {
+        width: 100%; min-width: 0; flex: 1 1 auto;
+        border: 0; border-radius: 0; box-shadow: none;
+    }
+    .s-modern .si-main { display: none; }
+    .s-modern .si-wrap.is-detail .si-side { display: none; }
+    .s-modern .si-wrap.is-detail .si-main { display: flex; }
+    .s-modern .si-wrap .si-pane-back.si-mobile-only { display: inline-flex; }
+    .s-modern .si-wrap .si-desktop-only { display: none; }
+    /* Tapped a row: spinner over the pane until the server render lands. */
+    .s-modern .si-wrap.is-opening .si-main::after {
+        content: ""; position: absolute; inset: 0; z-index: 80;
+        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Ccircle cx='25' cy='25' r='20' fill='none' stroke='%236366f1' stroke-width='4' stroke-linecap='round' stroke-dasharray='90 40'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 25 25' to='360 25 25' dur='0.8s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") center / 34px no-repeat;
+    }
+    .s-modern .si-list,
+    .s-modern .si-msgs,
+    .s-modern .si-media-body,
+    .s-modern .si-pane-body,
+    .s-modern .si-starred-body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+
+    /* ----- List header ----- */
+    .s-modern .si-side-head { padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 10px 6px; border-bottom: 0; }
+    .s-modern .si-side-title { font-size: 21px !important; gap: 4px !important; letter-spacing: -.01em; }
+    .s-modern .si-side-icon { display: none; }
+    .s-modern .si-menu-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 42px; height: 42px; flex: none; padding: 0;
+        border: 0; border-radius: 50%; background: transparent;
+        color: var(--sm-slate-700); font-size: 19px; cursor: pointer;
+    }
+    .s-modern .si-menu-btn:active { background: var(--sm-slate-100); }
+    .s-modern .si-side-head > div:first-child > .si-badge { margin-right: 4px; }
+    .s-modern .si-side-head .si-search,
+    .s-modern .si-side-head .si-calls-paused { margin-left: 6px; width: calc(100% - 6px); }
+    .s-modern .si-search {
+        height: 42px; padding: 0 16px 0 42px;
+        border: 0; border-radius: 999px;
+        background: var(--sm-slate-100) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") 15px center / 17px no-repeat;
+    }
+    .s-modern .si-search:focus { background-color: #fff; box-shadow: 0 0 0 2px var(--sm-primary); }
+
+    /* ----- List rows ----- */
+    .s-modern .si-list { padding: 0 0 12px; }
+    .s-modern .si-item { position: relative; margin: 0; padding: 10px 16px; border-radius: 0; }
+    .s-modern .si-item::after {
+        content: ""; position: absolute; right: 0; bottom: 0; left: 80px;
+        height: 1px; background: var(--sm-slate-100);
+    }
+    .s-modern .si-item:last-child::after { display: none; }
+    .s-modern .si-item.active { background: transparent; box-shadow: none; }
+    .s-modern .si-item:active,
+    .s-modern .si-set-row:active,
+    .s-modern .si-status-me:active { background: var(--sm-slate-100); }
+    .s-modern .si-item .si-avatar,
+    .s-modern .si-item .si-status-thumb { width: 50px; height: 50px; margin-right: 14px; font-size: 18px; }
+    .s-modern .si-name { font-size: 16px; }
+    .s-modern .si-country-prefix { font-size: 11px; }
+    .s-modern .si-preview { margin-top: 2px; font-size: 14px; }
+    .s-modern .si-time { margin-bottom: 6px; font-size: 12px; }
+    .s-modern .si-meta .si-badge,
+    .s-modern .si-meta .si-view-tab-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 21px; height: 21px; padding: 0 6px; font-size: 11.5px;
+    }
+    .s-modern .si-status-me,
+    .s-modern .si-set-profile { padding: 10px 10px 14px; }
+    .s-modern .si-status-actions { padding: 0 10px 12px; }
+    .s-modern .si-set-row { margin: 0; padding: 13px 14px; border-radius: 0; }
+    .s-modern .si-set-row.active { background: transparent; box-shadow: none; }
+    .s-modern .si-set-row.active .si-set-row-icon { background: var(--sm-slate-100); color: var(--sm-slate-600); }
+    .s-modern .si-section-label,
+    .s-modern .si-status-hint { padding-right: 16px; padding-left: 16px; }
+
+    /* ----- Bottom tab bar (icon in a pill + label) ----- */
+    .s-modern .si-bottom-tabs {
+        padding: 4px 2px calc(4px + env(safe-area-inset-bottom, 0px));
+        border-top: 1px solid var(--sm-slate-200); background: #fff;
+    }
+    .s-modern .si-bottom-tab,
+    .s-modern .si-bottom-tab:hover,
+    .s-modern .si-bottom-tab.active {
+        flex: 1 1 0; width: auto; height: auto; min-width: 0;
+        flex-direction: column; gap: 5px; padding: 0 0 4px;
+        border-radius: 0; background: transparent; box-shadow: none;
+    }
+    .s-modern .si-bottom-tab { color: var(--sm-slate-500); }
+    .s-modern .si-bottom-tab.active { color: var(--sm-primary); }
+    .s-modern .si-bottom-tab::before {
+        content: ""; position: absolute; top: 3px; left: 50%;
+        width: 56px; height: 30px; margin-left: -28px;
+        border-radius: 999px; background: transparent; transition: background .15s;
+    }
+    .s-modern .si-bottom-tab.active::before { background: rgba(99, 102, 241, .13); }
+    .s-modern .si-bottom-tab svg { position: relative; width: 20px; height: 20px; margin-top: 8px; }
+    .s-modern .si-bottom-tab-label { display: block; font-size: 11.5px; font-weight: 500; line-height: 1.2; }
+    .s-modern .si-bottom-tab.active .si-bottom-tab-label { font-weight: 700; }
+    .s-modern .si-tab-badge { top: 0; right: auto; left: calc(50% + 6px); box-shadow: 0 0 0 2px #fff; }
+    .s-modern .si-tab-dot { top: 5px; right: auto; left: calc(50% + 10px); box-shadow: 0 0 0 2px #fff; }
+
+    /* ----- Shared pane header (chat, media, status, settings, starred) ----- */
+    .s-modern .si-head,
+    .s-modern .si-pane-head,
+    .s-modern .si-starred-head {
+        gap: 6px; padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 8px 4px;
+        background: #fff;
+    }
+    .s-modern .si-pane-back,
+    .s-modern .si-starred-back { width: 40px; height: 40px; font-size: 17px; }
+    .s-modern .si-pane-title { font-size: 16px; }
+    .s-modern .si-pane-sub { overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+    .s-modern .si-pane-head > div:not(.si-pane-head-actions) { flex: 1; min-width: 0; }
+
+    /* ----- Chat thread ----- */
+    .s-modern .si-head-who { flex: 1; min-width: 0; }
+    .s-modern .si-head-who > .si-avatar { width: 40px !important; height: 40px !important; flex: none; }
+    .s-modern .si-head-text { flex: 1; min-width: 0; }
+    .s-modern .si-head-name,
+    .s-modern .si-head-mail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .s-modern .si-head-name { font-size: 16px; }
+    .s-modern .si-head-name .si-country-prefix { display: none; }
+    .s-modern .si-head-actions { flex: none; gap: 0; }
+    .s-modern .si-hbtn,
+    .s-modern .si-hbtn:hover {
+        width: 40px; height: 40px; border: 0; background: transparent;
+        color: var(--sm-slate-700); font-size: 17px; transform: none;
+    }
+    .s-modern .si-hbtn:active { background: var(--sm-slate-100); }
+    .s-modern .si-head-actions .si-hbtn.pill { display: none; }
+    .s-modern .si-head-more { display: block; position: relative; }
+    .s-modern .si-head-more-menu {
+        display: none; position: absolute; top: 44px; right: 0; z-index: 70;
+        min-width: 210px; padding: 6px;
+        border: 1px solid var(--sm-slate-200); border-radius: 12px; background: #fff;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, .18);
+    }
+    .s-modern .si-head-more.open .si-head-more-menu { display: block; }
+    .s-modern .si-head-more-menu button {
+        display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px;
+        border: 0; border-radius: 8px; background: transparent;
+        color: var(--sm-slate-800); font: inherit; font-size: 15px; text-align: left; cursor: pointer;
+    }
+    .s-modern .si-head-more-menu button:active { background: var(--sm-slate-100); }
+    .s-modern .si-head-more-menu button i { width: 18px; color: var(--sm-slate-500); text-align: center; }
+    .s-modern .si-head-more-menu button.danger,
+    .s-modern .si-head-more-menu button.danger i { color: #b91c1c; }
+    .s-modern .si-wrap .si-mobile-only.si-head-flag {
+        display: flex; flex: none; align-items: center; gap: 8px; padding: 7px 14px;
+        border-bottom: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; font-size: 12.5px;
+    }
+
+    .s-modern .si-msgs { padding: 10px 10px 14px; gap: 4px; }
+    .s-modern .si-bub { max-width: 85%; font-size: 15px; }
+    .s-modern .si-msg-image { max-width: min(260px, 68vw); }
+    .s-modern .si-msg.media video { max-width: min(260px, 68vw) !important; }
+    .s-modern .si-msg-voice { min-width: 0; width: min(300px, 72vw); }
+    .s-modern .si-msg-file { min-width: 0; }
+    .s-modern .si-call { min-width: 0; }
+    .s-modern .si-wallet-receipt { min-width: 0; }
+
+    /* ----- Composer: pill input, round mic/send button ----- */
+    .s-modern .si-input {
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+        border-top: 0; background: var(--sm-slate-100);
+    }
+    .s-modern .si-input form { gap: 4px !important; }
+    .s-modern .si-input textarea {
+        min-height: 44px; padding: 11px 16px;
+        border: 0; border-radius: 22px; background: #fff; line-height: 1.35;
+    }
+    .s-modern .si-input textarea:focus { background: #fff; box-shadow: none; }
+    .s-modern .si-input .si-att-btn,
+    .s-modern .si-input .si-suggest-btn { width: 40px; height: 40px; flex: none; font-size: 18px; }
+    .s-modern .si-input .si-att-btn { color: var(--sm-slate-600); }
+    .s-modern .si-input .si-mic-btn,
+    .s-modern .si-input .si-mic-btn:hover,
+    .s-modern .si-input button[type="submit"] {
+        width: 46px; height: 46px; flex: none; border-radius: 50%; font-size: 17px;
+        background: linear-gradient(180deg, var(--sm-primary) 0%, var(--sm-primary-dark) 100%);
+        color: #fff; box-shadow: 0 3px 8px rgba(99, 102, 241, .25);
+    }
+    .s-modern .si-input .si-mic-btn.recording { background: var(--sm-danger); }
+    /* WhatsApp swap: mic while the box is empty, send once there's text. */
+    .s-modern .si-input textarea:placeholder-shown ~ button[type="submit"],
+    .s-modern .si-input textarea:not(:placeholder-shown) ~ .si-mic-btn { display: none; }
+    .s-modern .si-attach-menu { bottom: 50px; min-width: 220px; }
+    .s-modern .si-attach-menu button { padding: 12px; font-size: 15px; }
+    .s-modern .si-qr-menu { right: 8px; left: 8px; max-height: 50vh; }
+    .s-modern .si-qr-menu-head small { display: none; }
+    .s-modern .si-suggest-menu { right: -50px; }
+    .s-modern .si-suggest-chip { margin: 0 8px 8px; }
+    .s-modern .si-att-preview,
+    .s-modern .si-reply-composer { padding-right: 12px; padding-left: 12px; }
+
+    /* ----- Media ----- */
+    .s-modern .si-media-tabs { padding: 2px 8px 0; overflow-x: auto; scrollbar-width: none; }
+    .s-modern .si-media-tabs::-webkit-scrollbar { display: none; }
+    .s-modern .si-media-tab { flex: none; padding: 10px 10px 12px; }
+    .s-modern .si-media-body { padding: 0 6px 16px; }
+    .s-modern .si-media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+    .s-modern .si-media-tile { border-radius: 4px; }
+    .s-modern .si-media-row { padding: 12px; }
+
+    /* ----- Status ----- */
+    .s-modern .si-status-body { flex-direction: column; }
+    .s-modern .si-status-stage { flex: 1 1 auto; padding: 16px; }
+    .s-modern .si-status-stage img,
+    .s-modern .si-status-stage video { max-height: 52vh; }
+    .s-modern .si-status-card { width: min(300px, 100%); }
+    .s-modern .si-status-viewers { width: auto; max-height: 38%; border-top: 1px solid var(--sm-slate-100); border-left: 0; }
+
+    /* ----- Settings ----- */
+    .s-modern .si-pane-body { padding: 16px 14px calc(24px + env(safe-area-inset-bottom, 0px)); }
+    .s-modern .si-set-card { gap: 12px; padding: 14px; }
+    .s-modern .si-blocked-row { flex-wrap: wrap; }
+    .s-modern .si-qr-badge { max-width: 110px; }
+
+    /* ----- Dialogs become bottom sheets ----- */
+    .s-modern .si-modal { align-items: flex-end; padding: 0; }
+    .s-modern .si-modal-card,
+    .s-modern .si-modal-card.si-broadcast-card {
+        width: 100% !important; max-width: none !important; max-height: 92vh; max-height: 92dvh;
+        overflow-y: auto; overscroll-behavior: contain;
+        padding: 20px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+        border-radius: 18px 18px 0 0;
+    }
+    .s-modern .si-modal-actions button { padding: 11px 18px; font-size: 14px; }
+}
 </style>
 @endpush
 
@@ -1134,7 +1512,17 @@
         <div class="si-broadcast-notice" role="status">{{ session('broadcast-success') }}</div>
     @endif
 
-    <div class="si-wrap">
+    @php
+        // Phones show one pane at a time, WhatsApp-style: the list, or — once
+        // something is opened from it — the right-hand pane with a back arrow.
+        $siDetailOpen = $starredViewOpen || match ($inboxTab) {
+            'media' => $mediaPaneOpen,
+            'status' => $statusComposerOpen || $selectedStatus,
+            'settings' => $settingsSection !== '',
+            default => $selectedConversationId && $selectedCustomer,
+        };
+    @endphp
+    <div class="si-wrap {{ $siDetailOpen ? 'is-detail' : '' }}">
         {{-- Left: conversation list --}}
         <div class="si-side">
             @php
@@ -1149,8 +1537,12 @@
             @endphp
             <div class="si-side-head">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:{{ in_array($inboxTab, ['status', 'settings'], true) ? '0' : '8px' }};">
-                    <div style="color: var(--sm-slate-800); font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px;">
-                        <i class="fa {{ $sideIcon }}" style="color: var(--sm-primary);"></i>
+                    <div class="si-side-title" style="color: var(--sm-slate-800); font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                        {{-- Phones only: the inbox covers the admin chrome, so it carries the menu button. --}}
+                        <button type="button" class="si-menu-btn" onclick="document.getElementById('mm-btn')?.click()" aria-label="Open admin menu" title="Menu">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <i class="fa {{ $sideIcon }} si-side-icon" style="color: var(--sm-primary);"></i>
                         {{ $sideTitle }}
                         {{-- wire:ignore: siInit() flips offline→online client-side; without it every re-render morphs the class back to offline. --}}
                         <span id="si-conn" class="si-conn offline" wire:ignore><i class="fa fa-circle"></i></span>
@@ -1174,7 +1566,7 @@
                 @if($inboxTab === 'chat')
                     @forelse($conversations as $c)
                         <div class="si-item {{ $selectedConversationId == $c['id'] ? 'active' : '' }}"
-                             wire:click="selectConversation({{ $c['id'] }})"
+                             wire:click="selectConversation({{ $c['id'] }})" data-si-open
                              wire:key="si-{{ $c['id'] }}">
                             <div class="si-avatar">
                                 {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
@@ -1194,7 +1586,7 @@
                             </div>
                             <div class="si-meta">
                                 @if($c['last_message_at'])
-                                    <div class="si-time">{{ \Carbon\Carbon::parse($c['last_message_at'])->diffForHumans(null, true) }}</div>
+                                    <div class="si-time {{ $c['unread_count'] > 0 ? 'is-unread' : '' }}">{{ \Carbon\Carbon::parse($c['last_message_at'])->diffForHumans(null, true) }}</div>
                                 @endif
                                 @if($c['unread_count'] > 0)
                                     <span class="si-badge">{{ $c['unread_count'] }}</span>
@@ -1221,7 +1613,7 @@
                             };
                         @endphp
                         <div class="si-item {{ $selectedConversationId == $call['conversation_id'] ? 'active' : '' }} {{ $call['is_unanswered'] ? 'si-call-row-unanswered' : '' }}"
-                             wire:click="selectConversation({{ $call['conversation_id'] }})"
+                             wire:click="selectConversation({{ $call['conversation_id'] }})" data-si-open
                              wire:key="si-call-row-{{ $call['id'] }}">
                             <div class="si-avatar">
                                 {{ strtoupper(substr($call['customer_name'], 0, 1)) }}
@@ -1251,7 +1643,7 @@
                     @endforelse
                 @elseif($inboxTab === 'status')
                     @php $me = auth()->user(); @endphp
-                    <button type="button" class="si-status-me"
+                    <button type="button" class="si-status-me" data-si-open
                             @if($myStatuses->isNotEmpty()) wire:click="viewStatus({{ $myStatuses->first()->id }})" @else wire:click="openStatusComposer" @endif>
                         <span class="si-status-me-avatar {{ $myStatuses->isNotEmpty() ? 'has-status' : '' }}">
                             <span class="si-avatar">
@@ -1276,13 +1668,13 @@
                     </button>
                     <div class="si-status-actions">
                         <button type="button" class="si-set-btn" data-si-status-pick><i class="fa fa-image"></i> Photo / video</button>
-                        <button type="button" class="si-set-btn" wire:click="openStatusComposer"><i class="fa fa-font"></i> Text</button>
+                        <button type="button" class="si-set-btn" wire:click="openStatusComposer" data-si-open><i class="fa fa-font"></i> Text</button>
                     </div>
                     @if($myStatuses->isNotEmpty())
                         <div class="si-section-label">Your updates</div>
                         @foreach($myStatuses as $status)
                             <div class="si-item {{ $selectedStatusId === $status->id ? 'active' : '' }}"
-                                 wire:click="viewStatus({{ $status->id }})" wire:key="si-status-{{ $status->id }}">
+                                 wire:click="viewStatus({{ $status->id }})" data-si-open wire:key="si-status-{{ $status->id }}">
                                 <div class="si-status-thumb" @if($status->type === 'text') style="background: {{ $status->background_color ?: '#075E54' }};" @endif>
                                     @if($status->type === 'photo')
                                         <img src="{{ route('status.media', $status->id) }}" alt="">
@@ -1310,7 +1702,7 @@
                 @elseif($inboxTab === 'media')
                     {{-- Customer filter for the media pane on the right. --}}
                     <div class="si-item {{ $mediaConversationId === null ? 'active' : '' }}"
-                         wire:click="setMediaConversation" wire:key="si-media-all">
+                         wire:click="setMediaConversation" data-si-open wire:key="si-media-all">
                         <div class="si-avatar"><i class="fa fa-images"></i></div>
                         <div class="si-info">
                             <div class="si-name">All customers</div>
@@ -1320,7 +1712,7 @@
                     </div>
                     @foreach($conversations->filter(fn ($c) => ($mediaConversationCounts[$c['id']] ?? 0) > 0) as $c)
                         <div class="si-item {{ $mediaConversationId == $c['id'] ? 'active' : '' }}"
-                             wire:click="setMediaConversation({{ $c['id'] }})"
+                             wire:click="setMediaConversation({{ $c['id'] }})" data-si-open
                              wire:key="si-media-conv-{{ $c['id'] }}">
                             <div class="si-avatar">
                                 {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
@@ -1340,7 +1732,7 @@
                     @endforeach
                 @else
                     @php $me = auth()->user(); @endphp
-                    <button type="button" class="si-set-profile is-link" wire:click="setSettingsSection('account')" title="Edit your profile">
+                    <button type="button" class="si-set-profile is-link" wire:click="setSettingsSection('account')" data-si-open title="Edit your profile">
                         <span class="si-avatar">
                             @if($meAvatarUrl)
                                 <img src="{{ $meAvatarUrl }}" alt="">
@@ -1366,7 +1758,7 @@
                     @foreach($settingsItems as $item)
                         {{-- Quick / auto replies live under Business tools, so keep that row lit. --}}
                         <button type="button" class="si-set-row {{ ($settingsSection === $item['id'] || ($item['id'] === 'tools' && in_array($settingsSection, ['quick-replies', 'auto-reply'], true))) && !$starredViewOpen ? 'active' : '' }}"
-                                wire:click="setSettingsSection('{{ $item['id'] }}')" wire:key="si-set-{{ $item['id'] }}">
+                                wire:click="setSettingsSection('{{ $item['id'] }}')" data-si-open wire:key="si-set-{{ $item['id'] }}">
                             <span class="si-set-row-icon"><i class="fa {{ $item['icon'] }}"></i></span>
                             <span class="si-set-row-body">
                                 <span class="si-set-row-title">{{ $item['title'] }}</span>
@@ -1375,7 +1767,7 @@
                             <i class="fa fa-angle-right si-set-row-arrow"></i>
                         </button>
                     @endforeach
-                    <button type="button" class="si-set-row {{ $starredViewOpen ? 'active' : '' }}" wire:click="openStarredView" wire:key="si-set-starred">
+                    <button type="button" class="si-set-row {{ $starredViewOpen ? 'active' : '' }}" wire:click="openStarredView" data-si-open wire:key="si-set-starred">
                         <span class="si-set-row-icon"><i class="fa fa-star"></i></span>
                         <span class="si-set-row-body">
                             <span class="si-set-row-title">Starred messages</span>
@@ -1394,6 +1786,7 @@
                         <path d="M1.53846 16.8005L4.26683 14.6154H16.9231C17.3311 14.6154 17.7224 14.4533 18.0109 14.1648C18.2995 13.8763 18.4615 13.485 18.4615 13.077V3.07695C18.4615 2.66893 18.2995 2.27761 18.0109 1.9891C17.7224 1.70058 17.3311 1.53849 16.9231 1.53849H3.07692C2.6689 1.53849 2.27758 1.70058 1.98907 1.9891C1.70055 2.27761 1.53846 2.66893 1.53846 3.07695V16.8005ZM4.80769 16.1539L1.25 19C1.13684 19.0906 1.00038 19.1474 0.856346 19.1638C0.712315 19.1803 0.566576 19.1556 0.435927 19.0928C0.305279 19.03 0.195037 18.9316 0.11791 18.8088C0.0407831 18.6861 -9.05108e-05 18.544 1.50494e-07 18.3991V3.07695C1.50494e-07 2.2609 0.324175 1.47828 0.90121 0.90124C1.47825 0.324205 2.26087 3.05176e-05 3.07692 3.05176e-05H16.9231C17.7391 3.05176e-05 18.5218 0.324205 19.0988 0.90124C19.6758 1.47828 20 2.2609 20 3.07695V13.077C20 13.893 19.6758 14.6756 19.0988 15.2527C18.5218 15.8297 17.7391 16.1539 16.9231 16.1539H4.80769Z" fill="currentColor"/>
                         <path d="M6.154 9.2308H13.8463C14.3591 9.2308 14.6155 9.48721 14.6155 10C14.6155 10.5129 14.3591 10.7693 13.8463 10.7693H6.154C5.64118 10.7693 5.38477 10.5129 5.38477 10C5.38477 9.48721 5.64118 9.2308 6.154 9.2308ZM6.154 4.61542H13.8463C14.3591 4.61542 14.6155 4.87183 14.6155 5.38465C14.6155 5.89747 14.3591 6.15388 13.8463 6.15388H6.154C5.64118 6.15388 5.38477 5.89747 5.38477 5.38465C5.38477 4.87183 5.64118 4.61542 6.154 4.61542Z" fill="currentColor"/>
                     </svg>
+                    <span class="si-bottom-tab-label">Chats</span>
                     @if($unansweredChatCount > 0)<span class="si-tab-badge">{{ $unansweredChatCount }}</span>@endif
                 </button>
                 <button type="button" class="si-bottom-tab {{ $inboxTab === 'calls' ? 'active' : '' }}" wire:click="setInboxTab('calls')"
@@ -1401,6 +1794,7 @@
                     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M18.1891 14.8547C17.502 14.1624 15.8378 13.1521 15.0304 12.745C13.979 12.2154 13.8924 12.1721 13.0659 12.7861C12.5147 13.1958 12.1482 13.5619 11.503 13.4243C10.8579 13.2867 9.45591 12.5109 8.22833 11.2873C7.00075 10.0637 6.17991 8.62116 6.04188 7.9782C5.90385 7.33525 6.27597 6.9731 6.68185 6.42058C7.25388 5.64177 7.21061 5.51196 6.72166 4.46057C6.34045 3.64281 5.30066 1.99433 4.60574 1.3107C3.86236 0.576455 3.86236 0.706257 3.38336 0.905287C2.99338 1.06932 2.61925 1.26875 2.26568 1.50108C1.57336 1.96101 1.18912 2.34306 0.920411 2.91722C0.651703 3.49138 0.530979 4.83743 1.91866 7.35818C3.30633 9.87894 4.27992 11.1679 6.29501 13.1772C8.31011 15.1865 9.85962 16.2669 12.1248 17.5373C14.927 19.1066 16.0018 18.8007 16.5778 18.5324C17.1537 18.2642 17.5375 17.8834 17.9983 17.1911C18.2313 16.8382 18.4312 16.4645 18.5955 16.0748C18.7949 15.5976 18.9247 15.5976 18.1891 14.8547Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10"/>
                     </svg>
+                    <span class="si-bottom-tab-label">Calls</span>
                     @if($unansweredCallsCount > 0)<span class="si-tab-badge">{{ $unansweredCallsCount }}</span>@endif
                 </button>
                 <button type="button" class="si-bottom-tab {{ $inboxTab === 'status' ? 'active' : '' }}" wire:click="setInboxTab('status')"
@@ -1408,18 +1802,21 @@
                     <svg viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M18.5694 6.81786L18.5877 6.87039L18.6553 7.09736L18.7119 7.30107L18.7361 7.3941L18.7756 7.56252C19.2889 9.90945 18.9143 12.3661 17.7257 14.4465C16.5398 16.5334 14.6229 18.0922 12.3556 18.8135L12.1957 18.8616L11.9994 18.9129L11.7156 18.9811C11.6154 19.0042 11.5116 19.0062 11.4106 18.9868C11.3096 18.9674 11.2136 18.9272 11.1286 18.8686C11.0437 18.8099 10.9715 18.7342 10.9167 18.6461C10.862 18.5579 10.8257 18.4593 10.8102 18.3563C10.7784 18.145 10.826 17.9292 10.9437 17.7518C11.0614 17.5744 11.2406 17.4482 11.4457 17.3983L11.6741 17.3402C11.8166 17.3022 11.9391 17.2657 12.0417 17.2307C13.8626 16.6077 15.3964 15.3325 16.3549 13.6445C17.319 11.9578 17.6416 9.97224 17.2619 8.06137L17.2346 7.93586L17.1982 7.78949L17.1527 7.62187L17.0981 7.4334C17.0369 7.22781 17.0542 7.00643 17.1466 6.81316C17.239 6.6199 17.3996 6.46886 17.5967 6.38999C17.6883 6.35332 17.7861 6.33531 17.8846 6.33697C17.9831 6.33863 18.0802 6.35994 18.1706 6.39967C18.2609 6.43941 18.3426 6.49679 18.4111 6.56855C18.4795 6.6403 18.5333 6.72502 18.5694 6.81786ZM1.33976 6.38398C1.35691 6.38932 1.37379 6.39521 1.39041 6.40162C1.58708 6.47929 1.74777 6.62899 1.84064 6.82106C1.93351 7.01313 1.95177 7.23354 1.89181 7.43861C1.82058 7.68162 1.76913 7.88386 1.73748 8.04533C1.35944 9.95468 1.6824 11.9382 2.6457 13.6233C3.60507 15.3128 5.14069 16.5887 6.96361 17.2111L7.0847 17.25L7.15356 17.27L7.3079 17.3125L7.58254 17.3811C7.78887 17.4302 7.96943 17.5562 8.0884 17.7339C8.20737 17.9117 8.25607 18.1283 8.22483 18.3407C8.19551 18.5399 8.08933 18.7191 7.92962 18.839C7.76992 18.9588 7.56977 19.0095 7.3732 18.9799L7.31858 18.9699L7.09064 18.9157L6.88881 18.8636L6.71231 18.8135L6.63316 18.7894C4.37043 18.0662 2.45806 16.5086 1.27446 14.4249C0.0837235 12.3408 -0.290189 9.87928 0.226939 7.52884L0.257411 7.40052L0.296985 7.25014L0.373758 6.98348L0.403835 6.88323C0.432902 6.78814 0.48017 6.69979 0.542939 6.62322C0.605707 6.54665 0.682747 6.48335 0.769658 6.43696C0.856569 6.39056 0.951649 6.36196 1.04947 6.3528C1.14729 6.34364 1.24593 6.3545 1.33976 6.38398ZM9.5181 3.20803C13.0152 3.20803 15.8499 6.08042 15.8499 9.62408C15.8499 13.1677 13.0152 16.0401 9.5181 16.0401C6.02096 16.0401 3.18628 13.1677 3.18628 9.62408C3.18628 6.08042 6.02135 3.20803 9.5181 3.20803ZM9.5181 4.81204C6.89554 4.81204 4.76923 6.96663 4.76923 9.62408C4.76923 12.2815 6.89554 14.4361 9.5181 14.4361C12.1411 14.4361 14.267 12.2815 14.267 9.62408C14.267 6.96663 12.1411 4.81204 9.5181 4.81204ZM9.5181 7.22374e-06C11.8947 -0.00294597 14.1855 0.899685 15.9358 2.52873L16.0304 2.61976L16.1392 2.72964L16.2619 2.85876L16.3988 3.00673C16.4687 3.08311 16.5222 3.17326 16.5562 3.27155C16.5901 3.36984 16.6037 3.47417 16.5961 3.57801C16.5885 3.68186 16.5598 3.78301 16.5119 3.87514C16.464 3.96727 16.3979 4.04841 16.3177 4.1135C16.153 4.24723 15.9447 4.31337 15.7341 4.29881C15.5235 4.28426 15.326 4.19006 15.1807 4.0349C15.0947 3.94267 15.0149 3.8602 14.9413 3.78748L14.8028 3.65355L14.7395 3.5962C13.2967 2.30971 11.44 1.60129 9.5181 1.60402C7.59446 1.60119 5.73612 2.31084 4.29276 3.59941L4.24765 3.64031L4.14753 3.73655L4.03395 3.85084L3.83806 4.05736C3.5373 4.38177 3.04104 4.41826 2.69714 4.14157C2.62002 4.07953 2.55572 4.0027 2.50791 3.91546C2.4601 3.82823 2.42972 3.73231 2.41851 3.63317C2.4073 3.53404 2.41548 3.43364 2.44258 3.33771C2.46968 3.24178 2.51517 3.15221 2.57644 3.0741L2.61206 3.03159L2.77233 2.85876L2.91797 2.70718C2.98709 2.63687 3.05093 2.57471 3.1095 2.52071C4.8586 0.896831 7.14546 -0.00272003 9.51771 7.22374e-06" fill="currentColor"/>
                     </svg>
+                    <span class="si-bottom-tab-label">Status</span>
                 </button>
                 <button type="button" class="si-bottom-tab {{ $inboxTab === 'media' ? 'active' : '' }}" wire:click="setInboxTab('media')"
                         data-si-tab role="tab" aria-selected="{{ $inboxTab === 'media' ? 'true' : 'false' }}" title="Media" aria-label="Media">
                     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M12.3006 12.4248C12.9348 12.4248 13.5247 12.3081 14.0701 12.0748C14.6156 11.8415 15.1058 11.5188 15.5408 11.1068C15.905 10.7606 16.2053 10.368 16.4418 9.92906C16.6784 9.49011 16.8422 9.01713 16.9332 8.51014C16.9705 8.35759 16.9354 8.22411 16.828 8.1097C16.7213 7.99529 16.5892 7.94967 16.4318 7.97286C15.9177 8.03268 15.4341 8.17476 14.9812 8.39909C14.5283 8.62343 14.1197 8.90908 13.7556 9.25605C13.3266 9.66733 12.9863 10.144 12.7348 10.6862C12.4834 11.2283 12.3386 11.8079 12.3006 12.4248ZM12.3006 12.4248C12.2632 11.8079 12.1189 11.2283 11.8674 10.6862C11.6159 10.144 11.2753 9.66733 10.8455 9.25605C10.4814 8.90983 10.0728 8.62455 9.61991 8.40021C9.16698 8.17588 8.68383 8.03343 8.17046 7.97286C8.01227 7.94967 7.87982 7.99529 7.77312 8.1097C7.66642 8.22411 7.63172 8.35759 7.66903 8.51014C7.7623 9.01713 7.93019 9.49011 8.1727 9.92906C8.41521 10.368 8.71853 10.7606 9.08266 11.1068C9.51172 11.5181 9.99673 11.8408 10.5377 12.0748C11.0787 12.3089 11.6663 12.4255 12.3006 12.4248ZM12.3006 9.05976C12.6177 9.05976 12.8837 8.95245 13.0986 8.73784C13.3135 8.52322 13.4206 8.25664 13.4198 7.93808V7.65767L13.6996 7.76983C13.9795 7.882 14.2641 7.91004 14.5536 7.85396C14.8432 7.79787 15.0622 7.63897 15.2107 7.37725C15.3785 7.09683 15.4345 6.79772 15.3785 6.47991C15.3226 6.1621 15.136 5.93851 14.8189 5.80915L14.5391 5.69922L14.8189 5.58818C15.136 5.45881 15.3215 5.23298 15.3752 4.91069C15.4297 4.58764 15.3748 4.28816 15.2107 4.01223C15.0577 3.74602 14.8447 3.58263 14.5716 3.52205C14.2984 3.46148 14.0078 3.49401 13.6996 3.61964L13.4198 3.73181V3.45139C13.4198 3.13358 13.3127 2.86737 13.0986 2.65276C12.8844 2.43814 12.6184 2.33046 12.3006 2.32972C11.9827 2.32897 11.717 2.43665 11.5036 2.65276C11.2902 2.86887 11.1828 3.13508 11.1813 3.45139V3.73181L10.9015 3.61964C10.5933 3.49252 10.3027 3.45962 10.0296 3.52093C9.75721 3.58225 9.54455 3.74602 9.39158 4.01223C9.22742 4.28891 9.1722 4.58802 9.22593 4.90956C9.27965 5.23261 9.46508 5.45881 9.78221 5.58818L10.062 5.69922L9.78221 5.80915C9.46508 5.93851 9.27853 6.1621 9.22257 6.47991C9.16661 6.79772 9.22257 7.09683 9.39046 7.37725C9.5397 7.63897 9.75907 7.79787 10.0486 7.85396C10.3381 7.91004 10.6224 7.882 10.9015 7.76983L11.1813 7.65767V7.93808C11.1813 8.25589 11.2887 8.52248 11.5036 8.73784C11.7185 8.9532 11.9842 9.0605 12.3006 9.05976ZM12.3006 6.81641C11.9834 6.81641 11.7178 6.7091 11.5036 6.49449C11.2895 6.27988 11.182 6.01329 11.1813 5.69474C11.1805 5.37618 11.288 5.10997 11.5036 4.8961C11.7193 4.68224 11.9849 4.57456 12.3006 4.57306C12.6162 4.57157 12.8822 4.67925 13.0986 4.8961C13.315 5.11296 13.4221 5.37917 13.4198 5.69474C13.4176 6.0103 13.3105 6.27689 13.0986 6.49449C12.8867 6.71209 12.6207 6.8194 12.3006 6.81641ZM6.74115 15.1C6.22629 15.1 5.79612 14.9269 5.45064 14.5806C5.10516 14.2344 4.93279 13.8033 4.93354 13.2873V1.81262C4.93354 1.29591 5.1059 0.86481 5.45064 0.519335C5.79537 0.173859 6.22554 0.000747782 6.74115 0H18.1913C18.7069 0 19.137 0.173112 19.4818 0.519335C19.8265 0.865558 19.9993 1.29665 20 1.81262V13.2873C20 13.8033 19.8273 14.2344 19.4818 14.5806C19.1363 14.9269 18.7061 15.1 18.1913 15.1H6.74115ZM6.74115 13.9783H18.1913C18.3927 13.9783 18.558 13.9136 18.6871 13.7842C18.8162 13.6549 18.8807 13.4892 18.8807 13.2873V1.81262C18.8807 1.61072 18.8162 1.44509 18.6871 1.31572C18.558 1.18636 18.3931 1.12167 18.1924 1.12167H6.74115C6.53969 1.12167 6.37478 1.18636 6.24644 1.31572C6.11735 1.44509 6.0528 1.61072 6.0528 1.81262V13.2873C6.0528 13.4892 6.11735 13.6549 6.24644 13.7842C6.37553 13.9136 6.54043 13.9783 6.74115 13.9783ZM3.41245 19.9849C2.91102 20.0454 2.46331 19.9243 2.06933 19.6214C1.67535 19.3186 1.44851 18.917 1.38882 18.4168L0.0143553 7.52194C-0.0453389 7.02018 0.0811383 6.5659 0.393787 6.15911C0.706436 5.75157 1.1131 5.52275 1.61379 5.47265L2.10067 5.45021C2.25961 5.4375 2.40026 5.48237 2.52263 5.58481C2.64575 5.68726 2.70731 5.8241 2.70731 5.99535C2.70731 6.13892 2.65956 6.26679 2.56405 6.37896C2.46854 6.49113 2.35288 6.55357 2.21707 6.56628L1.78056 6.58759C1.57909 6.60254 1.4209 6.68517 1.30599 6.83548C1.19108 6.98653 1.14817 7.16263 1.17727 7.36379L2.51592 18.2665C2.54427 18.4676 2.63008 18.6258 2.77335 18.7409C2.91736 18.8561 3.08973 18.8991 3.29045 18.8699L16.4676 17.2211C16.6273 17.1986 16.7683 17.2341 16.8907 17.3276C17.013 17.4211 17.0839 17.5478 17.1033 17.7079C17.1257 17.8671 17.0903 18.0036 16.997 18.1173C16.9037 18.2309 16.7776 18.2971 16.6187 18.3158L3.41245 19.9849Z" fill="currentColor"/>
                     </svg>
+                    <span class="si-bottom-tab-label">Media</span>
                 </button>
                 <button type="button" class="si-bottom-tab {{ $inboxTab === 'settings' ? 'active' : '' }}" wire:click="setInboxTab('settings')"
                         data-si-tab role="tab" aria-selected="{{ $inboxTab === 'settings' ? 'true' : 'false' }}" title="Settings" aria-label="Settings">
                     <svg viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M17.7623 11.9151L16.3723 10.7275C16.4381 10.3245 16.4721 9.91313 16.4721 9.50172C16.4721 9.09031 16.4381 8.67889 16.3723 8.27597L17.7623 7.08838C17.8672 6.99869 17.9422 6.87923 17.9775 6.74589C18.0127 6.61255 18.0065 6.47164 17.9597 6.3419L17.9406 6.28676C17.5579 5.21799 16.9849 4.22722 16.2492 3.36234L16.211 3.31781C16.1218 3.21294 16.0028 3.13756 15.8699 3.1016C15.7369 3.06564 15.5961 3.07078 15.4662 3.11634L13.7409 3.72922C13.1042 3.20753 12.3933 2.79612 11.6251 2.50771L11.2919 0.705127C11.2668 0.569493 11.2009 0.444712 11.1031 0.347363C11.0053 0.250014 10.8802 0.184705 10.7444 0.160112L10.6871 0.149508C9.58147 -0.049836 8.41853 -0.049836 7.3129 0.149508L7.2556 0.160112C7.11978 0.184705 6.99466 0.250014 6.89686 0.347363C6.79907 0.444712 6.73323 0.569493 6.70809 0.705127L6.37279 2.51619C5.61071 2.80468 4.90102 3.21587 4.27187 3.73346L2.53384 3.11634C2.40389 3.07041 2.26304 3.06509 2.12999 3.10107C1.99694 3.13706 1.878 3.21265 1.78897 3.31781L1.75077 3.36234C1.01596 4.22784 0.443048 5.21844 0.0594242 6.28676L0.0403249 6.3419C-0.0551714 6.60699 0.0233479 6.90388 0.237684 7.08838L1.64466 8.28869C1.57888 8.68738 1.54704 9.09455 1.54704 9.4996C1.54704 9.90677 1.57888 10.3139 1.64466 10.7105L0.237684 11.9108C0.132841 12.0005 0.0578039 12.12 0.0225499 12.2533C-0.0127041 12.3867 -0.00650436 12.5276 0.0403249 12.6573L0.0594242 12.7124C0.443532 13.7813 1.01227 14.7674 1.75077 15.6369L1.78897 15.6814C1.87821 15.7863 1.99716 15.8616 2.13013 15.8976C2.2631 15.9336 2.40385 15.9284 2.53384 15.8829L4.27187 15.2657C4.90427 15.7853 5.61094 16.1967 6.37279 16.483L6.70809 18.2941C6.73323 18.4297 6.79907 18.5545 6.89686 18.6518C6.99466 18.7492 7.11978 18.8145 7.2556 18.8391L7.3129 18.8497C8.42869 19.0501 9.57131 19.0501 10.6871 18.8497L10.7444 18.8391C10.8802 18.8145 11.0053 18.7492 11.1031 18.6518C11.2009 18.5545 11.2668 18.4297 11.2919 18.2941L11.6251 16.4915C12.393 16.2038 13.1079 15.7911 13.7409 15.27L15.4662 15.8829C15.5961 15.9288 15.737 15.9341 15.87 15.8981C16.0031 15.8621 16.122 15.7865 16.211 15.6814L16.2492 15.6369C16.9877 14.7653 17.5565 13.7813 17.9406 12.7124L17.9597 12.6573C18.0552 12.3965 17.9767 12.0996 17.7623 11.9151ZM14.8656 8.52621C14.9186 8.84643 14.9462 9.17513 14.9462 9.50384C14.9462 9.83255 14.9186 10.1613 14.8656 10.4815L14.7255 11.3319L16.3108 12.687C16.0705 13.2403 15.7671 13.764 15.4067 14.2478L13.4374 13.5501L12.771 14.0972C12.2639 14.5129 11.6994 14.8395 11.0882 15.0685L10.2797 15.3718L9.89979 17.4288C9.30043 17.4967 8.69532 17.4967 8.09597 17.4288L7.71611 15.3675L6.91394 15.06C6.30913 14.831 5.74676 14.5044 5.24381 14.0909L4.57746 13.5416L2.59538 14.2457C2.23462 13.7601 1.93327 13.2362 1.69135 12.6849L3.29357 11.317L3.15563 10.4688C3.1047 10.1528 3.07711 9.82618 3.07711 9.50384C3.07711 9.17938 3.10257 8.85491 3.15563 8.53893L3.29357 7.69066L1.69135 6.32282C1.93115 5.76932 2.23462 5.24763 2.59538 4.76199L4.57746 5.46606L5.24381 4.9168C5.74676 4.50327 6.30913 4.17668 6.91394 3.94765L7.71823 3.64439L8.09809 1.58309C8.69441 1.51523 9.30347 1.51523 9.90191 1.58309L10.2818 3.64015L11.0903 3.94341C11.6994 4.17244 12.266 4.49903 12.7732 4.91468L13.4395 5.46182L15.4089 4.76411C15.7696 5.24975 16.071 5.77356 16.3129 6.32494L14.7277 7.68005L14.8656 8.52621ZM9.00212 5.55937C6.9394 5.55937 5.26716 7.23047 5.26716 9.29177C5.26716 11.3531 6.9394 13.0242 9.00212 13.0242C11.0648 13.0242 12.7371 11.3531 12.7371 9.29177C12.7371 7.23047 11.0648 5.55937 9.00212 5.55937ZM10.6829 10.9714C10.4624 11.1923 10.2004 11.3675 9.91199 11.4868C9.62354 11.6062 9.31433 11.6674 9.00212 11.6669C8.3676 11.6669 7.77128 11.4188 7.32139 10.9714C7.10031 10.7511 6.925 10.4893 6.80554 10.201C6.68609 9.91277 6.62484 9.60376 6.62533 9.29177C6.62533 8.65769 6.87362 8.06178 7.32139 7.61219C7.77128 7.16261 8.3676 6.91661 9.00212 6.91661C9.63664 6.91661 10.233 7.16261 10.6829 7.61219C10.9039 7.83248 11.0792 8.09428 11.1987 8.38253C11.3182 8.67078 11.3794 8.97978 11.3789 9.29177C11.3789 9.92586 11.1306 10.5218 10.6829 10.9714Z" fill="currentColor"/>
                     </svg>
+                    <span class="si-bottom-tab-label">Settings</span>
                     @if($supportCallsBlocked)<span class="si-tab-dot" title="Support calls are paused"></span>@endif
                 </button>
             </div>
@@ -1434,7 +1831,7 @@
                 @php $starred = $this->getStarredMessages(); @endphp
                 <div class="si-starred-panel">
                     <div class="si-starred-head">
-                        <button type="button" class="si-starred-back" wire:click="closeStarredView" aria-label="Back">
+                        <button type="button" class="si-starred-back" wire:click="closeStarredView" @if($settingsSection === '') data-si-back @endif aria-label="Back">
                             <i class="fa fa-angle-left"></i>
                         </button>
                         <h3>Starred messages</h3>
@@ -1481,6 +1878,9 @@
                      like WhatsApp. Clicking an item opens its chat on that message. --}}
                 <div class="si-pane">
                     <div class="si-pane-head">
+                        <button type="button" class="si-pane-back si-mobile-only" wire:click="closeMediaPane" data-si-back title="Back" aria-label="Back">
+                            <i class="fa fa-arrow-left"></i>
+                        </button>
                         <div style="flex:1; min-width:0;">
                             <div class="si-pane-title">Media, links and docs</div>
                             <div class="si-pane-sub">{{ $mediaCustomerName ?? 'All support chats' }}</div>
@@ -1621,7 +2021,7 @@
                 <div class="si-pane">
                     @if($statusComposerOpen)
                         <div class="si-pane-head">
-                            <button type="button" class="si-pane-back" wire:click="closeStatusComposer" title="Back" aria-label="Back">
+                            <button type="button" class="si-pane-back" wire:click="closeStatusComposer" data-si-back title="Back" aria-label="Back">
                                 <i class="fa fa-arrow-left"></i>
                             </button>
                             <div>
@@ -1649,6 +2049,9 @@
                         </form>
                     @elseif($selectedStatus)
                         <div class="si-pane-head">
+                            <button type="button" class="si-pane-back si-mobile-only" wire:click="closeStatusViewer" data-si-back title="Back" aria-label="Back">
+                                <i class="fa fa-arrow-left"></i>
+                            </button>
                             <span class="si-avatar" style="width:36px; height:36px; margin:0;">
                                 @if($meAvatarUrl)
                                     <img src="{{ $meAvatarUrl }}" alt="">
@@ -1665,7 +2068,7 @@
                                         wire:confirm="Delete this status? Customers will no longer see it." title="Delete status" aria-label="Delete status">
                                     <i class="fa fa-trash"></i>
                                 </button>
-                                <button type="button" class="si-pane-back" wire:click="closeStatusViewer" title="Close" aria-label="Close">
+                                <button type="button" class="si-pane-back si-desktop-only" wire:click="closeStatusViewer" title="Close" aria-label="Close">
                                     <i class="fa fa-times"></i>
                                 </button>
                             </div>
@@ -1739,7 +2142,8 @@
                             };
                         @endphp
                         <div class="si-pane-head">
-                            <button type="button" class="si-pane-back" wire:click="setSettingsSection('{{ in_array($settingsSection, ['quick-replies', 'auto-reply'], true) ? 'tools' : '' }}')" title="Back" aria-label="Back">
+                            <button type="button" class="si-pane-back" wire:click="setSettingsSection('{{ in_array($settingsSection, ['quick-replies', 'auto-reply'], true) ? 'tools' : '' }}')"
+                                    @unless(in_array($settingsSection, ['quick-replies', 'auto-reply'], true)) data-si-back @endunless title="Back" aria-label="Back">
                                 <i class="fa fa-arrow-left"></i>
                             </button>
                             <div>
@@ -2026,7 +2430,10 @@
                 </div>
             @elseif($selectedConversationId && $selectedCustomer)
                 <div class="si-head">
-                    <div style="display:flex; align-items:center;">
+                    <div class="si-head-who" style="display:flex; align-items:center;">
+                        <button type="button" class="si-pane-back si-mobile-only" wire:click="closeConversation" data-si-back title="Back" aria-label="Back to chats">
+                            <i class="fa fa-arrow-left"></i>
+                        </button>
                         <div class="si-avatar" style="width:36px; height:36px; margin-right:10px;">
                             {{ strtoupper(substr($selectedCustomer->name ?: $selectedCustomer->email, 0, 1)) }}
                             @if($selectedCustomer->avatar)
@@ -2034,7 +2441,7 @@
                                 <img src="{{ $headAvatar }}" alt="" wire:key="si-av-{{ md5($headAvatar) }}" wire:ignore onerror="this.style.display='none'">
                             @endif
                         </div>
-                        <div>
+                        <div class="si-head-text">
                             <div class="si-head-name">
                                 {{ $selectedCustomer->name ?? $selectedCustomer->email }}
                                 @if($selectedCustomerCountry)<span class="si-country-prefix">{{ $selectedCustomerCountry }}</span>@endif
@@ -2078,8 +2485,28 @@
                             <i class="fa {{ $callsBlocked ? 'fa-phone-slash' : 'fa-ban' }}"></i>
                             {{ $callsBlocked ? 'Calls blocked' : 'Block calls' }}
                         </button>
+                        {{-- Phones: the two pills above don't fit, so they move into a ⋮ menu. --}}
+                        <div class="si-head-more">
+                            <button type="button" class="si-hbtn" data-si-head-more title="More options" aria-label="More options" aria-haspopup="true">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                            <div class="si-head-more-menu" role="menu">
+                                <button type="button" role="menuitem" wire:click="openWalletTopup">
+                                    <i class="fa fa-wallet"></i> Top up wallet
+                                </button>
+                                <button type="button" role="menuitem" class="{{ $callsBlocked ? '' : 'danger' }}" wire:click="toggleCallBlock">
+                                    <i class="fa {{ $callsBlocked ? 'fa-phone' : 'fa-ban' }}"></i>
+                                    {{ $callsBlocked ? 'Allow calls again' : 'Block calls' }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                @if($callsBlocked)
+                    <div class="si-head-flag si-mobile-only">
+                        <i class="fa fa-phone-slash"></i> This customer can't place calls
+                    </div>
+                @endif
 
                 <div class="si-msgs" id="siMsgs">
                     @php
@@ -2627,8 +3054,8 @@ window.__siBroadcastEmojiGroups = window.__siBroadcastEmojiGroups || {
 
 window.__siState.emojiCategory = window.__siState.emojiCategory || 'smileys';
 
-document.addEventListener('DOMContentLoaded', () => { siInit(); siWireMedia(); siInitVoicePlayers(); });
-document.addEventListener('livewire:navigated', () => { siInit(); siWireMedia(); siInitVoicePlayers(); });
+document.addEventListener('DOMContentLoaded', () => { siInit(); siWireMedia(); siInitVoicePlayers(); siTrackViewport(); });
+document.addEventListener('livewire:navigated', () => { siInit(); siWireMedia(); siInitVoicePlayers(); siTrackViewport(); });
 document.addEventListener('livewire:initialized', () => {
     Livewire.on('message-received', () => { siScrollBottom(); siInitVoicePlayers(); });
     // Media tab → chat. Wait past message-received's scroll-to-bottom, then
@@ -2655,11 +3082,26 @@ function siWireMedia() {
     window.__siState.wired = true;
 
     document.addEventListener('click', (e) => {
-        // Media / Settings unmount the composer — drop any half-recorded note
-        // rather than letting it upload to a thread the admin has left.
-        if (e.target.closest('[data-si-tab]') && window.__siState.recorder) {
+        // Media / Settings / the phone back arrow unmount the composer — drop
+        // any half-recorded note rather than letting it upload to a thread the
+        // admin has left.
+        if (e.target.closest('[data-si-tab], [data-si-back]') && window.__siState.recorder) {
             siCancelRecording();
         }
+
+        // Phone layout: flip panes on tap instead of after the round trip.
+        // wire:click still runs; its render confirms the same state.
+        if (e.target.closest('[data-si-back]')) siSetPane(false);
+        else if (e.target.closest('[data-si-open]')) siSetPane(true);
+
+        const headMore = e.target.closest('[data-si-head-more]');
+        if (headMore) {
+            e.preventDefault();
+            e.stopPropagation();
+            headMore.closest('.si-head-more')?.classList.toggle('open');
+            return;
+        }
+        document.querySelectorAll('.si-head-more.open').forEach(menu => menu.classList.remove('open'));
 
         if (e.target.closest('[data-si-status-pick]')) {
             e.preventDefault();
@@ -2907,10 +3349,14 @@ function siWireMedia() {
         const files = Array.from(t.files || []);
         t.value = ''; // allow picking the same file twice in a row
         if (!files.length) return;
+        // Photos and videos go through the send preview first, like my-chat;
+        // audio and documents upload straight away.
+        const isMedia = f => /^(image|video)\//.test(f.type || '');
+        if (files.some(isMedia)) siOpenMediaPreview(files.filter(isMedia));
         // Sequential: each file becomes its own message + broadcast, and PHP's
         // per-session file lock would serialise parallel uploads anyway.
         (async () => {
-            for (const f of files) { try { await siUploadAttachment(f); } catch (_) {} }
+            for (const f of files.filter(f => !isMedia(f))) { try { await siUploadAttachment(f); } catch (_) {} }
         })();
     }, true);
 
@@ -2933,20 +3379,24 @@ function siInitVoicePlayers() {
         if (!audio || !waveform || audio.__siVoicePlayerReady) return;
         audio.__siVoicePlayerReady = true;
 
-        let seed = Number(wrap.dataset.messageId) || 37;
-        const random = () => {
-            seed = (seed * 1664525 + 1013904223) >>> 0;
-            return seed / 4294967296;
-        };
-        const bars = document.createDocumentFragment();
-        for (let index = 0; index < 32; index++) {
-            const bar = document.createElement('span');
-            bar.className = 'si-vp-bar';
-            const height = 22 + Math.round(random() * 72);
-            bar.style.height = height + '%';
-            bars.appendChild(bar);
+        // The thread renders its own 32 bars; appending more doubled them
+        // (overflowing the pill on phones) until the next morph trimmed them.
+        if (!waveform.children.length) {
+            let seed = Number(wrap.dataset.messageId) || 37;
+            const random = () => {
+                seed = (seed * 1664525 + 1013904223) >>> 0;
+                return seed / 4294967296;
+            };
+            const bars = document.createDocumentFragment();
+            for (let index = 0; index < 32; index++) {
+                const bar = document.createElement('span');
+                bar.className = 'si-vp-bar';
+                const height = 22 + Math.round(random() * 72);
+                bar.style.height = height + '%';
+                bars.appendChild(bar);
+            }
+            waveform.appendChild(bars);
         }
-        waveform.appendChild(bars);
 
         const paint = () => siPaintVoiceProgress(wrap);
         audio.addEventListener('loadedmetadata', paint);
@@ -3135,10 +3585,15 @@ function siInsertBroadcastEmoji(emoji) {
     }
 }
 
-async function siUploadAttachment(file) {
+// options (all optional, from the send preview): conversationId — pinned when
+// the preview opened, so a queue keeps going to that chat even if the admin
+// opens another one mid-upload; caption; batchId — groups 2+ photos into one
+// album on the customer's side; videoPreview — the thumbnail/duration the
+// preview already captured.
+async function siUploadAttachment(file, options = {}) {
     const root = document.querySelector('[wire\\:id]');
     const comp = root && Livewire.find(root.getAttribute('wire:id'));
-    const conversationId = comp?.$get?.('selectedConversationId') ?? comp?.selectedConversationId;
+    const conversationId = options.conversationId ?? comp?.$get?.('selectedConversationId') ?? comp?.selectedConversationId;
     if (!conversationId) { alert('Select a conversation first.'); return; }
 
     const isImage = file.type.startsWith('image/');
@@ -3172,16 +3627,26 @@ async function siUploadAttachment(file) {
     const fd = new FormData();
     fd.append('conversation_id', conversationId);
     fd.append('attachment', file);
+    if (options.caption) fd.append('message', options.caption);
+    if (options.batchId) fd.append('batch_id', options.batchId);
+    const trim = isVideo ? options.trim : null;
+    if (trim) {
+        fd.append('trim_start', trim.start.toFixed(3));
+        fd.append('trim_end', trim.end.toFixed(3));
+    }
 
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     try {
         if (isVideo) {
-            const videoPreview = await Promise.race([
-                siCaptureVideoThumbnail(file),
-                new Promise(resolve => setTimeout(() => resolve(null), 1200)),
+            // A trimmed clip's poster comes from its new first frame; seeking
+            // deep into a large file needs more than the usual second.
+            const videoPreview = options.videoPreview || await Promise.race([
+                siCaptureVideoThumbnail(file, trim ? 4000 : 1000, trim ? Math.max(0.1, trim.start) : 0.1),
+                new Promise(resolve => setTimeout(() => resolve(null), trim ? 4200 : 1200)),
             ]);
             if (videoPreview?.thumbnail) fd.append('thumbnail', videoPreview.thumbnail, 'thumb.jpg');
-            if (videoPreview?.duration) fd.append('duration', String(videoPreview.duration));
+            if (trim) fd.append('duration', String(Math.max(1, Math.round(trim.end - trim.start))));
+            else if (videoPreview?.duration) fd.append('duration', String(videoPreview.duration));
             if (videoPreview?.thumbnail) {
                 pending?.setThumb(videoPreview.thumbnail);
             }
@@ -3328,13 +3793,13 @@ function siInsertPendingMedia(file, isVideo) {
     };
 }
 
-function siCaptureVideoThumbnail(file) {
+function siCaptureVideoThumbnail(file, timeoutMs = 1000, atSeconds = 0.1) {
     return new Promise((resolve) => {
         const video = document.createElement('video');
         const objectUrl = URL.createObjectURL(file);
         let finished = false;
         let duration = 0;
-        const timeout = setTimeout(() => finish(null), 1000);
+        const timeout = setTimeout(() => finish(null), timeoutMs);
 
         const finish = (thumbnail) => {
             if (finished) return;
@@ -3367,7 +3832,7 @@ function siCaptureVideoThumbnail(file) {
         video.addEventListener('loadedmetadata', () => {
             duration = Number.isFinite(video.duration) ? Math.round(video.duration) : 0;
             try {
-                video.currentTime = Math.min(0.1, Math.max(0, (video.duration || 0) - 0.05));
+                video.currentTime = Math.min(atSeconds, Math.max(0, (video.duration || 0) - 0.05));
             } catch (_) {
                 captureFrame();
             }
@@ -3376,6 +3841,459 @@ function siCaptureVideoThumbnail(file) {
         video.addEventListener('error', () => finish(null), { once: true });
         video.src = objectUrl;
     });
+}
+
+// ---------- Photos & videos: send preview ----------
+// my-chat's WhatsApp-style send popup (openImagePreviewModal), extended to
+// videos: full preview, a caption per item, a thumbnail strip with "+" once
+// there are 2+, discard-current, and send. Built outside the Livewire tree so
+// inbox refreshes can't morph it away while it's open.
+const SI_MPM_MAX = 20;
+const SI_VIDEO_MAX_BYTES = 100 * 1024 * 1024;
+// Server has ffmpeg (App\Services\VideoTrimmer) — otherwise no trim bar.
+const SI_CAN_TRIM = @json($videoTrimAvailable);
+const SI_TRIM_MIN_SECONDS = 1;
+
+function siOpenMediaPreview(files) {
+    const tooBig = files.filter(f => f.type.startsWith('video/') && f.size > SI_VIDEO_MAX_BYTES);
+    if (tooBig.length) {
+        alert(tooBig.length === 1
+            ? 'Video is larger than 100 MB. Please pick a smaller clip.'
+            : tooBig.length + ' videos are larger than 100 MB and were skipped.');
+    }
+    const accepted = files.filter(f => !tooBig.includes(f));
+    if (!accepted.length) return;
+
+    const state = window.__siState.mpm || (window.__siState.mpm = siCreateMediaPreview());
+    if (!state.items.length) {
+        state.conversationId = siComponent()?.$get?.('selectedConversationId') ?? null;
+        if (!state.conversationId) { alert('Select a conversation first.'); return; }
+    }
+    const room = SI_MPM_MAX - state.items.length;
+    if (room <= 0) { alert(`You can send up to ${SI_MPM_MAX} photos and videos at once.`); return; }
+    if (accepted.length > room) alert(`Only ${room} more can be added (${SI_MPM_MAX} max).`);
+    accepted.slice(0, room).forEach(file => state.add(file));
+    state.open();
+}
+
+function siCreateMediaPreview() {
+    const modal = document.createElement('div');
+    modal.className = 'si-mpm';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Send photos and videos');
+    modal.innerHTML = `
+        <div class="si-mpm-topbar">
+            <button type="button" class="si-mpm-icon" data-mpm-close title="Close" aria-label="Close">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <span class="si-mpm-count"></span>
+            <button type="button" class="si-mpm-icon" data-mpm-discard title="Discard" aria-label="Discard">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+        </div>
+        <div class="si-mpm-body"></div>
+        <div class="si-mpm-thumbs" aria-label="Selected photos and videos"></div>
+        <div class="si-mpm-footer">
+            <input type="text" class="si-mpm-caption" maxlength="1000" placeholder="Add a caption..." autocomplete="off" aria-label="Caption">
+            <button type="button" class="si-mpm-send" data-mpm-send title="Send" aria-label="Send">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>`;
+    document.body.appendChild(modal);
+
+    const body = modal.querySelector('.si-mpm-body');
+    const thumbs = modal.querySelector('.si-mpm-thumbs');
+    const count = modal.querySelector('.si-mpm-count');
+    const caption = modal.querySelector('.si-mpm-caption');
+    const state = { items: [], idx: 0, conversationId: null };
+
+    const saveCaption = () => {
+        const item = state.items[state.idx];
+        if (item) item.caption = caption.value;
+    };
+    const release = (item) => {
+        URL.revokeObjectURL(item.url);
+        if (item.thumbUrl) URL.revokeObjectURL(item.thumbUrl);
+    };
+
+    const renderBody = () => {
+        body.querySelector('video')?.pause();
+        cancelAnimationFrame(state.playFrame);
+        body.innerHTML = '';
+        body.classList.remove('has-trim');
+        const item = state.items[state.idx];
+        if (!item) return;
+
+        const stage = document.createElement('div');
+        stage.className = 'si-mpm-stage';
+        const media = document.createElement(item.isVideo ? 'video' : 'img');
+        media.src = item.url;
+        stage.appendChild(media);
+        body.appendChild(stage);
+        caption.value = item.caption;
+        count.textContent = `${state.idx + 1}/${state.items.length}`;
+        if (!item.isVideo) { media.alt = ''; return; }
+
+        media.controls = true;
+        media.playsInline = true;
+        media.preload = 'metadata';
+        media.setAttribute('data-no-player', '');
+
+        // Duration + size chip, like WhatsApp's video send screen; shows the
+        // selected length once the clip is trimmed.
+        const meta = document.createElement('div');
+        meta.className = 'si-mpm-meta';
+        meta.innerHTML = '<i class="fa fa-video"></i> <span></span>';
+        body.appendChild(meta);
+        const size = (item.file.size / 1024 / 1024).toFixed(1) + ' MB';
+        const updateMeta = () => {
+            const text = meta.querySelector('span');
+            if (!item.duration) { text.textContent = size; return; }
+            text.textContent = siIsTrimmed(item)
+                ? siFormatClipTime(item.trim.end - item.trim.start) + ' of ' + siFormatClipTime(item.duration)
+                : siFormatClipTime(item.duration) + ' · ' + size;
+        };
+        updateMeta();
+
+        const setup = () => {
+            if (!Number.isFinite(media.duration) || media.duration <= 0) return;
+            item.duration = media.duration;
+            if (!item.trim) item.trim = { start: 0, end: media.duration };
+            updateMeta();
+            if (SI_CAN_TRIM && item.duration > SI_TRIM_MIN_SECONDS + 0.5) {
+                body.classList.add('has-trim');
+                body.appendChild(siBuildTrimBar(item, media, updateMeta));
+            }
+        };
+        media.addEventListener('loadedmetadata', setup, { once: true });
+
+        // Keep playback inside the trimmed range: start from the in-point and
+        // stop at the out-point (checked per frame — timeupdate is too coarse).
+        const watch = () => {
+            if (item.trim && media.currentTime >= item.trim.end - 0.02) {
+                media.pause();
+                media.currentTime = item.trim.start;
+            }
+            body.querySelector('.si-mpm-trim')?.__siSyncPlayhead?.();
+            if (!media.paused) state.playFrame = requestAnimationFrame(watch);
+        };
+        media.addEventListener('play', () => {
+            if (item.trim && (media.currentTime < item.trim.start || media.currentTime >= item.trim.end - 0.05)) {
+                media.currentTime = item.trim.start;
+            }
+            cancelAnimationFrame(state.playFrame);
+            state.playFrame = requestAnimationFrame(watch);
+        });
+        media.addEventListener('seeked', () => {
+            // The native scrubber can still reach outside the range.
+            if (!item.trim) return;
+            const clamped = Math.min(Math.max(media.currentTime, item.trim.start), item.trim.end);
+            if (Math.abs(clamped - media.currentTime) > 0.05) media.currentTime = clamped;
+            body.querySelector('.si-mpm-trim')?.__siSyncPlayhead?.();
+        });
+    };
+
+    const renderThumbs = () => {
+        thumbs.classList.toggle('open', state.items.length > 1);
+        thumbs.innerHTML = '';
+        state.items.forEach((item, index) => {
+            const tile = document.createElement('button');
+            tile.type = 'button';
+            tile.className = 'si-mpm-thumb' + (index === state.idx ? ' active' : '') + (item.isVideo ? ' is-video' : '');
+            const background = item.isVideo ? item.thumbUrl : item.url;
+            if (background) tile.style.backgroundImage = `url('${background}')`;
+            tile.dataset.mpmIndex = index;
+            tile.setAttribute('aria-label', (item.isVideo ? 'Video ' : 'Photo ') + (index + 1));
+            thumbs.appendChild(tile);
+        });
+        if (state.items.length < SI_MPM_MAX) {
+            const add = document.createElement('button');
+            add.type = 'button';
+            add.className = 'si-mpm-thumb si-mpm-thumb-add';
+            add.dataset.mpmAdd = '';
+            add.textContent = '+';
+            add.setAttribute('aria-label', 'Add more photos or videos');
+            thumbs.appendChild(add);
+        }
+    };
+
+    state.render = () => { renderBody(); renderThumbs(); };
+
+    state.add = (file) => {
+        const item = { file, isVideo: file.type.startsWith('video/'), url: URL.createObjectURL(file), caption: '', preview: null, thumbUrl: null };
+        state.items.push(item);
+        if (!item.isVideo) return;
+        // Frame for the strip; reused at send time as the poster + duration.
+        siCaptureVideoThumbnail(file, 8000).then(preview => {
+            if (!preview || !state.items.includes(item)) return;
+            item.preview = preview;
+            item.thumbUrl = URL.createObjectURL(preview.thumbnail);
+            renderThumbs();
+        });
+    };
+
+    state.open = () => {
+        modal.classList.add('open');
+        // Hides the floating "Support calls" pill, which sits over the caption.
+        document.body.classList.add('si-mpm-open');
+        state.render();
+        // Skip on phones: the keyboard would cover the preview straight away.
+        if (!window.matchMedia('(hover: none)').matches) setTimeout(() => caption.focus(), 100);
+    };
+
+    state.close = () => {
+        body.querySelector('video')?.pause();
+        cancelAnimationFrame(state.playFrame);
+        modal.classList.remove('open');
+        document.body.classList.remove('si-mpm-open');
+        state.items.forEach(release);
+        state.items = [];
+        state.idx = 0;
+        body.innerHTML = '';
+    };
+
+    // Discard removes only the item on screen; the last one closes the popup.
+    state.discard = () => {
+        const [item] = state.items.splice(state.idx, 1);
+        if (item) release(item);
+        if (!state.items.length) { state.close(); return; }
+        state.idx = Math.min(state.idx, state.items.length - 1);
+        state.render();
+    };
+
+    state.send = () => {
+        saveCaption();
+        // 2+ photos share one batch_id so the customer sees one album grid.
+        const photoCount = state.items.filter(item => !item.isVideo).length;
+        const batchId = photoCount > 1 ? siUuid() : null;
+        const conversationId = state.conversationId;
+        const queue = state.items.map(item => {
+            // Trimmed: the server cuts the range, and the poster is re-taken
+            // at the new start rather than reusing the frame-0 capture.
+            const trim = item.isVideo && siIsTrimmed(item) ? { ...item.trim } : null;
+            return {
+                file: item.file,
+                options: {
+                    conversationId,
+                    caption: item.caption.trim(),
+                    batchId: item.isVideo ? null : batchId,
+                    videoPreview: trim ? null : item.preview,
+                    trim,
+                },
+            };
+        });
+        state.close();
+        // One at a time: parallel uploads collide on PHP's session lock.
+        (async () => {
+            for (const job of queue) {
+                try { await siUploadAttachment(job.file, job.options); } catch (_) {}
+            }
+        })();
+    };
+
+    modal.addEventListener('click', (e) => {
+        if (e.target.closest('[data-mpm-close]')) { state.close(); return; }
+        if (e.target.closest('[data-mpm-discard]')) { state.discard(); return; }
+        if (e.target.closest('[data-mpm-send]')) { state.send(); return; }
+        if (e.target.closest('[data-mpm-add]')) {
+            saveCaption();
+            document.getElementById('siInputPhotos')?.click();
+            return;
+        }
+        const tile = e.target.closest('[data-mpm-index]');
+        if (tile) {
+            saveCaption();
+            state.idx = Number(tile.dataset.mpmIndex);
+            state.render();
+        }
+    });
+    caption.addEventListener('input', saveCaption);
+    caption.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); state.send(); }
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) state.close();
+    });
+
+    return state;
+}
+
+function siIsTrimmed(item) {
+    return !!(item.trim && item.duration)
+        && (item.trim.start > 0.05 || item.trim.end < item.duration - 0.05);
+}
+
+// 0:07, 1:05 — tenths only for short clips, where they matter.
+function siFormatClipTime(seconds, tenths = false) {
+    const safe = Math.max(0, seconds || 0);
+    const minutes = Math.floor(safe / 60);
+    const rest = safe - minutes * 60;
+    const secs = tenths ? rest.toFixed(1).padStart(4, '0') : String(Math.floor(rest)).padStart(2, '0');
+    return minutes + ':' + secs;
+}
+
+// WhatsApp-style trim bar: a filmstrip of the clip with a start and an end
+// handle. Dragging a handle previews that frame; the range lives on
+// item.trim and goes to the server with the upload.
+function siBuildTrimBar(item, media, onChange) {
+    const bar = document.createElement('div');
+    bar.className = 'si-mpm-trim';
+    bar.innerHTML = `
+        <div class="si-mpm-strip">
+            <div class="si-mpm-frames"></div>
+            <div class="si-mpm-shade start"></div>
+            <div class="si-mpm-shade end"></div>
+            <div class="si-mpm-window"></div>
+            <div class="si-mpm-playhead"></div>
+            <button type="button" class="si-mpm-handle start" data-handle="start" role="slider" aria-label="Trim start"></button>
+            <button type="button" class="si-mpm-handle end" data-handle="end" role="slider" aria-label="Trim end"></button>
+        </div>
+        <div class="si-mpm-trim-times">
+            <span data-time="start"></span>
+            <strong data-time="length"></strong>
+            <span data-time="end"></span>
+        </div>`;
+
+    const strip = bar.querySelector('.si-mpm-strip');
+    const frames = bar.querySelector('.si-mpm-frames');
+    const pct = t => (t / item.duration) * 100 + '%';
+
+    const paint = () => {
+        const { start, end } = item.trim;
+        bar.querySelector('.si-mpm-shade.start').style.width = pct(start);
+        bar.querySelector('.si-mpm-shade.end').style.left = pct(end);
+        const win = bar.querySelector('.si-mpm-window');
+        win.style.left = pct(start);
+        win.style.right = (100 - (end / item.duration) * 100) + '%';
+        bar.querySelector('.si-mpm-handle.start').style.left = pct(start);
+        bar.querySelector('.si-mpm-handle.end').style.left = pct(end);
+        bar.querySelector('[data-time="start"]').textContent = siFormatClipTime(start, true);
+        bar.querySelector('[data-time="end"]').textContent = siFormatClipTime(end, true);
+        bar.querySelector('[data-time="length"]').textContent = siFormatClipTime(end - start);
+        ['start', 'end'].forEach(side => {
+            const handle = bar.querySelector('.si-mpm-handle.' + side);
+            handle.setAttribute('aria-valuemin', '0');
+            handle.setAttribute('aria-valuemax', String(Math.round(item.duration)));
+            handle.setAttribute('aria-valuenow', String(Math.round(item.trim[side])));
+            handle.setAttribute('aria-valuetext', siFormatClipTime(item.trim[side], true));
+        });
+        onChange();
+    };
+    bar.__siSyncPlayhead = () => {
+        bar.querySelector('.si-mpm-playhead').style.left = pct(media.currentTime);
+    };
+
+    // Move one handle, keeping at least SI_TRIM_MIN_SECONDS selected, and
+    // show the frame at the new edge.
+    const setEdge = (side, time) => {
+        const { start, end } = item.trim;
+        item.trim[side] = side === 'start'
+            ? Math.min(Math.max(0, time), end - SI_TRIM_MIN_SECONDS)
+            : Math.max(Math.min(item.duration, time), start + SI_TRIM_MIN_SECONDS);
+        media.pause();
+        media.currentTime = item.trim[side];
+        paint();
+        bar.__siSyncPlayhead();
+    };
+    const timeAt = clientX => {
+        const rect = strip.getBoundingClientRect();
+        return Math.min(Math.max(0, (clientX - rect.left) / rect.width), 1) * item.duration;
+    };
+
+    strip.addEventListener('pointerdown', (e) => {
+        const handle = e.target.closest('[data-handle]');
+        e.preventDefault();
+        if (!handle) {
+            // Tap the strip to scrub inside the selection.
+            media.pause();
+            media.currentTime = Math.min(Math.max(timeAt(e.clientX), item.trim.start), item.trim.end);
+            bar.__siSyncPlayhead();
+            return;
+        }
+        handle.focus();
+        handle.setPointerCapture(e.pointerId);
+        handle.classList.add('dragging');
+        const side = handle.dataset.handle;
+        const move = ev => setEdge(side, timeAt(ev.clientX));
+        const up = () => {
+            handle.classList.remove('dragging');
+            handle.removeEventListener('pointermove', move);
+            handle.removeEventListener('pointerup', up);
+            handle.removeEventListener('pointercancel', up);
+        };
+        handle.addEventListener('pointermove', move);
+        handle.addEventListener('pointerup', up);
+        handle.addEventListener('pointercancel', up);
+    });
+    strip.addEventListener('keydown', (e) => {
+        const handle = e.target.closest('[data-handle]');
+        if (!handle || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+        e.preventDefault();
+        const step = (e.shiftKey ? 0.1 : 1) * (e.key === 'ArrowLeft' ? -1 : 1);
+        setEdge(handle.dataset.handle, item.trim[handle.dataset.handle] + step);
+    });
+
+    // Filmstrip frames are generated once per clip and reused when the admin
+    // flips between items.
+    item.framesPromise = item.framesPromise || siVideoFrames(item.file, 10);
+    item.framesPromise.then(urls => {
+        frames.innerHTML = '';
+        urls.forEach(url => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = '';
+            frames.appendChild(img);
+        });
+    });
+
+    paint();
+    bar.__siSyncPlayhead();
+    return bar;
+}
+
+// Evenly spaced JPEG frames for the trim filmstrip. Best effort: whatever
+// frames decode in time are returned, an empty list leaves a plain strip.
+async function siVideoFrames(file, count) {
+    const video = document.createElement('video');
+    const url = URL.createObjectURL(file);
+    const wait = (event, ms) => new Promise(resolve => {
+        const timer = setTimeout(() => resolve(false), ms);
+        video.addEventListener(event, () => { clearTimeout(timer); resolve(true); }, { once: true });
+    });
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.src = url;
+
+    const frames = [];
+    try {
+        if (!await wait('loadedmetadata', 8000) || !Number.isFinite(video.duration)) return frames;
+        const height = 96;
+        const width = Math.round(height * ((video.videoWidth || 16) / (video.videoHeight || 9)));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        for (let index = 0; index < count; index++) {
+            video.currentTime = video.duration * (index + 0.5) / count;
+            if (!await wait('seeked', 4000)) break;
+            context.drawImage(video, 0, 0, width, height);
+            frames.push(canvas.toDataURL('image/jpeg', 0.6));
+        }
+    } catch (_) {
+        // Keep whatever frames we already have.
+    } finally {
+        video.removeAttribute('src');
+        video.load();
+        URL.revokeObjectURL(url);
+    }
+    return frames;
+}
+
+function siUuid() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return 'b-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
 }
 
 // Dispatcher for the paperclip menu. File kinds open their own hidden input
@@ -3947,6 +4865,47 @@ function siScrollBottom() {
         const el = document.getElementById('siMsgs');
         if (el) el.scrollTop = el.scrollHeight;
     }, 80);
+}
+
+// Phones show one pane at a time (.is-detail on .si-wrap). Flip it on tap and
+// show a spinner (.is-opening) over the pane; the server render that follows
+// sets the class itself, which drops the spinner. If that render never lands,
+// fall back to the list rather than leave a spinner with no way back.
+function siSetPane(open) {
+    const wrap = document.querySelector('.s-modern .si-wrap');
+    if (!wrap || !window.matchMedia('(max-width: 767px)').matches) return;
+    wrap.classList.toggle('is-detail', open);
+    wrap.classList.toggle('is-opening', open);
+    clearTimeout(window.__siState.paneTimer);
+    if (!open) return;
+    window.__siState.paneTimer = setTimeout(() => {
+        const current = document.querySelector('.s-modern .si-wrap.is-opening');
+        current?.classList.remove('is-opening', 'is-detail');
+    }, 10000);
+}
+
+// Phones: size the full-screen inbox to the visible area so the composer sits
+// above the on-screen keyboard. The vars live on <html>, outside the Livewire
+// tree, so re-renders can't morph them away; the CSS only reads them on phones.
+function siTrackViewport() {
+    const vv = window.visualViewport;
+    if (!vv || window.__siState.viewportTracked) return;
+    window.__siState.viewportTracked = true;
+    const root = document.documentElement;
+    const apply = () => {
+        // Pinch-zoomed: let the page zoom normally instead of shrinking the shell.
+        if (vv.scale > 1.01) { root.classList.remove('si-vv'); return; }
+        // Keep the latest message in view when the keyboard opens.
+        const msgs = document.getElementById('siMsgs');
+        const pinned = msgs && msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 120;
+        root.style.setProperty('--si-vv-top', vv.offsetTop + 'px');
+        root.style.setProperty('--si-vv-height', vv.height + 'px');
+        root.classList.add('si-vv');
+        if (pinned) requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; });
+    };
+    vv.addEventListener('resize', apply);
+    vv.addEventListener('scroll', apply);
+    apply();
 }
 </script>
 @endpush
