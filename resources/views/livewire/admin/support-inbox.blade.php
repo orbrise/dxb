@@ -1171,6 +1171,21 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
     color: rgba(255,255,255,0.6); font-size: 12px; font-variant-numeric: tabular-nums;
 }
 .si-mpm-trim-times strong { color: #fff; font-size: 13px; font-weight: 600; }
+/* In-browser trimming progress — covers the whole popup while recording. */
+.si-mpm-busy { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(6,8,9,0.78); }
+.si-mpm-busy[hidden] { display: none; }
+.si-mpm-busy-card { width: min(380px, 100%); padding: 20px; border-radius: 14px; background: #15191b; color: #fff; text-align: center; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+.si-mpm-busy-title { font-size: 15px; font-weight: 600; }
+.si-mpm-busy-bar { height: 6px; margin: 14px 0 10px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,0.12); }
+.si-mpm-busy-bar span { display: block; width: 0; height: 100%; border-radius: inherit; background: #C1F11D; transition: width .15s linear; }
+.si-mpm-busy-note { color: rgba(255,255,255,0.65); font-size: 12.5px; line-height: 1.45; }
+.si-mpm-busy-btn {
+    margin-top: 14px; padding: 8px 18px; border: 1px solid rgba(255,255,255,0.18); border-radius: 999px;
+    background: transparent; color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.si-mpm-busy-btn:hover { background: rgba(255,255,255,0.08); }
+.si-mpm-busy.is-error .si-mpm-busy-bar { display: none; }
+.si-mpm-busy.is-error .si-mpm-busy-title { color: #fca5a5; }
 .si-mpm-trim-off {
     position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
     width: max-content; max-width: calc(100% - 32px); padding: 7px 12px; border-radius: 8px;
@@ -3856,8 +3871,8 @@ function siCaptureVideoThumbnail(file, timeoutMs = 1000, atSeconds = 0.1) {
 // inbox refreshes can't morph it away while it's open.
 const SI_MPM_MAX = 20;
 const SI_VIDEO_MAX_BYTES = 100 * 1024 * 1024;
-// Server has ffmpeg (App\Services\VideoTrimmer) — otherwise no trim bar, and
-// the preview says why so it can be fixed on the server.
+// Server has ffmpeg (App\Services\VideoTrimmer): trims are cut there,
+// instantly. Otherwise the browser records the trimmed clip (siTrimInBrowser).
 const SI_CAN_TRIM = @json($videoTrim['ok']);
 const SI_TRIM_OFF_REASON = @json($videoTrim['reason']);
 const SI_TRIM_MIN_SECONDS = 1;
@@ -3907,6 +3922,14 @@ function siCreateMediaPreview() {
             <button type="button" class="si-mpm-send" data-mpm-send title="Send" aria-label="Send">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
+        </div>
+        <div class="si-mpm-busy" hidden>
+            <div class="si-mpm-busy-card" role="status" aria-live="polite">
+                <div class="si-mpm-busy-title"></div>
+                <div class="si-mpm-busy-bar"><span></span></div>
+                <div class="si-mpm-busy-note"></div>
+                <button type="button" class="si-mpm-busy-btn" data-mpm-busy-btn>Cancel</button>
+            </div>
         </div>`;
     document.body.appendChild(modal);
 
@@ -3969,13 +3992,14 @@ function siCreateMediaPreview() {
             item.duration = media.duration;
             if (!item.trim) item.trim = { start: 0, end: media.duration };
             updateMeta();
-            if (SI_CAN_TRIM && item.duration > SI_TRIM_MIN_SECONDS + 0.5) {
+            const canTrim = SI_CAN_TRIM || siCanTrimInBrowser();
+            if (canTrim && item.duration > SI_TRIM_MIN_SECONDS + 0.5) {
                 body.classList.add('has-trim');
                 body.appendChild(siBuildTrimBar(item, media, updateMeta));
-            } else if (!SI_CAN_TRIM) {
+            } else if (!canTrim) {
                 const note = document.createElement('div');
                 note.className = 'si-mpm-trim-off';
-                note.textContent = 'Trimming is off on this server — '
+                note.textContent = "Trimming isn't available in this browser — "
                     + (SI_TRIM_OFF_REASON || 'ffmpeg is not available').replace(/\.+\s*$/, '') + '. The video will be sent whole.';
                 body.appendChild(note);
             }
@@ -4059,6 +4083,7 @@ function siCreateMediaPreview() {
     state.close = () => {
         body.querySelector('video')?.pause();
         cancelAnimationFrame(state.playFrame);
+        busy.hidden = true;
         modal.classList.remove('open');
         document.body.classList.remove('si-mpm-open');
         state.items.forEach(release);
@@ -4076,26 +4101,101 @@ function siCreateMediaPreview() {
         state.render();
     };
 
-    state.send = () => {
+    // Progress overlay for in-browser trimming. While busy the overlay
+    // covers the popup, and its button cancels.
+    const busy = modal.querySelector('.si-mpm-busy');
+    const showBusy = (title, fraction, note) => {
+        busy.hidden = false;
+        busy.classList.remove('is-error');
+        busy.querySelector('.si-mpm-busy-title').textContent = title;
+        busy.querySelector('.si-mpm-busy-bar span').style.width = Math.round(Math.min(1, Math.max(0, fraction)) * 100) + '%';
+        busy.querySelector('.si-mpm-busy-note').textContent = note;
+        busy.querySelector('[data-mpm-busy-btn]').textContent = 'Cancel';
+    };
+    const showBusyError = (message) => {
+        busy.hidden = false;
+        busy.classList.add('is-error');
+        busy.querySelector('.si-mpm-busy-title').textContent = "Couldn't trim the video";
+        busy.querySelector('.si-mpm-busy-note').textContent = message;
+        busy.querySelector('[data-mpm-busy-btn]').textContent = 'OK';
+    };
+
+    // No ffmpeg on the server: record each trimmed video here first, the
+    // way the new-profile page does. Finished clips are kept on the item,
+    // so after a failure or cancel, Send picks up where it stopped.
+    state.trimInBrowser = async (items) => {
+        state.busy = true;
+        body.querySelector('video')?.pause();
+        const controller = new AbortController();
+        state.abortTrim = () => controller.abort();
+        // Created inside the Send click so the browser lets it run; it keeps
+        // the clip's sound in the recording without playing it aloud.
+        let audioContext = null;
+        try { audioContext = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+        try {
+            for (const [index, item] of items.entries()) {
+                const title = items.length > 1 ? `Trimming video ${index + 1} of ${items.length}…` : 'Trimming video…';
+                const { start, end } = item.trim;
+                const note = `Recording the ${siFormatClipTime(end - start)} you selected — this takes about as long as the clip. Keep this tab open.`;
+                showBusy(title, 0, note);
+                const file = await siTrimInBrowser(item.file, start, end, {
+                    audioContext,
+                    signal: controller.signal,
+                    onProgress: fraction => showBusy(title, fraction, note),
+                });
+                // Poster from the original at the new start (a recording's
+                // first frames can be blank while the encoder warms up).
+                const poster = await siCaptureVideoThumbnail(item.file, 4000, Math.max(0.1, start));
+                item.trimmed = {
+                    key: siTrimKey(item),
+                    file,
+                    preview: { thumbnail: poster?.thumbnail || null, duration: Math.max(1, Math.round(end - start)) },
+                };
+            }
+            busy.hidden = true;
+            return true;
+        } catch (err) {
+            if (err?.name === 'AbortError') busy.hidden = true;
+            else showBusyError(err?.message || 'Trimming failed.');
+            return false;
+        } finally {
+            state.busy = false;
+            state.abortTrim = null;
+            audioContext?.close?.().catch(() => {});
+        }
+    };
+
+    state.send = async () => {
+        if (state.busy) return;
         saveCaption();
+
+        if (!SI_CAN_TRIM) {
+            const pending = state.items.filter(item => item.isVideo && siIsTrimmed(item) && item.trimmed?.key !== siTrimKey(item));
+            if (pending.length && !await state.trimInBrowser(pending)) return;
+        }
+
         // 2+ photos share one batch_id so the customer sees one album grid.
         const photoCount = state.items.filter(item => !item.isVideo).length;
         const batchId = photoCount > 1 ? siUuid() : null;
         const conversationId = state.conversationId;
         const queue = state.items.map(item => {
-            // Trimmed: the server cuts the range, and the poster is re-taken
-            // at the new start rather than reusing the frame-0 capture.
-            const trim = item.isVideo && siIsTrimmed(item) ? { ...item.trim } : null;
-            return {
-                file: item.file,
-                options: {
-                    conversationId,
-                    caption: item.caption.trim(),
-                    batchId: item.isVideo ? null : batchId,
-                    videoPreview: trim ? null : item.preview,
-                    trim,
-                },
+            const trimmed = item.isVideo && siIsTrimmed(item);
+            const options = {
+                conversationId,
+                caption: item.caption.trim(),
+                batchId: item.isVideo ? null : batchId,
+                videoPreview: trimmed ? null : item.preview,
+                trim: null,
             };
+            if (trimmed && SI_CAN_TRIM) {
+                // The server cuts the range; the poster is re-taken at the
+                // new start rather than reusing the frame-0 capture.
+                options.trim = { ...item.trim };
+            } else if (trimmed) {
+                // Already cut in the browser above: upload that clip.
+                return { file: item.trimmed.file, options: { ...options, videoPreview: item.trimmed.preview } };
+            }
+            return { file: item.file, options };
         });
         state.close();
         // One at a time: parallel uploads collide on PHP's session lock.
@@ -4107,6 +4207,12 @@ function siCreateMediaPreview() {
     };
 
     modal.addEventListener('click', (e) => {
+        if (e.target.closest('[data-mpm-busy-btn]')) {
+            if (state.busy) state.abortTrim?.();
+            else busy.hidden = true;
+            return;
+        }
+        if (state.busy) return;
         if (e.target.closest('[data-mpm-close]')) { state.close(); return; }
         if (e.target.closest('[data-mpm-discard]')) { state.discard(); return; }
         if (e.target.closest('[data-mpm-send]')) { state.send(); return; }
@@ -4127,10 +4233,148 @@ function siCreateMediaPreview() {
         if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); state.send(); }
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('open')) state.close();
+        if (e.key !== 'Escape' || !modal.classList.contains('open')) return;
+        if (state.busy) state.abortTrim?.();
+        else if (!busy.hidden) busy.hidden = true;
+        else state.close();
     });
 
     return state;
+}
+
+function siTrimKey(item) {
+    return item.trim.start.toFixed(2) + '-' + item.trim.end.toFixed(2);
+}
+
+// The browser can record a clip itself (the new-profile page's technique).
+function siCanTrimInBrowser() {
+    return typeof window.MediaRecorder === 'function'
+        && (typeof HTMLMediaElement.prototype.captureStream === 'function'
+            || typeof HTMLMediaElement.prototype.mozCaptureStream === 'function'
+            || typeof HTMLCanvasElement.prototype.captureStream === 'function');
+}
+
+function siMediaEvent(element, event, ms = 8000) {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('The video took too long to load.')), ms);
+        element.addEventListener(event, () => { clearTimeout(timer); resolve(); }, { once: true });
+        element.addEventListener('error', () => { clearTimeout(timer); reject(new Error("The video couldn't be read.")); }, { once: true });
+    });
+}
+
+// In-browser trim, as on the new-profile page: play [start, end] in a hidden
+// <video> and record it with MediaRecorder. Runs in real time, so it's only
+// used when the server has no ffmpeg. Sound goes through Web Audio into the
+// recording alone, so nothing plays aloud; MP4 is preferred so iPhones can
+// play the result. Resolves to a File; rejects with AbortError on cancel.
+async function siTrimInBrowser(file, start, end, { audioContext, signal, onProgress } = {}) {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.src = url;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.setAttribute('data-no-player', '');
+    video.style.cssText = 'position:fixed;left:-9999px;top:0;width:2px;height:2px;';
+    document.body.appendChild(video);
+    let drawTimer = null;
+    let recorder = null;
+
+    try {
+        await siMediaEvent(video, 'loadedmetadata');
+        video.currentTime = start;
+        await siMediaEvent(video, 'seeked');
+
+        let audioTrack = null;
+        if (audioContext) {
+            const destination = audioContext.createMediaStreamDestination();
+            audioContext.createMediaElementSource(video).connect(destination);
+            audioTrack = destination.stream.getAudioTracks()[0] || null;
+        }
+
+        // Video straight from the element; through a canvas where the
+        // browser can't capture a <video> (Safari).
+        const capture = video.captureStream || video.mozCaptureStream;
+        let videoStream = capture ? capture.call(video) : null;
+        if (!videoStream) {
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(1, 1280 / (video.videoWidth || 1280));
+            canvas.width = Math.round((video.videoWidth || 1280) * scale);
+            canvas.height = Math.round((video.videoHeight || 720) * scale);
+            const context = canvas.getContext('2d');
+            drawTimer = setInterval(() => context.drawImage(video, 0, 0, canvas.width, canvas.height), 1000 / 30);
+            videoStream = canvas.captureStream(30);
+        }
+
+        // captureStream() adds its track once a frame is decoded; after the
+        // seek above that's normally immediate.
+        for (let i = 0; i < 20 && !videoStream.getVideoTracks().length; i++) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        const videoTrack = videoStream.getVideoTracks()[0];
+        if (!videoTrack) throw new Error("This browser can't record the video for trimming.");
+
+        const mimeType = [
+            'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4',
+            'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm',
+        ].find(type => MediaRecorder.isTypeSupported(type));
+        if (!mimeType) throw new Error("This browser can't record video for trimming.");
+
+        // Roughly keep the source quality: its average bitrate, 1–4 Mbps.
+        const sourceBitrate = video.duration ? (file.size * 8) / video.duration : 2500000;
+        recorder = new MediaRecorder(new MediaStream([videoTrack, audioTrack].filter(Boolean)), {
+            mimeType,
+            videoBitsPerSecond: Math.round(Math.min(4000000, Math.max(1000000, sourceBitrate))),
+        });
+        const chunks = [];
+        recorder.ondataavailable = event => { if (event.data?.size) chunks.push(event.data); };
+        const stopped = new Promise(resolve => { recorder.onstop = resolve; });
+        // Record from the moment playback is running; starting the recorder
+        // first put up to a second of frozen first frame at the start.
+        try {
+            await video.play();
+        } catch (_) {
+            throw new Error('The browser blocked playback needed for trimming. Press Send again.');
+        }
+        recorder.start(250);
+
+        // Stop at the out-point. The 50 ms timer is the precise check; the
+        // media's own timeupdate is a backstop for when the browser delays
+        // timers. A hidden tab may also stop decoding the video, so leaving
+        // the tab aborts rather than producing a frozen clip.
+        await new Promise((resolve, reject) => {
+            let timer = null;
+            const finish = (error) => {
+                clearInterval(timer);
+                video.removeEventListener('timeupdate', check);
+                error ? reject(error) : resolve();
+            };
+            const check = () => {
+                if (signal?.aborted) return finish(new DOMException('Cancelled', 'AbortError'));
+                if (document.hidden) return finish(new Error('Trimming needs this tab to stay open. Press Send to try again.'));
+                onProgress?.((video.currentTime - start) / Math.max(0.001, end - start));
+                if (video.currentTime >= end - 0.03 || video.ended) finish();
+            };
+            timer = setInterval(check, 50);
+            video.addEventListener('timeupdate', check);
+        });
+
+        recorder.stop();
+        video.pause();
+        await stopped;
+        onProgress?.(1);
+
+        const type = mimeType.split(';')[0];
+        const base = (file.name || 'video').replace(/\.[^.]+$/, '') || 'video';
+        return new File(chunks, `${base}-trimmed.${type === 'video/mp4' ? 'mp4' : 'webm'}`, { type });
+    } finally {
+        clearInterval(drawTimer);
+        if (recorder && recorder.state !== 'inactive') { try { recorder.stop(); } catch (_) {} }
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        video.remove();
+        URL.revokeObjectURL(url);
+    }
 }
 
 function siIsTrimmed(item) {

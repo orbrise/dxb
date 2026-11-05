@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Process;
 use RuntimeException;
 
 /**
- * Cuts a time range out of an uploaded video with ffmpeg — backs the trim bar
- * in the support inbox's send preview. The UI only offers trimming when
- * available() says the binary runs, so a server without ffmpeg simply sends
- * videos whole.
+ * Cuts a time range out of an uploaded video with ffmpeg — the fast path for
+ * the trim bar in the support inbox's send preview. When available() says
+ * ffmpeg can't run, the browser records the clip itself instead (slower: it
+ * takes as long as the clip).
  */
 class VideoTrimmer
 {

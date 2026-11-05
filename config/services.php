@@ -177,8 +177,9 @@ return [
     ],
 
     // ffmpeg trims videos sent from the support inbox (App\Services\VideoTrimmer).
-    // Without a working binary the trim bar is simply hidden. Set an absolute
-    // path when the web server's PATH doesn't include ffmpeg.
+    // Optional: without it the browser records the trimmed clip instead, which
+    // takes as long as the clip. Set an absolute path when the web server's
+    // PATH doesn't include ffmpeg.
     'ffmpeg' => [
         'binary' => env('FFMPEG_BINARY', 'ffmpeg'),
     ],
