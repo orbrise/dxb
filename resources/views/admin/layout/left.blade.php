@@ -9,13 +9,6 @@
                         </a>
                     </li><!--end -->
 
-                    <li class="{{ Route::currentRouteName() == 'admin.bots' ? 'current-page' : '' }}">
-                        <a class="ripple" href="{{route('admin.bots')}}">
-                            <i class="list-icon material-icons">smart_toy</i>
-                            <span class="hide-menu">Bots</span>
-                        </a>
-                    </li>
-
                     <li class="{{ Route::currentRouteName() == 'admin.support.inbox' ? 'current-page' : '' }}">
                         <a class="ripple" href="{{route('admin.support.inbox')}}">
                             <i class="list-icon material-icons">headset_mic</i>

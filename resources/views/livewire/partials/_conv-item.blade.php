@@ -104,15 +104,9 @@
                 </span>
             @endif
             @if(!empty($conversation['is_support']))
-                {{-- WhatsApp-style blue verified tick — eight-pointed starburst
-                     with a white check inside. Signals "official account" at a
-                     glance so users trust the support row. --}}
-                <span class="support-verified" title="Verified official account" aria-label="Verified">
-                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                        <path fill="#1DA1F2" d="M22.5 12.5c0-1.5-.9-2.8-2.2-3.4.3-1.4-.1-2.9-1.2-3.9s-2.5-1.5-3.9-1.2C14.5 2.7 13.3 2 12 2s-2.5.7-3.1 2c-1.4-.3-2.9.1-3.9 1.2S3.5 7.6 3.8 9.1C2.4 9.7 1.5 10.9 1.5 12.5s.9 2.8 2.3 3.4c-.3 1.4.1 2.9 1.2 3.9s2.5 1.5 3.9 1.2c.6 1.3 1.8 2 3.1 2s2.5-.7 3.1-2c1.4.3 2.9-.1 3.9-1.2s1.5-2.5 1.2-3.9c1.4-.6 2.3-1.9 2.3-3.4z"/>
-                        <path fill="#fff" d="M10.6 15.2 7.8 12.4l1.4-1.4 1.4 1.4 4.2-4.2 1.4 1.4z"/>
-                    </svg>
-                </span>
+                {{-- WhatsApp-style blue verified tick: signals "official account"
+                     at a glance so users trust the support row. --}}
+                @include('livewire.partials._support-verified', ['size' => 16])
             @endif
         </div>
         <div class="conversation-preview">

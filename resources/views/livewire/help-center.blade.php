@@ -16,11 +16,14 @@
         <div class="ev-help-header-spacer"></div>
     </div>
 
-    {{-- Log In / Sign up tab buttons --}}
-    <div class="ev-help-tabs">
-        <a href="{{ route('sign-in') }}" wire:navigate class="ev-help-tab ev-help-tab--primary">Log In</a>
-        <a href="{{ route('register') }}" wire:navigate class="ev-help-tab">Sign up</a>
-    </div>
+    {{-- Log In / Sign up tab buttons — guests only; Call Now brings a
+         visitor back here after logging in. --}}
+    @guest
+        <div class="ev-help-tabs">
+            <a href="{{ route('sign-in') }}" wire:navigate class="ev-help-tab ev-help-tab--primary">Log In</a>
+            <a href="{{ route('register') }}" wire:navigate class="ev-help-tab">Sign up</a>
+        </div>
+    @endguest
 
     {{-- Support card --}}
     <div class="ev-help-card">
@@ -32,6 +35,9 @@
         </div>
         <h1 class="ev-help-card__title">We're Here to Help</h1>
         <p class="ev-help-card__subtitle">Our support team is ready to assist you 24/7</p>
+
+        {{-- Website call to Support; guests are asked to log in first. --}}
+        @include('livewire.partials.support-direct-call', ['supportConversationId' => $supportConversationId])
 
         {{-- Primary call CTA --}}
         <a href="tel:+15169005003" class="ev-help-call">

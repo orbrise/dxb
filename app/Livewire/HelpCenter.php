@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -25,7 +26,26 @@ class HelpCenter extends Component
 
     public function render()
     {
-        return view('livewire.help-center');
+        // Logged in: the "Direct Call on evoory" card calls Support on the
+        // user's Support conversation (as on My Account). Guests get null
+        // and the card's Call Now runs loginToCall().
+        return view('livewire.help-center', [
+            'supportConversationId' => auth()->check()
+                ? Conversation::getOrCreateSupport(auth()->id())->id
+                : null,
+        ]);
+    }
+
+    /**
+     * Website calls need an account: send a guest to Log In, and back here
+     * afterwards (LoginController redirects to the intended URL), where Call
+     * Now starts the support call.
+     */
+    public function loginToCall()
+    {
+        session()->put('url.intended', route('help'));
+
+        return $this->redirect(route('sign-in'), navigate: true);
     }
 
     protected function isMobile(string $userAgent): bool

@@ -232,7 +232,14 @@
     .d-stat-value { font-size: 30px; }
 }
 @media (max-width: 480px) {
-    .d-stats-grid { grid-template-columns: 1fr; }
+    /* Phones: two cards per row; an odd last card spans the full width. */
+    .d-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .d-stat { min-height: 112px; padding: 14px; border-radius: 12px; }
+    .d-stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .d-stat-label { font-size: 10.5px; letter-spacing: .04em; line-height: 1.3; }
+    .d-stat-icon { flex: none; width: 30px; height: 30px; border-radius: 8px; font-size: 14px; }
+    .d-stat-value { font-size: 26px; }
+    .d-stat-sub { font-size: 11px; }
 }
 </style>
 @endpush

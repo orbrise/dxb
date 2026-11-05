@@ -147,6 +147,16 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             await S.pc.setLocalDescription(offer);
             await postSignal('offer', { sdp: { type: offer.type, sdp: sanitizeOutgoingSdp(offer.sdp) } });
 
+            // A support call rings every agent's screen at once, so once the
+            // server has accepted the offer the line is ringing — show
+            // "Ringing…" now instead of waiting for an agent's 'ringing' ack.
+            // (postSignal throws on a rejected offer, so this never shows
+            // for a blocked or paused call.)
+            if (S.isSupport) {
+                S.calleeRinging = true;
+                setState('Ringing…');
+            }
+
             startRingback();
             // endCall() → cleanup() dismisses any toast, so every message in
             // this function is painted AFTER the teardown or it never shows.

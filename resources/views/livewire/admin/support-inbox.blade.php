@@ -1568,9 +1568,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         {{-- wire:ignore: siInit() flips offline→online client-side; without it every re-render morphs the class back to offline. --}}
                         <span id="si-conn" class="si-conn offline" wire:ignore><i class="fa fa-circle"></i></span>
                     </div>
-                    @if(in_array($inboxTab, ['chat', 'calls'], true))
-                        <span class="si-badge">{{ $inboxTab === 'chat' ? $conversations->count() : $supportCalls->count() }}</span>
-                    @endif
+                    
                 </div>
                 @if($supportCallsBlocked && in_array($inboxTab, ['chat', 'calls', 'media'], true))
                     <button type="button" class="si-calls-paused" wire:click="setSettingsSection('calls')">

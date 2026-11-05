@@ -391,7 +391,7 @@ img.logo-expand {
 @media (max-width: 768px) {
     .card { margin-bottom: 16px !important; }
     .card:last-child { margin-bottom: 24px; }
-    .main-wrapper { padding-bottom: 32px !important; padding-top: 64px !important; }
+    .main-wrapper { padding-bottom: 0px !important; padding-top: 0px !important; }
     /* Reserve room so page-title + first content don't hide behind #mm-btn */
     .page-title { padding-left: 60px !important; }
     /* Theme footer is position:absolute bottom:0 with margin-left for sidebar —
@@ -399,12 +399,23 @@ img.logo-expand {
     .footer {
         position: static !important;
         margin-left: 0 !important;
-        margin-top: 24px !important;
+        margin-top: 0px !important;
         height: auto !important;
         line-height: 1.4 !important;
         padding: 16px 10px !important;
     }
+
+    .page-title {
+        padding-left: 37px !important;
+        height: 3.42857em;
+    }
+    .main-wrapper {
+    padding: 0 1rem 3.75rem;
 }
+    
+}
+
+
 
 
 .modal-content .close {

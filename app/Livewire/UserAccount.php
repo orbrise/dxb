@@ -163,7 +163,13 @@ class UserAccount extends Component
             $premiumDaysRemaining = max(0, (int) ceil(now()->diffInHours($premiumExpiresAt, false) / 24));
         }
 
+        // "Call Now" in the support card rings every admin; tying it to the
+        // user's Support conversation (my-chat creates the same one on load)
+        // puts the call in the admin inbox's Calls tab and the chat history.
+        $supportConversationId = $user ? Conversation::getOrCreateSupport($user->id)->id : null;
+
         return view('livewire.user-account', [
+            'supportConversationId' => $supportConversationId,
             'profilesCount' => $profilesCount,
             'favoritesCount' => $favoritesCount,
             'chatsCount' => $chatsCount,

@@ -874,6 +874,8 @@
             object-fit: cover;
         }
         .conversation-avatar i { font-size: 18px; }
+        /* Support row only: lime-tinted circle with a white headset. */
+        .conversation-item.is-support .conversation-avatar { background: #c1f11d17; color: #fff; }
 
         .conversation-info {
             flex: 1;
@@ -946,8 +948,7 @@
            $conversation['is_support'] is truthy, so this works for every
            support conv in the list (not just the first). */
         .conversation-item.is-support {
-            background: rgba(29, 161, 242, 0.06);
-            box-shadow: inset 3px 0 0 #1DA1F2;
+         
         }
         .conversation-item.is-support:hover {
             background: rgba(29, 161, 242, 0.12);
@@ -960,15 +961,8 @@
             font-size: 12.5px;
         }
 
-        .support-badge {
-            background: var(--ev-lime);
-            color: var(--ev-lime-ink);
-            font-size: 9px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 6px;
-            letter-spacing: 0.4px;
-        }
+        /* "Support" + verified tick in the chat header, WhatsApp-style. */
+        .support-name { display: inline-flex; align-items: center; gap: 5px; }
         .missed-call-badge {
             color: var(--ev-danger);
             font-size: 11px;
@@ -5433,7 +5427,7 @@
                                     <div>
                                         <div class="chat-header-name">
                                             <template x-if="selConvMeta && selConvMeta.isSupport">
-                                                <span>Support <span class="support-badge">HELP</span></span>
+                                                <span class="support-name">Support @include('livewire.partials._support-verified', ['size' => 17])</span>
                                             </template>
                                             <template x-if="selConvMeta && !selConvMeta.isSupport">
                                                 <span x-text="selConvMeta.name"></span>
@@ -5842,7 +5836,7 @@
                                         <div>
                                             <div class="chat-header-name">
                                                 @if($selectedIsSupport)
-                                                    Support <span class="support-badge">HELP</span>
+                                                    <span class="support-name">Support @include('livewire.partials._support-verified', ['size' => 17])</span>
                                                 @else
                                                     {{ Str::limit($selectedUser->name ?? $selectedUser->email, 12, '...') }}
                                                 @endif

@@ -336,6 +336,36 @@
         // Only one toast visible at a time; if another is already up,
         // keep it visible and show this one when the active clears.
         if (!activeCallId) show(e);
+        ackRinging(e);
+    }
+
+    // Tell the caller support is ringing, so their "Calling…" becomes
+    // "Ringing…" — the same ack a user's device sends on a user-to-user
+    // call (webrtc-scripts posts 'ringing' when its banner opens). Every
+    // admin screen showing the call sends one; the caller only flips a
+    // label, so duplicates are harmless. Fire-and-forget: a failed ack
+    // just leaves the caller on "Calling…".
+    const SIGNAL_URL = {!! json_encode(route('call.signal')) !!};
+    function ackRinging(signal) {
+        if (!signal.from) return;
+        const token = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+        fetch(SIGNAL_URL, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                target_user_id: signal.from,
+                call_id: signal.callId,
+                type: 'ringing',
+                call_type: signal.callType === 'video' ? 'video' : 'audio',
+                payload: {},
+            }),
+        }).catch(err => console.warn('[admin-support-call] ringing ack failed', err));
     }
 
     // Polling fallback. Fast while the socket is down, a slow safety net
