@@ -517,9 +517,23 @@
         .rtc-call .rtc-topbar {
             padding: calc(18px + env(safe-area-inset-top, 0px)) 16px 10px;
         }
-        .rtc-call .rtc-controls {
-            margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
+        /* Every control on one row (4 in a voice call, 5 in a video call)
+           instead of the 3-column grid, which pushed End onto a second
+           line. Also covers .maximized, whose wrapping row is for desktop. */
+        .rtc-call .rtc-controls,
+        .rtc-call.maximized .rtc-controls {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: space-around;
+            gap: 4px;
+            width: calc(100% - 24px);
+            max-width: 480px;
+            margin: 0 auto calc(12px + env(safe-area-inset-bottom, 0px));
+            padding: 16px 6px;
         }
+        .rtc-call .rtc-ctrl { flex: 1 1 0; }
+        .rtc-call .rtc-ctrl-label { white-space: nowrap; }
+        .rtc-call.maximized .rtc-btn { width: 54px; height: 54px; }
         /* Local self-view: compact and tucked under the topbar. */
         .rtc-call video.rtc-local {
             top: calc(80px + env(safe-area-inset-top, 0px));
@@ -528,6 +542,11 @@
             height: 140px;
             border-radius: 12px;
         }
+    }
+    /* Small phones: five 54px buttons don't fit one row, so shrink them. */
+    @media (max-width: 360px) {
+        .rtc-call .rtc-btn,
+        .rtc-call.maximized .rtc-btn { width: 46px; height: 46px; }
     }
 
     @media (max-width: 640px) {

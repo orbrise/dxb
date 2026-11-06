@@ -184,6 +184,8 @@
         }
         toast.classList.add('open');
         try { ring.currentTime = 0; ring.play().catch(() => {}); } catch (_) {}
+        // Fetch TURN creds while it rings so Accept doesn't wait on them.
+        if (typeof window.rtcPrefetchIceServers === 'function') window.rtcPrefetchIceServers();
     }
 
     function hide() {

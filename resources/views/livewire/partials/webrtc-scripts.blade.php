@@ -58,8 +58,19 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         { urls: 'stun:stun.l.google.com:19302' },
     ];
 
-    async function fetchIceServers() {
-        if (S.iceServers) return S.iceServers;
+    // Incoming calls prefetch these while ringing (minting Cloudflare TURN
+    // creds is a server-side round trip), so Accept doesn't wait on it.
+    // Accept can land while that prefetch is still in flight, so share it.
+    function fetchIceServers() {
+        if (S.iceServers) return Promise.resolve(S.iceServers);
+        if (!S.iceServersLoading) {
+            S.iceServersLoading = loadIceServers().finally(() => { S.iceServersLoading = null; });
+        }
+        return S.iceServersLoading;
+    }
+    window.rtcPrefetchIceServers = fetchIceServers;
+
+    async function loadIceServers() {
         try {
             const csrf = document.querySelector('meta[name=csrf-token]')?.content;
             const res = await fetch('/rtc/turn', {
@@ -135,6 +146,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             attachLocalPreview();
             await fetchIceServers();
             S.pc = createPeer();
+            pollNow();
             S.localStream.getTracks().forEach(t => S.pc.addTrack(t, S.localStream));
             // Voice-first bitrate cap (24 kbps) — applied before the offer
             // is created so the initial SDP reflects our encoder limits.
@@ -400,6 +412,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                     // error message.
                     console.warn('[rtc] prewarm getUserMedia failed', err);
                 });
+                fetchIceServers();
                 return;
             }
 
@@ -722,6 +735,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             attachLocalPreview();
             await fetchIceServers();
             S.pc = createPeer();
+            pollNow();
             S.localStream.getTracks().forEach(t => S.pc.addTrack(t, S.localStream));
             await capAudioBitrate(S.pc, 24000);
 
@@ -2636,12 +2650,24 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     // concurrent polls DDoSing the server. If the previous poll is still
     // in flight, we skip rather than queue.
     function startPolling() {
-        if (S.pollTimer) return;
-        const tick = async () => {
+        if (S.pollTick) return;
+        S.pollTick = async () => {
+            S.pollTimer = null; // null while a poll is in flight
             try { await pollPendingSignals(); } catch (_) {}
-            S.pollTimer = setTimeout(tick, pollIntervalMs());
+            S.pollTimer = setTimeout(S.pollTick, pollIntervalMs());
         };
-        tick();
+        S.pollTick();
+    }
+    // Poll right away instead of waiting out an idle tick that was scheduled
+    // before the call started. Called once a peer connection exists: the
+    // other side's answer / ICE otherwise sat in the queue for up to
+    // POLL_IDLE_MS. On a support call that was the 5-6 s between the agent's
+    // Accept and the audio connecting, because the caller only sends its ICE
+    // after the answer reaches it.
+    function pollNow() {
+        if (!S.pollTimer) return; // in flight — it reschedules at the active rate
+        clearTimeout(S.pollTimer);
+        S.pollTick();
     }
     startPolling();
 
