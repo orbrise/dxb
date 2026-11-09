@@ -2,10 +2,29 @@
 (function(){
 'use strict';
 
+// wire:navigate swaps the page body without a reload, so bindings made once on
+// DOM ready are lost on the way back to a page (the homepage city search went
+// dead after visiting chat). init() therefore runs again on every
+// livewire:navigated, binding each element only once; document-level listeners
+// are added once per tab. The guard stops a second copy of this file (Livewire
+// re-runs body scripts on navigation) from adding them again.
+if(window.__evooryThemeLoaded)return;
+window.__evooryThemeLoaded=true;
+
 // Wait for DOM ready
 function ready(fn){document.readyState!=='loading'?fn():document.addEventListener('DOMContentLoaded',fn)}
 
-ready(function(){
+// True the first time it's called for an element (then marks it bound).
+function once(el,key){
+  if(!el||el.dataset[key])return false;
+  el.dataset[key]='1';
+  return true;
+}
+
+// Set by init() for the country modal on the current page (used by Escape).
+var closeCurrentCountryModal=null;
+
+function init(){
   // City Search Functionality
   var searchForm=document.querySelector('.ev-search-form');
   var searchInput=searchForm?searchForm.querySelector('.ev-city-search'):null;
@@ -13,19 +32,19 @@ ready(function(){
   var cityIdInput=document.querySelector('#city_id');
   var searchTimeout;
   var csrfToken=document.querySelector('meta[name="csrf-token"]');
-  
-  if(searchInput&&dropdown){
+
+  if(searchInput&&dropdown&&once(searchInput,'evCitySearch')){
     // Search cities on input
     searchInput.addEventListener('input',function(){
       var query=this.value.trim();
       clearTimeout(searchTimeout);
-      
+
       if(query.length<2){
         dropdown.classList.remove('show');
         dropdown.innerHTML='';
         return;
       }
-      
+
       searchTimeout=setTimeout(function(){
         console.log('Searching for:', query);
         fetch('/cities/search',{
@@ -57,7 +76,7 @@ ready(function(){
         });
       },300);
     });
-    
+
     // Select city from dropdown
     dropdown.addEventListener('click',function(e){
       var item=e.target.closest('.ev-dropdown-item');
@@ -68,14 +87,7 @@ ready(function(){
         dropdown.classList.remove('show');
       }
     });
-    
-    // Close dropdown on outside click
-    document.addEventListener('click',function(e){
-      if(!e.target.closest('.ev-relative')){
-        dropdown.classList.remove('show');
-      }
-    });
-    
+
     // Focus handling
     searchInput.addEventListener('focus',function(){
       if(this.value.trim().length>=2&&dropdown.innerHTML){
@@ -83,9 +95,9 @@ ready(function(){
       }
     });
   }
-  
+
   // Form submission
-  if(searchForm){
+  if(searchForm&&once(searchForm,'evSearchSubmit')){
     searchForm.addEventListener('submit',function(e){
       e.preventDefault();
       var city=searchInput?searchInput.value.trim():'';
@@ -96,19 +108,20 @@ ready(function(){
       }
     });
   }
-  
+
   // Alphabet Filter
   var alphaButtons=document.querySelectorAll('.ev-alpha-btn');
   var countryCards=document.querySelectorAll('.ev-country-card');
-  
+
   alphaButtons.forEach(function(btn){
+    if(!once(btn,'evAlpha'))return;
     btn.addEventListener('click',function(){
       var letter=this.dataset.letter;
-      
+
       // Update active state
       alphaButtons.forEach(function(b){b.classList.remove('active')});
       this.classList.add('active');
-      
+
       // Filter countries
       countryCards.forEach(function(card){
         var name=card.dataset.country||card.querySelector('.ev-country-name').textContent;
@@ -182,6 +195,9 @@ ready(function(){
     document.body.style.overflow='';
     if(countryModalSearch)countryModalSearch.value='';
   }
+  closeCurrentCountryModal=countryModal?function(){
+    if(countryModal.classList.contains('show'))closeCountryModal();
+  }:null;
 
   function loadCountryCities(code, fallbackName, fallbackCount){
     if(!countryModalBody)return;
@@ -209,6 +225,7 @@ ready(function(){
   }
 
   countryCards.forEach(function(card){
+    if(!once(card,'evCountryCard'))return;
     card.addEventListener('click',function(e){
       e.preventDefault();
       var code=card.dataset.countryCode||'';
@@ -223,7 +240,7 @@ ready(function(){
     });
   });
 
-  if(countryModalSearch){
+  if(countryModalSearch&&once(countryModalSearch,'evCountrySearch')){
     countryModalSearch.addEventListener('input',function(){
       var query=this.value.trim().toLowerCase();
       if(!query){
@@ -238,42 +255,34 @@ ready(function(){
   }
 
   countryModalCloseButtons.forEach(function(btn){
-    btn.addEventListener('click',closeCountryModal);
+    if(once(btn,'evCountryClose'))btn.addEventListener('click',closeCountryModal);
   });
 
-  document.addEventListener('keydown',function(e){
-    if(e.key==='Escape'&&countryModal&&countryModal.classList.contains('show')){
-      closeCountryModal();
-    }
-  });
-  
   // Mobile menu toggle
   var mobileMenuBtn=document.querySelector('.ev-mobile-menu-btn');
   var mobileMenu=document.querySelector('.ev-mobile-menu');
-  
-  if(mobileMenuBtn&&mobileMenu){
+
+  if(mobileMenuBtn&&mobileMenu&&once(mobileMenuBtn,'evMobileMenu')){
     mobileMenuBtn.addEventListener('click',function(){
       mobileMenu.classList.toggle('show');
       this.setAttribute('aria-expanded',mobileMenu.classList.contains('show'));
     });
   }
-  
+
   // Language selector
   var langBtn=document.querySelector('.ev-lang-btn');
   var langDropdown=document.querySelector('.ev-lang-dropdown');
-  
-  if(langBtn&&langDropdown){
+
+  if(langBtn&&langDropdown&&once(langBtn,'evLang')){
     langBtn.addEventListener('click',function(e){
       e.stopPropagation();
       langDropdown.classList.toggle('show');
     });
-    document.addEventListener('click',function(){
-      langDropdown.classList.remove('show');
-    });
   }
-  
+
   // Smooth scroll for anchor links
   document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    if(!once(a,'evSmoothScroll'))return;
     a.addEventListener('click',function(e){
       var target=document.querySelector(this.getAttribute('href'));
       if(target){
@@ -282,7 +291,7 @@ ready(function(){
       }
     });
   });
-  
+
   // Lazy load optimization - defer non-critical images
   if('IntersectionObserver'in window){
     var lazyImages=document.querySelectorAll('img[data-src]');
@@ -296,9 +305,28 @@ ready(function(){
         }
       });
     });
-    lazyImages.forEach(function(img){imageObserver.observe(img)});
+    lazyImages.forEach(function(img){if(once(img,'evLazy'))imageObserver.observe(img)});
   }
-  
+
   console.log('Evoory theme initialized');
+}
+
+// Document-level listeners, added once; they look elements up when they fire
+// so they keep working on pages swapped in by wire:navigate.
+document.addEventListener('click',function(e){
+  // Close the city dropdown on outside click
+  if(!e.target.closest('.ev-relative')){
+    document.querySelectorAll('.ev-search-form .ev-dropdown').forEach(function(d){d.classList.remove('show')});
+  }
+  // Close the language dropdown (its button stops propagation of its own click)
+  var langDropdown=document.querySelector('.ev-lang-dropdown');
+  if(langDropdown)langDropdown.classList.remove('show');
 });
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&closeCurrentCountryModal)closeCurrentCountryModal();
+});
+
+ready(init);
+document.addEventListener('livewire:navigated',init);
 })();

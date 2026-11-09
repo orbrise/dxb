@@ -47,6 +47,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\GeoRedirectMiddleware::class,
             \App\Http\Middleware\UrlRedirectMiddleware::class,
             \App\Http\Middleware\MinifyHtml::class,
+            \App\Http\Middleware\KeepScriptsFromRocketLoader::class,
         ],
 
     ];

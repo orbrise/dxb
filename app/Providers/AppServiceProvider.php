@@ -57,7 +57,11 @@ class AppServiceProvider extends ServiceProvider
             }
         }
         View::share('setting', $setting);
-        
+
+        // Keep Cloudflare Rocket Loader off Livewire's own <script> tag; see
+        // KeepScriptsFromRocketLoader for why (it handles every other tag).
+        \Livewire\Livewire::useScriptTagAttributes(['data-cfasync' => 'false']);
+
         // Register SEO View Composer for all views
         View::composer('*', SeoComposer::class);
         

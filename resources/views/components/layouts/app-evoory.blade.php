@@ -588,7 +588,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"></script>
 
     {{-- Theme JS - Deferred for performance --}}
-    <script src="{{ asset('assets/js/evoory-theme.js') }}?v=20260318-4" defer></script>
+    <script src="{{ asset('assets/js/evoory-theme.js') }}?v={{ @filemtime(public_path('assets/js/evoory-theme.js')) ?: time() }}" defer></script>
 
     {{-- iOS Safari zoom-on-focus fix. If any form field has font-size < 16px,
          Safari auto-zooms the page on focus (and does NOT zoom back out,
