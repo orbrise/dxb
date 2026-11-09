@@ -59,35 +59,11 @@ class Message extends Model
             try {
                 $conv = $msg->conversation;
                 if (!$conv) return;
-                $senderId = (int) $msg->sender_id;
-                $uids = array_filter([
+                static::forgetChatCaches([
                     (int) $conv->user_one_id,
                     (int) $conv->user_two_id,
-                    $senderId,
+                    (int) $msg->sender_id,
                 ]);
-                $uids = array_values(array_unique($uids));
-
-                foreach ($uids as $uid) {
-                    // Badge counter (top header + mobile nav) — clear
-                    // so the next /chat/badges poll returns fresh values.
-                    \App\Support\ChatBadges::clear($uid);
-
-                    // Sidebar conversation list cache (unread pill, last
-                    // message preview, Unread filter counter). Without
-                    // this the sidebar stays stale until the 5s cache
-                    // TTL expires AND the next tickPoll fires.
-                    foreach (['chat.convs', 'chat.statusfeed', 'chat.gallery', 'chat.calls'] as $prefix) {
-                        \Illuminate\Support\Facades\Cache::forget("{$prefix}.{$uid}");
-                    }
-                    foreach (['0', '1'] as $pref) {
-                        // The getConversations key uses md5(searchTerm) +
-                        // the pref flag — clear the empty-search variant
-                        // (hot path; search is rare).
-                        \Illuminate\Support\Facades\Cache::forget(
-                            "chat.convs.{$uid}." . md5('') . ".{$pref}"
-                        );
-                    }
-                }
             } catch (\Throwable $e) {
                 // Non-critical — stale badge for up to 30s is tolerable.
             }
@@ -96,6 +72,39 @@ class Message extends Model
         static::created($invalidateBothSides);
         static::updated($invalidateBothSides);
         static::deleted($invalidateBothSides);
+    }
+
+    /**
+     * Clear these users' chat badge + sidebar caches. Bulk query deletes
+     * skip the model events above, so they call this themselves.
+     */
+    public static function forgetChatCaches(array $userIds): void
+    {
+        try {
+            foreach (array_values(array_unique(array_filter($userIds))) as $uid) {
+                // Badge counter (top header + mobile nav) — clear
+                // so the next /chat/badges poll returns fresh values.
+                \App\Support\ChatBadges::clear($uid);
+
+                // Sidebar conversation list cache (unread pill, last
+                // message preview, Unread filter counter). Without
+                // this the sidebar stays stale until the 5s cache
+                // TTL expires AND the next tickPoll fires.
+                foreach (['chat.convs', 'chat.statusfeed', 'chat.gallery', 'chat.calls'] as $prefix) {
+                    \Illuminate\Support\Facades\Cache::forget("{$prefix}.{$uid}");
+                }
+                foreach (['0', '1'] as $pref) {
+                    // The getConversations key uses md5(searchTerm) +
+                    // the pref flag — clear the empty-search variant
+                    // (hot path; search is rare).
+                    \Illuminate\Support\Facades\Cache::forget(
+                        "chat.convs.{$uid}." . md5('') . ".{$pref}"
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            // Non-critical — stale badge for up to 30s is tolerable.
+        }
     }
 
     /**

@@ -15,6 +15,7 @@
                             <span class="hide-menu">Support Inbox</span>
                             @php
                                 $pendingSupport = \App\Models\Conversation::support()
+                                    ->visibleInSupportInbox()
                                     ->whereHas('messages', function ($q) {
                                         $q->whereColumn('sender_id', 'conversations.user_one_id')
                                           ->where(function ($qq) {

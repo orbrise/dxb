@@ -5,11 +5,14 @@ namespace App\Livewire\Admin;
 use App\Events\MessageStatusUpdated;
 use App\Events\NewChatMessage;
 use App\Jobs\SendSupportBroadcast;
+use App\Mail\ProfileUpgraded;
 use App\Models\Call;
 use App\Models\City;
 use App\Models\Conversation;
 use App\Models\Country;
+use App\Models\MailSettings;
 use App\Models\Message;
+use App\Models\Package;
 use App\Models\User;
 use App\Models\Setting;
 use App\Models\Status;
@@ -24,6 +27,7 @@ use App\Services\SupportAutoReply;
 use App\Services\VideoTrimmer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -37,7 +41,55 @@ class SupportInbox extends Component
     // Same text-status backgrounds the customer app offers.
     public const STATUS_COLORS = ['#075E54', '#128C7E', '#25D366', '#34B7F1', '#7c3aed', '#ec4899', '#f59e0b', '#0a0a0a'];
 
+    // Chat message sent with a wallet top-up until an admin saves their own
+    // (Settings → Business tools → Top-up message).
+    public const DEFAULT_TOPUP_MESSAGE = <<<'TXT'
+        🎉🎉 𝘾𝙊𝙉𝙂𝙍𝙐𝙇𝘼𝙏𝙄𝙊𝙉𝙎 🎉🎉
+
+        Dear, balance of {amount} have been added in your wallet.
+
+        Log in your Evoory ™  account and check your balance of your wallet.
+
+
+        Thanks
+
+        Regards,
+        Evoory ™ Team
+        TXT;
+
+    // Starting text of the chat message sent when support upgrades a listing
+    // (Customer info → Listings → Upgrade); the admin can edit it per upgrade.
+    public const DEFAULT_UPGRADE_MESSAGE = <<<'TXT'
+        🎉🎉 𝘾𝙊𝙉𝙂𝙍𝙐𝙇𝘼𝙏𝙄𝙊𝙉𝙎 🎉🎉
+
+        Dear {name}, your listing "{listing}" has been upgraded to {package} for {days} days, until {date}.
+
+        Log in your Evoory ™ account to see it.
+
+
+        Thanks
+
+        Regards,
+        Evoory ™ Team
+        TXT;
+
     public ?int $selectedConversationId = null;
+    // The Calls-tab row that opened the thread: one customer has many call
+    // rows, so highlighting by conversation lit up all of them.
+    public ?int $selectedCallId = null;
+    // "Customer info" panel over the thread (tap the name in the chat header).
+    public bool $customerInfoOpen = false;
+    // Success line shown in the panel after a listing upgrade.
+    public string $customerInfoNotice = '';
+    // Contact info shows the latest few listings; this finds the others.
+    public string $listingSearch = '';
+    // Upgrade-a-listing dialog; upgradeDays is a tier's days or 'custom'.
+    public ?int $upgradeProfileId = null;
+    public string $upgradePackageId = '';
+    public string $upgradeDays = '';
+    public string $upgradeCustomDays = '';
+    public string $upgradePayment = 'free';
+    public string $upgradeMessage = '';
     public ?object $selectedCustomer = null;
     public string $selectedCustomerCountry = '';
     public string $reply = '';
@@ -89,6 +141,8 @@ class SupportInbox extends Component
     public int $autoReplyDelay = 5;
     public string $autoReplyMessage = '';
     public bool $autoReplySaved = false;
+    public string $topupMessage = '';
+    public bool $topupMessageSaved = false;
     public bool $showQuickReplyForm = false;
     public ?int $editingQuickReplyId = null;
     public string $quickReplyShortcut = '';
@@ -162,6 +216,35 @@ class SupportInbox extends Component
         $setting->save();
 
         $this->autoReplySaved = true;
+    }
+
+    protected function savedTopupMessage(): string
+    {
+        return trim((string) Setting::query()->whereKey(1)->value('support_topup_message')) ?: self::DEFAULT_TOPUP_MESSAGE;
+    }
+
+    public function saveTopupMessage(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $this->topupMessage = trim($this->topupMessage);
+        $this->validate(['topupMessage' => 'required|string|max:2000'], [], ['topupMessage' => 'message']);
+
+        $setting = Setting::query()->find(1);
+        if (!$setting) return;
+
+        $setting->support_topup_message = $this->topupMessage;
+        $setting->save();
+
+        $this->topupMessageSaved = true;
+    }
+
+    /** Puts the default back in the editor; nothing changes until Save. */
+    public function resetTopupMessage(): void
+    {
+        $this->topupMessage = self::DEFAULT_TOPUP_MESSAGE;
+        $this->topupMessageSaved = false;
+        $this->resetValidation('topupMessage');
     }
 
     public function openBroadcast(): void
@@ -395,17 +478,23 @@ class SupportInbox extends Component
 
     public function setSettingsSection(string $section): void
     {
-        if (!in_array($section, ['', 'account', 'tools', 'quick-replies', 'auto-reply', 'calls', 'blocked'], true)) return;
+        if (!in_array($section, ['', 'account', 'tools', 'quick-replies', 'auto-reply', 'topup-message', 'calls', 'blocked'], true)) return;
 
         $this->inboxTab = 'settings';
         $this->settingsSection = $section;
         $this->starredViewOpen = false;
         $this->accountSaved = false;
         $this->autoReplySaved = false;
+        $this->topupMessageSaved = false;
 
         if ($section === 'auto-reply') {
             $this->loadAutoReplySettings();
             $this->resetValidation(['autoReplyDelay', 'autoReplyMessage']);
+        }
+
+        if ($section === 'topup-message') {
+            $this->topupMessage = $this->savedTopupMessage();
+            $this->resetValidation('topupMessage');
         }
 
         if ($section === 'account') {
@@ -772,6 +861,7 @@ class SupportInbox extends Component
     {
         $countryLookups = $this->countryNameLookups();
         $conversations = Conversation::support()
+            ->visibleInSupportInbox()
             ->with(['userOne', 'latestMessage'])
             ->orderByDesc('last_message_at')
             ->orderByDesc('created_at')
@@ -833,6 +923,7 @@ class SupportInbox extends Component
 
         return Call::with(['caller', 'callee'])
             ->whereIn('conversation_id', $supportConversationIds)
+            ->whereNull('inbox_hidden_at')
             ->orderByDesc('created_at')
             ->limit(100)
             ->get()
@@ -842,6 +933,8 @@ class SupportInbox extends Component
                 $isUnanswered = !$callerIsAdmin && in_array($call->status, ['missed', 'declined'], true);
 
                 return [
+                    // Not yet opened by an admin: counts in the Calls tab badge.
+                    'is_new' => $isUnanswered && !$call->seen_at,
                     'id' => $call->id,
                     'conversation_id' => $call->conversation_id,
                     'customer_id' => $customer?->id,
@@ -913,6 +1006,10 @@ class SupportInbox extends Component
         }
 
         $this->selectedConversationId = $conversationId;
+        $this->selectedCallId = null;
+        $this->customerInfoOpen = false;
+        $this->customerInfoNotice = '';
+        $this->upgradeProfileId = null;
         $this->selectedCustomer = $conversation->userOne;
         $this->selectedCustomerCountry = $this->resolveCustomerCountry($this->selectedCustomer, $this->countryNameLookups());
         $this->cancelReply();
@@ -925,11 +1022,486 @@ class SupportInbox extends Component
     }
 
     /**
+     * A Calls-tab row: open that customer's chat on the call's own row.
+     */
+    public function openCall(int $callId): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $call = Call::whereKey($callId)
+            ->whereIn('conversation_id', Conversation::support()->select('id'))
+            ->first();
+        if (!$call) return;
+
+        $this->selectConversation((int) $call->conversation_id);
+        $this->selectedCallId = $call->id;
+
+        // Opening a missed / declined call takes that one call (only) off the
+        // Calls tab badge. seen_at is free on these: the customer placed the
+        // call, and only the callee's missed-call badge reads it.
+        if ((int) $call->caller_id === (int) $this->selectedCustomer?->id
+            && in_array($call->status, ['missed', 'declined'], true)
+            && !$call->seen_at) {
+            $call->seen_at = now();
+            $call->save();
+        }
+
+        $messageId = $call->summaryMessageId();
+        if ($messageId) {
+            $this->dispatch('si-jump-to-message', messageId: $messageId);
+        }
+    }
+
+    public function openCustomerInfo(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        if (!$this->selectedSupportConversation()) return;
+        $this->customerInfoOpen = true;
+        $this->customerInfoNotice = '';
+        $this->listingSearch = '';
+        $this->upgradeProfileId = null;
+    }
+
+    public function closeCustomerInfo(): void
+    {
+        $this->customerInfoOpen = false;
+        $this->customerInfoNotice = '';
+    }
+
+    /**
+     * Everything the "Customer info" panel shows, read fresh on each render
+     * so a top-up or call block made from the panel shows straight away.
+     */
+    protected function getCustomerInfo(): ?array
+    {
+        $conversation = $this->selectedSupportConversation();
+        $customer = $conversation?->userOne;
+        if (!$customer) return null;
+
+        $customer->loadMissing(['wallet', 'premiumPlan']);
+
+        $formatPhone = function ($code, $number) {
+            $number = trim((string) $number);
+            if ($number === '') return null;
+            $dial = preg_replace('/\D+/', '', (string) $code);
+            return $dial !== '' ? "+{$dial} {$number}" : $number;
+        };
+
+        $city = $customer->city;
+        if (is_numeric($city)) {
+            $city = City::query()->whereKey($city)->value('name');
+        }
+
+        $plan = $customer->premiumPlan;
+        $planExpires = $customer->premium_expires_at ? \Carbon\Carbon::parse($customer->premium_expires_at) : null;
+
+        $messages = Message::where('conversation_id', $conversation->id);
+        $calls = Call::where('conversation_id', $conversation->id);
+
+        // The latest 5 listings; a search looks through all of them.
+        $search = trim($this->listingSearch);
+        $listings = UsersProfile::where('user_id', $customer->id);
+        $listingsTotal = (clone $listings)->count();
+        if ($search !== '') {
+            $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $search) . '%';
+            $listings->where(function ($query) use ($search, $like) {
+                $query->where('name', 'like', $like)
+                    ->orWhere('slug', 'like', $like)
+                    ->orWhereHas('gcity', fn ($city) => $city->where('name', 'like', $like))
+                    ->orWhereHas('glisting', fn ($category) => $category->where('name', 'like', $like));
+                $id = ltrim($search, '#');
+                if (ctype_digit($id)) $query->orWhere('id', (int) $id);
+            });
+        }
+        $listingsFound = $search !== '' ? (clone $listings)->count() : $listingsTotal;
+
+        return [
+            'avatar' => $customer->avatar ? user_avatar_url($customer) : null,
+            'online' => $customer->isOnline(),
+            'last_seen' => $customer->last_seen_at ? \Carbon\Carbon::parse($customer->last_seen_at) : null,
+            'phone' => $formatPhone($customer->country_code, $customer->phone),
+            'phone2' => $formatPhone($customer->country_code2, $customer->phone2),
+            'city' => $city ?: null,
+            // Matches the account types in Users → Edit (2 / 3); other
+            // values are plain member accounts.
+            'account_type' => match ((int) $customer->type) {
+                2 => 'Individual advertiser',
+                3 => 'Agency',
+                default => null,
+            },
+            'sign_in' => $customer->google_id ? 'Google' : 'Email & password',
+            'plan' => $plan ? [
+                'name' => $plan->name,
+                'expires' => $planExpires,
+                'expired' => $planExpires && $planExpires->isPast(),
+            ] : null,
+            'wallet_balance' => (float) ($customer->wallet?->balance ?? 0),
+            'profiles_total' => $listingsTotal,
+            'profiles_found' => $listingsFound,
+            'profiles' => $listings
+                ->with(['coverimg', 'singleimg', 'gcity', 'glisting', 'package'])
+                ->latest('id')
+                ->limit($search !== '' ? 20 : 5)
+                ->get()
+                ->map(function (UsersProfile $profile) {
+                    $image = $profile->coverimg ?? $profile->singleimg;
+                    $until = $this->listingPackageUntil($profile);
+                    return [
+                        'id' => $profile->id,
+                        'name' => $profile->name ?: 'Untitled listing',
+                        'city' => $profile->gcity?->name,
+                        'category' => $profile->glisting?->name,
+                        'archived' => $profile->isArchived(),
+                        'image' => $image?->image
+                            ? smart_asset('userimages/' . $profile->user_id . '/' . $profile->id . '/' . $image->image)
+                            : null,
+                        'package' => $profile->package_id
+                            ? ($profile->package?->name ?? 'Package #' . $profile->package_id)
+                            : null,
+                        'package_until' => $until,
+                        'package_active' => $profile->package_id && (!$until || $until->isFuture()),
+                    ];
+                }),
+            'stats' => [
+                'messages' => (clone $messages)->where('sender_id', $customer->id)
+                    ->where(fn ($q) => $q->whereNull('attachment_type')->orWhere('attachment_type', '!=', 'call'))
+                    ->count(),
+                'media' => (clone $messages)->whereIn('attachment_type', ['image', 'video', 'audio', 'file'])
+                    ->whereNotNull('attachment_path')
+                    ->count(),
+                'calls' => (clone $calls)->count(),
+                'missed_calls' => (clone $calls)->where('caller_id', $customer->id)
+                    ->whereIn('status', ['missed', 'declined'])
+                    ->count(),
+                'first_contact' => (clone $messages)->min('created_at'),
+            ],
+            // Same count the Media tab shows for this customer.
+            'media_links_docs' => collect(['media', 'audio', 'docs', 'links'])
+                ->sum(fn ($type) => $this->supportMediaQuery($type)->where('conversation_id', $conversation->id)->count()),
+        ];
+    }
+
+    /** Contact info → "Media, links and docs": the Media tab for this customer. */
+    public function openCustomerMedia(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $conversationId = $this->selectedConversationId;
+        if (!$conversationId) return;
+
+        $this->customerInfoOpen = false;
+        $this->setInboxTab('media');
+        $this->setMediaConversation($conversationId);
+    }
+
+    /**
+     * When a listing's package runs out. Upgrades from the customer's own
+     * Upgrade page only set promoted_until, and older ones only package_days
+     * (counted from created_at, as CheckExpiredPackages does).
+     */
+    protected function listingPackageUntil(UsersProfile $profile): ?\Carbon\Carbon
+    {
+        $until = $profile->package_expires_at ?? $profile->promoted_until;
+        if ($until) return \Carbon\Carbon::parse($until);
+
+        return $profile->package_days && $profile->created_at
+            ? \Carbon\Carbon::parse($profile->created_at)->addDays((int) $profile->package_days)
+            : null;
+    }
+
+    /** One of the selected customer's listings, or null. */
+    protected function customerListing(?int $profileId): ?UsersProfile
+    {
+        $customerId = $this->selectedSupportConversation()?->user_one_id;
+        if (!$profileId || !$customerId) return null;
+
+        return UsersProfile::where('user_id', $customerId)->find($profileId);
+    }
+
+    /**
+     * The packages, days and prices the listing's owner sees on their own
+     * Upgrade page (UpgradeController): the listing country's packages, or
+     * the global ones when that country has none.
+     */
+    protected function upgradePackagesFor(UsersProfile $profile): array
+    {
+        $countryName = $profile->city ? City::query()->whereKey($profile->city)->value('country') : null;
+        $countryId = $countryName ? Country::where('nicename', $countryName)->value('id') : null;
+        if (!$countryId && function_exists('getCurrentCountry')) {
+            $countryId = getCurrentCountry()?->id;
+        }
+
+        $packages = $countryId
+            ? Package::where('is_global', false)
+                ->whereHas('countryPrices', fn ($query) => $query->where('country_id', $countryId))
+                ->orderBy('id')
+                ->get()
+            : collect();
+        if ($packages->isEmpty()) {
+            $packages = Package::where('is_global', true)->orderBy('id')->get();
+        }
+
+        return $packages->map(function (Package $package) use ($countryId) {
+            // Tiers are stored JSON-encoded twice in places; decode until it's an array.
+            $tiers = $package->getPriceForCountry($countryId);
+            if (is_string($tiers)) $tiers = json_decode($tiers, true);
+
+            return [
+                'id' => $package->id,
+                'name' => $package->name,
+                'tagline' => $package->tagline,
+                'tiers' => collect(is_array($tiers) ? $tiers : [])
+                    ->map(fn ($tier) => ['days' => (int) ($tier['days'] ?? 0), 'price' => round((float) ($tier['price'] ?? 0), 2)])
+                    ->filter(fn ($tier) => $tier['days'] > 0)
+                    ->sortBy('days')
+                    ->values()
+                    ->all(),
+            ];
+        })->values()->all();
+    }
+
+    /** What the upgrade form under a listing shows for the current choices. */
+    protected function getUpgradeOptions(): ?array
+    {
+        $profile = $this->customerListing($this->upgradeProfileId);
+        if (!$profile) return null;
+
+        $packages = $this->upgradePackagesFor($profile);
+        $package = collect($packages)->firstWhere('id', (int) $this->upgradePackageId);
+        $tier = $package && $this->upgradeDays !== 'custom'
+            ? collect($package['tiers'])->firstWhere('days', (int) $this->upgradeDays)
+            : null;
+
+        return [
+            'archived' => $profile->isArchived(),
+            'packages' => $packages,
+            'price' => $tier['price'] ?? null,
+            'balance' => (float) (Wallet::where('user_id', $profile->user_id)->value('balance') ?? 0),
+        ];
+    }
+
+    public function openListingUpgrade(int $profileId): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $profile = $this->customerListing($profileId);
+        if (!$profile) return;
+
+        $this->upgradeProfileId = $profile->id;
+        $this->upgradePackageId = (string) ($this->upgradePackagesFor($profile)[0]['id'] ?? '');
+        $this->resetUpgradeDays($profile);
+        $this->upgradeCustomDays = '';
+        $this->upgradePayment = 'free';
+        $this->upgradeMessage = self::DEFAULT_UPGRADE_MESSAGE;
+        $this->customerInfoNotice = '';
+        $this->resetValidation();
+    }
+
+    public function closeListingUpgrade(): void
+    {
+        $this->upgradeProfileId = null;
+        $this->resetValidation();
+    }
+
+    // Picking another package starts on its shortest duration.
+    public function updatedUpgradePackageId(): void
+    {
+        $profile = $this->customerListing($this->upgradeProfileId);
+        if ($profile) $this->resetUpgradeDays($profile);
+    }
+
+    protected function resetUpgradeDays(UsersProfile $profile): void
+    {
+        $package = collect($this->upgradePackagesFor($profile))->firstWhere('id', (int) $this->upgradePackageId);
+        $this->upgradeDays = isset($package['tiers'][0]) ? (string) $package['tiers'][0]['days'] : 'custom';
+        $this->updatedUpgradeDays();
+    }
+
+    // A custom length has no price, so it can only be given free.
+    public function updatedUpgradeDays(): void
+    {
+        if ($this->upgradeDays === 'custom') $this->upgradePayment = 'free';
+    }
+
+    /**
+     * Upgrade the listing (free, or paid from the customer's wallet), then
+     * message the customer in this chat, plus the upgrade email when it's on
+     * in Mail Settings, as the customer's own upgrade does.
+     */
+    public function upgradeListing(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $conversation = $this->selectedSupportConversation();
+        $customer = $conversation?->userOne;
+        $profile = $this->customerListing($this->upgradeProfileId);
+        if (!$conversation || !$customer || !$profile) {
+            $this->addError('upgradePackageId', 'This listing is no longer available.');
+            return;
+        }
+
+        $package = collect($this->upgradePackagesFor($profile))->firstWhere('id', (int) $this->upgradePackageId);
+        if (!$package) {
+            $this->addError('upgradePackageId', 'Choose a package.');
+            return;
+        }
+
+        $price = null;
+        if ($this->upgradeDays === 'custom') {
+            $this->validate(['upgradeCustomDays' => 'required|integer|min:1|max:3650'], [], ['upgradeCustomDays' => 'number of days']);
+            $days = (int) $this->upgradeCustomDays;
+        } else {
+            $tier = collect($package['tiers'])->firstWhere('days', (int) $this->upgradeDays);
+            if (!$tier) {
+                $this->addError('upgradeDays', 'Choose a duration.');
+                return;
+            }
+            $days = $tier['days'];
+            $price = $tier['price'];
+        }
+
+        $charge = $this->upgradePayment === 'wallet';
+        if ($charge && $price === null) {
+            $this->addError('upgradePayment', 'A custom duration has no price. Choose Free, or one of the package durations.');
+            return;
+        }
+        $this->validate(['upgradeMessage' => 'required|string|max:2000'], [], ['upgradeMessage' => 'message']);
+
+        $until = now()->addDays($days);
+        $displayName = $customer->name ?: Str::before((string) $customer->email, '@');
+        $text = trim(str_ireplace(
+            ['{name}', '{listing}', '{package}', '{days}', '{date}'],
+            [strtok(trim($displayName), ' ') ?: '', $profile->name, $package['name'], $days, $until->format('j M Y')],
+            $this->upgradeMessage
+        ));
+
+        try {
+            $message = DB::transaction(function () use ($conversation, $customer, $profile, $package, $days, $price, $charge, $until, $text) {
+                if ($charge && $price > 0) {
+                    $wallet = Wallet::where('user_id', $customer->id)->lockForUpdate()->first();
+                    if (!$wallet || (float) $wallet->balance < $price) return null;
+
+                    $wallet->balance = round((float) $wallet->balance - $price, 2);
+                    $wallet->save();
+
+                    WalletTransaction::create([
+                        'user_id' => $customer->id,
+                        'wallet_id' => $wallet->id,
+                        'amount' => $price,
+                        'type' => 'package_purchase',
+                        'status' => 'completed',
+                        'description' => "Package upgrade by support: {$package['name']}, {$days} days ({$profile->name})",
+                        'package_id' => $package['id'],
+                    ]);
+                }
+
+                // What the customer's own upgrade sets, plus the expiry that
+                // CheckExpiredPackages reads. A fresh created_at puts the
+                // listing back on top, as every other upgrade path does.
+                $profile->update([
+                    'is_featured' => true,
+                    'package_id' => $package['id'],
+                    'package_days' => $days,
+                    'promoted_until' => $until,
+                    'package_expires_at' => $until,
+                    'created_at' => now(),
+                ]);
+
+                $message = Message::create([
+                    'conversation_id' => $conversation->id,
+                    'sender_id' => auth()->id(),
+                    'message' => $text,
+                    'status' => 'sent',
+                ]);
+                $conversation->update(['last_message_at' => now()]);
+
+                return $message;
+            });
+        } catch (\Throwable $e) {
+            Log::error('Support listing upgrade failed', [
+                'admin_id' => auth()->id(),
+                'customer_id' => $customer->id,
+                'profile_id' => $profile->id,
+                'error' => $e->getMessage(),
+            ]);
+            $this->addError('upgradePackageId', 'Upgrade failed. Nothing was changed.');
+            return;
+        }
+
+        if (!$message) {
+            $this->addError('upgradePayment', 'Not enough balance in the customer\'s wallet. Choose Free, or top up first.');
+            return;
+        }
+
+        try {
+            broadcast(new NewChatMessage($message, (int) $customer->id))->toOthers();
+        } catch (\Throwable $e) {
+            Log::warning('Support upgrade message broadcast failed', ['message_id' => $message->id, 'error' => $e->getMessage()]);
+        }
+
+        if ($customer->email && MailSettings::shouldSendEmail('profile_upgrade')) {
+            try {
+                Mail::to($customer->email)->send(new ProfileUpgraded([
+                    'userName' => $customer->name,
+                    'profileName' => $profile->name,
+                    'packageName' => $package['name'],
+                    'duration' => $days,
+                    'profileUrl' => url("/my-profile/{$profile->slug}/{$profile->id}"),
+                    'expiryDate' => $until->format('M d, Y'),
+                ]));
+            } catch (\Throwable $e) {
+                Log::error('Support upgrade email failed', ['profile_id' => $profile->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        if ($charge) $this->selectedCustomer->load('wallet');
+        $this->closeListingUpgrade();
+        $this->customerInfoNotice = "\"{$profile->name}\" upgraded to {$package['name']} until {$until->format('j M Y')}"
+            . ($charge && $price > 0 ? ', $' . number_format($price, 2) . ' charged to the wallet' : '')
+            . '. The customer has been messaged.';
+        $this->loadMessages();
+        $this->dispatch('message-received');
+    }
+
+    /**
+     * "Delete chat" in the chat list. Only hides it from the admins: a support
+     * chat is shared with the customer, who keeps their history, and it comes
+     * back here once they write again (Conversation::scopeVisibleInSupportInbox).
+     */
+    public function hideConversation(int $conversationId): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $hidden = Conversation::support()->whereKey($conversationId)->update(['inbox_hidden_at' => now()]);
+        if ($hidden && (int) $this->selectedConversationId === $conversationId) {
+            $this->closeConversation();
+        }
+    }
+
+    /**
+     * "Delete call" in the calls list — drops it from the admins' call log
+     * only; the customer's call history is untouched.
+     */
+    public function hideCall(int $callId): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        Call::whereKey($callId)
+            ->whereIn('conversation_id', Conversation::support()->select('id'))
+            ->update(['inbox_hidden_at' => now()]);
+    }
+
+    /**
      * Phone back arrow from an open thread to the chat/calls list.
      */
     public function closeConversation(): void
     {
         $this->selectedConversationId = null;
+        $this->selectedCallId = null;
+        $this->customerInfoOpen = false;
+        $this->customerInfoNotice = '';
+        $this->upgradeProfileId = null;
         $this->selectedCustomer = null;
         $this->selectedCustomerCountry = '';
         $this->conversationMessages = [];
@@ -1130,6 +1702,76 @@ class SupportInbox extends Component
     }
 
     /**
+     * Permanently delete everything in the open support chat — for the
+     * customer as well — plus the files only those messages used. The
+     * conversation row stays: it is the customer's pinned Support thread and
+     * the call log hangs off it, so the chat simply starts over empty.
+     */
+    public function deleteChatHistory(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $conversation = $this->selectedSupportConversation();
+        if (!$conversation) return;
+
+        $messages = Message::where('conversation_id', $conversation->id)
+            ->get(['id', 'sender_id', 'attachment_disk', 'attachment_path', 'attachment_thumbnail_path']);
+
+        DB::transaction(function () use ($conversation) {
+            DB::table('message_stars')
+                ->whereIn('message_id', Message::where('conversation_id', $conversation->id)->select('id'))
+                ->delete();
+            Message::where('conversation_id', $conversation->id)->delete();
+            $conversation->update(['last_message_at' => null]);
+        });
+
+        // Forwarded copies in other chats point at the same files, so only
+        // remove the ones nothing references any more.
+        $files = $messages->flatMap(fn (Message $message) => collect([$message->attachment_path, $message->attachment_thumbnail_path])
+            ->filter()
+            ->map(fn ($path) => ['disk' => $message->attachment_disk ?: 'public', 'path' => $path]))
+            ->unique(fn ($file) => $file['disk'] . '|' . $file['path']);
+        if ($files->isNotEmpty()) {
+            $paths = $files->pluck('path')->unique()->values();
+            $stillUsed = Message::whereIn('attachment_path', $paths)
+                ->orWhereIn('attachment_thumbnail_path', $paths)
+                ->get(['attachment_path', 'attachment_thumbnail_path'])
+                ->flatMap(fn ($message) => [$message->attachment_path, $message->attachment_thumbnail_path])
+                ->filter()
+                ->flip();
+            foreach ($files as $file) {
+                if (isset($stillUsed[$file['path']])) continue;
+                try {
+                    Storage::disk($file['disk'])->delete($file['path']);
+                } catch (\Throwable $e) {
+                    Log::warning('Support chat history file cleanup failed', ['path' => $file['path'], 'error' => $e->getMessage()]);
+                }
+            }
+        }
+
+        // The bulk delete skips Message's events, which normally clear these.
+        Message::forgetChatCaches(array_merge(
+            [(int) $conversation->user_one_id],
+            $messages->pluck('sender_id')->map(fn ($id) => (int) $id)->all()
+        ));
+
+        Log::info('Support chat history deleted', [
+            'admin_id' => auth()->id(),
+            'conversation_id' => $conversation->id,
+            'customer_id' => $conversation->user_one_id,
+            'messages' => $messages->count(),
+            'files' => $files->count(),
+        ]);
+
+        $this->cancelReply();
+        $this->closeForward();
+        $this->dismissSuggestion();
+        $this->starredViewOpen = false;
+        $this->loadMessages();
+        $this->dispatch('message-received');
+    }
+
+    /**
      * Bar (or un-bar) the selected customer from placing calls at all.
      *
      * Enforced server-side in CallController::signal() on every offer, support
@@ -1194,9 +1836,13 @@ class SupportInbox extends Component
 
         $amount = round((float) $this->walletTopupAmount, 2);
         $note = trim($this->walletTopupNote) ?: 'Admin wallet top-up';
+        $template = $this->savedTopupMessage();
+        // 5000 → "5,000", 12.5 → "12.50".
+        $money = fn (float $value) => number_format($value, floor($value) == $value ? 0 : 2);
+        $displayName = $customer->name ?: Str::before((string) $customer->email, '@');
 
         try {
-            [$wallet, $message] = DB::transaction(function () use ($conversation, $customer, $amount, $note) {
+            [$wallet, $message] = DB::transaction(function () use ($conversation, $customer, $amount, $note, $template, $money, $displayName) {
                 Wallet::firstOrCreate(
                     ['user_id' => $customer->id],
                     ['balance' => 0]
@@ -1206,7 +1852,7 @@ class SupportInbox extends Component
                 $wallet->balance = round((float) $wallet->balance + $amount, 2);
                 $wallet->save();
 
-                $transaction = WalletTransaction::create([
+                WalletTransaction::create([
                     'wallet_id' => $wallet->id,
                     'amount' => $amount,
                     'type' => 'credit',
@@ -1214,19 +1860,16 @@ class SupportInbox extends Component
                     'status' => 'completed',
                 ]);
 
-                $receiptLines = [
-                    'Wallet Top-up Receipt',
-                    'Amount: $' . number_format($amount, 2),
-                    'New balance: $' . number_format((float) $wallet->balance, 2),
-                    'Transaction: #' . $transaction->id,
-                    'Note: ' . $note,
-                ];
-
+                // The admin's top-up message, sent as a plain chat message.
+                // (Older top-ups were 'wallet_receipt' cards; those still render.)
                 $message = Message::create([
                     'conversation_id' => $conversation->id,
                     'sender_id' => auth()->id(),
-                    'message' => implode("\n", $receiptLines),
-                    'attachment_type' => 'wallet_receipt',
+                    'message' => trim(str_ireplace(
+                        ['{name}', '{amount}', '{balance}'],
+                        [strtok(trim($displayName), ' ') ?: '', $money($amount), $money((float) $wallet->balance)],
+                        $template
+                    )),
                     'status' => 'sent',
                 ]);
 
@@ -1606,10 +2249,14 @@ class SupportInbox extends Component
 
     public function render()
     {
+        Call::closeAbandonedSupportCalls();
         $conversations = $this->getConversations();
         $supportCalls = $this->getSupportCalls();
         $supportConversationIds = Conversation::support()->select('id');
+        // Missed / declined customer calls no admin has opened yet.
         $unansweredCallsCount = Call::whereIn('conversation_id', $supportConversationIds)
+            ->whereNull('inbox_hidden_at')
+            ->whereNull('seen_at')
             ->whereIn('status', ['missed', 'declined'])
             ->whereHas('caller', function ($query) {
                 $query->where(function ($query) {
@@ -1715,6 +2362,8 @@ class SupportInbox extends Component
                 ->get(['id', 'name', 'description']),
             'grokConfigured' => !empty(config('services.grok.api_key')),
             'videoTrim' => VideoTrimmer::status(),
+            'customerInfo' => $this->customerInfoOpen ? $this->getCustomerInfo() : null,
+            'upgradeOptions' => $this->upgradeProfileId ? $this->getUpgradeOptions() : null,
         ])->layout('admin.layout.master-slot');
     }
 }

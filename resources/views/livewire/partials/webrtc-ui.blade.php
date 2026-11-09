@@ -211,6 +211,8 @@
         width: 220px; height: 220px; font-size: 84px;
     }
     .rtc-call .rtc-remote-audio-only .big-avatar img { width:100%; height:100%; object-fit:cover; }
+    /* Calling Support: the headset on the same tint as the Support chat row. */
+    .rtc-call .rtc-remote-audio-only .big-avatar.is-support { background: #c1f11d17; color: #fff; }
     /* The topbar now carries the peer name; hide the duplicate name/sub
        under the avatar for the WhatsApp-style single-identity layout. */
     .rtc-call .rtc-remote-audio-only .callee-name,
@@ -228,8 +230,8 @@
     /* ---- Control sheet (WhatsApp 3-column grid with labels) ----
        Dark rounded card at the bottom of the call panel. Each cell is
        a .rtc-ctrl that stacks the circular button + a text label below.
-       Buttons the current state doesn't support (video toggle during
-       voice call, switch during video call, etc.) are hidden by JS
+       Buttons the current state doesn't support (the Video switch
+       before the call connects, etc.) are hidden by JS
        setting the inner <button>'s display:none; we rely on :has() to
        collapse the whole .rtc-ctrl so the grid still looks balanced. */
     .rtc-call .rtc-controls {
@@ -264,10 +266,8 @@
         gap: 8px;
         min-width: 0;
     }
-    /* Collapse a cell only when ALL its buttons are hidden. The Video
-       slot holds two buttons (rtcVideoBtn + rtcSwitchBtn) and only one
-       is visible at a time; the cell should stay as long as either is
-       live. :has() with :not() checks "no visible button inside". */
+    /* Collapse a cell only when ALL its buttons are hidden.
+       :has() with :not() checks "no visible button inside". */
     .rtc-ctrl:not(:has(> button:not([style*="display:none"]):not([style*="display: none"]))) {
         display: none;
     }
@@ -298,7 +298,6 @@
     .rtc-call.maximized .rtc-btn { width: 60px; height: 60px; }
     .rtc-call .rtc-btn:hover { background: #343a3e; transform: translateY(-1px); }
     .rtc-call .rtc-btn.muted { background: #fff; color: #0a0a0a; }
-    .rtc-call .rtc-btn.video-off { background: #fff; color: #0a0a0a; }
     /* Speaker ON = WhatsApp "active" state: white filled circle with
        dark icon, matching the Audio/Bluetooth chip in the reference. */
     .rtc-call .rtc-btn.speaker-on { background: #fff; color: #0a0a0a; }
@@ -315,10 +314,10 @@
        waiting" affordance rather than a loading animation. */
     .rtc-call #rtcSwitchBtn.is-pending { opacity: 0.55; pointer-events: none; }
 
-    /* Highlighted "downgrade available" state — shown on the switch button
-       while a video call is active, so the user clearly sees they can
-       flip back to audio-only. Same visual treatment as the active-share
-       state (white filled circle with dark glyph + lime label). */
+    /* Selected state of the Video button — on while the call is a video
+       call; tapping it again turns video off (back to voice). Same visual
+       treatment as the active-share state (white filled circle with dark
+       glyph + lime label). */
     .rtc-call .rtc-btn.is-active-mode { background: #fff; color: #0a0a0a; }
     .rtc-ctrl:has(> .rtc-btn.is-active-mode) .rtc-ctrl-label { color: #C1F11D; }
 
@@ -834,22 +833,13 @@
             <span class="rtc-ctrl-label">Audio</span>
         </div>
 
-        {{-- Camera toggle — on/off during a video call. Hidden during
-             audio calls because there's no local video track to toggle. --}}
-        <div class="rtc-ctrl">
-            <button type="button" class="rtc-btn" id="rtcVideoBtn" title="Toggle camera" style="display:none;">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M15 8v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2zm7-1l-5 3v4l5 3V7z"/></svg>
-            </button>
-            <span class="rtc-ctrl-label">Camera</span>
-        </div>
-
-        {{-- Switch mode — tap to request a voice↔video flip. Dedicated cell
-             (used to share the Video slot) so it stays visible in BOTH
-             audio and video calls. updateSwitchBtn() flips the icon,
-             label and highlight state based on the current call type:
-               audio call → video icon,  label "Video", normal state
-               video call → phone icon, label "Audio", highlighted (is-active-mode)
-             so the user has a clear "switch back to audio" affordance. --}}
+        {{-- Video — the ONE camera button, a toggle for the call mode.
+             updateSwitchBtn() keeps the icon and label fixed and only
+             flips the selected state:
+               audio call → normal state,  tap = ask to switch to video
+               video call → selected (is-active-mode), tap = back to voice
+             (There used to be a separate Camera on/off button next to it;
+             two camera buttons in a video call read as a duplicate.) --}}
         <div class="rtc-ctrl" id="rtcSwitchCell" style="display:none;">
             <button type="button" class="rtc-btn" id="rtcSwitchBtn" title="Switch to video">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M15 8v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2zm7-1l-5 3v4l5 3V7z"/></svg>

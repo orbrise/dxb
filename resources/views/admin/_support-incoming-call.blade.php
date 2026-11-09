@@ -319,8 +319,9 @@
     // CallSignal payload shape.
     function forwardSignal(e) {
         if (!e || e.type !== 'offer') {
-            // support-claimed signal → dismiss matching pending toast
-            if (e && e.type === 'support-claimed' && e.callId) {
+            // support-claimed (another admin took it) or hangup (the caller
+            // gave up before anyone answered) → dismiss matching pending toast
+            if (e && (e.type === 'support-claimed' || e.type === 'hangup') && e.callId) {
                 dismiss(e.callId);
             }
             return;

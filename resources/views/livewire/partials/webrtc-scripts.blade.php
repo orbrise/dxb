@@ -25,6 +25,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     if (window.__rtc) return; // already initialized
     const S = window.__rtc = {
         pollTimer: null,
+        fastPollUntil: 0,
         pollSeen: new Set(),
         dismissedCallIds: new Set(),
         ringOscillators: [],
@@ -172,10 +173,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             startRingback();
             // endCall() → cleanup() dismisses any toast, so every message in
             // this function is painted AFTER the teardown or it never shows.
+            // hangup(), not a bare endCall(): the other side has to hear the
+            // call ended, or the call log keeps it "Ringing" forever.
             S.ringTimeout = setTimeout(() => {
                 if (S.pc && S.pc.connectionState !== 'connected') {
-                    endCall(true);
-                    toast('No answer.');
+                    hangup().then(() => toast('No answer.'));
                 }
             }, 45000);
 
@@ -187,8 +189,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             if (S.isSupport) {
                 S._supportNoAnswerTimer = setTimeout(() => {
                     if (!S.peer?.id && S.pc && S.pc.connectionState !== 'connected') {
-                        endCall(true);
-                        toast('No support agent available right now — please try again later or send a message.');
+                        hangup().then(() => toast('No support agent available right now — please try again later or send a message.'));
                     }
                 }, 30000);
             }
@@ -262,8 +263,13 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                         // (a) we were already expecting one (acceptSwitch set
                         // the flag) OR (b) the remote offer carries a live
                         // m=video section while we were still in audio mode.
-                        const upgradingToVideo = (S._awaitingSwitchOffer === 'video')
-                            || (remoteHasVideo && previousCallType !== 'video');
+                        // Never (b) while we're waiting on OUR OWN switch to
+                        // audio: requestSwitch() already flipped us to audio,
+                        // and the peer's offer still has an m=video section
+                        // (its transceiver outlives the dropped track).
+                        const expectedSwitch = S._awaitingSwitchOffer;
+                        const upgradingToVideo = (expectedSwitch === 'video')
+                            || (expectedSwitch !== 'audio' && remoteHasVideo && previousCallType !== 'video');
                         const downgradingToAudio = (S._awaitingSwitchOffer === 'audio')
                             || (!remoteHasVideo && previousCallType === 'video');
 
@@ -355,6 +361,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                             // ontrack. Hiding here guarantees the loader
                             // comes down either way.
                             setSwitchLoader(false);
+                        } else if (expectedSwitch) {
+                            // Our own switch to audio, already applied
+                            // locally — this offer just confirms it.
+                            updateSwitchBtn();
+                            setSwitchLoader(false);
                         } else {
                             setState('Reconnecting…');
                         }
@@ -444,14 +455,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                         S._supportIceBuffer = [];
                     }
                     // Update the in-call UI's displayed peer name so the
-                    // caller sees who they're talking to.
+                    // caller sees who they're talking to. The avatar stays
+                    // the Support headset (paintPeerAvatar).
                     const nameEl = document.getElementById('rtcCallName');
                     if (nameEl) nameEl.textContent = S.peer.name;
-                    const av = document.getElementById('rtcCallAvatar');
-                    if (av) {
-                        if (S.peer.avatar) av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
-                        else av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
-                    }
+                    paintPeerAvatar(document.getElementById('rtcCallAvatar'));
                 }
                 await S.pc.setRemoteDescription(new RTCSessionDescription({
                     type: e.payload.sdp.type || 'answer',
@@ -532,7 +540,12 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                     return;
                 }
                 const to = e.payload?.to === 'audio' ? 'audio' : 'video';
-                if (to === S.callType) {
+                // A switch of our own in flight skips this shortcut: a switch
+                // to audio flips callType locally before the peer answers, so
+                // two simultaneous taps would otherwise both "auto-accept",
+                // nobody would drive the offer, and the glare tiebreak below
+                // would never run.
+                if (to === S.callType && S._pendingSwitch?.role !== 'sender') {
                     // Already in the requested mode — auto-accept to keep peers in sync.
                     await postSignal('switch-accept', { to });
                     return;
@@ -563,6 +576,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                         console.log('[rtc-switch] audio glare — driving (lower id)');
                         S._pendingSwitch = null;
                         S._pendingSwitchStartedAt = null;
+                        S._awaitingSwitchOffer = null; // we send the offer now, not wait for one
                         dismissToast();
                     }
                     S._pendingSwitch = { to, role: 'receiver' };
@@ -609,6 +623,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 // the flag so the incoming offer handler knows this is a
                 // switch upgrade (not just an ICE restart). The actual
                 // media attach + answer happens in the offer handler.
+                fastPollFor(10000); // the receiver's offer is next
                 if (to === 'video') {
                     S._awaitingSwitchOffer = 'video';
                     try {
@@ -1207,12 +1222,10 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     }
 
     // --- Switch button + prompt UI helpers ----------------------------
-    // Visible in BOTH audio and video calls:
-    //   audio call  → "Video" label + video icon, taps = upgrade to video
-    //   video call  → "Audio" label + phone icon + highlighted (is-active-mode),
-    //                 taps = downgrade to audio-only
-    // Previously the button was hidden during video calls, leaving no
-    // obvious way to flip back to audio without hanging up.
+    // The Video button is a single toggle, visible in BOTH audio and video
+    // calls with the same camera icon and "Video" label:
+    //   audio call  → normal state, taps = upgrade to video
+    //   video call  → selected (is-active-mode), taps = back to audio-only
     function updateSwitchBtn() {
         const btn  = document.getElementById('rtcSwitchBtn');
         const cell = document.getElementById('rtcSwitchCell');
@@ -1226,19 +1239,14 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             return;
         }
         cell.style.display = '';
-        if (S.callType === 'video') {
-            // Downgrade affordance — highlighted so it reads as "active mode,
-            // tap to turn off", mirroring the sharing-active treatment.
-            btn.title = 'Switch to voice call';
-            btn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>';
-            btn.classList.add('is-active-mode');
-            if (lbl) lbl.textContent = 'Audio';
-        } else {
-            btn.title = 'Switch to video call';
-            btn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M15 8v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2zm7-1l-5 3v4l5 3V7z"/></svg>';
-            btn.classList.remove('is-active-mode');
-            if (lbl) lbl.textContent = 'Video';
-        }
+        // Selected while video is on — "tap to turn off", mirroring the
+        // sharing-active treatment. The icon and label never change, so
+        // the button reads as one toggle rather than two different buttons.
+        const isVideo = S.callType === 'video';
+        btn.classList.toggle('is-active-mode', isVideo);
+        btn.setAttribute('aria-pressed', isVideo ? 'true' : 'false');
+        btn.title = isVideo ? 'Turn off video (switch to voice call)' : 'Switch to video call';
+        if (lbl) lbl.textContent = 'Video';
         if (S._pendingSwitch) btn.classList.add('is-pending');
         else                  btn.classList.remove('is-pending');
 
@@ -1383,21 +1391,7 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 // flip local UI. The renegotiation offer we send below
                 // will tell the sender to stop sending us video too (via
                 // their offer handler's downgradingToAudio branch).
-                if (S.localStream) {
-                    S.localStream.getVideoTracks().forEach(t => {
-                        try { t.stop(); } catch (_) {}
-                        try { S.localStream.removeTrack(t); } catch (_) {}
-                    });
-                }
-                S.pc.getSenders().forEach(sender => {
-                    if (sender.track && sender.track.kind === 'video') {
-                        try { sender.replaceTrack(null); } catch (_) {}
-                    }
-                });
-                S.callType = 'audio';
-                showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
-                attachLocalPreview();
-                updateSwitchBtn();
+                switchToAudioLocally();
             }
 
             // 4. Tell the sender we accepted. They'll be ready to expect
@@ -1422,6 +1416,8 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
                 await S.pc.setLocalDescription(offer);
                 await postSignal('offer', { sdp: { type: offer.type, sdp: sanitizeOutgoingSdp(offer.sdp) } });
                 console.log('[rtc-switch] receiver sent renegotiation offer (we drive now), to=' + to);
+                fastPollFor(10000); // pick up the answer promptly
+                pollNow();
             } else {
                 console.warn('[rtc-switch] signalingState not stable, offer skipped:', S.pc?.signalingState);
             }
@@ -1448,6 +1444,26 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             // here too or the loader hangs on the second video switch.
             setSwitchLoader(false);
         }
+    }
+    // Camera off + voice-call UI, no signaling. Used by both ends of a
+    // switch to audio: the receiver in acceptSwitch(), and the requester
+    // straight from requestSwitch() since an audio switch is never refused.
+    function switchToAudioLocally() {
+        if (S.localStream) {
+            S.localStream.getVideoTracks().forEach(t => {
+                try { t.stop(); } catch (_) {}
+                try { S.localStream.removeTrack(t); } catch (_) {}
+            });
+        }
+        S.pc?.getSenders().forEach(sender => {
+            if (sender.track && sender.track.kind === 'video') {
+                try { sender.replaceTrack(null); } catch (_) {}
+            }
+        });
+        S.callType = 'audio';
+        showCallUI(document.getElementById('rtcCallState')?.textContent || 'In call');
+        attachLocalPreview();
+        updateSwitchBtn();
     }
     // Receiver side: Decline the pending switch.
     async function rejectSwitch() {
@@ -1525,8 +1541,19 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         //           prompt, no toast. Feels instant to the user.
         S._pendingSwitch = { to, role: 'sender' };
         S._pendingSwitchStartedAt = Date.now();
-        updateSwitchBtn();
-        setSwitchLoader(true, to === 'video' ? 'Switching to video…' : 'Switching to audio…');
+        fastPollFor(10000);
+
+        if (to === 'audio') {
+            // Nobody has to agree to turning video OFF (the peer auto-accepts),
+            // so drop the camera and show the voice UI now rather than after
+            // the request → accept → offer round trip. The peer's renegotiation
+            // offer then only confirms it; the flag tells the offer handler so.
+            S._awaitingSwitchOffer = 'audio';
+            switchToAudioLocally();
+        } else {
+            updateSwitchBtn();
+            setSwitchLoader(true, 'Switching to video…');
+        }
 
         if (to === 'video') {
             // Pre-warm the camera IN PARALLEL with the switch-request RPC
@@ -1580,9 +1607,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         try {
             await postSignal('switch-request', { to });
             console.log('[rtc-switch] switch-request sent, to=' + to);
+            pollNow();
         } catch (err) {
             console.error('[rtc-switch] switch-request POST failed', err);
             S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
+            S._awaitingSwitchOffer = null;
             updateSwitchBtn();
             setSwitchLoader(false);
             dismissToast();
@@ -2085,20 +2114,24 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         document.getElementById('rtcIncoming')?.classList.remove('open');
         stopIncomingRing();
     }
+    // Photo, else initial. A customer calling Support always sees the Support
+    // headset (same as the chat list), even after an agent picks up.
+    function paintPeerAvatar(el) {
+        if (!el) return;
+        el.classList.toggle('is-support', !!S.isSupport);
+        if (S.isSupport) el.innerHTML = '<i class="fa fa-headset" aria-hidden="true"></i>';
+        else if (S.peer.avatar) el.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
+        else el.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
+    }
     function showCallUI(state) {
         document.getElementById('rtcCall')?.classList.add('open');
         maybeShowSpeakerBtn();
         setState(state);
         const nameEl = document.getElementById('rtcCallName');
         if (nameEl) nameEl.textContent = S.peer.name;
-        const av = document.getElementById('rtcCallAvatar');
-        if (av) {
-            if (S.peer.avatar) av.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
-            else av.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
-        }
+        paintPeerAvatar(document.getElementById('rtcCallAvatar'));
         const ao = document.getElementById('rtcAudioOnly');
         const rv = document.getElementById('rtcRemoteVideo');
-        const videoBtn = document.getElementById('rtcVideoBtn');
         // Share-screen button stays visible on both call types. If the
         // user taps it during a voice call, startScreenShare() shows a
         // friendly "video calls only" toast — same as WhatsApp.
@@ -2107,18 +2140,12 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (S.callType === 'audio') {
             if (ao) ao.style.display = 'block';
             if (rv) rv.style.display = 'none';
-            if (videoBtn)  videoBtn.style.display  = 'none';
             const audioName = document.getElementById('rtcAudioName');
             if (audioName) audioName.textContent = S.peer.name;
-            const ba = document.getElementById('rtcAudioAvatar');
-            if (ba) {
-                if (S.peer.avatar) ba.innerHTML = `<img src="${escapeAttr(S.peer.avatar)}" alt="">`;
-                else ba.textContent = (S.peer.name || '?').charAt(0).toUpperCase();
-            }
+            paintPeerAvatar(document.getElementById('rtcAudioAvatar'));
         } else {
             if (ao) ao.style.display = 'none';
             if (rv) rv.style.display = 'block';
-            if (videoBtn)  videoBtn.style.display  = '';
         }
         // Recompute switch button visibility whenever the call panel renders —
         // handles Livewire morph / navigation restore where this fn runs again
@@ -2214,6 +2241,14 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         const ra = document.getElementById('rtcRemoteAudio'); if (ra) ra.srcObject = null;
         S.callId = null; S.callType = null; S.peer = null; S.role = null;
         S.conversationId = null;
+        // Only rtcStartCall/rtcAcceptSupport set this; without the reset a
+        // later incoming call inherited it (Support headset, is_support signals).
+        S.isSupport = false;
+        // A support call nobody picked up must not leak into the next one:
+        // the old 30 s no-answer timer would end it, and the old ICE would
+        // be flushed with it.
+        clearTimeout(S._supportNoAnswerTimer); S._supportNoAnswerTimer = null;
+        S._supportIceBuffer = [];
         S.pendingIce = []; S._pendingOffer = null;
         S._pendingSwitch = null; S._pendingSwitchStartedAt = null;
         S._awaitingSwitchOffer = null;
@@ -2229,9 +2264,11 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     async function postSignal(type, payload, opts = {}) {
         const target = opts.targetOverride || S.peer?.id;
         // Support offer path: no concrete target yet (first admin claims the
-        // call). Allow target=0 ONLY for the initial support offer.
-        const supportOffer = S.isSupport && type === 'offer' && !target;
-        if (!target && !supportOffer) {
+        // call). Allow target=0 ONLY for the initial support offer, and for
+        // the caller hanging up before anyone picked up — without it the call
+        // stayed "Ringing" in the support inbox instead of "Missed".
+        const toSupportInbox = S.isSupport && (type === 'offer' || type === 'hangup') && !target;
+        if (!target && !toSupportInbox) {
             // Support-call pre-answer window: the caller's PC starts
             // trickling ICE before any admin has claimed the call, so
             // target is still 0. Buffer those candidates and flush them
@@ -2630,16 +2667,26 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
     // case 5s latency when the WebSocket path fails. Active polling
     // (during a handshake) stays at 120ms so ICE still feels instant.
     const POLL_IDLE_MS   = 5000;
+    const POLL_INCALL_MS = 1000;
     const POLL_ACTIVE_MS = 120;
     function pollIntervalMs() {
         // "Active" = any point from an incoming/outgoing call being
-        // negotiated up to the moment it's fully connected. After
-        // 'connected', slow back down — no more signaling traffic expected
-        // until hangup / ICE restart.
+        // negotiated up to the moment it's fully connected, plus a short
+        // window after a mid-call switch starts (see fastPollFor).
         if (!S.pc) return POLL_IDLE_MS;
         const st = S.pc.connectionState;
         if (st === 'new' || st === 'connecting' || st === 'disconnected' || st === 'failed') return POLL_ACTIVE_MS;
-        return POLL_IDLE_MS;
+        if (Date.now() < S.fastPollUntil) return POLL_ACTIVE_MS;
+        // Connected. Not idle: the peer can still send a voice/video switch
+        // request or a hangup at any moment, and every hop of a switch used
+        // to wait out a 5 s tick (5-6 s to drop back to voice).
+        return POLL_INCALL_MS;
+    }
+    // Keep polling at the active rate for the next `ms` — a switch's reply
+    // is one round trip away. Time-boxed so a reply that never comes can't
+    // leave the tab polling at 120 ms for the rest of the call.
+    function fastPollFor(ms) {
+        S.fastPollUntil = Math.max(S.fastPollUntil || 0, Date.now() + ms);
     }
     // PROD PERF: await the fetch BEFORE scheduling the next tick. The old
     // version called pollPendingSignals() without awaiting then immediately
@@ -2843,16 +2890,6 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
         if (e.target.closest('#rtcSpeakerBtn')) {
             const btn = e.target.closest('#rtcSpeakerBtn');
             toggleSpeaker(btn).catch(() => {});
-            return;
-        }
-
-        if (e.target.closest('#rtcVideoBtn')) {
-            const btn = e.target.closest('#rtcVideoBtn');
-            const track = S.localStream?.getVideoTracks?.()[0];
-            if (!track) return;
-            track.enabled = !track.enabled;
-            btn.classList.toggle('video-off', !track.enabled);
-            btn.innerHTML = track.enabled ? '<i class="fa fa-video"></i>' : '<i class="fa fa-video-slash"></i>';
             return;
         }
 

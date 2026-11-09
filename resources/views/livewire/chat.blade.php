@@ -270,7 +270,8 @@
            currentColor so they respond to hover just like the FA icons. */
         .chat-sidebar-title-actions button svg { display: block; }
 
-        /* Lime round "+" — opens the New-chat user directory overlay.
+        /* Lime round "+" — opens the New-chat user directory overlay (Chats)
+           or the add-status menu (Status); same look on both tabs.
            Sits at the far right of the sidebar title actions, styled as
            a filled lime pill rather than the transparent ghost buttons. */
         .chat-sidebar-title-actions button.new-chat-btn {
@@ -286,21 +287,6 @@
         .chat-sidebar-title-actions button.new-chat-btn svg {
             width: 20px;
             height: 20px;
-        }
-        /* Status-tab variant: outline circle "+" button instead of the lime
-           filled chat-bubble icon. Sized to match the sibling ghost buttons
-           (expand / kebab) at 30px. */
-        .chat-sidebar-title-actions button.new-chat-btn.is-plus-btn {
-            width: 30px; height: 30px;
-            background: transparent;
-            color: var(--ev-text);
-        }
-        .chat-sidebar-title-actions button.new-chat-btn.is-plus-btn:hover {
-            background: var(--ev-hover);
-            color: var(--ev-text);
-        }
-        .chat-sidebar-title-actions button.new-chat-btn.is-plus-btn svg {
-            width: 22px; height: 22px;
         }
 
         /* --------------------------------------------------------------
@@ -916,29 +902,6 @@
             line-height: 0;
         }
         .support-verified svg { display: block; }
-
-        /* Inline presence chip next to each peer's name in the sidebar list.
-           Replaces the small status dot — users confused the lime status
-           ring with an online indicator, so now we spell it out: a green
-           "Online" when last_seen_at < 120s, a muted "Offline" otherwise. */
-        .presence-chip {
-            font-size: 10.5px;
-            font-weight: 600;
-            line-height: 1;
-            padding: 2px 6px;
-            border-radius: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            flex-shrink: 0;
-        }
-        .presence-chip.is-online {
-            color: #15803d;
-            background: rgba(34, 197, 94, 0.14);
-        }
-        .presence-chip.is-offline {
-            color: var(--ev-text-3);
-            background: rgba(255, 255, 255, 0.05);
-        }
 
         /* Make the Support row visually stand out at the top of the chat
            list so users notice it (addresses the "need to make more visible"
@@ -1839,7 +1802,7 @@
             color: var(--ev-text-3);
         }
         .unread-badge {
-            background: var(--ev-pink);
+            background: var(--ev-danger);   /* same red as the Unread filter count */
             color: #fff;
             font-size: 11px;
             font-weight: 700;
@@ -1896,7 +1859,7 @@
             font-weight: 700;
             display: inline-flex; align-items: center; justify-content: center;
             border-radius: var(--ev-r-pill);
-            background: var(--ev-pink);
+            background: var(--ev-danger);
             color: #fff;
         }
 
@@ -4840,12 +4803,10 @@
                                                  from firing on this same bubble and immediately
                                                  closing the dropdown. --}}
                                             <button type="button" class="new-chat-btn"
-                                                    :class="{ 'is-plus-btn': tab === 'status' }"
                                                     @click.stop="if (tab === 'status') { $event.currentTarget.closest('.new-chat-wrap').classList.toggle('open'); } else { newChatOpen = true; $nextTick(() => document.querySelector('.new-chat-search input')?.focus()); }"
                                                     :title="tab === 'status' ? 'Add status' : 'New chat'">
                                                 {{-- Custom chat-bubble-with-plus icon supplied by product.
-                                                     Uses currentColor so it inherits lime-ink on the Chats
-                                                     tab and white on the Status tab variant. --}}
+                                                     Uses currentColor so it inherits the lime-ink colour. --}}
                                                 <svg viewBox="0 0 22 22" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                     <path fill-rule="evenodd" clip-rule="evenodd" d="M1.7753 14.9015C-1.03709 7.78574 4.04328 0 11.5 0H11.9141C17.4847 0 22 4.65257 22 10.3925C22.0003 11.9169 21.7092 13.4265 21.1432 14.8349C20.5772 16.2434 19.7474 17.5231 18.7013 18.601C17.6552 19.6789 16.4132 20.5339 15.0463 21.1171C13.6794 21.7003 12.2144 22.0003 10.735 22H0.646478C0.512769 22.0003 0.382272 21.9578 0.273039 21.8783C0.163806 21.7989 0.0812349 21.6864 0.0367486 21.5565C-0.00773768 21.4266 -0.0119408 21.2856 0.024721 21.1531C0.0613827 21.0206 0.137097 20.9031 0.241391 20.8169L2.78544 18.7126C2.8939 18.623 2.97133 18.4996 3.0062 18.3609C3.04108 18.2222 3.03152 18.0756 2.97896 17.943L1.7753 14.9015ZM12.4534 7.24471C12.4534 6.9803 12.3514 6.72671 12.17 6.53974C11.9885 6.35277 11.7424 6.24773 11.4858 6.24773C11.2292 6.24773 10.9831 6.35277 10.8016 6.53974C10.6202 6.72671 10.5182 6.9803 10.5182 7.24471V9.90332H7.93805C7.68144 9.90332 7.43533 10.0084 7.25388 10.1953C7.07242 10.3823 6.97049 10.6359 6.97049 10.9003C6.97049 11.1647 7.07242 11.4183 7.25388 11.6053C7.43533 11.7922 7.68144 11.8973 7.93805 11.8973H10.5182V14.5559C10.5182 14.8203 10.6202 15.0739 10.8016 15.2609C10.9831 15.4478 11.2292 15.5529 11.4858 15.5529C11.7424 15.5529 11.9885 15.4478 12.17 15.2609C12.3514 15.0739 12.4534 14.8203 12.4534 14.5559V11.8973H15.0335C15.2901 11.8973 15.5362 11.7922 15.7177 11.6053C15.8992 11.4183 16.0011 11.1647 16.0011 10.9003C16.0011 10.6359 15.8992 10.3823 15.7177 10.1953C15.5362 10.0084 15.2901 9.90332 15.0335 9.90332H12.4534V7.24471Z"/>
                                                 </svg>
@@ -5236,8 +5197,17 @@
                                     @if($callHistory->isNotEmpty())
                                         <div class="conv-section-header">Recent</div>
                                         @foreach($callHistory as $call)
+                                            {{-- Same ⋮ menu / long-press sheet as the chat rows
+                                                 (shared x-data in _row-longpress-xdata). --}}
                                             <div class="conversation-item call-row {{ $call['status'] === 'missed' && !$call['is_outgoing'] ? 'missed' : '' }}"
                                                  wire:key="call-{{ $call['id'] }}"
+                                                 x-data="@include('livewire.partials._row-longpress-xdata')"
+                                                 @pointerdown="longPressStart($event)"
+                                                 @pointerup="longPressCancel()"
+                                                 @pointercancel="longPressCancel()"
+                                                 @pointerleave="longPressCancel()"
+                                                 @pointermove="trackMove($event)"
+                                                 @contextmenu.prevent
                                                  @if($call['peer_id']) wire:click="openChatFromCall({{ $call['peer_id'] }})" @endif>
                                                 <div class="conversation-avatar">
                                                     @if(!empty($call['peer_avatar']))
@@ -5264,6 +5234,33 @@
                                                 <div class="conversation-meta">
                                                     <div class="conversation-time">
                                                         {{ \Carbon\Carbon::parse($call['started_at'])->format('h:i A') }}
+                                                    </div>
+                                                </div>
+
+                                                <div class="conv-lp-backdrop"
+                                                     x-show="open"
+                                                     x-transition.opacity.duration.150ms
+                                                     @click.stop="open = false"
+                                                     x-cloak></div>
+                                                <div class="conv-kebab" @click.outside="open = false">
+                                                    <button type="button" class="conv-kebab-btn"
+                                                            @click.stop="open = !open" aria-label="More">
+                                                        <i class="fa fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <div class="conv-kebab-menu"
+                                                         x-show="open"
+                                                         x-transition.opacity.duration.100ms
+                                                         @click.stop
+                                                         x-cloak>
+                                                        <div class="conv-lp-handle" aria-hidden="true"></div>
+                                                        <div class="conv-lp-title">{{ $call['peer_name'] }}</div>
+                                                        <button type="button" class="danger"
+                                                                wire:click="hideCallFromHistory({{ $call['id'] }})"
+                                                                wire:confirm="Delete this call from your call history?"
+                                                                @click="open = false">
+                                                            <i class="fa fa-trash"></i>
+                                                            Delete call
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -5514,7 +5511,7 @@
                                             @if($selectedStatus['is_mine'])
                                                 <button type="button" class="status-viewer-delete"
                                                         wire:click="deleteStatus({{ $selectedStatus['id'] }})"
-                                                        onclick="return confirm('Delete this status?')"
+                                                        wire:confirm="Delete this status?"
                                                         title="Delete">
                                                     <i class="fa fa-trash"></i>
                                                 </button>
@@ -5939,13 +5936,13 @@
                                                         @php $isBlocked = $curConv['is_blocked_by_me'] ?? false; @endphp
                                                         <button type="button" class="danger"
                                                                 wire:click="toggleBlock({{ $selectedUser->id }})"
-                                                                onclick="return confirm('{{ $isBlocked ? 'Unblock' : 'Block' }} this user?')">
+                                                                wire:confirm="{{ $isBlocked ? 'Unblock' : 'Block' }} this user?">
                                                             <i class="fa fa-ban"></i> {{ $isBlocked ? 'Unblock' : 'Block' }}
                                                         </button>
                                                     @endif
                                                     <button type="button" class="danger"
                                                             wire:click="deleteConversation"
-                                                            onclick="return confirm('Move this conversation to trash?')">
+                                                            wire:confirm="Move this conversation to trash?">
                                                         <i class="fa fa-trash"></i> Move to trash
                                                     </button>
                                                 </div>
@@ -6528,11 +6525,11 @@
                                                 @php $isBlocked2 = $curConv2['is_blocked_by_me'] ?? false; @endphp
                                                 <button type="button" class="ci-row danger"
                                                         wire:click="toggleBlock({{ $selectedUser->id }})"
-                                                        onclick="return confirm('{{ $isBlocked2 ? 'Unblock' : 'Block' }} this user?')">
+                                                        wire:confirm="{{ $isBlocked2 ? 'Unblock' : 'Block' }} this user?">
                                                     <span class="ci-row-icon"><i class="fa fa-ban"></i></span>
                                                     <span class="ci-row-label">{{ $isBlocked2 ? 'Unblock' : 'Block' }}</span>
                                                 </button>
-                                                <button type="button" class="ci-row danger" wire:click="deleteConversation" onclick="return confirm('Delete this conversation?')">
+                                                <button type="button" class="ci-row danger" wire:click="deleteConversation" wire:confirm="Delete this conversation?">
                                                     <span class="ci-row-icon"><i class="fa fa-trash"></i></span>
                                                     <span class="ci-row-label">Delete chat</span>
                                                 </button>

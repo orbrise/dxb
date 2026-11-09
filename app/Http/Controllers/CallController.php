@@ -3,11 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Events\CallSignal;
-use App\Events\NewChatMessage;
 use App\Models\Call;
 use App\Models\CallSignal as CallSignalRow;
-use App\Models\Conversation;
-use App\Models\Message;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -81,9 +78,18 @@ class CallController extends Controller
         // Support-offer validation: on the initial offer the caller doesn't
         // know which admin will accept, so we accept target_user_id=0 and
         // broadcast on support-inbox instead. For every other signal (ice,
-        // answer, hangup, …) the admin has already been determined so a
-        // real target is required.
-        if ($data['type'] !== 'offer' || !$isSupport) {
+        // answer, …) the admin has already been determined so a real target
+        // is required. The one exception is the caller hanging up before any
+        // admin picked up: it goes to the shared inbox like the offer did, so
+        // the call is logged as missed instead of ringing forever.
+        $supportCancel = $isSupport && $data['type'] === 'hangup' && $targetId <= 0;
+        if ($supportCancel && !Call::where('call_id', $data['call_id'])
+                ->where('is_support', true)
+                ->where('caller_id', $user->id)
+                ->exists()) {
+            return response()->json(['error' => 'not your call'], 403);
+        }
+        if (($data['type'] !== 'offer' || !$isSupport) && !$supportCancel) {
             if ($targetId <= 0) {
                 return response()->json(['error' => 'target_user_id required'], 422);
             }
@@ -782,7 +788,7 @@ class CallController extends Controller
                     $call->status = 'declined';
                     $call->ended_at = now();
                     $call->save();
-                    $this->emitCallSummaryMessage($call);
+                    $call->postSummaryMessage();
                 }
                 break;
 
@@ -797,7 +803,7 @@ class CallController extends Controller
                     $call->duration = Carbon::parse($call->connected_at)->diffInSeconds(now());
                 }
                 $call->save();
-                $this->emitCallSummaryMessage($call);
+                $call->postSummaryMessage();
                 break;
         }
     }
@@ -1029,66 +1035,6 @@ class CallController extends Controller
             return response()->json(['token' => $tokenResp->json()['token'] ?? null]);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Daily.co API error'], 500);
-        }
-    }
-
-    /**
-     * Insert a WhatsApp-style call-summary message into the associated
-     * conversation so both participants see the call outcome in their thread.
-     * Reuses the existing attachment_* columns (no schema change):
-     *
-     *   attachment_type     = 'call'
-     *   attachment_mime     = 'audio' | 'video'         (the call kind)
-     *   attachment_original_name = final Call.status    (missed|declined|ended)
-     *   attachment_duration = seconds when status=ended (nullable otherwise)
-     *
-     * The chat view renders this as a call bubble with a phone icon,
-     * direction arrow, status text and (if answered) duration.
-     */
-    protected function emitCallSummaryMessage(Call $call): void
-    {
-        if (!$call->conversation_id) {
-            // Missing — try to look up the 1:1 conversation between the pair.
-            $conv = Conversation::forUser($call->caller_id)
-                ->where(function ($q) use ($call) {
-                    $q->where('user_one_id', $call->callee_id)
-                      ->orWhere('user_two_id', $call->callee_id);
-                })
-                ->where('is_support', false)
-                ->first();
-            if (!$conv) return;
-            $call->conversation_id = $conv->id;
-            $call->save();
-        }
-
-        try {
-            $message = Message::create([
-                'conversation_id' => $call->conversation_id,
-                'sender_id' => $call->caller_id,
-                'message' => '',
-                'status' => 'sent',
-                'attachment_type' => 'call',
-                'attachment_mime' => $call->type,              // 'audio' | 'video'
-                'attachment_original_name' => $call->status,   // 'missed' | 'declined' | 'ended'
-                'attachment_duration' => $call->duration,
-            ]);
-
-            Conversation::where('id', $call->conversation_id)->update(['last_message_at' => now()]);
-
-            // Broadcast to the callee so the message appears in real time.
-            try {
-                broadcast(new NewChatMessage($message, $call->callee_id))->toOthers();
-            } catch (\Throwable $e) {
-                Log::channel('rtc')->warning('call_summary.broadcast_failed', [
-                    'call_id' => $call->call_id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::channel('rtc')->error('call_summary.insert_failed', [
-                'call_id' => $call->call_id,
-                'error' => $e->getMessage(),
-            ]);
         }
     }
 }

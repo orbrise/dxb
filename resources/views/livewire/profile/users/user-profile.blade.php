@@ -779,6 +779,9 @@ form.listing .image {
 #contact-information .form-group.phone_number:nth-of-type(2) .custom-select2 {
   z-index: 1 !important;
 }
+/* Empty second number, until "+ Add another phone" — beats the
+   display:flex !important the desktop layout puts on every phone row. */
+#contact-information .form-group.phone_number.ev-phone-hidden { display: none !important; }
 /* Open dropdown - max stacking */
 .insidewrapper .custom-select2.open {
   position: relative !important;
@@ -2205,9 +2208,9 @@ form.listing textarea#listing_description:focus {
                                   <p class="m-0 font-weight-bold drag-drop-text-main" style="font-size: 12px; color: #ffffff; font-weight:400; margin-bottom:20px">Drop files here</p>
                                   <p class="m-1 drag-drop-text ev-desktop-upload-text" style="color: #6c757d;padding-top:10px; padding-bottom:15px">or</p>
                                   <button class="m-1 mb-3 btn btn-primary" type="button" onclick="document.getElementById('mphoto').click(); return false;" style="background:#c8ff00;color:#000;border:none;border-radius:50px;font-weight:600;padding:8px 24px;font-size:16px;">Choose file</button>
-                                  <p class="m-0 mt-3 drag-drop-text ev-desktop-upload-text" style="font-size: 13px; color: #6c757d;">Images up to 8 MB · Videos up to 50 MB (max 10)</p>
+                                  <p class="m-0 mt-3 drag-drop-text ev-desktop-upload-text" style="font-size: 13px; color: #6c757d;">Images up to 8 MB · Videos up to 100 MB (max 10)</p>
                                   <p class="m-0 drag-drop-text ev-desktop-upload-text" style="font-size: 13px; color: #6c757d;">jpg, jpeg, gif, png, webp &nbsp;·&nbsp; mp4, webm, mov</p>
-                                  <p class="m-0 mt-2 ev-mobile-upload-info" style="display:none;font-size: 11px; color: #888; line-height: 1.4;">Photos + videos up to 50MB.<br>Min 3 photos required.</p>
+                                  <p class="m-0 mt-2 ev-mobile-upload-info" style="display:none;font-size: 11px; color: #888; line-height: 1.4;">Photos + videos up to 100MB.<br>Min 3 photos required.</p>
                                 </div>
                               </div>
                             </label>
@@ -2216,6 +2219,9 @@ form.listing textarea#listing_description:focus {
                             <input class="file optional" wire:model='mphoto' type="file" accept="image/*,video/mp4,video/webm,video/quicktime" id="mphoto" multiple style="display: none;">
                           </div>
                         </div>
+
+                        {{-- Same trim + thumbnail modal as the new-profile page. --}}
+                        @include('livewire.partials._profile-video-trim-modal')
                       </div>
 
                     </div>
@@ -2352,7 +2358,7 @@ form.listing textarea#listing_description:focus {
                           </select>
                         </div>
                         <div style="width: 50%;" wire:ignore>
-                          <input class="phone_number_input--digits form-control" type="text" name="phone" style="width:100%" placeholder="Enter phone number" id="listing_phone_numbers_attributes_0_phone_digits" />
+                          <input class="phone_number_input--digits form-control" type="text" name="phone" value="{{ $phone }}" style="width:100%" placeholder="Enter phone number" id="listing_phone_numbers_attributes_0_phone_digits" />
                         </div>
                         </div>
                         <div style="row">
@@ -2374,7 +2380,14 @@ form.listing textarea#listing_description:focus {
                           <span class="icon-signal icon-inline"></span> Signal </label>
                         </div>
                       </div>
-                      <div class="form-group phone_number">
+                      {{-- Second number stays hidden until it's filled in or the
+                           user asks for it, as on new-profile (where app2.js does
+                           this; that script isn't loaded on this page). --}}
+                      @if(blank($phone2))
+                        <a href="#add-alternate-phone" id="add-phone" class="btn btn-dark"
+                           onclick="event.preventDefault(); this.style.display = 'none'; document.getElementById('second-phone-section').classList.remove('ev-phone-hidden');">+ Add another phone</a>
+                      @endif
+                      <div class="form-group phone_number {{ blank($phone2) ? 'ev-phone-hidden' : '' }}" id="second-phone-section">
                         <div style="margin-bottom:15px" class="wrappper d-flex align-items-center">
                           <div class="insidewrapper" wire:ignore>
                           <select class="select2-country apply-custom-select2 form-control" wire:model='countrycode2' name="listing[phone_numbers_attributes][1][calling_code]" id="second_phone_code" data-radius="left" style="border-top-left-radius:4px">
@@ -2385,7 +2398,7 @@ form.listing textarea#listing_description:focus {
                           </select>
                         </div>
                         <div style="width: 50%;" wire:ignore>
-                          <input class="phone_number_input--digits form-control" name="phone2" type="text" style="width:100%" placeholder="Enter phone number" id="listing_phone_numbers_attributes_1_phone_digits" />
+                          <input class="phone_number_input--digits form-control" name="phone2" type="text" value="{{ $phone2 }}" style="width:100%" placeholder="Enter phone number" id="listing_phone_numbers_attributes_1_phone_digits" />
                         </div>
                         </div>
                         <div style="row">
@@ -3332,9 +3345,15 @@ form.listing textarea#listing_description:focus {
                     var r = document.getElementById('cityappend');
                     if (r && r.contains(e.target)) CitySearch.handleSelect(e);
                 }, false);
+                // Select on a real tap only, not when the finger lifts after
+                // scrolling the list.
+                document.addEventListener('touchstart', function(e) {
+                    var r = document.getElementById('cityappend');
+                    if (r && r.contains(e.target)) CitySearch.rememberTouch(e);
+                }, { passive: true });
                 document.addEventListener('touchend', function(e) {
                     var r = document.getElementById('cityappend');
-                    if (r && r.contains(e.target)) CitySearch.handleSelect(e);
+                    if (r && r.contains(e.target) && !CitySearch.wasScroll(e)) CitySearch.handleSelect(e);
                 }, false);
                 document.addEventListener('mousedown', function(e) {
                     var r = document.getElementById('cityappend');
@@ -3359,6 +3378,37 @@ form.listing textarea#listing_description:focus {
         syncInputRef: function() {
             var live = document.getElementById('citysearch');
             if (live && live !== this.input) this.input = live;
+        },
+
+        // Where the current touch on the list started, to tell a tap from a scroll.
+        rememberTouch: function(e) {
+            var t = e.touches && e.touches[0];
+            this._touchStart = t ? { x: t.clientX, y: t.clientY } : null;
+        },
+
+        wasScroll: function(e) {
+            var start = this._touchStart;
+            var t = e.changedTouches && e.changedTouches[0];
+            this._touchStart = null;
+            return !!(start && t && (Math.abs(t.clientX - start.x) > 10 || Math.abs(t.clientY - start.y) > 10));
+        },
+
+        // A tap fires touchend and then click. preventDefault() on touchend
+        // should drop that click, but Samsung Internet still sends it — and
+        // with the list already closed it lands on whatever was underneath
+        // ("Ask for it" opening /contact-us, the bottom bar) and the user
+        // leaves the page. Cancel the next click for a moment.
+        swallowGhostClick: function() {
+            var until = Date.now() + 800;
+            var swallow = function(ev) {
+                window.removeEventListener('click', swallow, true);
+                if (Date.now() > until) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+            };
+            window.addEventListener('click', swallow, true);
+            setTimeout(function() { window.removeEventListener('click', swallow, true); }, 800);
         },
         
         // Handle input changes
@@ -3563,7 +3613,9 @@ form.listing textarea#listing_description:focus {
             var currencyCode = target.getAttribute('data-currency');
 
             if (!cityId || !cityName) { this.isSelecting = false; return; }
-            
+
+            if (e.type === 'touchend') this.swallowGhostClick();
+
             // Update input field
             this.input.value = cityName;
 
@@ -4221,13 +4273,14 @@ function initDragDrop() {
         const files = e.dataTransfer.files;
         console.log('Files dropped:', files.length);
         
-        if (files.length > 0 && files[0].type.startsWith('image/')) {
-            console.log('Image file detected:', files[0].name);
-            
+        // Photos and videos both go through #mphoto; a dropped video opens
+        // the trim modal the same as one picked with "Choose file".
+        const isMedia = f => f.type.startsWith('image/') || f.type.startsWith('video/');
+        if (Array.from(files).some(isMedia)) {
             // Use DataTransfer to properly set files
             const dataTransfer = new DataTransfer();
             for (let i = 0; i < files.length; i++) {
-                if (files[i].type.startsWith('image/')) {
+                if (isMedia(files[i])) {
                     dataTransfer.items.add(files[i]);
                 }
             }

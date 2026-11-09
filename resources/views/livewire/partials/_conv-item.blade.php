@@ -8,48 +8,7 @@
     class="conversation-item {{ $conversation['unread_count'] > 0 ? 'unread' : '' }} {{ !empty($conversation['is_pinned']) ? 'pinned' : '' }} {{ !empty($conversation['missed_calls']) ? 'has-missed' : '' }} {{ !empty($conversation['is_support']) ? 'is-support' : '' }}"
     :class="selConv == {{ $conversation['id'] }} ? 'active' : ''"
     wire:key="conv-{{ $conversation['id'] }}"
-    x-data="{
-        open: false,
-        pressTimer: null,
-        startX: 0, startY: 0,
-        moved: false,
-        pressed: false,
-        longPressStart(e) {
-            // Touch-only — desktop uses the kebab button, right-click is left alone.
-            if (e.pointerType !== 'touch') return;
-            this.moved = false;
-            this.pressed = true;
-            this.startX = e.clientX;
-            this.startY = e.clientY;
-            const row = e.currentTarget;
-            clearTimeout(this.pressTimer);
-            this.pressTimer = setTimeout(() => {
-                if (this.moved || !this.pressed) return;
-                this.open = true;
-                if (navigator.vibrate) { try { navigator.vibrate(25); } catch(_){} }
-                // Swallow the click that fires on finger-up after a long-press
-                // so the row doesn't open the conversation under the menu.
-                const stopClick = (ev) => {
-                    ev.preventDefault();
-                    ev.stopImmediatePropagation();
-                };
-                row.addEventListener('click', stopClick, { capture: true, once: true });
-                setTimeout(() => row.removeEventListener('click', stopClick, true), 700);
-            }, 500);
-        },
-        longPressCancel() {
-            this.pressed = false;
-            clearTimeout(this.pressTimer);
-            this.pressTimer = null;
-        },
-        trackMove(e) {
-            if (!this.pressed) return;
-            if (Math.abs(e.clientX - this.startX) > 10 || Math.abs(e.clientY - this.startY) > 10) {
-                this.moved = true;
-                this.longPressCancel();
-            }
-        }
-    }"
+    x-data="@include('livewire.partials._row-longpress-xdata')"
     @pointerdown="longPressStart($event)"
     @pointerup="longPressCancel()"
     @pointercancel="longPressCancel()"
@@ -73,10 +32,8 @@
     {{-- Avatar wrapper. The green presence dot (span.presence-dot-overlay)
          sits outside the circular .conversation-avatar so it can bleed over
          the avatar's rounded corner without being clipped by the avatar's
-         overflow:hidden. Both the dot visibility AND the "Online / Offline"
-         chip next to the name read from the same server-computed
-         $conversation['is_online'] flag, so they are guaranteed to agree —
-         dot visible ⇔ chip says Online. --}}
+         overflow:hidden. It's the only presence signal in the list (the
+         "Online / Offline" text chip beside the name was removed). --}}
     <div class="conversation-avatar-wrap">
         <div class="conversation-avatar">
             @if(!empty($conversation['is_support']))
@@ -94,15 +51,6 @@
     <div class="conversation-info">
         <div class="conversation-name">
             {{ $conversation['other_user_name'] ?? 'Unknown' }}
-            @if(empty($conversation['is_support']))
-                {{-- Inline presence chip beside the name. Server-computed
-                     is_online: last_seen_at within the past 120s. Keeps the
-                     signal explicit (text, not a dot) per user request. --}}
-                <span class="presence-chip {{ !empty($conversation['is_online']) ? 'is-online' : 'is-offline' }}"
-                      title="Last seen: {{ $conversation['last_seen_debug'] ?? 'unknown' }}">
-                    {{ !empty($conversation['is_online']) ? 'Online' : 'Offline' }}
-                </span>
-            @endif
             @if(!empty($conversation['is_support']))
                 {{-- WhatsApp-style blue verified tick: signals "official account"
                      at a glance so users trust the support row. --}}
@@ -183,10 +131,13 @@
                         {{ !empty($conversation['is_blocked_by_me']) ? 'Unblock' : 'Block' }}
                     </button>
                 @endif
+                {{-- wire:confirm, not onclick="return confirm()": Livewire's
+                     wire:click ignores preventDefault, so Cancel on the old
+                     native confirm still deleted the chat. --}}
                 <button type="button" class="danger"
                         wire:click="deleteConversation({{ $conversation['id'] }})"
-                        @click="open = false"
-                        onclick="return confirm('Delete this conversation?')">
+                        wire:confirm="Delete this conversation?"
+                        @click="open = false">
                     <i class="fa fa-trash"></i>
                     Delete chat
                 </button>

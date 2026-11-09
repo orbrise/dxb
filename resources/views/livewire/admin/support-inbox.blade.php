@@ -78,6 +78,28 @@
     font-size: 10.5px; font-weight: 600;
     padding: 2px 7px; border-radius: 999px;
 }
+/* Row chevron menu (Delete chat / Delete call): appears on hover like
+   WhatsApp Web, always shown on touch screens. siRowMenu() drives it. */
+.s-modern .si-meta-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.s-modern .si-row-actions { position: relative; opacity: 0; transition: opacity .15s; }
+.s-modern .si-item:hover .si-row-actions,
+.s-modern .si-row-actions.open,
+.s-modern .si-row-actions:focus-within { opacity: 1; }
+@media (hover: none) { .s-modern .si-row-actions { opacity: 1; } }
+.s-modern .si-row-actions-trigger {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 22px; padding: 0; border: 0; border-radius: 5px;
+    background: transparent; color: var(--sm-slate-500); font-size: 11px; cursor: pointer;
+}
+.s-modern .si-row-actions-trigger:hover { background: var(--sm-slate-200); color: var(--sm-slate-700); }
+.s-modern .si-row-actions-menu {
+    display: none; position: absolute; top: calc(100% + 4px); right: 0; z-index: 50;
+    width: 150px; padding: 4px; border: 1px solid var(--sm-slate-200); border-radius: 8px;
+    background: #fff; box-shadow: 0 8px 24px rgba(15,23,42,.16);
+}
+/* No room below inside the scrolling list — open upward. */
+.s-modern .si-row-actions.up .si-row-actions-menu { top: auto; bottom: calc(100% + 4px); }
+.s-modern .si-row-actions.open .si-row-actions-menu { display: block; }
 
 /* ---------- Right pane (message thread) ---------- */
 .s-modern .si-main {
@@ -132,13 +154,16 @@
     background: #fff; box-shadow: 0 8px 24px rgba(15,23,42,.16);
 }
 .s-modern .si-msg-actions.open .si-msg-actions-menu { display: block; }
-.s-modern .si-msg-actions-menu button {
+.s-modern .si-msg-actions-menu button,
+.s-modern .si-row-actions-menu button {
     display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px;
     border: 0; border-radius: 5px; background: transparent; color: var(--sm-slate-700);
     font: inherit; font-size: 12px; text-align: left; cursor: pointer;
 }
-.s-modern .si-msg-actions-menu button:hover { background: var(--sm-slate-100); }
-.s-modern .si-msg-actions-menu button.danger { color: #b91c1c; }
+.s-modern .si-msg-actions-menu button:hover,
+.s-modern .si-row-actions-menu button:hover { background: var(--sm-slate-100); }
+.s-modern .si-msg-actions-menu button.danger,
+.s-modern .si-row-actions-menu button.danger { color: #b91c1c; }
 .s-modern .si-reply-quote { margin: 0 0 7px; padding: 5px 8px; border-left: 3px solid #53bdeb; border-radius: 3px; background: rgba(255,255,255,.55); font-size: 11px; }
 .s-modern .si-reply-quote strong { display: block; margin-bottom: 2px; color: #416b7c; }
 .s-modern .si-reply-quote span { display: block; color: var(--sm-slate-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -160,7 +185,9 @@
     border-bottom-left-radius: 3px;
 }
 .s-modern .si-msg.media .si-bub { padding: 3px; border-color: transparent; box-shadow: none; background: transparent !important; }
-.s-modern .si-bub p { margin: 0; word-wrap: break-word; }
+/* pre-wrap keeps the line breaks of multi-line messages (top-up message,
+   quick replies), same as the customer's my-chat bubble. */
+.s-modern .si-bub p { margin: 0; word-wrap: break-word; white-space: pre-wrap; }
 .s-modern .si-date-sep { display: flex; justify-content: center; margin: 12px 0 6px; }
 .s-modern .si-date-sep span {
     padding: 4px 12px; border: 1px solid var(--sm-slate-200); border-radius: 999px;
@@ -179,6 +206,213 @@
     z-index: 20;
 }
 .s-modern .si-main { position: relative; }
+
+/* ---------- Customer info (tap the name in the chat header) ---------- */
+.s-modern .si-head-profile {
+    display: flex; align-items: center; flex: 1; min-width: 0;
+    margin: -4px 0 -4px -6px; padding: 4px 10px 4px 6px;
+    border-radius: 12px; cursor: pointer; outline: none;
+    transition: background .15s;
+}
+.s-modern .si-head-profile:hover,
+.s-modern .si-head-profile:focus-visible { background: var(--sm-slate-50); }
+/* Full-pane "Contact info" over the chat, laid out like my-chat's. */
+.s-modern .si-info-panel {
+    position: absolute; inset: 0; z-index: 25;
+    display: flex; flex-direction: column;
+    background: var(--sm-slate-50);
+    animation: siInfoIn .16s ease-out;
+}
+@keyframes siInfoIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.s-modern .si-info-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--sm-slate-100);
+    background: #fff;
+}
+.s-modern .si-info-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--sm-slate-800); }
+.s-modern .si-info-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border: 0; border-radius: 50%;
+    background: transparent; color: var(--sm-slate-700); font-size: 17px; cursor: pointer;
+}
+.s-modern .si-info-close:hover { background: var(--sm-slate-100); color: var(--sm-slate-900, #0f172a); }
+.s-modern .si-info-body { flex: 1; overflow-y: auto; }
+.s-modern .si-info-inner { max-width: 820px; margin: 0 auto; padding-bottom: 24px; }
+.s-modern .si-info-hero {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 34px 20px 26px; background: #fff;
+}
+.s-modern .si-info-avatar {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    width: 160px; height: 160px; margin-bottom: 18px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #fff; font-size: 62px; font-weight: 700;
+    box-shadow: 0 8px 26px rgba(79, 70, 229, .22);
+}
+.s-modern .si-info-avatar a,
+.s-modern .si-info-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.s-modern .si-info-avatar img { object-fit: cover; }
+.s-modern .si-info-name { max-width: 100%; color: var(--sm-slate-800); font-size: 26px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.s-modern .si-info-mail { max-width: 100%; margin-top: 4px; color: var(--sm-slate-500); font-size: 14px; overflow-wrap: anywhere; }
+.s-modern .si-info-seen { margin-top: 6px; color: var(--sm-slate-500); font-size: 14px; }
+.s-modern .si-info-seen.online { color: #16a34a; font-weight: 600; }
+.s-modern .si-info-seen.online::before {
+    content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px;
+    border-radius: 50%; background: #22c55e; vertical-align: 1px;
+}
+.s-modern .si-info-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 12px; }
+.s-modern .si-info-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 999px;
+    background: var(--sm-slate-100); color: var(--sm-slate-600);
+    font-size: 11.5px; font-weight: 600;
+}
+.s-modern .si-info-chip.good { background: #dcfce7; color: #15803d; }
+.s-modern .si-info-chip.warn { background: #fef3c7; color: #b45309; }
+.s-modern .si-info-chip.bad { background: #fee2e2; color: #b91c1c; }
+.s-modern .si-info-chip.plan { background: #ede9fe; color: #6d28d9; }
+/* Round icon buttons with a label underneath (Voice / Video / …). */
+.s-modern .si-info-actions { display: flex; justify-content: center; gap: 30px; margin-top: 26px; }
+.s-modern .si-info-action {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 0; border: 0; background: transparent; cursor: pointer;
+    text-decoration: none !important;
+}
+.s-modern .si-info-action-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 58px; height: 58px; border-radius: 50%;
+    border: 1px solid var(--sm-slate-200); background: #fff;
+    color: var(--sm-primary); font-size: 20px;
+    transition: background .15s, border-color .15s, color .15s;
+}
+.s-modern .si-info-action > span:last-child { color: var(--sm-slate-700); font-size: 13px; font-weight: 600; }
+.s-modern .si-info-action:hover .si-info-action-icon { border-color: var(--sm-primary); background: var(--sm-primary); color: #fff; }
+/* Tappable rows with a round icon, like my-chat's Contact info. */
+.s-modern .si-info-rows { margin-top: 10px; background: #fff; }
+.s-modern .si-info-row {
+    display: flex; align-items: center; gap: 16px; width: 100%;
+    padding: 14px 20px; border: 0; border-bottom: 1px solid var(--sm-slate-100);
+    background: transparent; color: var(--sm-slate-800); font-family: inherit; font-size: 15.5px; text-align: left; cursor: pointer;
+}
+.s-modern .si-info-row:last-child { border-bottom: 0; }
+.s-modern .si-info-row:hover { background: var(--sm-slate-50); }
+.s-modern .si-info-row-icon {
+    flex: none; display: flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--sm-slate-100); color: var(--sm-slate-600); font-size: 16px;
+}
+.s-modern .si-info-row-text { flex: 1; min-width: 0; font-weight: 500; }
+.s-modern .si-info-row-text small { display: block; margin-top: 1px; color: var(--sm-slate-500); font-size: 12.5px; font-weight: 400; }
+.s-modern .si-info-row-meta { color: var(--sm-slate-500); font-size: 14px; }
+.s-modern .si-info-row-meta.strong { color: var(--sm-slate-800); font-weight: 700; }
+.s-modern .si-info-row-go { color: var(--sm-slate-400, #94a3b8); font-size: 12px; }
+.s-modern .si-info-row.danger { color: #dc2626; }
+.s-modern .si-info-row.danger .si-info-row-icon { background: #fee2e2; color: #dc2626; }
+.s-modern .si-info-section { margin-top: 10px; padding: 16px 20px; background: #fff; }
+.s-modern .si-info-section h4 {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 0 0 10px; color: var(--sm-slate-500);
+    font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+}
+.s-modern .si-info-list { margin: 0; }
+.s-modern .si-info-list > div {
+    display: flex; justify-content: space-between; gap: 14px;
+    padding: 9px 0; border-bottom: 1px solid var(--sm-slate-100); font-size: 14px;
+}
+.s-modern .si-info-list > div:last-child { border-bottom: 0; }
+.s-modern .si-info-list dt { flex: none; color: var(--sm-slate-500); font-weight: 500; }
+.s-modern .si-info-list dd { min-width: 0; margin: 0; color: var(--sm-slate-800); font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.s-modern .si-info-list dd a { color: var(--sm-primary); }
+.s-modern .si-info-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.s-modern .si-info-stat { padding: 10px 12px; border-radius: 12px; background: var(--sm-slate-50); }
+.s-modern .si-info-stat strong { display: block; color: var(--sm-slate-800); font-size: 18px; }
+.s-modern .si-info-stat span { color: var(--sm-slate-500); font-size: 12px; }
+.s-modern .si-info-stat.bad strong { color: #dc2626; }
+.s-modern .si-info-note { margin-top: 10px; color: var(--sm-slate-500); font-size: 12.5px; }
+.s-modern .si-info-about { margin: 0; color: var(--sm-slate-700); font-size: 13.5px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.s-modern .si-info-search { position: relative; margin-bottom: 6px; }
+.s-modern .si-info-search .fa {
+    position: absolute; top: 50%; left: 14px; transform: translateY(-50%);
+    color: var(--sm-slate-400, #94a3b8); font-size: 13px; pointer-events: none;
+}
+.s-modern .si-info-search input {
+    display: block; width: 100%; height: 40px; padding: 0 14px 0 38px;
+    border: 1px solid var(--sm-slate-200); border-radius: 999px; background: var(--sm-slate-50);
+    color: var(--sm-slate-800); font-size: 13.5px;
+}
+.s-modern .si-info-search input:focus { outline: none; border-color: var(--sm-primary); background: #fff; box-shadow: 0 0 0 3px rgba(99, 102, 241, .12); }
+.s-modern .si-info-listing-item { border-bottom: 1px solid var(--sm-slate-100); }
+.s-modern .si-info-listing-item:last-of-type { border-bottom: 0; }
+.s-modern .si-info-listing { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
+.s-modern .si-info-listing-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.s-modern .si-info-pkg {
+    display: inline-flex; align-items: center; gap: 4px; margin-top: 3px;
+    color: var(--sm-slate-500); font-size: 11.5px; font-weight: 600;
+}
+.s-modern .si-info-pkg.on { color: #6d28d9; }
+.s-modern .si-info-pkg.off { color: #b45309; }
+.s-modern .si-info-upgrade {
+    flex: none; display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 11px; border: 1px solid var(--sm-primary); border-radius: 999px;
+    background: #fff; color: var(--sm-primary); font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.s-modern .si-info-upgrade:hover { background: var(--sm-primary); color: #fff; }
+.s-modern .si-info-upgrade.is-open { border-color: var(--sm-slate-300, #cbd5e1); color: var(--sm-slate-600); }
+.s-modern .si-info-upgrade.is-open:hover { background: var(--sm-slate-100); color: var(--sm-slate-800); }
+.s-modern .si-info-notice {
+    display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; padding: 10px 12px;
+    border-radius: 10px; background: #dcfce7; color: #166534; font-size: 12.5px; font-weight: 600;
+}
+.s-modern .si-info-notice .fa { margin-top: 2px; }
+
+/* Upgrade form, opened in place under its listing */
+.s-modern .si-upgrade-form {
+    margin: 0 0 12px; padding: 14px; border-radius: 12px;
+    background: var(--sm-slate-50); border: 1px solid var(--sm-slate-200);
+    animation: siInfoIn .16s ease-out;
+}
+.s-modern .si-upgrade-warn { margin-bottom: 12px; color: #b45309; font-size: 12.5px; font-weight: 600; }
+.s-modern .si-upgrade-hint { margin-bottom: 8px; color: var(--sm-slate-500); font-size: 12px; }
+.s-modern .si-upgrade-label { display: block; margin: 0 0 6px; color: var(--sm-slate-700); font-size: 12.5px; font-weight: 700; }
+.s-modern .si-upgrade-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.s-modern .si-upgrade-opt { position: relative; margin: 0; cursor: pointer; }
+.s-modern .si-upgrade-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.s-modern .si-upgrade-opt > span {
+    display: flex; flex-direction: column; min-width: 86px; padding: 8px 12px;
+    border: 1.5px solid var(--sm-slate-200); border-radius: 10px; background: #fff;
+    color: var(--sm-slate-800); font-size: 13px; font-weight: 700; line-height: 1.3;
+    transition: border-color .15s, background .15s;
+}
+.s-modern .si-upgrade-opt > span small { color: var(--sm-slate-500); font-size: 11.5px; font-weight: 500; }
+.s-modern .si-upgrade-opt:hover > span { border-color: var(--sm-primary); }
+.s-modern .si-upgrade-opt input:checked + span { border-color: var(--sm-primary); background: rgba(99, 102, 241, .07); box-shadow: 0 0 0 1px var(--sm-primary); }
+.s-modern .si-upgrade-opt input:disabled + span { opacity: .45; cursor: not-allowed; }
+.s-modern .si-upgrade-pay { display: grid; gap: 8px; margin-bottom: 14px; }
+.s-modern .si-upgrade-pay .si-upgrade-opt > span { min-width: 0; }
+.s-modern .si-upgrade-form textarea,
+.s-modern .si-upgrade-form .si-upgrade-days {
+    display: block; width: 100%; padding: 10px 12px;
+    border: 1px solid var(--sm-slate-200); border-radius: 9px; background: #fff;
+    color: var(--sm-slate-800); font-size: 13.5px;
+}
+.s-modern .si-upgrade-form .si-upgrade-days { max-width: 220px; margin: -4px 0 14px; }
+.s-modern .si-upgrade-form textarea { min-height: 150px; margin-bottom: 4px; line-height: 1.45; resize: vertical; }
+.s-modern .si-upgrade-form textarea:focus,
+.s-modern .si-upgrade-form .si-upgrade-days:focus { outline: none; border-color: var(--sm-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, .12); }
+.s-modern .si-info-listing-img {
+    flex: none; display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 54px; overflow: hidden; border-radius: 8px;
+    background: var(--sm-slate-100); color: var(--sm-slate-400, #94a3b8);
+}
+.s-modern .si-info-listing-img img { width: 100%; height: 100%; object-fit: cover; }
+.s-modern .si-info-listing-text { flex: 1; min-width: 0; }
+.s-modern .si-info-listing-name { overflow: hidden; color: var(--sm-slate-800); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.s-modern .si-info-listing-sub { color: var(--sm-slate-500); font-size: 12.5px; }
+.s-modern .si-info-listing > .fa { color: var(--sm-slate-400, #94a3b8); font-size: 12px; }
+
 .s-modern .si-starred-head {
     display: flex; align-items: center; gap: 10px;
     padding: 14px 18px;
@@ -413,15 +647,28 @@
     background: var(--sm-primary); border-color: var(--sm-primary);
     color: #fff; transform: translateY(-1px);
 }
-.s-modern .si-hbtn.pill {
-    width: auto; padding: 0 13px; gap: 7px;
-    border-radius: 999px; font-size: 12.5px; font-weight: 600;
+/* ⋮ menu in the chat header: Top up, Block calls, Delete chat history. */
+.s-modern .si-head-more { position: relative; }
+.s-modern .si-head-more-menu {
+    display: none; position: absolute; top: 42px; right: 0; z-index: 70;
+    min-width: 200px; padding: 5px;
+    border: 1px solid var(--sm-slate-200); border-radius: 10px; background: #fff;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, .18);
 }
-.s-modern .si-hbtn.pill:hover { background: var(--sm-slate-800); border-color: var(--sm-slate-800); color: #fff; }
-.s-modern .si-hbtn.pill.danger {
-    background: #fef2f2; border-color: #fecaca; color: #b91c1c;
+.s-modern .si-head-more.open .si-head-more-menu { display: block; }
+.s-modern .si-head-more-menu button {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px;
+    border: 0; border-radius: 6px; background: transparent;
+    color: var(--sm-slate-800); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
 }
-.s-modern .si-hbtn.pill.danger:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+.s-modern .si-head-more-menu button:hover { background: var(--sm-slate-100); }
+.s-modern .si-head-more-menu button i { width: 16px; color: var(--sm-slate-500); text-align: center; }
+.s-modern .si-head-more-menu button.danger,
+.s-modern .si-head-more-menu button.danger i { color: #b91c1c; }
+.s-modern .si-head-flag {
+    display: flex; flex: none; align-items: center; gap: 8px; padding: 7px 20px;
+    border-bottom: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; font-size: 12.5px;
+}
 .s-modern .si-flag { color: #dc2626; font-size: 11px; margin-left: 6px; }
 
 /* ---------- Attach menu ---------- */
@@ -1246,7 +1493,6 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
 .s-modern .si-time.is-unread { color: var(--sm-primary); font-weight: 600; }
 .s-modern .si-menu-btn,
 .s-modern .si-bottom-tab-label,
-.s-modern .si-head-more,
 .s-modern .si-wrap .si-mobile-only { display: none; }
 
 /* ---------- Phones: WhatsApp-style single pane ----------
@@ -1349,6 +1595,8 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
         display: inline-flex; align-items: center; justify-content: center;
         min-width: 21px; height: 21px; padding: 0 6px; font-size: 11.5px;
     }
+    .s-modern .si-row-actions-trigger { width: 30px; height: 28px; font-size: 13px; }
+    .s-modern .si-row-actions-menu button { padding: 11px 10px; font-size: 14px; }
     .s-modern .si-status-me,
     .s-modern .si-set-profile { padding: 10px 10px 14px; }
     .s-modern .si-status-actions { padding: 0 10px 12px; }
@@ -1387,10 +1635,22 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
     /* ----- Shared pane header (chat, media, status, settings, starred) ----- */
     .s-modern .si-head,
     .s-modern .si-pane-head,
-    .s-modern .si-starred-head {
+    .s-modern .si-starred-head,
+    .s-modern .si-info-head {
         gap: 6px; padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 8px 4px;
         background: #fff;
     }
+    /* Contact info: same page, sized for a phone. */
+    .s-modern .si-info-panel { animation: none; }
+    .s-modern .si-info-close { width: 40px; height: 40px; font-size: 17px; }
+    .s-modern .si-info-body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    .s-modern .si-info-hero { padding: 26px 16px 22px; }
+    .s-modern .si-info-avatar { width: 128px; height: 128px; font-size: 50px; }
+    .s-modern .si-info-name { font-size: 23px; }
+    .s-modern .si-info-actions { gap: 20px; margin-top: 22px; }
+    .s-modern .si-info-action-icon { width: 54px; height: 54px; font-size: 19px; }
+    .s-modern .si-info-row { padding: 13px 16px; gap: 14px; }
+    .s-modern .si-info-section { padding: 16px; }
     .s-modern .si-pane-back,
     .s-modern .si-starred-back { width: 40px; height: 40px; font-size: 17px; }
     .s-modern .si-pane-title { font-size: 16px; }
@@ -1399,7 +1659,9 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
 
     /* ----- Chat thread ----- */
     .s-modern .si-head-who { flex: 1; min-width: 0; }
-    .s-modern .si-head-who > .si-avatar { width: 40px !important; height: 40px !important; flex: none; }
+    .s-modern .si-head-profile > .si-avatar { width: 40px !important; height: 40px !important; flex: none; }
+    .s-modern .si-head-profile:hover { background: transparent; }
+    .s-modern .si-head-profile:active { background: var(--sm-slate-100); }
     .s-modern .si-head-text { flex: 1; min-width: 0; }
     .s-modern .si-head-name,
     .s-modern .si-head-mail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1412,28 +1674,12 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
         color: var(--sm-slate-700); font-size: 17px; transform: none;
     }
     .s-modern .si-hbtn:active { background: var(--sm-slate-100); }
-    .s-modern .si-head-actions .si-hbtn.pill { display: none; }
-    .s-modern .si-head-more { display: block; position: relative; }
-    .s-modern .si-head-more-menu {
-        display: none; position: absolute; top: 44px; right: 0; z-index: 70;
-        min-width: 210px; padding: 6px;
-        border: 1px solid var(--sm-slate-200); border-radius: 12px; background: #fff;
-        box-shadow: 0 12px 32px rgba(15, 23, 42, .18);
-    }
-    .s-modern .si-head-more.open .si-head-more-menu { display: block; }
-    .s-modern .si-head-more-menu button {
-        display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px;
-        border: 0; border-radius: 8px; background: transparent;
-        color: var(--sm-slate-800); font: inherit; font-size: 15px; text-align: left; cursor: pointer;
-    }
+    /* Bigger touch targets for the ⋮ menu. */
+    .s-modern .si-head-more-menu { top: 44px; min-width: 210px; padding: 6px; border-radius: 12px; }
+    .s-modern .si-head-more-menu button { gap: 12px; padding: 12px; border-radius: 8px; font-size: 15px; }
     .s-modern .si-head-more-menu button:active { background: var(--sm-slate-100); }
-    .s-modern .si-head-more-menu button i { width: 18px; color: var(--sm-slate-500); text-align: center; }
-    .s-modern .si-head-more-menu button.danger,
-    .s-modern .si-head-more-menu button.danger i { color: #b91c1c; }
-    .s-modern .si-wrap .si-mobile-only.si-head-flag {
-        display: flex; flex: none; align-items: center; gap: 8px; padding: 7px 14px;
-        border-bottom: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; font-size: 12.5px;
-    }
+    .s-modern .si-head-more-menu button i { width: 18px; }
+    .s-modern .si-head-flag { padding: 7px 14px; }
 
     .s-modern .si-msgs { padding: 10px 10px 14px; gap: 4px; }
     .s-modern .si-bub { max-width: 85%; font-size: 15px; }
@@ -1607,9 +1853,22 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 @if($c['last_message_at'])
                                     <div class="si-time {{ $c['unread_count'] > 0 ? 'is-unread' : '' }}">{{ \Carbon\Carbon::parse($c['last_message_at'])->diffForHumans(null, true) }}</div>
                                 @endif
-                                @if($c['unread_count'] > 0)
-                                    <span class="si-badge">{{ $c['unread_count'] }}</span>
-                                @endif
+                                <div class="si-meta-actions">
+                                    @if($c['unread_count'] > 0)
+                                        <span class="si-badge">{{ $c['unread_count'] }}</span>
+                                    @endif
+                                    <div class="si-row-actions" onclick="siRowMenu(event, this)">
+                                        <button type="button" class="si-row-actions-trigger" title="More options" aria-label="More options for {{ $c['customer_name'] }}">
+                                            <i class="fa fa-chevron-down"></i>
+                                        </button>
+                                        <div class="si-row-actions-menu">
+                                            <button type="button" class="danger" wire:click="hideConversation({{ $c['id'] }})"
+                                                    wire:confirm="Delete the chat with {{ $c['customer_name'] }} from the Support Inbox? The customer keeps their messages, and the chat comes back here if they write again.">
+                                                <i class="fa fa-trash"></i> Delete chat
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -1631,8 +1890,8 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 default => ucfirst($call['status']) . ' call',
                             };
                         @endphp
-                        <div class="si-item {{ $selectedConversationId == $call['conversation_id'] ? 'active' : '' }} {{ $call['is_unanswered'] ? 'si-call-row-unanswered' : '' }}"
-                             wire:click="selectConversation({{ $call['conversation_id'] }})" data-si-open
+                        <div class="si-item {{ $selectedCallId === $call['id'] ? 'active' : '' }} {{ $call['is_unanswered'] ? 'si-call-row-unanswered' : '' }}"
+                             wire:click="openCall({{ $call['id'] }})" data-si-open
                              wire:key="si-call-row-{{ $call['id'] }}">
                             <div class="si-avatar">
                                 {{ strtoupper(substr($call['customer_name'], 0, 1)) }}
@@ -1650,7 +1909,20 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                             </div>
                             <div class="si-meta">
                                 <div class="si-time">{{ \Carbon\Carbon::parse($call['started_at'])->format('h:i A') }}</div>
-                                @if($call['is_unanswered'])<span class="si-view-tab-badge">!</span>@endif
+                                <div class="si-meta-actions">
+                                    @if($call['is_new'])<span class="si-view-tab-badge">!</span>@endif
+                                    <div class="si-row-actions" onclick="siRowMenu(event, this)">
+                                        <button type="button" class="si-row-actions-trigger" title="More options" aria-label="More options for this call">
+                                            <i class="fa fa-chevron-down"></i>
+                                        </button>
+                                        <div class="si-row-actions-menu">
+                                            <button type="button" class="danger" wire:click="hideCall({{ $call['id'] }})"
+                                                    wire:confirm="Delete this call from the Support Inbox call log? The customer's call history is not affected.">
+                                                <i class="fa fa-trash"></i> Delete call
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -1776,7 +2048,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                     @endphp
                     @foreach($settingsItems as $item)
                         {{-- Quick / auto replies live under Business tools, so keep that row lit. --}}
-                        <button type="button" class="si-set-row {{ ($settingsSection === $item['id'] || ($item['id'] === 'tools' && in_array($settingsSection, ['quick-replies', 'auto-reply'], true))) && !$starredViewOpen ? 'active' : '' }}"
+                        <button type="button" class="si-set-row {{ ($settingsSection === $item['id'] || ($item['id'] === 'tools' && in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message'], true))) && !$starredViewOpen ? 'active' : '' }}"
                                 wire:click="setSettingsSection('{{ $item['id'] }}')" data-si-open wire:key="si-set-{{ $item['id'] }}">
                             <span class="si-set-row-icon"><i class="fa {{ $item['icon'] }}"></i></span>
                             <span class="si-set-row-body">
@@ -2156,13 +2428,14 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 'tools' => ['Business tools', 'Reach customers in bulk and reply faster'],
                                 'quick-replies' => ['Quick replies', 'Saved messages any agent can insert by typing /'],
                                 'auto-reply' => ['Auto reply', 'Let customers know you got their message when no one replies in time'],
+                                'topup-message' => ['Top-up message', 'Sent to the customer when you add funds to their wallet'],
                                 'calls' => ['Calls', 'Control whether customers can call support'],
                                 default => ['Blocked', 'Customers barred from placing calls'],
                             };
                         @endphp
                         <div class="si-pane-head">
-                            <button type="button" class="si-pane-back" wire:click="setSettingsSection('{{ in_array($settingsSection, ['quick-replies', 'auto-reply'], true) ? 'tools' : '' }}')"
-                                    @unless(in_array($settingsSection, ['quick-replies', 'auto-reply'], true)) data-si-back @endunless title="Back" aria-label="Back">
+                            <button type="button" class="si-pane-back" wire:click="setSettingsSection('{{ in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message'], true) ? 'tools' : '' }}')"
+                                    @unless(in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message'], true)) data-si-back @endunless title="Back" aria-label="Back">
                                 <i class="fa fa-arrow-left"></i>
                             </button>
                             <div>
@@ -2258,6 +2531,18 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                             <div class="si-set-card-actions">
                                                 <button type="button" class="si-set-btn" wire:click="setSettingsSection('auto-reply')">
                                                     <i class="fa fa-cog"></i> Set up auto reply
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="si-set-card">
+                                        <span class="si-set-card-icon"><i class="fa fa-wallet"></i></span>
+                                        <div class="si-set-card-body">
+                                            <div class="si-set-card-title">Top-up message</div>
+                                            <div class="si-set-card-text">The message a customer gets in their Support chat when you top up their wallet.</div>
+                                            <div class="si-set-card-actions">
+                                                <button type="button" class="si-set-btn" wire:click="setSettingsSection('topup-message')">
+                                                    <i class="fa fa-pen"></i> Edit top-up message
                                                 </button>
                                             </div>
                                         </div>
@@ -2363,6 +2648,31 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                         A customer gets one auto reply per wait. It isn't sent again until an agent has replied, or 24 hours have passed.
                                         Auto replies are labelled in the chat and the conversation stays marked as unanswered.
                                     </p>
+                                @elseif($settingsSection === 'topup-message')
+                                    <form class="si-set-card" style="display:block;" wire:submit.prevent="saveTopupMessage">
+                                        <div class="si-field">
+                                            <label for="siTopupMessage">Message</label>
+                                            <textarea id="siTopupMessage" class="si-field-input si-field-textarea" rows="13" maxlength="2000"
+                                                      wire:model="topupMessage" required></textarea>
+                                            <div class="si-field-hint">
+                                                <code>{amount}</code> is the amount added, <code>{balance}</code> the new wallet balance and
+                                                <code>{name}</code> the customer's first name. Line breaks and emoji are kept exactly as typed.
+                                            </div>
+                                            @error('topupMessage') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                        </div>
+                                        <button type="submit" class="si-set-btn primary" wire:loading.attr="disabled" wire:target="saveTopupMessage">
+                                            <i class="fa fa-check"></i> Save
+                                        </button>
+                                        <button type="button" class="si-set-btn" wire:click="resetTopupMessage">
+                                            <i class="fa fa-undo"></i> Use default
+                                        </button>
+                                        @if($topupMessageSaved)
+                                            <span class="si-acct-saved" wire:key="si-topup-message-saved"><i class="fa fa-check-circle"></i> Saved</span>
+                                        @endif
+                                    </form>
+                                    <p class="si-set-hint">
+                                        Sent in the customer's Support chat from the admin who does the top-up, the moment the funds are added.
+                                    </p>
                                 @elseif($settingsSection === 'calls')
                                     <div class="si-set-card">
                                         <span class="si-set-card-icon {{ $supportCallsBlocked ? 'danger' : '' }}">
@@ -2386,7 +2696,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                         <span class="si-set-card-icon"><i class="fa fa-history"></i></span>
                                         <div class="si-set-card-body">
                                             <div class="si-set-card-title">Unanswered calls</div>
-                                            <div class="si-set-card-text">{{ $unansweredCallsCount }} missed or declined {{ \Illuminate\Support\Str::plural('call', $unansweredCallsCount) }} from customers.</div>
+                                            <div class="si-set-card-text">{{ $unansweredCallsCount }} new missed or declined {{ \Illuminate\Support\Str::plural('call', $unansweredCallsCount) }} from customers.</div>
                                             <div class="si-set-card-actions">
                                                 <button type="button" class="si-set-btn" wire:click="setInboxTab('calls')"><i class="fa fa-phone"></i> View calls</button>
                                             </div>
@@ -2453,19 +2763,24 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         <button type="button" class="si-pane-back si-mobile-only" wire:click="closeConversation" data-si-back title="Back" aria-label="Back to chats">
                             <i class="fa fa-arrow-left"></i>
                         </button>
-                        <div class="si-avatar" style="width:36px; height:36px; margin-right:10px;">
-                            {{ strtoupper(substr($selectedCustomer->name ?: $selectedCustomer->email, 0, 1)) }}
-                            @if($selectedCustomer->avatar)
-                                @php $headAvatar = user_avatar_url($selectedCustomer); @endphp
-                                <img src="{{ $headAvatar }}" alt="" wire:key="si-av-{{ md5($headAvatar) }}" wire:ignore onerror="this.style.display='none'">
-                            @endif
-                        </div>
-                        <div class="si-head-text">
-                            <div class="si-head-name">
-                                {{ $selectedCustomer->name ?? $selectedCustomer->email }}
-                                @if($selectedCustomerCountry)<span class="si-country-prefix">{{ $selectedCustomerCountry }}</span>@endif
+                        {{-- Tap the customer to open the "Customer info" panel. --}}
+                        <div class="si-head-profile" role="button" tabindex="0" title="Customer info"
+                             aria-label="Customer info for {{ $selectedCustomer->name ?: $selectedCustomer->email }}"
+                             wire:click="openCustomerInfo" wire:keydown.enter="openCustomerInfo">
+                            <div class="si-avatar" style="width:36px; height:36px; margin-right:10px;">
+                                {{ strtoupper(substr($selectedCustomer->name ?: $selectedCustomer->email, 0, 1)) }}
+                                @if($selectedCustomer->avatar)
+                                    @php $headAvatar = user_avatar_url($selectedCustomer); @endphp
+                                    <img src="{{ $headAvatar }}" alt="" wire:key="si-av-{{ md5($headAvatar) }}" wire:ignore onerror="this.style.display='none'">
+                                @endif
                             </div>
-                            <div class="si-head-mail">{{ $selectedCustomer->email }}</div>
+                            <div class="si-head-text">
+                                <div class="si-head-name">
+                                    {{ $selectedCustomer->name ?? $selectedCustomer->email }}
+                                    @if($selectedCustomerCountry)<span class="si-country-prefix">{{ $selectedCustomerCountry }}</span>@endif
+                                </div>
+                                <div class="si-head-mail">{{ $selectedCustomer->email }}</div>
+                            </div>
                         </div>
                     </div>
                     @php
@@ -2477,6 +2792,10 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         $rtcPeerName = $selectedCustomer->name ?: $selectedCustomer->email;
                         $rtcPeerAvatar = $selectedCustomer->avatar ? user_avatar_url($selectedCustomer) : '';
                         $callsBlocked = (bool) ($selectedCustomer->calls_blocked ?? false);
+                        // wire:confirm.prompt: question|expected answer, \n = new line.
+                        $deleteChatPrompt = 'Permanently delete the whole chat with ' . str_replace('|', '', $rtcPeerName)
+                            . '? Every message, photo, video and voice note is removed for you AND for the customer. This cannot be undone.'
+                            . '\n\nType DELETE to confirm.|DELETE';
                     @endphp
                     <div class="si-head-actions">
                         <button type="button" class="si-hbtn" title="Voice call" aria-label="Voice call"
@@ -2495,16 +2814,6 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 data-conversation-id="{{ $selectedConversationId }}">
                             <i class="fa fa-video"></i>
                         </button>
-                        <button type="button" class="si-hbtn pill" wire:click="openWalletTopup" title="Add funds to this customer's wallet">
-                            <i class="fa fa-wallet"></i> Top up
-                        </button>
-                        <button type="button" class="si-hbtn pill {{ $callsBlocked ? 'danger' : '' }}"
-                                wire:click="toggleCallBlock" wire:key="si-block-{{ $selectedCustomer->id }}"
-                                title="{{ $callsBlocked ? 'This customer cannot place calls. Click to allow again.' : 'Stop this customer from calling support' }}">
-                            <i class="fa {{ $callsBlocked ? 'fa-phone-slash' : 'fa-ban' }}"></i>
-                            {{ $callsBlocked ? 'Calls blocked' : 'Block calls' }}
-                        </button>
-                        {{-- Phones: the two pills above don't fit, so they move into a ⋮ menu. --}}
                         <div class="si-head-more">
                             <button type="button" class="si-hbtn" data-si-head-more title="More options" aria-label="More options" aria-haspopup="true">
                                 <i class="fa fa-ellipsis-v"></i>
@@ -2517,12 +2826,17 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                     <i class="fa {{ $callsBlocked ? 'fa-phone' : 'fa-ban' }}"></i>
                                     {{ $callsBlocked ? 'Allow calls again' : 'Block calls' }}
                                 </button>
+                                <button type="button" role="menuitem" class="danger" wire:click="deleteChatHistory"
+                                        wire:confirm.prompt="{{ $deleteChatPrompt }}">
+                                    <i class="fa fa-trash"></i> Delete chat history
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
                 @if($callsBlocked)
-                    <div class="si-head-flag si-mobile-only">
+                    {{-- Block calls lives in the ⋮ menu, so show the state here. --}}
+                    <div class="si-head-flag">
                         <i class="fa fa-phone-slash"></i> This customer can't place calls
                     </div>
                 @endif
@@ -2819,6 +3133,295 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         <button type="submit"><i class="fa fa-paper-plane"></i></button>
                     </form>
                 </div>
+
+                @if($customerInfoOpen && $customerInfo)
+                    @php
+                        $ci = $customerInfo;
+                        $ciName = $selectedCustomer->name ?: $selectedCustomer->email;
+                        $ciStatus = strtolower((string) ($selectedCustomer->status ?: 'active'));
+                    @endphp
+                    {{-- Full-pane "Contact info" page over the chat, like my-chat's. --}}
+                    <aside class="si-info-panel" aria-label="Contact info" wire:key="si-info-{{ $selectedConversationId }}"
+                           x-data x-on:keydown.escape.window="$wire.closeCustomerInfo()">
+                        <div class="si-info-head">
+                            <button type="button" class="si-info-close" wire:click="closeCustomerInfo" title="Back to chat" aria-label="Back to chat">
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                            <h3>Contact info</h3>
+                        </div>
+                        <div class="si-info-body">
+                          <div class="si-info-inner">
+                            <div class="si-info-hero">
+                                <div class="si-info-avatar">
+                                    {{ strtoupper(substr($ciName, 0, 1)) }}
+                                    @if($ci['avatar'])
+                                        <a href="{{ $ci['avatar'] }}" target="_blank" rel="noopener" title="Open full photo">
+                                            <img src="{{ $ci['avatar'] }}" alt="{{ $ciName }}" onerror="this.closest('a').remove()">
+                                        </a>
+                                    @endif
+                                </div>
+                                <div class="si-info-name">{{ $ciName }}</div>
+                                @if($selectedCustomer->name)<div class="si-info-mail">{{ $selectedCustomer->email }}</div>@endif
+                                @if($ci['online'])
+                                    <div class="si-info-seen online">Online</div>
+                                @elseif($ci['last_seen'])
+                                    <div class="si-info-seen" title="{{ $ci['last_seen']->format('j M Y, h:i A') }}">Last seen {{ $ci['last_seen']->diffForHumans() }}</div>
+                                @endif
+                                <div class="si-info-chips">
+                                    <span class="si-info-chip {{ $ciStatus === 'active' ? 'good' : ($ciStatus === 'pending' ? 'warn' : 'bad') }}">{{ ucfirst($ciStatus) }}</span>
+                                    @if($selectedCustomer->verified || $selectedCustomer->email_verified_at)
+                                        <span class="si-info-chip good"><i class="fa fa-check-circle"></i> Verified</span>
+                                    @else
+                                        <span class="si-info-chip warn">Not verified</span>
+                                    @endif
+                                    @if($ci['plan'] && !$ci['plan']['expired'])
+                                        <span class="si-info-chip plan"><i class="fa fa-crown"></i> {{ $ci['plan']['name'] }}</span>
+                                    @endif
+                                    @if($callsBlocked)
+                                        <span class="si-info-chip bad"><i class="fa fa-phone-slash"></i> Calls blocked</span>
+                                    @endif
+                                </div>
+
+                                <div class="si-info-actions">
+                                    <button type="button" class="si-info-action" title="Voice call"
+                                            data-rtc-call="audio" data-peer-id="{{ $selectedCustomer->id }}" data-peer-name="{{ $rtcPeerName }}"
+                                            data-peer-avatar="{{ $rtcPeerAvatar }}" data-conversation-id="{{ $selectedConversationId }}">
+                                        <span class="si-info-action-icon"><i class="fa fa-phone"></i></span><span>Voice</span>
+                                    </button>
+                                    <button type="button" class="si-info-action" title="Video call"
+                                            data-rtc-call="video" data-peer-id="{{ $selectedCustomer->id }}" data-peer-name="{{ $rtcPeerName }}"
+                                            data-peer-avatar="{{ $rtcPeerAvatar }}" data-conversation-id="{{ $selectedConversationId }}">
+                                        <span class="si-info-action-icon"><i class="fa fa-video"></i></span><span>Video</span>
+                                    </button>
+                                    <button type="button" class="si-info-action" wire:click="openWalletTopup" title="Top up wallet">
+                                        <span class="si-info-action-icon"><i class="fa fa-wallet"></i></span><span>Top up</span>
+                                    </button>
+                                    <a class="si-info-action" href="{{ route('admin.users', ['id' => $selectedCustomer->id]) }}" target="_blank" rel="noopener" title="Open this user in Users">
+                                        <span class="si-info-action-icon"><i class="fa fa-user-cog"></i></span><span>Edit user</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="si-info-rows">
+                                <button type="button" class="si-info-row" wire:click="openCustomerMedia" data-si-open>
+                                    <span class="si-info-row-icon"><i class="fa fa-image"></i></span>
+                                    <span class="si-info-row-text">Media, links and docs</span>
+                                    <span class="si-info-row-meta">{{ number_format($ci['media_links_docs']) }}</span>
+                                    <i class="fa fa-chevron-right si-info-row-go"></i>
+                                </button>
+                                <button type="button" class="si-info-row" wire:click="openWalletTopup">
+                                    <span class="si-info-row-icon"><i class="fa fa-wallet"></i></span>
+                                    <span class="si-info-row-text">Wallet balance<small>Top up the customer's wallet</small></span>
+                                    <span class="si-info-row-meta strong">${{ number_format($ci['wallet_balance'], 2) }}</span>
+                                    <i class="fa fa-chevron-right si-info-row-go"></i>
+                                </button>
+                            </div>
+
+                            <section class="si-info-section">
+                                <h4>Account</h4>
+                                <dl class="si-info-list">
+                                    <div><dt>User ID</dt><dd>#{{ $selectedCustomer->id }}</dd></div>
+                                    @if($selectedCustomer->username)<div><dt>Username</dt><dd>{{ $selectedCustomer->username }}</dd></div>@endif
+                                    <div><dt>Email</dt><dd><a href="mailto:{{ $selectedCustomer->email }}">{{ $selectedCustomer->email }}</a></dd></div>
+                                    @if($ci['phone'])<div><dt>Phone</dt><dd><a href="tel:{{ preg_replace('/[^\d+]/', '', $ci['phone']) }}">{{ $ci['phone'] }}</a></dd></div>@endif
+                                    @if($ci['phone2'])<div><dt>Phone 2</dt><dd><a href="tel:{{ preg_replace('/[^\d+]/', '', $ci['phone2']) }}">{{ $ci['phone2'] }}</a></dd></div>@endif
+                                    @if($selectedCustomerCountry)<div><dt>Country</dt><dd>{{ $selectedCustomerCountry }}</dd></div>@endif
+                                    @if($ci['city'])<div><dt>City</dt><dd>{{ $ci['city'] }}</dd></div>@endif
+                                    @if($ci['account_type'])<div><dt>Account type</dt><dd>{{ $ci['account_type'] }}</dd></div>@endif
+                                    <div><dt>Signs in with</dt><dd>{{ $ci['sign_in'] }}</dd></div>
+                                    @if($ci['plan'])
+                                        <div><dt>Premium</dt><dd>{{ $ci['plan']['name'] }}@if($ci['plan']['expires']) · {{ $ci['plan']['expired'] ? 'expired' : 'until' }} {{ $ci['plan']['expires']->format('j M Y') }}@endif</dd></div>
+                                    @endif
+                                    <div><dt>Joined</dt><dd>{{ $selectedCustomer->created_at?->format('j M Y') ?? '—' }}</dd></div>
+                                    @if($selectedCustomer->registration_country || $selectedCustomer->registration_ip)
+                                        <div><dt>Signed up from</dt><dd>{{ collect([$selectedCustomer->registration_country, $selectedCustomer->registration_ip])->filter()->implode(' · ') }}</dd></div>
+                                    @endif
+                                </dl>
+                            </section>
+
+                            <section class="si-info-section">
+                                <h4>Support activity</h4>
+                                <div class="si-info-stats">
+                                    <div class="si-info-stat"><strong>{{ number_format($ci['stats']['messages']) }}</strong><span>Messages sent</span></div>
+                                    <div class="si-info-stat"><strong>{{ number_format($ci['stats']['media']) }}</strong><span>Media &amp; files</span></div>
+                                    <div class="si-info-stat"><strong>{{ number_format($ci['stats']['calls']) }}</strong><span>Calls</span></div>
+                                    <div class="si-info-stat {{ $ci['stats']['missed_calls'] ? 'bad' : '' }}"><strong>{{ number_format($ci['stats']['missed_calls']) }}</strong><span>Missed / declined</span></div>
+                                </div>
+                                @if($ci['stats']['first_contact'])
+                                    <div class="si-info-note">First contacted support {{ \Carbon\Carbon::parse($ci['stats']['first_contact'])->format('j M Y') }}</div>
+                                @endif
+                            </section>
+
+                            @if(trim((string) $selectedCustomer->about) !== '')
+                                <section class="si-info-section">
+                                    <h4>About</h4>
+                                    <p class="si-info-about">{{ \Illuminate\Support\Str::limit(trim($selectedCustomer->about), 600) }}</p>
+                                </section>
+                            @endif
+
+                            <section class="si-info-section">
+                                <h4>Listings <span>{{ $ci['profiles_total'] }}</span></h4>
+                                @if($customerInfoNotice)
+                                    <div class="si-info-notice" role="status"><i class="fa fa-check-circle"></i> <span>{{ $customerInfoNotice }}</span></div>
+                                @endif
+                                @if($ci['profiles_total'] > 5 || $listingSearch !== '')
+                                    <div class="si-info-search">
+                                        <i class="fa fa-search"></i>
+                                        <input type="search" wire:model.live.debounce.300ms="listingSearch" placeholder="Search listings by name, city or ID…"
+                                               aria-label="Search this customer's listings" autocomplete="off">
+                                    </div>
+                                @endif
+                                @forelse($ci['profiles'] as $profile)
+                                    @php $upgrading = $upgradeProfileId === $profile['id'] && $upgradeOptions; @endphp
+                                    <div class="si-info-listing-item {{ $upgrading ? 'is-upgrading' : '' }}" wire:key="si-info-listing-{{ $profile['id'] }}">
+                                        <div class="si-info-listing">
+                                            <div class="si-info-listing-main">
+                                                <span class="si-info-listing-img">
+                                                    @if($profile['image'])
+                                                        <img src="{{ $profile['image'] }}" alt="" loading="lazy" onerror="this.remove()">
+                                                    @else
+                                                        <i class="fa fa-image"></i>
+                                                    @endif
+                                                </span>
+                                                <span class="si-info-listing-text">
+                                                    <span class="si-info-listing-name" style="display:block;">{{ $profile['name'] }}</span>
+                                                    <span class="si-info-listing-sub" style="display:block;">
+                                                        {{ collect([$profile['category'], $profile['city']])->filter()->implode(' · ') ?: 'Listing' }} · #{{ $profile['id'] }}
+                                                        @if($profile['archived']) · <span style="color:#b45309;">Archived</span>@endif
+                                                    </span>
+                                                    @if($profile['package_active'])
+                                                        <span class="si-info-pkg on"><i class="fa fa-crown"></i> {{ $profile['package'] }}@if($profile['package_until']) · until {{ $profile['package_until']->format('j M Y') }}@endif</span>
+                                                    @elseif($profile['package'])
+                                                        <span class="si-info-pkg off">{{ $profile['package'] }} · expired {{ $profile['package_until']?->format('j M Y') }}</span>
+                                                    @else
+                                                        <span class="si-info-pkg">Free listing</span>
+                                                    @endif
+                                                </span>
+                                            </div>
+                                            @if($upgrading)
+                                                <button type="button" class="si-info-upgrade is-open" wire:click="closeListingUpgrade" title="Close the upgrade form">
+                                                    <i class="fa fa-times"></i> Close
+                                                </button>
+                                            @else
+                                                <button type="button" class="si-info-upgrade" wire:click="openListingUpgrade({{ $profile['id'] }})" title="Upgrade {{ $profile['name'] }}">
+                                                    <i class="fa fa-arrow-up"></i> Upgrade
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        {{-- Upgrade form opens right under its listing, on this page. --}}
+                                        @if($upgrading)
+                                            @php
+                                                $uo = $upgradeOptions;
+                                                $uoPackage = collect($uo['packages'])->firstWhere('id', (int) $upgradePackageId);
+                                                $uoCanCharge = $uo['price'] !== null && $uo['balance'] >= $uo['price'];
+                                            @endphp
+                                            <form class="si-upgrade-form" wire:submit.prevent="upgradeListing" aria-label="Upgrade {{ $profile['name'] }}">
+                                                @if($uo['archived'])
+                                                    <div class="si-upgrade-warn">This listing is archived, so it stays hidden until it's reposted.</div>
+                                                @endif
+                                                @if(empty($uo['packages']))
+                                                    <div class="text-danger small mb-2">No packages are set up for this listing's country. Add them in Packages first.</div>
+                                                @else
+                                                    <span class="si-upgrade-label">Package</span>
+                                                    <div class="si-upgrade-options">
+                                                        @foreach($uo['packages'] as $pkg)
+                                                            <label class="si-upgrade-opt" wire:key="si-up-pkg-{{ $pkg['id'] }}">
+                                                                <input type="radio" name="siUpgradePackage" value="{{ $pkg['id'] }}" wire:model.live="upgradePackageId">
+                                                                <span>{{ $pkg['name'] }}@if($pkg['tagline'])<small>{{ $pkg['tagline'] }}</small>@endif</span>
+                                                            </label>
+                                                        @endforeach
+                                                    </div>
+                                                    @error('upgradePackageId') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
+
+                                                    <span class="si-upgrade-label">Duration</span>
+                                                    <div class="si-upgrade-options">
+                                                        @foreach(($uoPackage['tiers'] ?? []) as $tier)
+                                                            <label class="si-upgrade-opt" wire:key="si-up-days-{{ $upgradePackageId }}-{{ $tier['days'] }}">
+                                                                <input type="radio" name="siUpgradeDays" value="{{ $tier['days'] }}" wire:model.live="upgradeDays">
+                                                                <span>{{ $tier['days'] }} days<small>${{ number_format($tier['price'], 2) }}</small></span>
+                                                            </label>
+                                                        @endforeach
+                                                        <label class="si-upgrade-opt" wire:key="si-up-days-custom">
+                                                            <input type="radio" name="siUpgradeDays" value="custom" wire:model.live="upgradeDays">
+                                                            <span>Custom<small>any number of days</small></span>
+                                                        </label>
+                                                    </div>
+                                                    @if($upgradeDays === 'custom')
+                                                        <input type="number" class="si-upgrade-days" min="1" max="3650" step="1" wire:model="upgradeCustomDays" placeholder="Number of days" aria-label="Number of days">
+                                                    @endif
+                                                    @error('upgradeDays') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
+                                                    @error('upgradeCustomDays') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
+
+                                                    <span class="si-upgrade-label">Payment</span>
+                                                    <div class="si-upgrade-pay">
+                                                        <label class="si-upgrade-opt">
+                                                            <input type="radio" name="siUpgradePayment" value="free" wire:model.live="upgradePayment">
+                                                            <span>Free<small>No charge to the customer</small></span>
+                                                        </label>
+                                                        <label class="si-upgrade-opt">
+                                                            <input type="radio" name="siUpgradePayment" value="wallet" wire:model.live="upgradePayment" @disabled(!$uoCanCharge && $upgradePayment !== 'wallet')>
+                                                            <span>
+                                                                Charge wallet{{ $uo['price'] !== null ? ' $' . number_format($uo['price'], 2) : '' }}
+                                                                <small>
+                                                                    Balance ${{ number_format($uo['balance'], 2) }}
+                                                                    @if($uo['price'] === null) · choose a package duration to charge
+                                                                    @elseif(!$uoCanCharge) · not enough balance
+                                                                    @endif
+                                                                </small>
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                    @error('upgradePayment') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
+
+                                                    <label class="si-upgrade-label" for="siUpgradeMessage">Message to the customer</label>
+                                                    <textarea id="siUpgradeMessage" wire:model="upgradeMessage" maxlength="2000"></textarea>
+                                                    <div class="si-upgrade-hint">
+                                                        Sent in this chat. {name}, {listing}, {package}, {days} and {date} are filled in for you.
+                                                        The upgrade email also goes out when it's on in Mail Settings.
+                                                    </div>
+                                                    @error('upgradeMessage') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
+                                                @endif
+
+                                                <div class="si-modal-actions">
+                                                    <button type="button" class="ghost" wire:click="closeListingUpgrade">Cancel</button>
+                                                    <button type="submit" class="primary" @disabled(empty($uo['packages'])) wire:loading.attr="disabled" wire:target="upgradeListing">
+                                                        <i class="fa fa-check"></i> Upgrade &amp; send
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        @endif
+                                    </div>
+                                @empty
+                                    <div class="si-info-note" style="margin-top:0;">
+                                        {{ $listingSearch !== '' ? 'No listings match "' . $listingSearch . '".' : 'No listings.' }}
+                                    </div>
+                                @endforelse
+                                @if($listingSearch === '' && $ci['profiles_total'] > count($ci['profiles']))
+                                    <div class="si-info-note">Showing the latest {{ count($ci['profiles']) }} of {{ $ci['profiles_total'] }}. Search to find the others.</div>
+                                @elseif($listingSearch !== '' && $ci['profiles_found'] > count($ci['profiles']))
+                                    <div class="si-info-note">Showing {{ count($ci['profiles']) }} of {{ $ci['profiles_found'] }} matches. Type more to narrow it down.</div>
+                                @endif
+                            </section>
+
+                            <div class="si-info-rows">
+                                <button type="button" class="si-info-row {{ $callsBlocked ? '' : 'danger' }}" wire:click="toggleCallBlock">
+                                    <span class="si-info-row-icon"><i class="fa {{ $callsBlocked ? 'fa-phone' : 'fa-ban' }}"></i></span>
+                                    <span class="si-info-row-text">
+                                        {{ $callsBlocked ? 'Allow calls again' : 'Block calls' }}
+                                        <small>{{ $callsBlocked ? 'This customer can\'t call support right now' : 'Stop this customer from calling support' }}</small>
+                                    </span>
+                                </button>
+                                <button type="button" class="si-info-row danger" wire:click="hideConversation({{ $selectedConversationId }})"
+                                        wire:confirm="Delete the chat with {{ str_replace('"', '', $ciName) }} from the Support Inbox? The customer keeps their messages, and the chat comes back here if they write again.">
+                                    <span class="si-info-row-icon"><i class="fa fa-trash"></i></span>
+                                    <span class="si-info-row-text">Delete chat<small>From the Support Inbox only. The customer keeps their messages.</small></span>
+                                </button>
+                            </div>
+                          </div>
+                        </div>
+                    </aside>
+                @endif
             @else
                 <div class="si-empty">
                     <i class="fa fa-comments"></i>
@@ -2971,6 +3574,9 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                 <label class="small font-weight-bold" for="siWalletTopupNote">Note (optional)</label>
                 <input id="siWalletTopupNote" type="text" maxlength="255" wire:model="walletTopupNote" placeholder="Admin wallet top-up">
                 @error('walletTopupNote') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
+                <div class="text-muted small mt-2">
+                    Sends your top-up message in this chat — change it in Settings → Business tools → Top-up message.
+                </div>
                 <div class="si-modal-actions">
                     <button type="button" class="ghost" wire:click="closeWalletTopup">Cancel</button>
                     <button type="submit" class="primary" wire:loading.attr="disabled" wire:target="topUpSelectedUser">
@@ -3101,6 +3707,12 @@ function siWireMedia() {
     window.__siState.wired = true;
 
     document.addEventListener('click', (e) => {
+        // Row chevron menus handle their own clicks (siRowMenu). This listener
+        // runs in the capture phase, before them — and their row is
+        // [data-si-open], which would flip the phone layout to the chat pane.
+        if (e.target.closest('.si-row-actions')) return;
+        document.querySelectorAll('.si-row-actions.open').forEach(menu => menu.classList.remove('open'));
+
         // Media / Settings / the phone back arrow unmount the composer — drop
         // any half-recorded note rather than letting it upload to a thread the
         // admin has left.
@@ -4567,6 +5179,20 @@ function siHandleAttachKind(kind) {
     }
 }
 
+// Chevron menu on a chat / call row. Stops the click here so it never bubbles
+// up to the row's own wire:click (open the chat). A menu item's wire:click
+// has already fired by the time the click reaches this.
+function siRowMenu(event, wrap) {
+    event.stopPropagation();
+    const opening = !!event.target.closest('.si-row-actions-trigger') && !wrap.classList.contains('open');
+    document.querySelectorAll('.si-row-actions.open').forEach(menu => menu.classList.remove('open'));
+    if (!opening) return;
+    const list = wrap.closest('.si-list');
+    const roomBelow = list ? list.getBoundingClientRect().bottom - wrap.getBoundingClientRect().bottom : Infinity;
+    wrap.classList.toggle('up', roomBelow < 90);
+    wrap.classList.add('open');
+}
+
 function siComponent() {
     const root = document.querySelector('.s-modern')?.closest('[wire\\:id]');
     return root ? Livewire.find(root.getAttribute('wire:id')) : null;
@@ -5108,7 +5734,7 @@ function siInit() {
             if (document.hidden || window.Echo?.connector?.pusher?.connection?.state === 'connected') return;
             const active = document.activeElement;
             if (active?.matches?.('input, select, textarea') && !(active.id === 'siReplyInput' && active.value === '')) return;
-            if (document.querySelector('.si-modal.open, .si-stp-overlay, .si-qr-menu.open, .si-msg-actions.open')) return;
+            if (document.querySelector('.si-modal.open, .si-stp-overlay, .si-qr-menu.open, .si-msg-actions.open, .si-row-actions.open, .si-head-more.open')) return;
             const comp = siComponent();
             const tab = comp?.$get?.('inboxTab') ?? comp?.inboxTab;
             if (comp && (tab === 'chat' || tab === 'calls')) comp.call('pollInbox');

@@ -183,6 +183,9 @@ class Chat extends Component
 
         if ($userId && $userId != auth()->id()) {
             $this->startConversation($userId);
+        } elseif (request()->boolean('support')) {
+            // /my-chat?support=1 — the "Direct on evoory" card's Message button.
+            $this->openSupport();
         }
     }
 
@@ -1498,6 +1501,28 @@ class Chat extends Component
     }
 
     /**
+     * "Delete call" on a Calls-tab row. Removes it from MY call history
+     * only — the other person's history, the admin support inbox and the
+     * call bubble in the chat thread are untouched. Deleting a missed call
+     * also counts as seeing it, so it drops out of the missed-calls badge.
+     */
+    public function hideCallFromHistory(int $callId): void
+    {
+        $userId = (int) auth()->id();
+        $call = Call::whereKey($callId)->inHistoryOf($userId)->first();
+        if (!$call) return;
+
+        if ((int) $call->caller_id === $userId) {
+            $call->caller_hidden_at = now();
+        } else {
+            $call->callee_hidden_at = now();
+            if ($call->status === 'missed' && !$call->seen_at) $call->seen_at = now();
+        }
+        // The model's updated hook clears both sides' badge + Calls-tab caches.
+        $call->save();
+    }
+
+    /**
      * Lifecycle hook — fires whenever $newChatOpen changes (including via
      * the Alpine @entangle sync when the sidebar "+" button sets
      * `newChatOpen = true` client-side). Clears any lingering
@@ -2037,9 +2062,7 @@ class Chat extends Component
     protected function fetchCallHistory(int $userId)
     {
         return Call::with(['caller', 'callee'])
-            ->where(function ($q) use ($userId) {
-                $q->where('caller_id', $userId)->orWhere('callee_id', $userId);
-            })
+            ->inHistoryOf($userId)
             ->orderByDesc('created_at')
             ->limit(100)
             ->get()

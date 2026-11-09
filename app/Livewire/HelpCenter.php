@@ -48,6 +48,15 @@ class HelpCenter extends Component
         return $this->redirect(route('sign-in'), navigate: true);
     }
 
+    // Guest tapped Message on the "Direct on evoory" card: after signing in,
+    // land straight in their Support chat.
+    public function loginToChat()
+    {
+        session()->put('url.intended', route('user.chat', ['support' => 1]));
+
+        return $this->redirect(route('sign-in'), navigate: true);
+    }
+
     protected function isMobile(string $userAgent): bool
     {
         return (bool) preg_match(

@@ -705,7 +705,7 @@
                                         </div>
                                     </div>
                                     <div class="chat-header-actions">
-                                        <button wire:click="deleteConversation" class="delete" onclick="return confirm('Delete this entire conversation?')" title="Delete conversation">
+                                        <button wire:click="deleteConversation" class="delete" wire:confirm="Delete this entire conversation?" title="Delete conversation">
                                             <i class="fa fa-trash"></i>
                                         </button>
                                         <button wire:click="closeConversation" title="Close">

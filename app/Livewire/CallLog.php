@@ -33,10 +33,7 @@ class CallLog extends Component
     public function render()
     {
         $userId = auth()->id();
-        $q = Call::with(['caller', 'callee'])
-            ->where(function ($q) use ($userId) {
-                $q->where('caller_id', $userId)->orWhere('callee_id', $userId);
-            });
+        $q = Call::with(['caller', 'callee'])->inHistoryOf($userId);
 
         match ($this->filter) {
             'missed'   => $q->where('callee_id', $userId)->where('status', 'missed'),

@@ -166,4 +166,22 @@ class Conversation extends Model
     {
         return $query->where('is_support', true);
     }
+
+    /**
+     * Support chats an admin hasn't hidden ("Delete chat" in the Support
+     * Inbox), or that the customer has written in since it was hidden.
+     */
+    public function scopeVisibleInSupportInbox($query)
+    {
+        return $query->where(function ($query) {
+            $query->whereNull('conversations.inbox_hidden_at')
+                ->orWhereExists(function ($sub) {
+                    $sub->selectRaw('1')
+                        ->from('messages')
+                        ->whereColumn('messages.conversation_id', 'conversations.id')
+                        ->whereColumn('messages.sender_id', 'conversations.user_one_id')
+                        ->whereColumn('messages.created_at', '>', 'conversations.inbox_hidden_at');
+                });
+        });
+    }
 }
