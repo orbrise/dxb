@@ -2078,7 +2078,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         <path d="M6.154 9.2308H13.8463C14.3591 9.2308 14.6155 9.48721 14.6155 10C14.6155 10.5129 14.3591 10.7693 13.8463 10.7693H6.154C5.64118 10.7693 5.38477 10.5129 5.38477 10C5.38477 9.48721 5.64118 9.2308 6.154 9.2308ZM6.154 4.61542H13.8463C14.3591 4.61542 14.6155 4.87183 14.6155 5.38465C14.6155 5.89747 14.3591 6.15388 13.8463 6.15388H6.154C5.64118 6.15388 5.38477 5.89747 5.38477 5.38465C5.38477 4.87183 5.64118 4.61542 6.154 4.61542Z" fill="currentColor"/>
                     </svg>
                     <span class="si-bottom-tab-label">Chats</span>
-                    @if($unansweredChatCount > 0)<span class="si-tab-badge">{{ $unansweredChatCount }}</span>@endif
+                    @if($unreadChatCount > 0)<span class="si-tab-badge">{{ $unreadChatCount }}</span>@endif
                 </button>
                 <button type="button" class="si-bottom-tab {{ $inboxTab === 'calls' ? 'active' : '' }}" wire:click="setInboxTab('calls')"
                         data-si-tab role="tab" aria-selected="{{ $inboxTab === 'calls' ? 'true' : 'false' }}" title="Calls" aria-label="Calls">
@@ -2646,7 +2646,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                     </form>
                                     <p class="si-set-hint">
                                         A customer gets one auto reply per wait. It isn't sent again until an agent has replied, or 24 hours have passed.
-                                        Auto replies are labelled in the chat and the conversation stays marked as unanswered.
+                                        Auto replies are labelled in the chat, and the chat stays unread until an agent opens it.
                                     </p>
                                 @elseif($settingsSection === 'topup-message')
                                     <form class="si-set-card" style="display:block;" wire:submit.prevent="saveTopupMessage">

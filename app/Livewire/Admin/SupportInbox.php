@@ -870,21 +870,6 @@ class SupportInbox extends Component
         return $conversations
             ->map(function ($conv) use ($countryLookups) {
                 $customer = $conv->userOne;
-                $latestCustomerMessageAt = $customer
-                    ? Message::where('conversation_id', $conv->id)
-                        ->where('sender_id', $customer->id)
-                        ->where(function ($query) {
-                            $query->whereNull('attachment_type')->orWhere('attachment_type', '!=', 'call');
-                        })
-                        ->max('created_at')
-                    : null;
-                // Auto replies don't count — the customer is still waiting for a person.
-                $latestAdminReplyAt = Message::where('conversation_id', $conv->id)
-                    ->whereHas('sender', fn ($query) => $query->where('is_admin', true))
-                    ->where(function ($query) {
-                        $query->whereNull('attachment_type')->orWhereNotIn('attachment_type', ['call', SupportAutoReply::TYPE]);
-                    })
-                    ->max('created_at');
 
                 return [
                     'id' => $conv->id,
@@ -898,9 +883,7 @@ class SupportInbox extends Component
                     'calls_blocked' => (bool) ($customer?->calls_blocked ?? false),
                     'last_message' => $conv->latestMessage?->message ?? '',
                     'last_message_at' => $conv->last_message_at,
-                    'unanswered' => $latestCustomerMessageAt
-                        && (!$latestAdminReplyAt || $latestCustomerMessageAt > $latestAdminReplyAt),
-                    'unread_count' => Message::where('conversation_id', $conv->id)
+                    'unread_count' =>Message::where('conversation_id', $conv->id)
                         ->where('sender_id', $customer?->id)
                         ->where(function ($q) {
                             $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
@@ -2264,6 +2247,23 @@ class SupportInbox extends Component
                 });
             })
             ->count();
+        // Chats with customer messages no admin has opened yet — the same
+        // rule as each row's unread badge, so the tab never shows a number
+        // the list can't account for. Counted over every chat, not just the
+        // ones matching the search box.
+        $unreadChatCount = Conversation::support()
+            ->visibleInSupportInbox()
+            ->whereHas('userOne')
+            ->whereExists(function ($query) {
+                $query->selectRaw('1')
+                    ->from('messages')
+                    ->whereColumn('messages.conversation_id', 'conversations.id')
+                    ->whereColumn('messages.sender_id', 'conversations.user_one_id')
+                    ->where(function ($q) {
+                        $q->whereIn('messages.status', ['sent', 'delivered', 'unread'])->orWhereNull('messages.status');
+                    });
+            })
+            ->count();
         $broadcastLocationUserCount = 0;
 
         if ($this->showBroadcastModal && $this->broadcastAudience === 'location'
@@ -2346,7 +2346,7 @@ class SupportInbox extends Component
             'blockedCustomers' => $this->inboxTab === 'settings' ? $this->getBlockedCustomers() : collect(),
             'quickReplies' => SupportQuickReply::query()->orderBy('shortcut')->get(['id', 'shortcut', 'message']),
             'supportCalls' => $supportCalls,
-            'unansweredChatCount' => $conversations->where('unanswered', true)->count(),
+            'unreadChatCount' => $unreadChatCount,
             'unansweredCallsCount' => $unansweredCallsCount,
             'broadcastUsers' => $this->showBroadcastModal ? $this->getBroadcastUsers() : collect(),
             'broadcastCountries' => $this->showBroadcastModal ? $this->getBroadcastCountries() : collect(),
