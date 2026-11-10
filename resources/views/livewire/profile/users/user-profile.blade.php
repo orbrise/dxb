@@ -2195,9 +2195,10 @@ form.listing textarea#listing_description:focus {
                         @endif
                         </div>
 
-                        <div wire:loading.block wire:target="mphoto" class="spinner">
-                          <i class="fas fa-spinner fa-spin"></i>
-                      </div>
+                        {{-- Same upload bar as new-profile (the old .spinner circle sat half under the upload box). --}}
+                        <div wire:loading.flex wire:target="mphoto" style="align-items:center;justify-content:center;gap:10px;color:#0a0b0d;background:#c8ff00;margin:14px 0;padding:10px 14px;border-radius:6px;font-size:14px;font-weight:600;">
+                            <i class="fas fa-spinner fa-spin"></i> Uploading…
+                        </div>
                         <div class="record image-input new-img">
                           <div class="file optional add-img">
                             <label class="modern-upload-label" for="mphoto" style="cursor: pointer;">

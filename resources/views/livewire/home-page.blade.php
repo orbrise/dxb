@@ -132,8 +132,8 @@
            inside the .img-wrapper (which is already position:relative). */
         .ev-media-badges {
             position: absolute;
-            top: 8px;
-            left: 8px;
+            top: 10px;
+            left: 10px;
             display: flex;
             gap: 6px;
             z-index: 3;
@@ -143,17 +143,22 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 3px 8px;
-            background: rgba(0, 0, 0, 0.72);
+            height: 20px;
+            padding: 0 6px;
+            background: rgb(20 20 20 / 70%);
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+           
             color: #fff;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             line-height: 1;
-            border-radius: 4px;
+            letter-spacing: .01em;
+            border-radius: 5px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
             white-space: nowrap;
         }
-        .ev-media-badge svg { display: block; }
-        .ev-media-badge--video { background: rgba(0, 0, 0, 0.78); }
+        .ev-media-badge svg { display: block; flex-shrink: 0; }
 
         /* === Auction winner cards — match Daisy design reference ===
            Solid dark-olive/lime background that hugs the card content only.
