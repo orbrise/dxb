@@ -3026,11 +3026,11 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                     <button type="button" class="si-msg-actions-trigger" data-si-message-menu aria-label="Message actions" title="Message actions"><i class="fa fa-chevron-down"></i></button>
                                     <div class="si-msg-actions-menu">
                                         <button type="button" data-si-message-action="reply" data-message-id="{{ $m['id'] }}"><i class="fa fa-reply"></i> Reply</button>
-                                        <button type="button" data-si-message-action="star" data-message-id="{{ $m['id'] }}"><i class="fa {{ $m['is_starred'] ? 'fa-star' : 'fa-star-o' }}"></i> {{ $m['is_starred'] ? 'Unstar' : 'Star' }}</button>
+                                        {{-- Font Awesome 7 loads last and has no fa-star-o (FA4), so the outline star is fa-regular. --}}
+                                        <button type="button" data-si-message-action="star" data-message-id="{{ $m['id'] }}"><i class="{{ $m['is_starred'] ? 'fa fa-star' : 'fa-regular fa-star' }}"></i> {{ $m['is_starred'] ? 'Unstar' : 'Star' }}</button>
                                         <button type="button" data-si-message-action="forward" data-message-id="{{ $m['id'] }}"><i class="fa fa-share"></i> Forward</button>
-                                        @if($m['is_me'])
-                                            <button type="button" class="danger" data-si-message-action="delete" data-message-id="{{ $m['id'] }}"><i class="fa fa-trash"></i> Delete</button>
-                                        @endif
+                                        {{-- Any message, the customer's and other agents' too: support owns the thread. --}}
+                                        <button type="button" class="danger" data-si-message-action="delete" data-message-id="{{ $m['id'] }}"><i class="fa fa-trash"></i> Delete</button>
                                     </div>
                                 </div>
                                 @if(!empty($m['is_auto_reply']))
@@ -3956,7 +3956,7 @@ function siWireMedia() {
             const messageId = Number(messageAction.dataset.messageId);
             const action = messageAction.dataset.siMessageAction;
 
-            if (action === 'delete' && !window.confirm('Delete this message?')) return;
+            if (action === 'delete' && !window.confirm('Delete this message? It is removed for the customer too.')) return;
             if (action === 'reply') {
                 component?.call('startReply', messageId);
                 siJumpToMessage(messageId);

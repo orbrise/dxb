@@ -1740,6 +1740,12 @@ class SupportInbox extends Component
         session()->flash('forward-success', "Message forwarded to {$sentCount} support chats.");
     }
 
+    /**
+     * Delete one message from the open support chat, for the customer too.
+     * Any message: the customer's, another agent's, a call record — support
+     * owns the thread. Its stars go with it, and so do its files unless a
+     * forwarded copy elsewhere still uses them.
+     */
     public function deleteMessage(int $messageId): void
     {
         abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
@@ -1749,27 +1755,36 @@ class SupportInbox extends Component
 
         $message = Message::whereKey($messageId)
             ->where('conversation_id', $conversation->id)
-            ->where('sender_id', auth()->id())
             ->first();
         if (!$message) return;
 
-        if ($message->attachment_path) {
-            $isSharedAttachment = Message::where('attachment_path', $message->attachment_path)
-                ->where('id', '!=', $message->id)
-                ->exists();
-            if (!$isSharedAttachment) {
-                try {
-                    Storage::disk($message->attachment_disk ?: 'public')->delete($message->attachment_path);
-                } catch (\Throwable $e) {
-                    Log::warning('Support message attachment cleanup failed', ['message_id' => $message->id, 'error' => $e->getMessage()]);
-                }
-            }
-        }
+        $disk = $message->attachment_disk ?: 'public';
+        $files = collect([$message->attachment_path, $message->attachment_thumbnail_path])->filter()->unique();
 
+        DB::table('message_stars')->where('message_id', $message->id)->delete();
         $message->delete();
         $conversation->update([
             'last_message_at' => Message::where('conversation_id', $conversation->id)->max('created_at'),
         ]);
+
+        foreach ($files as $path) {
+            $stillUsed = Message::where('attachment_path', $path)->orWhere('attachment_thumbnail_path', $path)->exists();
+            if ($stillUsed) continue;
+            try {
+                Storage::disk($disk)->delete($path);
+            } catch (\Throwable $e) {
+                Log::warning('Support message attachment cleanup failed', ['message_id' => $message->id, 'path' => $path, 'error' => $e->getMessage()]);
+            }
+        }
+
+        Log::info('Support message deleted', [
+            'admin_id' => auth()->id(),
+            'conversation_id' => $conversation->id,
+            'message_id' => $message->id,
+            'sender_id' => $message->sender_id,
+        ]);
+
+        if ($this->replyingToMessageId === $message->id) $this->cancelReply();
         $this->loadMessages();
         $this->dispatch('message-received');
     }
