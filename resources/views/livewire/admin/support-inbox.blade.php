@@ -7,8 +7,10 @@
 <style>
 /* Support Inbox — styled to match the modern admin theme (indigo/slate light).
    Uses the same design tokens as admin._partials.settings-modern. */
+/* 204px = header 68 + page title 62 + footer 60, leaving a 14px gap above
+   the footer (the same as between the two panes). */
 .s-modern .si-wrap {
-    display: flex; height: calc(100vh - 220px); min-height: 520px; gap: 14px;
+    display: flex; height: calc(100vh - 204px); min-height: 520px; gap: 14px;
 }
 
 /* ---------- Left sidebar (customer list) ---------- */
@@ -40,6 +42,28 @@
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 .s-modern .si-search::placeholder { color: var(--sm-slate-500); }
+/* Chat list filter chips (All / Unread / Archived), WhatsApp-style pills. */
+.s-modern .si-chat-filters { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+.s-modern .si-chat-filters::-webkit-scrollbar { display: none; }
+.s-modern .si-chat-filter {
+    flex: none; display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border: 0; border-radius: 999px;
+    background: var(--sm-slate-100); color: var(--sm-slate-600);
+    font: inherit; font-size: 12.5px; font-weight: 600; line-height: 1.3; cursor: pointer;
+}
+.s-modern .si-chat-filter:hover { background: var(--sm-slate-200); color: var(--sm-slate-800); }
+.s-modern .si-chat-filter.active { background: rgba(99,102,241,.14); color: var(--sm-primary-dark); }
+.s-modern .si-chat-filter i { font-size: 11px; }
+.s-modern .si-chat-filter small {
+    min-width: 17px; padding: 0 5px; border-radius: 999px;
+    background: var(--sm-slate-300, #cbd5e1); color: #fff; font-size: 10.5px; font-weight: 700; line-height: 17px; text-align: center;
+}
+.s-modern .si-chat-filter.active small { background: var(--sm-primary); }
+.s-modern .si-archived-tag {
+    display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 1px 6px;
+    border-radius: 4px; background: var(--sm-slate-100); color: var(--sm-slate-500);
+    font-size: 10px; font-weight: 600; vertical-align: 1px;
+}
 
 .s-modern .si-list { flex: 1; overflow-y: auto; padding: 8px; }
 .s-modern .si-item {
@@ -52,11 +76,12 @@
 .s-modern .si-item:hover { background: var(--sm-slate-50); }
 .s-modern .si-item.active {
     background: rgba(99, 102, 241, 0.08);
-    box-shadow: inset 3px 0 0 0 var(--sm-primary);
 }
+/* --si-av: a customer's own colour (user_avatar_color()), set inline where
+   the avatar is a customer's; everything else keeps the indigo. */
 .s-modern .si-avatar {
     width: 40px; height: 40px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--sm-primary) 0%, var(--sm-primary-dark) 100%);
+    background: var(--si-av, linear-gradient(135deg, var(--sm-primary) 0%, var(--sm-primary-dark) 100%));
     color: #fff;
     display: flex; align-items: center; justify-content: center;
     font-weight: 600; font-size: 14px;
@@ -67,10 +92,24 @@
    <img> keeps that hidden state through re-renders. */
 .s-modern .si-avatar { position: relative; }
 .s-modern .si-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Chat rows: a green dot on the photo while the customer is online. The
+   avatar clips its contents, so the dot sits on a wrapper instead. */
+.s-modern .si-avatar-wrap { position: relative; flex-shrink: 0; margin-right: 10px; }
+.s-modern .si-item .si-avatar-wrap > .si-avatar { margin-right: 0; }
+.s-modern .si-online-dot {
+    position: absolute; right: 0; bottom: 0;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #22c55e; box-shadow: 0 0 0 2px #fff;
+}
 .s-modern .si-info { flex: 1; min-width: 0; }
 .s-modern .si-name { color: var(--sm-slate-800); font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .s-modern .si-country-prefix { margin-left: 5px; color: var(--sm-slate-500); font-size: 10px; font-weight: 500; }
 .s-modern .si-preview { color: var(--sm-slate-500); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-modern .si-preview.is-unread { color: var(--sm-slate-700); font-weight: 500; }
+.s-modern .si-preview .si-ticks { margin: 0 3px 0 0; }
+.s-modern .si-preview-icon { margin-right: 4px; color: var(--sm-slate-400); font-size: 11.5px; }
+.s-modern .si-preview-icon.is-missed { color: #ef4444; }
+.s-modern .si-preview-empty { color: var(--sm-slate-400); font-style: italic; }
 .s-modern .si-meta { text-align: right; margin-left: 8px; flex-shrink: 0; }
 .s-modern .si-time { color: var(--sm-slate-500); font-size: 10.5px; margin-bottom: 4px; }
 .s-modern .si-badge {
@@ -118,36 +157,74 @@
 }
 .s-modern .si-head-name { color: var(--sm-slate-800); font-weight: 600; font-size: 15px; }
 .s-modern .si-head-mail { color: var(--sm-slate-500); font-size: 12.5px; }
+.s-modern .si-head-presence.is-online { color: #16a34a; font-weight: 600; }
+/* WhatsApp-style wallpaper: beige with a faint doodle tile. */
+.s-modern .si-msgs,
+.s-modern .si-typing-row {
+    background: #efeae2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='.055' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 20h26a5 5 0 0 1 5 5v14a5 5 0 0 1-5 5H34l-8 6v-6h-4a5 5 0 0 1-5-5V25a5 5 0 0 1 5-5z'/%3E%3Cpath d='M152 50c-9-6-14-11-14-17a7 7 0 0 1 14-2 7 7 0 0 1 14 2c0 6-5 11-14 17z'/%3E%3Cpath d='M98 82l2.5 6.6 7 .3-5.5 4.4 1.9 6.8-5.9-3.9-5.9 3.9 1.9-6.8-5.5-4.4 7-.3z'/%3E%3Cpath d='M190 92l5 7c1 1.5.5 3.5-1 4.5l-2 1.5c2.5 5 6 8.5 11 11l1.5-2c1-1.5 3-2 4.5-1l7 5c1.5 1 1.5 3.5 0 5l-3 3c-3 3-8 3.5-12 1-9-5-16-12-21-21-2.5-4-2-9 1-12l3-3c1.5-1.5 4-1.5 5 0z'/%3E%3Ccircle cx='48' cy='150' r='11'/%3E%3Cpath d='M42 153a7 7 0 0 0 12 0'/%3E%3Cpath d='M118 162l30-12-9 28-6-10zM133 168l15-18'/%3E%3Crect x='182' y='176' width='28' height='19' rx='4'/%3E%3Ccircle cx='196' cy='185.5' r='5'/%3E%3Cpath d='M190 176l2.5-4h7l2.5 4'/%3E%3Cpath d='M84 224v-22l15-3v20'/%3E%3Ccircle cx='80.5' cy='224' r='3.5'/%3E%3Ccircle cx='95.5' cy='219' r='3.5'/%3E%3Crect x='12' y='84' width='28' height='19' rx='3'/%3E%3Cpath d='M12 87l14 9 14-9'/%3E%3Ccircle cx='214' cy='34' r='3'/%3E%3Ccircle cx='64' cy='104' r='2.5'/%3E%3Ccircle cx='160' cy='118' r='2'/%3E%3Ccircle cx='22' cy='212' r='3'/%3E%3Ccircle cx='232' cy='140' r='2'/%3E%3Ccircle cx='140' cy='220' r='2.5'/%3E%3C/g%3E%3Cg fill='%23000' fill-opacity='.055'%3E%3Ccircle cx='44' cy='147' r='1.3'/%3E%3Ccircle cx='52' cy='147' r='1.3'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 240px 240px;
+}
 .s-modern .si-msgs {
     flex: 1; overflow-y: auto;
-    padding: 20px;
+    padding: 16px 28px 20px;
     display: flex; flex-direction: column;
-    gap: 6px;
-    background: #f5f7f6;
+    gap: 2px;
+}
+/* Customer "typing…" bubble under the thread: same wallpaper and padding. */
+.s-modern .si-typing-row {
+    padding: 0 28px 12px;
+    --ev-typing-bg: #fff;
+    --ev-typing-dot: #8696a0;
 }
 .s-modern .si-msg { display: flex; max-width: 100%; }
 .s-modern .si-msg.sent { justify-content: flex-end; }
 .s-modern .si-msg.recv { justify-content: flex-start; }
+/* A run of messages from one sender sits close together; a new run starts
+   a little lower (is-first, set in the message loop). */
+.s-modern .si-msg.is-first { margin-top: 10px; }
+.s-modern .si-date-sep + .si-msg.is-first { margin-top: 0; }
 .s-modern .si-bub {
+    --si-bub-bg: #fff;
     position: relative;
-    max-width: 70%;
-    padding: 9px 34px 6px 13px;
-    border: 1px solid rgba(17, 27, 33, .05);
-    border-radius: 10px;
-    box-shadow: 0 1px 1px rgba(15, 23, 42, .04);
-    font-size: 14px; line-height: 1.4;
+    max-width: 65%;
+    padding: 6px 9px 8px;
+    border-radius: 8px;
+    background: var(--si-bub-bg);
+    box-shadow: 0 1px .5px rgba(11, 20, 26, .13);
+    font-size: 14px; line-height: 19px;
 }
-.s-modern .si-msg-actions { position: absolute; z-index: 30; top: 3px; right: 3px; opacity: 0; }
+/* The first bubble of a run gets the tail at its top corner. */
+.s-modern .si-msg.is-first .si-bub::before {
+    content: ""; position: absolute; top: 0;
+    width: 8px; height: 13px; background: var(--si-bub-bg);
+}
+.s-modern .si-msg.is-first.sent .si-bub { border-top-right-radius: 0; }
+.s-modern .si-msg.is-first.sent .si-bub::before { right: -8px; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.s-modern .si-msg.is-first.recv .si-bub { border-top-left-radius: 0; }
+.s-modern .si-msg.is-first.recv .si-bub::before { left: -8px; clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.s-modern .si-msg.media .si-bub::before { display: none; }
+/* Text bubbles: the time and ticks share the last line of text. A spacer
+   after the text keeps room for them (it wraps to a new line when the
+   last line is full); the time is pinned to the bottom-right corner. */
+.s-modern .si-bub.has-text p::after { content: ""; display: inline-block; width: 56px; }
+.s-modern .si-msg.sent .si-bub.has-text p::after { width: 76px; }
+.s-modern .si-bub.has-text .si-btime { position: absolute; right: 8px; bottom: 4px; margin: 0; white-space: nowrap; }
+/* Touch screens always show the ⋮ chevron, so keep text out from under it. */
+@media (hover: none) { .s-modern .si-bub { padding-right: 30px; } }
+.s-modern .si-msg-actions { position: absolute; z-index: 30; top: 2px; right: 2px; opacity: 0; }
 .s-modern .si-msg-actions.open { z-index: 60; }
 .s-modern .si-msg:hover .si-msg-actions,
 .s-modern .si-msg-actions:focus-within { opacity: 1; }
 @media (hover: none) { .s-modern .si-msg-actions { opacity: 1; } }
+/* Shown over the text on hover, so it fades the text out beneath it
+   (WhatsApp Web's treatment) instead of reserving an empty column. */
 .s-modern .si-msg-actions-trigger {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 24px; height: 20px; padding: 0; border: 0; border-radius: 4px;
-    background: transparent; color: var(--sm-slate-600); font-size: 11px; cursor: pointer;
+    width: 28px; height: 22px; padding: 0; border: 0; border-radius: 0 6px 0 0;
+    background: radial-gradient(at top right, var(--si-bub-bg, #fff) 60%, transparent 80%);
+    color: #8696a0; font-size: 11px; cursor: pointer;
 }
-.s-modern .si-msg-actions-trigger:hover { background: rgba(17,27,33,.06); }
+.s-modern .si-msg-actions-trigger:hover { color: var(--sm-slate-700); }
+.s-modern .si-msg.media .si-msg-actions-trigger { background: radial-gradient(at top right, rgba(11,20,26,.45), transparent 70%); color: #fff; }
 .s-modern .si-msg-actions-menu {
     display: none; position: absolute; top: 27px; right: 0; z-index: 12;
     width: 142px; padding: 4px; border: 1px solid var(--sm-slate-200); border-radius: 8px;
@@ -170,31 +247,21 @@
 .s-modern .si-reply-quote[data-si-jump-to] { cursor: pointer; }
 .s-modern .si-reply-quote[data-si-jump-to]:hover { background: rgba(83,189,235,.14); }
 .s-modern .si-msg.si-jump-highlight .si-bub { animation: siMessageJump 1.4s ease-out; }
-@keyframes siMessageJump { 0%, 35% { box-shadow: 0 0 0 3px rgba(83,189,235,.55); } 100% { box-shadow: 0 1px 1px rgba(15,23,42,.04); } }
+@keyframes siMessageJump { 0%, 35% { box-shadow: 0 0 0 3px rgba(83,189,235,.55); } 100% { box-shadow: 0 1px .5px rgba(11,20,26,.13); } }
 /* WhatsApp-like pale green for agent messages, white for customer messages. */
-.s-modern .si-msg.sent .si-bub {
-    background: #d9fdd3;
-    color: #1f2c34;
-    border-color: transparent;
-    border-bottom-right-radius: 3px;
-}
-.s-modern .si-msg.recv .si-bub {
-    background: #fff;
-    color: #1f2c34;
-    border-color: rgba(17, 27, 33, .06);
-    border-bottom-left-radius: 3px;
-}
-.s-modern .si-msg.media .si-bub { padding: 3px; border-color: transparent; box-shadow: none; background: transparent !important; }
+.s-modern .si-msg.sent .si-bub { --si-bub-bg: #d9fdd3; color: #111b21; }
+.s-modern .si-msg.recv .si-bub { --si-bub-bg: #fff; color: #111b21; }
+.s-modern .si-msg.media .si-bub { padding: 3px; box-shadow: none; background: transparent !important; }
 /* pre-wrap keeps the line breaks of multi-line messages (top-up message,
    quick replies), same as the customer's my-chat bubble. */
 .s-modern .si-bub p { margin: 0; word-wrap: break-word; white-space: pre-wrap; }
-.s-modern .si-date-sep { display: flex; justify-content: center; margin: 12px 0 6px; }
+.s-modern .si-date-sep { display: flex; justify-content: center; margin: 12px 0 8px; }
 .s-modern .si-date-sep span {
-    padding: 4px 12px; border: 1px solid var(--sm-slate-200); border-radius: 999px;
-    background: #fff; color: var(--sm-slate-500); font-size: 11px; font-weight: 500;
-    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    padding: 5px 12px; border-radius: 8px;
+    background: #fff; color: #54656f; font-size: 12px; font-weight: 500;
+    box-shadow: 0 1px .5px rgba(11,20,26,.13);
 }
-.s-modern .si-btime { font-size: 10.5px; margin-top: 3px; opacity: 0.7; text-align: right; }
+.s-modern .si-btime { font-size: 11px; line-height: 15px; margin-top: 3px; opacity: 0.7; text-align: right; }
 .s-modern .si-starred { margin-right: 4px; color: #d6a400; }
 
 /* Full-area overlay that covers si-main while the admin reviews starred
@@ -247,9 +314,9 @@
     position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
     width: 160px; height: 160px; margin-bottom: 18px; border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    background: var(--si-av, linear-gradient(135deg, #6366f1, #4f46e5));
     color: #fff; font-size: 62px; font-weight: 700;
-    box-shadow: 0 8px 26px rgba(79, 70, 229, .22);
+    box-shadow: 0 8px 26px rgba(15, 23, 42, .16);
 }
 .s-modern .si-info-avatar a,
 .s-modern .si-info-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -466,10 +533,10 @@
 }
 .s-modern .si-input textarea {
     flex: 1;
-    padding: 10px 14px;
+    padding: 10px 16px;
     background: var(--sm-slate-50);
     border: 1px solid var(--sm-slate-200);
-    border-radius: 10px;
+    border-radius: 21px;
     color: var(--sm-slate-800);
     font-size: 14px;
     resize: none;
@@ -511,9 +578,9 @@
 .s-modern .si-conn.offline { color: var(--sm-slate-500); animation: si-pulse 1.5s infinite ease-in-out; }
 @keyframes si-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-.s-modern .si-ticks { display: inline-flex; margin-left: 4px; }
-.s-modern .si-ticks .t { color: #667781; }
-.s-modern .si-ticks .t.read { color: #53bdeb; font-weight: 700; }
+.s-modern .si-ticks { display: inline-flex; align-items: center; margin-left: 3px; vertical-align: -1px; }
+.s-modern .si-ticks .t { display: block; color: #667781; }
+.s-modern .si-ticks .t.read { color: #53bdeb; }
 
 /* Scrollbars in soft slate to match the theme */
 .s-modern .si-msgs::-webkit-scrollbar,
@@ -1565,6 +1632,8 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
     .s-modern .si-side-head > div:first-child > .si-badge { margin-right: 4px; }
     .s-modern .si-side-head .si-search,
     .s-modern .si-side-head .si-calls-paused { margin-left: 6px; width: calc(100% - 6px); }
+    .s-modern .si-side-head .si-chat-filters { margin-left: 6px; }
+    .s-modern .si-chat-filter { padding: 6px 13px; font-size: 13.5px; }
     .s-modern .si-search {
         height: 42px; padding: 0 16px 0 42px;
         border: 0; border-radius: 999px;
@@ -1586,6 +1655,8 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
     .s-modern .si-status-me:active { background: var(--sm-slate-100); }
     .s-modern .si-item .si-avatar,
     .s-modern .si-item .si-status-thumb { width: 50px; height: 50px; margin-right: 14px; font-size: 18px; }
+    .s-modern .si-item .si-avatar-wrap { margin-right: 14px; }
+    .s-modern .si-online-dot { right: 1px; bottom: 1px; width: 13px; height: 13px; }
     .s-modern .si-name { font-size: 16px; }
     .s-modern .si-country-prefix { font-size: 11px; }
     .s-modern .si-preview { margin-top: 2px; font-size: 14px; }
@@ -1681,8 +1752,9 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
     .s-modern .si-head-more-menu button i { width: 18px; }
     .s-modern .si-head-flag { padding: 7px 14px; }
 
-    .s-modern .si-msgs { padding: 10px 10px 14px; gap: 4px; }
-    .s-modern .si-bub { max-width: 85%; font-size: 15px; }
+    .s-modern .si-msgs { padding: 10px 16px 14px; }
+    .s-modern .si-typing-row { padding: 0 16px 10px; }
+    .s-modern .si-bub { max-width: 85%; font-size: 15px; line-height: 20px; }
     .s-modern .si-msg-image { max-width: min(260px, 68vw); }
     .s-modern .si-msg.media video { max-width: min(260px, 68vw) !important; }
     .s-modern .si-msg-voice { min-width: 0; width: min(300px, 72vw); }
@@ -1789,7 +1861,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
             default => $selectedConversationId && $selectedCustomer,
         };
     @endphp
-    <div class="si-wrap {{ $siDetailOpen ? 'is-detail' : '' }}">
+    <div class="si-wrap {{ $siDetailOpen ? 'is-detail' : '' }}" data-inbox-rev="{{ $inboxRev }}">
         {{-- Left: conversation list --}}
         <div class="si-side">
             @php
@@ -1826,17 +1898,46 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                 @if(in_array($inboxTab, ['chat', 'calls', 'media'], true))
                     <input type="text" class="si-search" placeholder="{{ $inboxTab === 'media' ? 'Search customers…' : 'Search by name or email…' }}" wire:model.live.debounce.300ms="searchTerm">
                 @endif
+                @if($inboxTab === 'chat')
+                    <div class="si-chat-filters" role="tablist" aria-label="Filter chats">
+                        @foreach(['all' => 'All', 'unread' => 'Unread', 'archived' => 'Archived'] as $filterKey => $filterLabel)
+                            @php $filterCount = ['unread' => $unreadChatCount, 'archived' => $archivedChatCount][$filterKey] ?? 0; @endphp
+                            <button type="button" class="si-chat-filter {{ $chatFilter === $filterKey ? 'active' : '' }}"
+                                    wire:click="setChatFilter('{{ $filterKey }}')" role="tab" aria-selected="{{ $chatFilter === $filterKey ? 'true' : 'false' }}">
+                                @if($filterKey === 'archived')<i class="fa fa-archive"></i>@endif
+                                {{ $filterLabel }}
+                                @if($filterCount > 0)<small>{{ $filterCount }}</small>@endif
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
             </div>
+            @php
+                // List times as WhatsApp shows them: the time today, then
+                // "Yesterday", the weekday within a week, then the date.
+                $siListTime = function ($at) {
+                    $at = \Carbon\Carbon::parse($at);
+                    if ($at->isToday()) return $at->format('h:i A');
+                    if ($at->isYesterday()) return 'Yesterday';
+                    if ($at->gte(now()->subDays(6)->startOfDay())) return $at->format('l');
+                    return $at->format('d/m/Y');
+                };
+            @endphp
             <div class="si-list">
                 @if($inboxTab === 'chat')
                     @forelse($conversations as $c)
                         <div class="si-item {{ $selectedConversationId == $c['id'] ? 'active' : '' }}"
                              wire:click="selectConversation({{ $c['id'] }})" data-si-open
                              wire:key="si-{{ $c['id'] }}">
-                            <div class="si-avatar">
-                                {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
-                                @if(!empty($c['customer_avatar']))
-                                    <img src="{{ $c['customer_avatar'] }}" alt="" wire:key="si-av-{{ md5($c['customer_avatar']) }}" wire:ignore onerror="this.style.display='none'">
+                            <div class="si-avatar-wrap">
+                                <div class="si-avatar" style="--si-av: {{ user_avatar_color($c['customer_id'] ?? $c['customer_name']) }}">
+                                    {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
+                                    @if(!empty($c['customer_avatar']))
+                                        <img src="{{ $c['customer_avatar'] }}" alt="" wire:key="si-av-{{ md5($c['customer_avatar']) }}" wire:ignore onerror="this.style.display='none'">
+                                    @endif
+                                </div>
+                                @if(!empty($c['is_online']))
+                                    <span class="si-online-dot" title="Online" aria-label="Online"></span>
                                 @endif
                             </div>
                             <div class="si-info">
@@ -1846,12 +1947,25 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                     @if(!empty($c['calls_blocked']))
                                         <i class="fa fa-phone-slash si-flag" title="This customer's calls are blocked"></i>
                                     @endif
+                                    {{-- Only a search under All mixes archived chats in. --}}
+                                    @if($c['is_archived'] && $chatFilter !== 'archived')
+                                        <span class="si-archived-tag"><i class="fa fa-archive"></i> Archived</span>
+                                    @endif
                                 </div>
-                                <div class="si-preview">{{ \Illuminate\Support\Str::limit($c['last_message'], 40) ?: '—' }}</div>
+                                @php $pv = $c['preview']; @endphp
+                                <div class="si-preview {{ $c['unread_count'] > 0 ? 'is-unread' : '' }}">
+                                    @if(!$pv)
+                                        <span class="si-preview-empty">No messages yet</span>
+                                    @else
+                                        @if($pv['status'])@include('livewire.partials._support-ticks', ['status' => $pv['status']])@endif
+                                        @if($pv['icon'])<i class="fa {{ $pv['icon'] }} si-preview-icon {{ $pv['missed'] ? 'is-missed' : '' }}"></i>@endif
+                                        {{ \Illuminate\Support\Str::limit($pv['text'], 60) }}
+                                    @endif
+                                </div>
                             </div>
                             <div class="si-meta">
                                 @if($c['last_message_at'])
-                                    <div class="si-time {{ $c['unread_count'] > 0 ? 'is-unread' : '' }}">{{ \Carbon\Carbon::parse($c['last_message_at'])->diffForHumans(null, true) }}</div>
+                                    <div class="si-time {{ $c['unread_count'] > 0 ? 'is-unread' : '' }}">{{ $siListTime($c['last_message_at']) }}</div>
                                 @endif
                                 <div class="si-meta-actions">
                                     @if($c['unread_count'] > 0)
@@ -1862,6 +1976,16 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                             <i class="fa fa-chevron-down"></i>
                                         </button>
                                         <div class="si-row-actions-menu">
+                                            @if($c['is_archived'])
+                                                <button type="button" wire:click="unarchiveConversation({{ $c['id'] }})">
+                                                    <i class="fa fa-inbox"></i> Unarchive chat
+                                                </button>
+                                            @else
+                                                <button type="button" wire:click="archiveConversation({{ $c['id'] }})"
+                                                        title="Moves the chat to Archived. It comes back to All when the customer writes again.">
+                                                    <i class="fa fa-archive"></i> Archive chat
+                                                </button>
+                                            @endif
                                             <button type="button" class="danger" wire:click="hideConversation({{ $c['id'] }})"
                                                     wire:confirm="Delete the chat with {{ $c['customer_name'] }} from the Support Inbox? The customer keeps their messages, and the chat comes back here if they write again.">
                                                 <i class="fa fa-trash"></i> Delete chat
@@ -1873,9 +1997,23 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         </div>
                     @empty
                         <div class="si-empty" style="padding:40px 20px;">
-                            <i class="fa fa-inbox"></i>
-                            <h4>No support conversations yet</h4>
-                            <p>They'll appear here when customers message support.</p>
+                            @if($searchTerm !== '')
+                                <i class="fa fa-search"></i>
+                                <h4>No chats found</h4>
+                                <p>No {{ $chatFilter === 'all' ? '' : $chatFilter . ' ' }}chats match “{{ $searchTerm }}”.</p>
+                            @elseif($chatFilter === 'unread')
+                                <i class="fa fa-check-circle"></i>
+                                <h4>No unread chats</h4>
+                                <p>You're all caught up.</p>
+                            @elseif($chatFilter === 'archived')
+                                <i class="fa fa-archive"></i>
+                                <h4>No archived chats</h4>
+                                <p>Archive a chat from its <i class="fa fa-chevron-down"></i> menu. It comes back to All when the customer writes again.</p>
+                            @else
+                                <i class="fa fa-inbox"></i>
+                                <h4>No support conversations yet</h4>
+                                <p>They'll appear here when customers message support.</p>
+                            @endif
                         </div>
                     @endforelse
                 @elseif($inboxTab === 'calls')
@@ -1893,7 +2031,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         <div class="si-item {{ $selectedCallId === $call['id'] ? 'active' : '' }} {{ $call['is_unanswered'] ? 'si-call-row-unanswered' : '' }}"
                              wire:click="openCall({{ $call['id'] }})" data-si-open
                              wire:key="si-call-row-{{ $call['id'] }}">
-                            <div class="si-avatar">
+                            <div class="si-avatar" style="--si-av: {{ user_avatar_color($call['customer_id'] ?? $call['customer_name']) }}">
                                 {{ strtoupper(substr($call['customer_name'], 0, 1)) }}
                                 @if($call['customer_avatar'])
                                     <img src="{{ $call['customer_avatar'] }}" alt="" wire:key="si-av-{{ md5($call['customer_avatar']) }}" wire:ignore onerror="this.style.display='none'">
@@ -1908,7 +2046,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 </div>
                             </div>
                             <div class="si-meta">
-                                <div class="si-time">{{ \Carbon\Carbon::parse($call['started_at'])->format('h:i A') }}</div>
+                                <div class="si-time">{{ $siListTime($call['started_at']) }}</div>
                                 <div class="si-meta-actions">
                                     @if($call['is_new'])<span class="si-view-tab-badge">!</span>@endif
                                     <div class="si-row-actions" onclick="siRowMenu(event, this)">
@@ -2005,7 +2143,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         <div class="si-item {{ $mediaConversationId == $c['id'] ? 'active' : '' }}"
                              wire:click="setMediaConversation({{ $c['id'] }})" data-si-open
                              wire:key="si-media-conv-{{ $c['id'] }}">
-                            <div class="si-avatar">
+                            <div class="si-avatar" style="--si-av: {{ user_avatar_color($c['customer_id'] ?? $c['customer_name']) }}">
                                 {{ strtoupper(substr($c['customer_name'] ?? '?', 0, 1)) }}
                                 @if(!empty($c['customer_avatar']))
                                     <img src="{{ $c['customer_avatar'] }}" alt="" wire:key="si-av-{{ md5($c['customer_avatar']) }}" wire:ignore onerror="this.style.display='none'">
@@ -2382,7 +2520,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 <div class="si-status-viewers-list">
                                     @forelse($selectedStatus->views as $view)
                                         <div class="si-status-viewer" wire:key="si-status-view-{{ $view->id }}">
-                                            <span class="si-avatar">
+                                            <span class="si-avatar" style="--si-av: {{ user_avatar_color($view->viewer?->id ?? '?') }}">
                                                 @if($view->viewer?->avatar)
                                                     <img src="{{ user_avatar_url($view->viewer) }}" alt="">
                                                 @else
@@ -2726,7 +2864,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                         <div class="si-blocked-list">
                                             @foreach($blockedCustomers as $blocked)
                                                 <div class="si-blocked-row" wire:key="si-blocked-{{ $blocked['id'] }}">
-                                                    <div class="si-avatar">
+                                                    <div class="si-avatar" style="--si-av: {{ user_avatar_color($blocked['id']) }}">
                                                         @if($blocked['avatar'])
                                                             <img src="{{ $blocked['avatar'] }}" alt="">
                                                         @else
@@ -2767,7 +2905,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         <div class="si-head-profile" role="button" tabindex="0" title="Customer info"
                              aria-label="Customer info for {{ $selectedCustomer->name ?: $selectedCustomer->email }}"
                              wire:click="openCustomerInfo" wire:keydown.enter="openCustomerInfo">
-                            <div class="si-avatar" style="width:36px; height:36px; margin-right:10px;">
+                            <div class="si-avatar" style="width:36px; height:36px; margin-right:10px; --si-av: {{ user_avatar_color($selectedCustomer->id) }}">
                                 {{ strtoupper(substr($selectedCustomer->name ?: $selectedCustomer->email, 0, 1)) }}
                                 @if($selectedCustomer->avatar)
                                     @php $headAvatar = user_avatar_url($selectedCustomer); @endphp
@@ -2779,7 +2917,15 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                     {{ $selectedCustomer->name ?? $selectedCustomer->email }}
                                     @if($selectedCustomerCountry)<span class="si-country-prefix">{{ $selectedCustomerCountry }}</span>@endif
                                 </div>
-                                <div class="si-head-mail">{{ $selectedCustomer->email }}</div>
+                                @php $headSeen = $selectedCustomer->last_seen_at; @endphp
+                                <div class="si-head-mail">
+                                    @if($selectedCustomer->isOnline())
+                                        <span class="si-head-presence is-online">online</span> ·
+                                    @elseif($headSeen)
+                                        <span class="si-head-presence" title="{{ $headSeen->format('j M Y, h:i A') }}">last seen {{ $headSeen->isToday() ? 'today' : ($headSeen->isYesterday() ? 'yesterday' : $headSeen->format('j M')) }} at {{ $headSeen->format('h:i A') }}</span> ·
+                                    @endif
+                                    {{ $selectedCustomer->email }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2844,6 +2990,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                 <div class="si-msgs" id="siMsgs">
                     @php
                         $lastRenderedDate = null;
+                        $prevSenderKey = null;
                         $renderDateLabel = function ($date) {
                             $day = \Carbon\Carbon::parse($date)->startOfDay();
                             $today = \Carbon\Carbon::today();
@@ -2859,14 +3006,22 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                             $messageDate = \Carbon\Carbon::parse($m['created_at'])->format('Y-m-d');
                             $showDateSeparator = $messageDate !== $lastRenderedDate;
                             $lastRenderedDate = $messageDate;
+                            // WhatsApp grouping: a run of messages from one sender sits
+                            // close together and only its first bubble has the tail.
+                            $senderKey = !empty($m['is_auto_reply']) ? 'auto' : $m['sender_id'];
+                            $isGroupStart = $showDateSeparator || $senderKey !== $prevSenderKey;
+                            $prevSenderKey = $senderKey;
+                            $isMedia = in_array(($m['attachment_type'] ?? ''), ['image', 'video'], true);
+                            // Text is the bubble's last line, so the time can share it.
+                            $hasText = !empty($m['message']) && !$isMedia && ($m['attachment_type'] ?? '') !== 'wallet_receipt';
                         @endphp
                         @if($showDateSeparator)
                             <div class="si-date-sep" wire:key="si-date-{{ $messageDate }}">
                                 <span>{{ $renderDateLabel($m['created_at']) }}</span>
                             </div>
                         @endif
-                        <div id="si-message-{{ $m['id'] }}" class="si-msg {{ $m['is_mine'] ? 'sent' : 'recv' }} {{ in_array(($m['attachment_type'] ?? ''), ['image', 'video'], true) ? 'media' : '' }}" wire:key="sim-{{ $m['id'] }}-{{ $m['status'] }}">
-                            <div class="si-bub">
+                        <div id="si-message-{{ $m['id'] }}" class="si-msg {{ $m['is_mine'] ? 'sent' : 'recv' }} {{ $isMedia ? 'media' : '' }} {{ $isGroupStart ? 'is-first' : '' }}" wire:key="sim-{{ $m['id'] }}-{{ $m['status'] }}">
+                            <div class="si-bub {{ $hasText ? 'has-text' : '' }}">
                                 <div class="si-msg-actions">
                                     <button type="button" class="si-msg-actions-trigger" data-si-message-menu aria-label="Message actions" title="Message actions"><i class="fa fa-chevron-down"></i></button>
                                     <div class="si-msg-actions-menu">
@@ -2880,7 +3035,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 </div>
                                 @if(!empty($m['is_auto_reply']))
                                     <span class="si-agent si-agent-auto"><i class="fa fa-robot"></i> Auto reply</span>
-                                @elseif($m['is_mine'] && !$m['is_me'])
+                                @elseif($m['is_mine'] && !$m['is_me'] && $isGroupStart)
                                     <span class="si-agent">{{ $m['sender_name'] }}</span>
                                 @endif
                                 @if(!empty($m['reply_to']))
@@ -2906,10 +3061,12 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                         $callStatus = $m['attachment_original_name'] ?? 'ended';
                                         $isMissed   = $callStatus === 'missed' && !$m['is_mine'];
                                         $iconClass  = $callKind === 'video' ? 'fa-video' : 'fa-phone';
+                                        // "voice call", as WhatsApp and the chat list say; stored as audio.
+                                        $callKindLabel = $callKind === 'video' ? 'video' : 'voice';
                                         $callLabel = match ($callStatus) {
-                                            'missed'   => 'Missed ' . $callKind . ' call',
+                                            'missed'   => 'Missed ' . $callKindLabel . ' call',
                                             'declined' => ($m['is_mine'] ? 'No answer' : 'Call declined'),
-                                            default   => ucfirst($callKind) . ' call',
+                                            default   => ucfirst($callKindLabel) . ' call',
                                         };
                                     @endphp
                                     <div class="si-call {{ $isMissed ? 'missed' : '' }}">
@@ -2971,20 +3128,18 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 <div class="si-btime">
                                     {{ \Carbon\Carbon::parse($m['created_at'])->format('h:i A') }}
                                     @if($m['is_mine'])
-                                        <span class="si-ticks">
-                                            @if($m['status'] === 'read')
-                                                <span class="t read">✓✓</span>
-                                            @elseif($m['status'] === 'delivered')
-                                                <span class="t">✓✓</span>
-                                            @else
-                                                <span class="t">✓</span>
-                                            @endif
-                                        </span>
+                                        @include('livewire.partials._support-ticks', ['status' => $m['status']])
                                     @endif
                                 </div>
                             </div>
                         </div>
                     @endforeach
+                </div>
+
+                {{-- Customer "typing…" bubble (partials/_chat-typing). Outside the
+                     morphing thread, and wire:ignore so re-renders can't hide it. --}}
+                <div class="ev-typing-row si-typing-row" id="siTyping" wire:ignore aria-live="polite" aria-label="Customer is typing">
+                    <div class="ev-typing-bubble"><span></span><span></span><span></span></div>
                 </div>
 
                 @if($replyingToPreview)
@@ -3104,6 +3259,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         </div>
 
                         <textarea wire:model="reply" id="siReplyInput" placeholder="Type a reply, or / for quick replies…" rows="1"
+                                  data-conversation-id="{{ $selectedConversationId }}"
                                   onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();this.form.requestSubmit();}"></textarea>
 
                         @if($grokConfigured && $availableBots->isNotEmpty())
@@ -3152,7 +3308,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                         <div class="si-info-body">
                           <div class="si-info-inner">
                             <div class="si-info-hero">
-                                <div class="si-info-avatar">
+                                <div class="si-info-avatar" style="--si-av: {{ user_avatar_color($selectedCustomer->id) }}">
                                     {{ strtoupper(substr($ciName, 0, 1)) }}
                                     @if($ci['avatar'])
                                         <a href="{{ $ci['avatar'] }}" target="_blank" rel="noopener" title="Open full photo">
@@ -3662,6 +3818,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
 </div>
 
 @push('js')
+@include('livewire.partials._chat-typing')
 <script>
 window.__siState = window.__siState || { recorder: null, wired: false, recStartedAt: 0, recPausedAt: 0, recPausedElapsed: 0, recTicker: null, voicePlayersWired: false };
 
@@ -5189,8 +5346,11 @@ function siRowMenu(event, wrap) {
     if (!opening) return;
     const list = wrap.closest('.si-list');
     const roomBelow = list ? list.getBoundingClientRect().bottom - wrap.getBoundingClientRect().bottom : Infinity;
-    wrap.classList.toggle('up', roomBelow < 90);
+    // Open first so the menu has a height to measure (chat rows have two items, call rows one).
+    wrap.classList.remove('up');
     wrap.classList.add('open');
+    const menu = wrap.querySelector('.si-row-actions-menu');
+    wrap.classList.toggle('up', roomBelow < (menu ? menu.offsetHeight + 8 : 90));
 }
 
 function siComponent() {
@@ -5725,21 +5885,86 @@ function siInit() {
     setTimeout(() => clearInterval(wait), 5000);
     siScrollBottom();
 
-    // Socket fallback: while Reverb isn't connected, poll for new messages so
-    // the inbox still updates. Stops costing anything once the socket is up.
-    // Skipped while the admin is typing or has a dialog open, so a refresh
-    // can't clobber a half-written reply or form.
+    // Socket fallback, while Reverb isn't connected (stops once it is):
+    // every second, ask whether any support message changed (one cache read
+    // on the server, App\Support\SupportInboxRevision) and run the full
+    // refresh only when it did, so a customer's message shows in ~1 s.
+    if (!window.__siState.revPoll) {
+        window.__siState.revPoll = setInterval(siCheckRevision, 1000);
+    }
+    // Safety net for anything the revision doesn't track (call log, "5 min ago").
     if (!window.__siState.fallbackPoll) {
         window.__siState.fallbackPoll = setInterval(() => {
-            if (document.hidden || window.Echo?.connector?.pusher?.connection?.state === 'connected') return;
-            const active = document.activeElement;
-            if (active?.matches?.('input, select, textarea') && !(active.id === 'siReplyInput' && active.value === '')) return;
-            if (document.querySelector('.si-modal.open, .si-stp-overlay, .si-qr-menu.open, .si-msg-actions.open, .si-row-actions.open, .si-head-more.open')) return;
-            const comp = siComponent();
-            const tab = comp?.$get?.('inboxTab') ?? comp?.inboxTab;
-            if (comp && (tab === 'chat' || tab === 'calls')) comp.call('pollInbox');
-        }, 6000);
+            if (document.hidden || siSocketUp()) return;
+            siPollInboxIfIdle();
+        }, 15000);
     }
+
+    siWireTyping();
+}
+
+function siSocketUp() {
+    return window.Echo?.connector?.pusher?.connection?.state === 'connected';
+}
+
+function siCheckRevision() {
+    const s = window.__siState;
+    const wrap = document.querySelector('.s-modern .si-wrap[data-inbox-rev]');
+    if (!wrap || document.hidden || siSocketUp() || s.revBusy) return;
+    // A refresh is already on its way; let it land before asking again.
+    if (s.revRefreshAt && Date.now() - s.revRefreshAt < 2500) return;
+    s.revBusy = true;
+    fetch('/admin/support-inbox/rev', { credentials: 'same-origin', cache: 'no-store', headers: { 'Accept': 'application/json' } })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+            // The page shows the revision it was rendered at; a different one
+            // on the server means something changed since.
+            if (!data || String(data.rev) === wrap.dataset.inboxRev) return;
+            if (siPollInboxIfIdle()) s.revRefreshAt = Date.now();
+            // Not now (half-written reply or an open dialog): next second's check retries.
+        })
+        .catch(() => {})
+        .finally(() => { s.revBusy = false; });
+}
+
+// Skipped while a form field, dialog, voice recording or upload is in
+// progress, since a refresh would reset it. The reply box is the exception:
+// tested safe (text and focus survive), so new messages show while the admin
+// is mid-reply. Returns whether it refreshed.
+function siPollInboxIfIdle() {
+    const active = document.activeElement;
+    if (active?.matches?.('input, select, textarea') && active.id !== 'siReplyInput') return false;
+    if (document.querySelector('.si-modal.open, .si-stp-overlay, .si-qr-menu.open, .si-msg-actions.open, .si-row-actions.open, .si-head-more.open')) return false;
+    if (window.__siState.recorder || document.querySelector('#siMsgs .si-pending-msg, #siAttachPreview.open')) return false;
+    const comp = siComponent();
+    const tab = comp?.$get?.('inboxTab') ?? comp?.inboxTab;
+    if (!comp || (tab !== 'chat' && tab !== 'calls')) return false;
+    comp.call('pollInbox');
+    return true;
+}
+
+// WhatsApp-style "typing…" both ways (partials/_chat-typing): the admin's
+// typing shows in the customer's Support chat, the customer's here.
+function siWireTyping() {
+    if (!window.EvTyping) return;
+    if (!window.__siState.typingWired) {
+        window.__siState.typingWired = true;
+        document.addEventListener('input', (e) => {
+            const input = e.target.closest?.('#siReplyInput');
+            if (input) EvTyping.input(input.getAttribute('data-conversation-id'), input.value);
+        });
+        document.addEventListener('submit', (e) => {
+            if (e.target.querySelector?.('#siReplyInput')) EvTyping.reset();
+        }, true);
+    }
+    EvTyping.watch({
+        convId: () => document.getElementById('siReplyInput')?.getAttribute('data-conversation-id'),
+        row: () => document.getElementById('siTyping'),
+        scroller: () => document.getElementById('siMsgs'),
+        // They stopped typing — most likely they just sent: check now rather
+        // than at the next tick (same check, so it never refreshes twice).
+        onStop: () => siCheckRevision(),
+    });
 }
 
 function siScrollBottom() {

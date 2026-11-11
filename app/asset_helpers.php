@@ -161,6 +161,25 @@ if (!function_exists('user_avatar_url')) {
     }
 }
 
+if (!function_exists('user_avatar_color')) {
+    /**
+     * WhatsApp-style colour behind a user's initial when they have no photo.
+     * Fixed per user (by id, or by name for a deleted user), so a customer
+     * looks the same in every list. Every shade keeps white text readable;
+     * no greens, which would hide the green "online" dot. Neighbouring
+     * entries differ in hue, so customers who signed up one after another
+     * (consecutive ids) don't get look-alike colours.
+     */
+    function user_avatar_color($key): string
+    {
+        // indigo, orange, teal, rose, blue, amber, fuchsia, sky, violet, pink
+        $palette = ['#6366f1', '#ea580c', '#0d9488', '#e11d48', '#2563eb', '#b45309', '#c026d3', '#0284c7', '#7c3aed', '#db2777'];
+        $n = is_numeric($key) ? (int) $key : crc32((string) $key);
+
+        return $palette[$n % count($palette)];
+    }
+}
+
 if (!function_exists('should_hide_us_profile_pics')) {
     /**
      * Resolve once per request: is the "hide profile pics from US visitors"

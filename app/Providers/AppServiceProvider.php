@@ -62,6 +62,13 @@ class AppServiceProvider extends ServiceProvider
         // KeepScriptsFromRocketLoader for why (it handles every other tag).
         \Livewire\Livewire::useScriptTagAttributes(['data-cfasync' => 'false']);
 
+        // Reverb broadcasts stop trying for a while when the server is down,
+        // instead of each one waiting out a 1 s timeout (see the class).
+        \Illuminate\Support\Facades\Broadcast::extend('reverb', fn ($app, array $config) =>
+            new \App\Broadcasting\CircuitBreakingPusherBroadcaster(
+                $app->make(\Illuminate\Broadcasting\BroadcastManager::class)->pusher($config)
+            ));
+
         // Register SEO View Composer for all views
         View::composer('*', SeoComposer::class);
         

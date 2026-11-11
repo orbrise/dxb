@@ -457,6 +457,7 @@ Route::group(['middleware'=>'auth'], function(){
         if ($rows->isEmpty()) return response()->json(['ok' => true, 'updated' => 0]);
 
         $query->update(['status' => 'delivered']);
+        \App\Support\SupportInboxRevision::bumpIfSupport($rows->pluck('conversation_id'));
 
         // Fan out one broadcast per (conversation, sender) pair so each
         // sender's UI knows to flip the ticks for the messages they own.
@@ -508,6 +509,7 @@ Route::group(['middleware'=>'auth'], function(){
         if ($senderIds->isEmpty()) return response()->json(['ok' => true, 'updated' => 0]);
 
         $updated = $query->update(['status' => 'read']);
+        \App\Support\SupportInboxRevision::bumpIfSupport([$convId]);
 
         try {
             foreach ($senderIds as $senderId) {
@@ -554,6 +556,18 @@ Route::group(['middleware'=>'auth'], function(){
             'statuses' => $rows->mapWithKeys(fn ($m) => [(string) $m->id => (string) ($m->status ?? 'sent')]),
         ])->header('Cache-Control', 'no-store, private');
     })->whereNumber('convId')->name('chat.sent.statuses');
+
+    // Checked every second by /my-chat (no socket there); reads one cache
+    // entry (App\Support\ChatRevision), no queries.
+    Route::get("chat/rev", fn () => response()
+        ->json(['rev' => \App\Support\ChatRevision::current((int) auth()->id())])
+        ->header('Cache-Control', 'no-store, private'))->name('chat.rev');
+
+    // WhatsApp-style "typing…" bubble (customer chat + admin Support Inbox).
+    Route::post("chat/typing/{convId}", [\App\Http\Controllers\ChatTypingController::class, 'ping'])
+        ->whereNumber('convId')->name('chat.typing.ping');
+    Route::get("chat/typing/{convId}", [\App\Http\Controllers\ChatTypingController::class, 'status'])
+        ->whereNumber('convId')->name('chat.typing.status');
 
     Route::get("call/history", [\App\Http\Controllers\CallController::class, 'history'])->name('call.history');
     Route::post("rtc/ping-user/{targetUserId}", [\App\Http\Controllers\CallController::class, 'pingUser'])
@@ -1377,5 +1391,10 @@ Route::get('/test-country-detection', function() {
 // with the admin middleware applied directly.
 Route::middleware(['web', 'admin'])->prefix('admin')->group(function () {
     Route::get('support-inbox', \App\Livewire\Admin\SupportInbox::class)->name('admin.support.inbox');
+    // Checked every second by an open inbox while its socket is down; reads
+    // one cache entry (App\Support\SupportInboxRevision), no queries.
+    Route::get('support-inbox/rev', fn () => response()
+        ->json(['rev' => \App\Support\SupportInboxRevision::current()])
+        ->header('Cache-Control', 'no-store, private'))->name('admin.support.inbox.rev');
     Route::get('bots', \App\Livewire\Admin\Bots::class)->name('admin.bots');
 });

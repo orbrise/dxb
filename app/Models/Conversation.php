@@ -184,4 +184,38 @@ class Conversation extends Model
                 });
         });
     }
+
+    /**
+     * Support chats an admin archived ("Archive chat" in the Support Inbox)
+     * that the customer hasn't written in since. A new customer message
+     * brings the chat back to All, so nobody waits unseen in the archive.
+     */
+    public function scopeArchivedInSupportInbox($query)
+    {
+        return $query->whereNotNull('conversations.inbox_archived_at')
+            ->whereNotExists(function ($sub) {
+                $sub->selectRaw('1')
+                    ->from('messages')
+                    ->whereColumn('messages.conversation_id', 'conversations.id')
+                    ->whereColumn('messages.sender_id', 'conversations.user_one_id')
+                    ->whereColumn('messages.created_at', '>', 'conversations.inbox_archived_at');
+            });
+    }
+
+    /**
+     * Support chats with customer messages no admin has opened yet: the
+     * same rule as the unread badge on each Support Inbox row.
+     */
+    public function scopeHasUnreadFromCustomer($query)
+    {
+        return $query->whereExists(function ($sub) {
+            $sub->selectRaw('1')
+                ->from('messages')
+                ->whereColumn('messages.conversation_id', 'conversations.id')
+                ->whereColumn('messages.sender_id', 'conversations.user_one_id')
+                ->where(function ($q) {
+                    $q->whereIn('messages.status', ['sent', 'delivered', 'unread'])->orWhereNull('messages.status');
+                });
+        });
+    }
 }

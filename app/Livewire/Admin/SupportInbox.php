@@ -25,6 +25,7 @@ use App\Models\WalletTransaction;
 use App\Services\GrokSupportBot;
 use App\Services\SupportAutoReply;
 use App\Services\VideoTrimmer;
+use App\Support\SupportInboxRevision;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -94,6 +95,8 @@ class SupportInbox extends Component
     public string $selectedCustomerCountry = '';
     public string $reply = '';
     public string $searchTerm = '';
+    // Chat list filter chips: all | unread | archived.
+    public string $chatFilter = 'all';
     public string $inboxTab = 'chat';
     public string $settingsSection = '';
     public string $mediaType = 'media';
@@ -854,12 +857,34 @@ class SupportInbox extends Component
         }
     }
 
+    public function setChatFilter(string $filter): void
+    {
+        if (in_array($filter, ['all', 'unread', 'archived'], true)) {
+            $this->chatFilter = $filter;
+        }
+    }
+
     /**
-     * All support conversations, most recently active first.
+     * Visible support chats in the archive, keyed by id.
+     */
+    protected function archivedConversationIds()
+    {
+        return Conversation::support()
+            ->visibleInSupportInbox()
+            ->archivedInSupportInbox()
+            ->pluck('id')
+            ->flip();
+    }
+
+    /**
+     * The chat list for the current filter chip, most recently active first.
+     * A search under All also finds archived chats (tagged in the row), as
+     * WhatsApp's search does; Unread and Archived search within themselves.
      */
     public function getConversations()
     {
         $countryLookups = $this->countryNameLookups();
+        $archivedIds = $this->archivedConversationIds();
         $conversations = Conversation::support()
             ->visibleInSupportInbox()
             ->with(['userOne', 'latestMessage'])
@@ -868,10 +893,11 @@ class SupportInbox extends Component
             ->get();
 
         return $conversations
-            ->map(function ($conv) use ($countryLookups) {
+            ->map(function ($conv) use ($countryLookups, $archivedIds) {
                 $customer = $conv->userOne;
 
                 return [
+                    'is_archived' => $archivedIds->has($conv->id),
                     'id' => $conv->id,
                     'customer_id' => $customer?->id,
                     'customer_name' => $customer?->name ?? $customer?->email ?? 'Unknown',
@@ -881,7 +907,10 @@ class SupportInbox extends Component
                     // and Google avatars are absolute URLs.
                     'customer_avatar' => $customer?->avatar ? user_avatar_url($customer) : null,
                     'calls_blocked' => (bool) ($customer?->calls_blocked ?? false),
+                    // Same rule as the customer panel's "Online" (seen in the last 3 min).
+                    'is_online' => (bool) $customer?->isOnline(),
                     'last_message' => $conv->latestMessage?->message ?? '',
+                    'preview' => $this->chatListPreview($conv->latestMessage, $customer?->id),
                     'last_message_at' => $conv->last_message_at,
                     'unread_count' =>Message::where('conversation_id', $conv->id)
                         ->where('sender_id', $customer?->id)
@@ -891,6 +920,11 @@ class SupportInbox extends Component
                         ->count(),
                 ];
             })
+            ->filter(fn ($c) => match ($this->chatFilter) {
+                'archived' => $c['is_archived'],
+                'unread' => !$c['is_archived'] && $c['unread_count'] > 0,
+                default => !$c['is_archived'] || $this->searchTerm !== '',
+            })
             ->when($this->searchTerm !== '', function ($items) {
                 $s = strtolower($this->searchTerm);
                 return $items->filter(fn ($c) =>
@@ -898,6 +932,43 @@ class SupportInbox extends Component
                     str_contains(strtolower($c['customer_email']), $s)
                 );
             });
+    }
+
+    /**
+     * A chat row's last-message line, WhatsApp-style: photos, voice notes and
+     * calls carry no text, so they get an icon and a label ("Voice message",
+     * "Missed voice call"); a photo or video caption is shown instead when
+     * there is one. `mine` is true when an agent sent it (the row shows ticks).
+     */
+    protected function chatListPreview(?Message $message, ?int $customerId): ?array
+    {
+        if (!$message) return null;
+
+        $type = $message->attachment_type;
+        $text = trim((string) $message->message);
+        $mine = $message->sender_id !== $customerId;
+        $kind = $message->attachment_mime === 'video' ? 'video' : 'voice';
+        $missed = $type === 'call' && $message->attachment_original_name === 'missed';
+
+        [$icon, $label] = match (true) {
+            $type === 'image' => ['fa-camera', 'Photo'],
+            $type === 'video' => ['fa-video', 'Video'],
+            $type === 'audio' => ['fa-microphone', 'Voice message'],
+            $type === 'call' => [$kind === 'video' ? 'fa-video' : 'fa-phone', $missed ? "Missed {$kind} call" : ucfirst($kind) . ' call'],
+            $type === 'wallet_receipt' => ['fa-receipt', 'Wallet top-up receipt'],
+            !empty($message->attachment_path) => ['fa-file', $message->attachment_original_name ?: 'File'],
+            default => [null, $text],
+        };
+
+        return [
+            'icon' => $icon,
+            'text' => in_array($type, ['image', 'video'], true) && $text !== '' ? $text : $label,
+            'mine' => $mine,
+            // Calls show a call icon, not delivery ticks.
+            'status' => $mine && $type !== 'call' ? $message->status : null,
+            // A customer's call nobody answered: red, like WhatsApp.
+            'missed' => $missed && !$mine,
+        ];
     }
 
     public function getSupportCalls()
@@ -1460,6 +1531,25 @@ class SupportInbox extends Component
         if ($hidden && (int) $this->selectedConversationId === $conversationId) {
             $this->closeConversation();
         }
+    }
+
+    /**
+     * "Archive chat" in the chat list: moves it under the Archived filter,
+     * for admins only. The open thread stays open, and the chat returns to
+     * All when the customer writes again (Conversation::scopeArchivedInSupportInbox).
+     */
+    public function archiveConversation(int $conversationId): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        Conversation::support()->whereKey($conversationId)->update(['inbox_archived_at' => now()]);
+    }
+
+    public function unarchiveConversation(int $conversationId): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        Conversation::support()->whereKey($conversationId)->update(['inbox_archived_at' => null]);
     }
 
     /**
@@ -2122,6 +2212,8 @@ class SupportInbox extends Component
                 $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
             })
             ->update(['status' => 'read']);
+        // Other admins' open inboxes drop this chat's unread badge too.
+        SupportInboxRevision::bump();
 
         try {
             broadcast(new MessageStatusUpdated(
@@ -2232,6 +2324,9 @@ class SupportInbox extends Component
 
     public function render()
     {
+        // Read first: a message landing mid-render then shows as a newer
+        // revision, and the inbox JS refreshes once more to pick it up.
+        $inboxRev = SupportInboxRevision::current();
         Call::closeAbandonedSupportCalls();
         $conversations = $this->getConversations();
         $supportCalls = $this->getSupportCalls();
@@ -2250,20 +2345,15 @@ class SupportInbox extends Component
         // Chats with customer messages no admin has opened yet — the same
         // rule as each row's unread badge, so the tab never shows a number
         // the list can't account for. Counted over every chat, not just the
-        // ones matching the search box.
+        // ones matching the search box. Archived chats stay out of it, as on
+        // WhatsApp; a new customer message unarchives the chat anyway.
         $unreadChatCount = Conversation::support()
             ->visibleInSupportInbox()
             ->whereHas('userOne')
-            ->whereExists(function ($query) {
-                $query->selectRaw('1')
-                    ->from('messages')
-                    ->whereColumn('messages.conversation_id', 'conversations.id')
-                    ->whereColumn('messages.sender_id', 'conversations.user_one_id')
-                    ->where(function ($q) {
-                        $q->whereIn('messages.status', ['sent', 'delivered', 'unread'])->orWhereNull('messages.status');
-                    });
-            })
+            ->hasUnreadFromCustomer()
+            ->whereNotIn('conversations.id', Conversation::support()->archivedInSupportInbox()->select('id'))
             ->count();
+        $archivedChatCount = $this->archivedConversationIds()->count();
         $broadcastLocationUserCount = 0;
 
         if ($this->showBroadcastModal && $this->broadcastAudience === 'location'
@@ -2347,6 +2437,8 @@ class SupportInbox extends Component
             'quickReplies' => SupportQuickReply::query()->orderBy('shortcut')->get(['id', 'shortcut', 'message']),
             'supportCalls' => $supportCalls,
             'unreadChatCount' => $unreadChatCount,
+            'archivedChatCount' => $archivedChatCount,
+            'inboxRev' => $inboxRev,
             'unansweredCallsCount' => $unansweredCallsCount,
             'broadcastUsers' => $this->showBroadcastModal ? $this->getBroadcastUsers() : collect(),
             'broadcastCountries' => $this->showBroadcastModal ? $this->getBroadcastCountries() : collect(),

@@ -2433,6 +2433,14 @@
                display area reads as a distinct pane, matching the mockup. */
             background: #0D1011;
         }
+        /* "Typing…" bubble row under the thread — same pane colour and side
+           padding as .chat-messages, bubble coloured like received messages. */
+        .chat-typing-row {
+            padding: 0 28px 10px;
+            background: #0D1011;
+            --ev-typing-bg: var(--ev-panel-3);
+            --ev-typing-dot: #8696a0;
+        }
 
         /* Skeleton shown while a conversation is being fetched.
            Absolutely positioned over chat-main so it covers whichever
@@ -4588,6 +4596,7 @@
 
             /* Messages — allow bubbles to breathe on narrow screens. */
             .chat-messages { padding: 16px 12px; }
+            .chat-typing-row { padding: 0 12px 8px; }
             .message-bubble { max-width: 82%; font-size: 14px; }
 
             /* Composer — lime circular send button matching the desktop
@@ -4733,7 +4742,7 @@
                              the round-trip latency was blocking the UI. --}}
                         <div class="chat-sidebar {{ $newChatOpen ? 'new-chat-open' : '' }}"
                              :class="{ 'mobile-hidden': selConv || section || selStatus }"
-                             id="chatSidebar">
+                             id="chatSidebar" data-chat-rev="{{ $chatRev }}">
                             <div class="chat-sidebar-header">
                                 @php
                                     // Shared helper — cached ~30s and shared with
@@ -6237,10 +6246,10 @@
                                     @endforeach
                                 </div>
 
-                                {{-- Typing indicator --}}
-                                <div id="typingIndicator" class="typing-indicator" style="display:none;">
-                                    <span id="typingName">Someone</span> is typing
-                                    <span class="dots"><span></span><span></span><span></span></span>
+                                {{-- "Typing…" bubble (partials/_chat-typing). Outside the morphing
+                                     message list, and wire:ignore so the 3 s refresh can't hide it. --}}
+                                <div id="typingIndicator" class="ev-typing-row chat-typing-row" wire:ignore aria-live="polite" aria-label="Typing">
+                                    <div class="ev-typing-bubble"><span></span><span></span><span></span></div>
                                 </div>
 
                                 {{-- Upload progress banner (shown by JS while a non-image/non-video
@@ -6769,6 +6778,7 @@
          Livewire update. Pushed to the layout, it lands in <body> once
          on initial page load and every subsequent tab-click/poll response
          is dramatically smaller. --}}
+    @include('livewire.partials._chat-typing')
     <script>
         // Defensive: when Livewire's wire:navigate soft-swaps us back to
         // /my-chat and Alpine/Livewire fail to re-wire the entangled `tab`
@@ -6808,9 +6818,7 @@
 
         // Track state at module scope so Livewire DOM swaps don't reset it.
         window.__chatState = window.__chatState || {
-            typingTimeout: null,
             currentChannel: null,
-            typingHideTimeout: null,
             emojiWired: false,
         };
 
@@ -7080,42 +7088,31 @@
         // hooks that call wireEmojiPicker() don't error out.
         function wireEmojiPicker() { /* IIFE above handles wiring */ }
 
-        // Typing indicator via Echo whispers. Delegated to survive DOM morphs.
+        // WhatsApp-style "typing…" bubble (partials/_chat-typing). Goes over
+        // HTTP, not Echo whispers: this page doesn't load Echo. Listeners are
+        // delegated and added once; watch() just re-points at the current DOM.
         function wireTypingWhispers() {
-            document.addEventListener('input', (e) => {
-                const input = e.target.closest('#chatReplyInput');
-                if (!input) return;
-                sendTypingWhisper(input);
+            if (!window.EvTyping) return;
+            if (!window.__chatState.typingWired) {
+                window.__chatState.typingWired = true;
+                document.addEventListener('input', (e) => {
+                    const input = e.target.closest('#chatReplyInput');
+                    if (input) EvTyping.input(input.getAttribute('data-conversation-id'), input.value);
+                });
+                document.addEventListener('submit', (e) => {
+                    if (e.target.querySelector?.('#chatReplyInput')) EvTyping.reset();
+                }, true);
+            }
+            EvTyping.watch({
+                convId: () => document.getElementById('chatReplyInput')?.getAttribute('data-conversation-id'),
+                row: () => document.getElementById('typingIndicator'),
+                scroller: () => document.getElementById('chatMessages'),
+                onStop: () => window.__chatState.checkRevision?.(),
             });
         }
-
-        function sendTypingWhisper(input) {
-            if (!window.Echo) return;
-            const otherUserId = input.getAttribute('data-other-user-id');
-            const isSupport = input.getAttribute('data-is-support') === '1';
-            const myName = @json(auth()->user()->name ?? auth()->user()->email ?? 'Someone');
-
-            let channelName = null;
-            if (isSupport) {
-                channelName = 'support-inbox';
-            } else if (otherUserId) {
-                channelName = `chat.${otherUserId}`;
-            }
-            if (!channelName) return;
-
-            // Throttle: only whisper once per 1.5s while continuously typing.
-            if (window.__chatState.typingTimeout) return;
-            try {
-                window.Echo.private(channelName).whisper('typing', {
-                    userId: {{ auth()->id() }},
-                    name: myName,
-                    conversationId: input.getAttribute('data-conversation-id'),
-                });
-            } catch (err) { /* channel not subscribed yet */ }
-            window.__chatState.typingTimeout = setTimeout(() => {
-                window.__chatState.typingTimeout = null;
-            }, 1500);
-        }
+        // Pushed scripts run after livewire:navigated on a soft visit, so the
+        // listeners below would miss the first one: wire up now as well.
+        wireTypingWhispers();
 
         function initEchoListener() {
             const userId = {{ auth()->id() }};
@@ -7331,9 +7328,6 @@
                                 if (typeof window.rtcHandleSignal === 'function') {
                                     window.rtcHandleSignal(e);
                                 }
-                            })
-                            .listenForWhisper('typing', (e) => {
-                                showTypingIndicator(e);
                             });
 
                         console.log('Echo listener registered for channel: chat.' + userId);
@@ -7406,7 +7400,9 @@
         // DOM), querySelector('[wire\\:id]') would find a non-Chat component
         // and Livewire would throw MethodNotFoundException for refreshChat.
         if (!window.__chatState.tickPoll) {
-            window.__chatState.tickPoll = setInterval(() => {
+            // Named so the typing bubble can run it straight away when the
+            // other side stops typing (they most likely just sent).
+            window.__chatState.pollTick = () => {
                 if (document.hidden) return;
                 // Skip while a voice recording is in progress — the poll's
                 // Livewire re-render morphs the input row and can cause the
@@ -7421,7 +7417,10 @@
                 if (document.querySelector('#attachMenu.open')) return;
                 if (document.querySelector('#contactOverlay') && document.getElementById('contactOverlay').style.display === 'flex') return;
                 if (document.querySelector('.conv-kebab .conv-kebab-menu:not([style*="display: none"])')) return;
-                if (document.querySelector('.fwd-overlay')) return;
+                // The forward picker only exists while open. #contactOverlay
+                // shares its class but is always in the page (checked above);
+                // matching it here blocked every refresh since it was added.
+                if (document.querySelector('.fwd-overlay:not(#contactOverlay)')) return;
                 if (document.querySelector('#chatSearchBar') && document.getElementById('chatSearchBar').style.display !== 'none') return;
                 // Skip while any voice note / video / audio message is actually
                 // playing. refreshChat morphs the message list, and even though
@@ -7446,14 +7445,37 @@
                 } catch (err) {
                     console.warn('[chat] refreshChat threw:', err);
                 }
-            }, 3000);  // 3s safety net. Reverb WebSocket is the fast path,
-                       // but when it drops (Cloudflare WS tunnel killed /
-                       // Reverb server restarted / client lost socket in a
-                       // background tab), 8s felt like "messages never
-                       // arrive until I refresh" from the recipient's seat.
-                       // 3s is still ~75% cheaper than the pre-WS legacy
-                       // 1s poll but close enough to feel real-time when
-                       // the WebSocket is dead.
+                return true;
+            };
+            // Safety net for what the revision check below doesn't track
+            // (presence, call log). New messages come through that check.
+            window.__chatState.tickPoll = setInterval(() => window.__chatState.pollTick(), 10000);
+        }
+
+        // Every second, ask whether any of this user's chats changed (the
+        // server reads one cache entry, App\Support\ChatRevision) and run the
+        // full refreshChat only when it did: a reply shows in about a second.
+        // This page has no Reverb socket, so this is the fast path.
+        window.__chatState.checkRevision = () => {
+            const s = window.__chatState;
+            const holder = document.querySelector('#chatSidebar[data-chat-rev]');
+            if (!holder || document.hidden || s.revBusy) return;
+            // A refresh is already on its way; let it land before asking again.
+            if (s.revRefreshAt && Date.now() - s.revRefreshAt < 2500) return;
+            s.revBusy = true;
+            fetch({!! json_encode(url('chat/rev')) !!}, { credentials: 'same-origin', cache: 'no-store', headers: { 'Accept': 'application/json' } })
+                .then((r) => r.ok ? r.json() : null)
+                .then((data) => {
+                    // The sidebar carries the revision it was rendered at.
+                    if (!data || String(data.rev) === holder.getAttribute('data-chat-rev')) return;
+                    // Skipped (menu open, voice note playing…)? Next second retries.
+                    if (s.pollTick?.() === true) s.revRefreshAt = Date.now();
+                })
+                .catch(() => {})
+                .finally(() => { s.revBusy = false; });
+        };
+        if (!window.__chatState.revPoll) {
+            window.__chatState.revPoll = setInterval(() => window.__chatState.checkRevision(), 1000);
         }
 
         // Dedicated sender-side tick poll — much lighter than refreshChat.
@@ -9856,28 +9878,7 @@
             });
         })();
 
-        // Show "X is typing…" for ~2.5s after each whisper; overlapping whispers reset the timer.
         // (WebRTC call UI + logic live in the included partials below.)
-        function showTypingIndicator(payload) {
-            const indicator = document.getElementById('typingIndicator');
-            const nameEl = document.getElementById('typingName');
-            if (!indicator) return;
-
-            // Only show when the whisper belongs to the currently open conversation.
-            const input = document.getElementById('chatReplyInput');
-            const currentConv = input?.getAttribute('data-conversation-id');
-            if (payload?.conversationId && currentConv && String(payload.conversationId) !== String(currentConv)) {
-                return;
-            }
-
-            if (nameEl) nameEl.textContent = payload?.name || 'Someone';
-            indicator.style.display = 'block';
-
-            clearTimeout(window.__chatState.typingHideTimeout);
-            window.__chatState.typingHideTimeout = setTimeout(() => {
-                indicator.style.display = 'none';
-            }, 2500);
-        }
     </script>
     @endpush
 

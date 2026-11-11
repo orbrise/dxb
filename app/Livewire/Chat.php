@@ -1220,6 +1220,7 @@ class Chat extends Component
                 $q->whereIn('status', ['sent', 'delivered', 'unread'])->orWhereNull('status');
             })
             ->update(['status' => 'read']);
+        \App\Support\SupportInboxRevision::bumpIfSupport([$this->selectedConversationId]);
 
         // Reading messages drops this user's unread badge AND the sidebar
         // pink pill on the just-opened conversation. Blow the chat.convs
@@ -1295,6 +1296,7 @@ class Chat extends Component
             ->where('sender_id', '!=', $userId)
             ->where('status', 'sent')
             ->update(['status' => 'delivered']);
+        \App\Support\SupportInboxRevision::bumpIfSupport($rows->pluck('conversation_id'));
 
         // Broadcast delivered receipts IMMEDIATELY. Same reasoning as
         // markConversationAsRead above — terminating callbacks were being
@@ -2086,6 +2088,10 @@ class Chat extends Component
 
     public function render()
     {
+        // Read first: a message landing mid-render then shows as a newer
+        // revision, and the page's 1 s check refreshes once more for it.
+        $chatRev = \App\Support\ChatRevision::current((int) auth()->id());
+
         // Conversations always needed — drives the sidebar list on every tab.
         $conversations = $this->getConversations();
 
@@ -2158,7 +2164,8 @@ class Chat extends Component
             'directoryUsers',
             'statusFeed',
             'selectedStatus',
-            'galleryMedia'
+            'galleryMedia',
+            'chatRev'
         ))->layout('components.layouts.app-evoory');
     }
 }

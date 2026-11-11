@@ -64,12 +64,23 @@ class Message extends Model
                     (int) $conv->user_two_id,
                     (int) $msg->sender_id,
                 ]);
+                // Lets open chats pick the change up within a second: both
+                // people's /my-chat, and the admin Support Inbox.
+                \App\Support\ChatRevision::bump((int) $conv->user_one_id, (int) $conv->user_two_id);
+                if ($conv->is_support) \App\Support\SupportInboxRevision::bump();
             } catch (\Throwable $e) {
                 // Non-critical — stale badge for up to 30s is tolerable.
             }
         };
 
         static::created($invalidateBothSides);
+        static::created(function (Message $msg) {
+            try {
+                if ($msg->conversation) \App\Support\ChatTyping::clearForMessage($msg, $msg->conversation);
+            } catch (\Throwable $e) {
+                // Non-critical — the typing entry lapses by itself within seconds.
+            }
+        });
         static::updated($invalidateBothSides);
         static::deleted($invalidateBothSides);
     }
