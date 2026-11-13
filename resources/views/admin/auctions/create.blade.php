@@ -100,7 +100,8 @@
                         <div class="form-group mt-2">
                             <label for="background_image">Background Image (optional)</label>
                             <input type="file" name="background_image" id="background_image" accept="image/jpeg,image/png,image/webp" class="form-control @error('background_image') is-invalid @enderror">
-                            <small class="form-text text-muted">Shown on the auction spot card when the spot has no bidder yet. JPG / PNG / WebP, max 4 MB.</small>
+                            <small class="form-text text-muted">Shown on the spot's card on the Auctions page. JPG / PNG / WebP, max 4 MB. Without one, the default image below is used.</small>
+                            <img src="{{ \App\Models\Auction::defaultImageUrl() }}" alt="Default spot image" style="display:block; margin-top:8px; width:220px; height:140px; object-fit:cover; border-radius:6px; border:1px solid #ddd;">
                             @error('background_image')
                                 <span class="invalid-feedback d-block">{{ $message }}</span>
                             @enderror

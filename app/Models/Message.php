@@ -81,6 +81,14 @@ class Message extends Model
                 // Non-critical — the typing entry lapses by itself within seconds.
             }
         });
+        // The free plan's people count (ChatAllowance): the sender has now
+        // talked to the other person.
+        static::created(function (Message $msg) {
+            $conv = $msg->conversation;
+            if ($conv && !$conv->is_support && $msg->sender_id) {
+                \App\Support\ChatAllowance::record((int) $msg->sender_id, (int) $conv->getOtherUserId((int) $msg->sender_id));
+            }
+        });
         static::updated($invalidateBothSides);
         static::deleted($invalidateBothSides);
     }

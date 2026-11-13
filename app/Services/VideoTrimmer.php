@@ -89,7 +89,8 @@ class VideoTrimmer
         return $target;
     }
 
-    protected static function binary(): string
+    // Also used by ProfileVideoThumbnail.
+    public static function binary(): string
     {
         $binary = (string) config('services.ffmpeg.binary', 'ffmpeg');
 

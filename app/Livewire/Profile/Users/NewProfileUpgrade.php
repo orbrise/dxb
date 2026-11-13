@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Services\NotificationService;
 use App\Models\MailSettings;
 use App\Mail\ProfileCreated;
+use App\Support\SupportUpgradeChat;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\WebpEncoder;
@@ -31,7 +32,7 @@ class NewProfileUpgrade extends Component
     public $paypalOrderId;
     public $paypalClientId = 'AXEOnZr8asYD0Wav8y-eNaDpv_Vj80sF1wvMXV-iu4V6MMnZWolAo1xfwXJvakd-QSsi7qBHnjZcvFlr';
 
-    protected $listeners = ['processWalletPayment', 'handlePayPalApproval', 'processPrimaryPayment', 'processPrimaryPaymentFailure', 'handlePayPalFailure', 'startPrimaryPaymentAttempt'];
+    protected $listeners = ['processWalletPayment', 'handlePayPalApproval', 'processPrimaryPayment', 'processPrimaryPaymentFailure', 'handlePayPalFailure', 'startPrimaryPaymentAttempt', 'contactSupportForUpgrade'];
 
     public function mount()
     {
@@ -779,11 +780,53 @@ class NewProfileUpgrade extends Component
         
         // Create profile without package (free profile)
         $profile = $this->createProfileFromSession(null, 0);
-        
+
         if (!$profile) {
             return $this->redirect(route('new.profile'), navigate: true);
         }
 
+        $this->sendFreeProfileCreatedEmail($profile);
+
+        // Use JavaScript redirect for reliability when called from event listener
+        $redirectUrl = "/my-profile/{$profile->slug}/{$profile->id}";
+        $this->js("setTimeout(function() { window.location.href = '{$redirectUrl}'; }, 500);");
+    }
+
+    /**
+     * "Contact Support" payment option: save the profile as a free listing,
+     * then open the Support chat with a note naming the new profile (title +
+     * id) and the package the user picked, so support can take payment
+     * another way and upgrade it.
+     */
+    public function contactSupportForUpgrade($packageId = null, $duration = null, $amount = null)
+    {
+        if (is_array($packageId)) {
+            $data = $packageId;
+            $packageId = $data['packageId'] ?? null;
+            $duration = $data['duration'] ?? null;
+            $amount = $data['amount'] ?? null;
+        }
+
+        $sessionData = session('new_profile_data_' . auth()->id());
+        if (!$sessionData) {
+            session()->flash('error', 'Session data expired. Please fill the form again.');
+            return $this->redirect(route('new.profile'), navigate: true);
+        }
+
+        $profile = $this->createProfileFromSession(null, 0);
+
+        if (!$profile) {
+            return $this->redirect(route('new.profile'), navigate: true);
+        }
+
+        $this->sendFreeProfileCreatedEmail($profile);
+
+        // Full load: /my-chat isn't wire:navigate-safe.
+        return $this->redirect(SupportUpgradeChat::url($profile, $packageId, $duration, $amount));
+    }
+
+    private function sendFreeProfileCreatedEmail($profile): void
+    {
         // Send email if enabled in settings
         if (MailSettings::shouldSendEmail('account_create')) {
             try {
@@ -800,10 +843,6 @@ class NewProfileUpgrade extends Component
                 \Log::error('Profile created email failed: ' . $e->getMessage());
             }
         }
-
-        // Use JavaScript redirect for reliability when called from event listener
-        $redirectUrl = "/my-profile/{$profile->slug}/{$profile->id}";
-        $this->js("setTimeout(function() { window.location.href = '{$redirectUrl}'; }, 500);");
     }
 
     private function createProfileFromSession($packageId, $duration)

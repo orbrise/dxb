@@ -12,6 +12,7 @@ use App\Models\StatusView;
 use App\Models\User;
 use App\Events\NewChatMessage;
 use App\Events\MessageStatusUpdated;
+use App\Support\ChatAllowance;
 use App\Support\ChatBadges;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -186,6 +187,10 @@ class Chat extends Component
         } elseif (request()->boolean('support')) {
             // /my-chat?support=1 — the "Direct on evoory" card's Message button.
             $this->openSupport();
+            // &draft= pre-fills the reply box, ready to send (Buy Credits →
+            // Contact Support puts the amount the user typed in it).
+            $draft = trim(strip_tags((string) request()->query('draft', '')));
+            if ($draft !== '') $this->reply = mb_substr($draft, 0, 500);
         }
     }
 
@@ -291,15 +296,21 @@ class Chat extends Component
         if (!$src) { $this->cancelForward(); return; }
 
         $touchedCurrent = false;
+        $refusedByPlan = false;
 
         foreach ($convIds as $targetConvId) {
             $target = Conversation::find($targetConvId);
             if (!$target || !$target->hasUser($userId)) continue;
 
-            // Block guard — skip without aborting the batch.
+            // Block guard — skip without aborting the batch. Same for a new
+            // person past the free plan's limit (popup after the batch).
             if (!$target->is_support) {
                 $peerId = $target->getOtherUserId($userId);
                 if ($peerId && auth()->user()->isBlockRelationWith($peerId)) continue;
+                if ($peerId && !ChatAllowance::allows(auth()->user(), $peerId)) {
+                    $refusedByPlan = true;
+                    continue;
+                }
             }
 
             $new = Message::create([
@@ -342,6 +353,9 @@ class Chat extends Component
         if ($touchedCurrent) {
             $this->loadConversationMessages();
         }
+        if ($refusedByPlan) {
+            $this->dispatch('premium-limit');
+        }
     }
 
     /**
@@ -364,6 +378,11 @@ class Chat extends Component
             if ($peerId && auth()->user()->isBlockRelationWith($peerId)) {
                 session()->flash('error', "Can't forward — this user is blocked.");
                 $this->cancelForward();
+                return;
+            }
+            if ($peerId && !ChatAllowance::allows(auth()->user(), $peerId)) {
+                $this->cancelForward();
+                $this->dispatch('premium-limit');
                 return;
             }
         }
@@ -1345,6 +1364,12 @@ class Chat extends Component
             $peerId = $conversation->getOtherUserId(auth()->id());
             if ($peerId && auth()->user()->isBlockRelationWith($peerId)) {
                 session()->flash('error', "Can't send — this user is blocked.");
+                return;
+            }
+            // Free plan: a new person beyond its limit gets the upgrade popup.
+            // The draft stays in the box.
+            if ($peerId && !ChatAllowance::allows(auth()->user(), $peerId)) {
+                $this->dispatch('premium-limit');
                 return;
             }
         }

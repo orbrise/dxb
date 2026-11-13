@@ -6,7 +6,7 @@
             <span class="ev-mobile-back" style="display:none;color:#C1F11D;"><i class="fa fa-angle-left"></i> Back</span>
         </a>
         <div class="title">
-            <h1>Bid on Spot #{{ $spotNumber }}</h1>
+            <h1>Bid on Spot #{{ $spotNumber }}@if($cityName) in {{ $cityName }}@endif</h1>
         </div>
     </div>
 </div>
@@ -190,6 +190,14 @@ margin-bottom: 10px !important;
     border-radius: 6px;
 }
 .card-body .alert-info strong { color: #0c5460; }
+
+/* Spot details card */
+.spot-details { margin: 0; }
+.spot-details > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #23292B; }
+.spot-details > div:last-child { border-bottom: 0; }
+.spot-details dt { color: #9aa6ac; font-weight: 400; }
+.spot-details dd { margin: 0; color: #fff; font-weight: 600; text-align: right; }
+.spot-details dd.accent { color: #C1F11D; }
 
 /* Highest Bidder card */
 .card-body h5 { color: #fff; }
@@ -723,7 +731,7 @@ select.native-select option {
             <div class="bid-form">
                 <div class="bid-form-header">
                     <h4>Place Your Bid Spot #{{ $auction->spot_number }}</h4>
-                    <span class="bid-form-gender">Gender: {{ ucfirst($auction->gender) }}</span>
+                    <span class="bid-form-gender">{{ $cityName }} · {{ \App\Livewire\Auctions\AuctionPage::GENDERS[$auction->gender] ?? ucfirst($auction->gender) }}</span>
                 </div>
 
                 <form wire:submit.prevent="placeBid">
@@ -800,7 +808,11 @@ select.native-select option {
                             <span class="auction-timer">
                                 <img src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/timer-5fc5fc1474905d451c5cb2d9ad472d17fea1e9059c0baf436d0aaf6df2b2aeed.svg"
                                      class="timer-icon" width="16" height="16">
-                                Auction ends in: {{ $timeRemaining }}
+                                @if($timeRemaining)
+                                    Auction ends in: {{ $timeRemaining }}
+                                @else
+                                    Auction ended {{ $auction->end_date->format('M j, Y') }}
+                                @endif
                             </span>
                         </div>
                     </div>
@@ -882,8 +894,38 @@ select.native-select option {
                 </div>
             </div>
 
-            {{-- Current Highest Bidder --}}
-            @if($auction->bids->count() > 0)
+            {{-- Which spot this is: city, category, length, timing. --}}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>Spot details</h4>
+                </div>
+                <div class="card-body">
+                    <dl class="spot-details">
+                        <div><dt>City</dt><dd>{{ $cityName }}</dd></div>
+                        <div><dt>Category</dt><dd>{{ \App\Livewire\Auctions\AuctionPage::GENDERS[$auction->gender] ?? ucfirst($auction->gender) }}</dd></div>
+                        <div><dt>Spot</dt><dd>#{{ $auction->spot_number }}</dd></div>
+                        <div><dt>Featured for</dt><dd>{{ $auction->duration_days ?? 7 }} days</dd></div>
+                        <div><dt>Current price</dt><dd class="accent">${{ number_format($auction->current_price, 2) }}</dd></div>
+                        <div><dt>Bids this round</dt><dd>{{ $roundBidCount }}</dd></div>
+                        <div>
+                            <dt>{{ $timeRemaining ? 'Auction ends' : 'Auction ended' }}</dt>
+                            <dd>{{ $auction->end_date->format('M j, Y · H:i') }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            {{-- Current Highest Bidder: this round's bids only. --}}
+            @if(!$highestBid)
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>Current Highest Bidder</h4>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">No bids yet on this spot. @if($timeRemaining)Be the first: bids start at ${{ number_format($minBid, 2) }}.@endif</p>
+                </div>
+            </div>
+            @else
             <div class="card mt-4">
                 <div class="card-header">
                     <h4>Current Highest Bidder</h4>
@@ -891,8 +933,7 @@ select.native-select option {
                 <div class="card-body">
                     <div class="highest-bidder-row">
                         @php
-                            $highestBid = $auction->bids->sortByDesc('amount')->first();
-                            $highestBidderProfile = $highestBid ? $highestBid->profile : null;
+                            $highestBidderProfile = $highestBid->profile;
                         @endphp
 
                         {{-- Image URL uses the project's standard webp_asset() helper
@@ -911,8 +952,8 @@ select.native-select option {
                              class="highest-bidder-img" alt="{{ $highestBidderProfile->name }}">
                         @endif
                         <div class="highest-bidder-info">
-                            <h5>{{ $highestBidderProfile->name ?? 'No bids yet' }}</h5>
-                            <p>Current bid: ${{ number_format($auction->current_price, 2) }}</p>
+                            <h5>{{ $highestBidderProfile->name ?? 'Deleted profile' }}</h5>
+                            <p>Current bid: ${{ number_format($highestBid->amount, 2) }}</p>
                             {{-- Second (small) View Profile button removed — the
                                  full-width button below is the one we show. --}}
                         </div>
@@ -936,8 +977,7 @@ select.native-select option {
                     <ul>
                         <li>Minimum bid increment: $10</li>
                         <li>All bids are final and cannot be retracted</li>
-                        <li>Type highest bidder when the auction ends</li>
-                        <li>will be the winner</li>
+                        <li>The highest bidder when the auction ends wins the spot</li>
                         <li>Payment will be processed automatically if you win</li>
                         <li>Auction end at: {{ $auction->end_date->format('M d, Y H:i') }}</li>
                     </ul>

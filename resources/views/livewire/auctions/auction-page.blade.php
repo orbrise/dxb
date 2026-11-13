@@ -268,6 +268,45 @@
 .page-title{
         margin-top: 0px !important
 }
+
+[x-cloak] { display: none !important; }
+
+/* City chooser: auctions run per city, so the spots show once one is picked. */
+.auction-picker { margin-bottom: 28px; padding: 22px; border: 1px solid #23292B; border-radius: 14px; background: #15191B; }
+.auction-picker-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.auction-picker h2 { margin: 0 0 4px; color: #fff; font-size: 20px; font-weight: 600; }
+.auction-picker p { margin: 0; color: #9aa6ac; font-size: 14px; }
+.auction-picker-city { color: #C1F11D; }
+.auction-change-city { margin-left: 10px; padding: 0; border: 0; background: none; color: #9aa6ac; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+.auction-change-city:hover { color: #fff; }
+.auction-genders { display: flex; flex-wrap: wrap; gap: 8px; }
+.auction-genders button { padding: 7px 14px; border: 1px solid #2a3133; border-radius: 999px; background: transparent; color: #c9d0d3; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.auction-genders button:hover { border-color: #3a4245; color: #fff; }
+.auction-genders button.active { border-color: #C1F11D; background: rgba(193, 241, 29, 0.08); color: #C1F11D; }
+.auction-search { position: relative; max-width: 520px; margin-top: 18px; }
+.auction-search-box { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px; border: 1px solid #2a3133; border-radius: 10px; background: #0D1011; }
+.auction-search-box:focus-within { border-color: #C1F11D; }
+.auction-search-box svg { flex: none; color: #8e99a0; }
+.auction-search-box input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: #fff; font-size: 16px; }
+.auction-search-box input::placeholder { color: #6b767b; }
+.auction-results { position: absolute; top: calc(100% + 6px); right: 0; left: 0; z-index: 20; max-height: 300px; overflow-y: auto; padding: 6px; border: 1px solid #2a3133; border-radius: 10px; background: #15191B; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); }
+.auction-results button { display: block; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: #fff; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.auction-results button:hover { background: #1f2527; }
+.auction-results small, .auction-suggest small { color: #8e99a0; }
+.auction-results .none { padding: 10px 12px; color: #8e99a0; font-size: 13px; }
+.auction-suggest-label { margin: 18px 0 10px; color: #9aa6ac; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.auction-suggest { display: flex; flex-wrap: wrap; gap: 8px; }
+.auction-suggest button { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 1px solid #2a3133; border-radius: 999px; background: #1b2022; color: #fff; font: inherit; font-size: 13.5px; cursor: pointer; }
+.auction-suggest button:hover { border-color: #C1F11D; }
+.auction-suggest .open-dot { width: 7px; height: 7px; border-radius: 50%; background: #C1F11D; }
+.auction-notice { margin-top: 14px; color: #ffb44d; font-size: 13.5px; }
+.auction-none { grid-column: 1 / -1; padding: 50px 20px; border: 1px dashed #2a3133; border-radius: 14px; text-align: center; }
+.auction-none h3 { margin: 0 0 6px; color: #fff; font-size: 18px; font-weight: 600; }
+.auction-none p { margin: 0; color: #8e99a0; font-size: 14px; }
+@media (max-width: 768px) {
+    .auction-picker { padding: 16px; border-radius: 12px; }
+    .auction-picker h2 { font-size: 17px; }
+}
 </style>
 @endpush
 
@@ -275,7 +314,7 @@
 {{-- Sub-header --}}
 <div class="auction-subheader">
     <div class="ev-container">
-        <a class="back-link" href="/{{ $gender }}-escorts-in-{{ strtolower($cityName) }}">
+        <a class="back-link" href="{{ $citySlug ? '/' . $gender . '-escorts-in-' . $citySlug : '/' }}">
             <span class="ev-desktop-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> Back</span>
             <span class="ev-mobile-back" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> Home</span>
         </a>
@@ -292,6 +331,68 @@
         </div>
         @endif
 
+        {{-- City chooser: spots are per city, so they show once one is picked. --}}
+        <div class="auction-picker" x-data="{ changing: {{ $cityId ? 'false' : 'true' }} }">
+            <div class="auction-picker-head">
+                <div>
+                    @if($cityId)
+                        <h2>Top Spots in <span class="auction-picker-city">{{ $cityName }}</span></h2>
+                        <p>
+                            {{ $auctions->count() ? $auctions->count() . ' ' . \Illuminate\Support\Str::plural('spot', $auctions->count()) . ' open for offers' : 'No spots open right now' }}
+                            <button type="button" class="auction-change-city" x-show="!changing" @click="changing = true; $nextTick(() => $refs.citySearch.focus())">Change city</button>
+                        </p>
+                    @else
+                        <h2>Choose a city</h2>
+                        <p>Top Spot auctions run per city. Pick yours to see the spots open for offers.</p>
+                    @endif
+                </div>
+                <div class="auction-genders" role="group" aria-label="Category">
+                    @foreach(\App\Livewire\Auctions\AuctionPage::GENDERS as $value => $label)
+                        <button type="button" class="{{ $gender === $value ? 'active' : '' }}" wire:click="setGender('{{ $value }}')"
+                                aria-pressed="{{ $gender === $value ? 'true' : 'false' }}">{{ $label }}</button>
+                    @endforeach
+                </div>
+            </div>
+
+            @if($cityNotFound)
+                <div class="auction-notice">We couldn't find that city. Search for it below.</div>
+            @endif
+
+            <div x-show="changing" x-cloak>
+                <div class="auction-search">
+                    <div class="auction-search-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <input type="text" x-ref="citySearch" placeholder="Search for a city…" autocomplete="off" aria-label="Search for a city"
+                               wire:model.live.debounce.250ms="citySearch">
+                    </div>
+                    @if(mb_strlen(trim($citySearch)) >= 2)
+                        <div class="auction-results">
+                            @forelse($searchResults as $result)
+                                <button type="button" wire:click="selectCity({{ $result['id'] }})" wire:key="auction-city-{{ $result['id'] }}">
+                                    {{ $result['name'] }}@if($result['country']) <small>· {{ $result['country'] }}</small>@endif
+                                </button>
+                            @empty
+                                <div class="none">No cities match “{{ $citySearch }}”.</div>
+                            @endforelse
+                        </div>
+                    @endif
+                </div>
+                @if($suggestedCities->isNotEmpty())
+                    <div class="auction-suggest-label">Popular cities</div>
+                    <div class="auction-suggest">
+                        @foreach($suggestedCities as $suggested)
+                            <button type="button" wire:click="selectCity({{ $suggested->id }})" wire:key="auction-suggest-{{ $suggested->id }}"
+                                    @if(!empty($suggested->hasOpenSpots)) title="Spots open for offers" @endif>
+                                @if(!empty($suggested->hasOpenSpots))<span class="open-dot" aria-hidden="true"></span>@endif
+                                {{ $suggested->name }}
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        @if($cityId)
         <div style="margin-bottom: 24px;">
             <h2 class="section-title">This week's deluxe profiles</h2>
             <span class="section-subtitle">(view for logged-in advertisers)</span>
@@ -301,17 +402,11 @@
             @forelse($auctions as $auction)
             <div class="auction-card">
                 <div class="auction-card-img">
-                    @if($auction->highestBidderProfile && !empty($auction->highestBidderProfile->singleimg))
-                        <img loading="lazy" src="{{ asset('storage/userimages/'.$auction->highestBidderProfile->user_id.'/'.$auction->highestBidderProfile->id.'/'.$auction->highestBidderProfile->singleimg->image) }}" alt="" />
-                    @elseif($auction->featuredProfile && !empty($auction->featuredProfile->singleimg))
-                        <img loading="lazy" src="{{ smart_asset('storage/userimages/'.$auction->featuredProfile->user_id.'/'.$auction->featuredProfile->id.'/'.$auction->featuredProfile->singleimg->image) }}" alt="" />
-                    @elseif($auction->background_image)
-                        <img loading="lazy" src="{{ $auction->background_image_url }}" alt="Spot #{{ $auction->spot_number }}" />
-                    @else
-                        <div class="placeholder-img">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                        </div>
-                    @endif
+                    {{-- The slot's image: the admin's upload, else the default
+                         (Auction::background_image_url). If an upload ever fails
+                         to load, fall back to the default instead of a broken icon. --}}
+                    <img loading="lazy" src="{{ $auction->background_image_url }}" alt="Spot #{{ $auction->spot_number }}"
+                         onerror="this.onerror=null;this.src='{{ \App\Models\Auction::defaultImageUrl() }}'" />
 
                     {{-- Overlay with price, button, timer --}}
                     <div class="auction-overlay">
@@ -333,12 +428,13 @@
                 <div class="auction-spot-label">Spot #{{ $auction->spot_number }}</div>
             </div>
             @empty
-            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 0;">
-                <p style="color: #999; font-size: 16px;">No active auctions found for {{ $gender }} escorts in {{ $cityName }}</p>
-                <p style="color: #666; font-size: 14px;">Check back later or contact support for more information.</p>
+            <div class="auction-none">
+                <h3>No slots available in {{ $cityName }}</h3>
+                <p>No spots are open for offers in {{ $cityName }} in the {{ \App\Livewire\Auctions\AuctionPage::GENDERS[$gender] }} category right now. Check back later, or try another city or category.</p>
             </div>
             @endforelse
         </div>
+        @endif
 
        
     </div>

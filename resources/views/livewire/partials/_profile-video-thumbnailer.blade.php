@@ -1,6 +1,6 @@
 {{-- Profile video thumbnail capturer. Walks every .profile-video-preview
-     element (freshly rendered after a Livewire morph), draws its first frame
-     into a hidden canvas, converts to a JPEG data URL, and ships it back to
+     element (freshly rendered after a Livewire morph), grabs a non-black frame
+     about 1 s in (grabFrame), converts it to a JPEG data URL, and ships it back to
      the Livewire component via `setVideoThumbnail` so the server can decode +
      store it beside the MP4.
 
@@ -26,9 +26,10 @@
     const MAX_W = 720; // scale down big portrait clips so the JPEG stays small
     const MAX_H = 720;
 
-    // Stable dedup set across Livewire morphs. Keys are object-URL strings
-    // (same URL = same temp file = don't re-capture).
+    // Stable dedup set across Livewire morphs. Keyed on the URL's path (the
+    // temp file): a re-render can sign the same file's preview URL afresh.
     const capturedSrcs = new Set();
+    const keyOf = (src) => { try { return new URL(src, location.href).pathname; } catch (e) { return src; } };
 
     // Thumb overlays keyed by data-video-index. Needed because the <video>'s
     // `poster` attribute only shows BEFORE the browser loads any video
@@ -79,10 +80,79 @@
         });
     }
 
-    function captureOne(video) {
+    // True when a canvas is (nearly) all black. Same test as the server's
+    // ProfileVideoThumbnail::isBlank().
+    function isBlank(canvas) {
+        const probe = document.createElement('canvas');
+        probe.width = probe.height = 24;
+        const context = probe.getContext('2d');
+        context.drawImage(canvas, 0, 0, 24, 24);
+        const px = context.getImageData(0, 0, 24, 24).data;
+        for (let i = 0; i < px.length; i += 4) {
+            if (px[i] + px[i + 1] + px[i + 2] >= 60) return false;
+        }
+        return true;
+    }
+
+    // A frame of the clip as a JPEG data URL, or null. Drawing the preview
+    // tile as soon as its size was known saved a black JPEG for every upload:
+    // no frame is decoded at that point, and clips often open on black. So
+    // load a hidden muted copy, seek a moment in, draw once that frame has
+    // decoded ('seeked'), and move further along while frames are black.
+    function grabFrame(src) {
+        return new Promise((resolve) => {
+            const video = document.createElement('video');
+            video.muted = true;
+            video.playsInline = true;
+            video.preload = 'auto';
+            let times = [];
+            let done = false;
+            const finish = (dataUrl) => {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                video.removeAttribute('src');
+                video.load();
+                resolve(dataUrl);
+            };
+            const timer = setTimeout(() => finish(null), 15000);
+            const next = () => times.length ? (video.currentTime = times.shift()) : finish(null);
+
+            video.addEventListener('loadedmetadata', () => {
+                const d = Number.isFinite(video.duration) ? video.duration : 0;
+                // 1 s in (a third of a very short clip), then further along.
+                // MediaRecorder webms report no duration: just try 1 s and 0.1 s.
+                times = (d > 0 ? [Math.min(1, d / 3), d * 0.25, d * 0.5, d * 0.75] : [1, 0.1])
+                    .map(t => d > 0 ? Math.max(0, Math.min(t, d - 0.05)) : t)
+                    .filter((t, i, all) => all.indexOf(t) === i);
+                next();
+            }, { once: true });
+            video.addEventListener('seeked', () => {
+                try {
+                    const vw = video.videoWidth, vh = video.videoHeight;
+                    if (!vw || !vh) return next();
+                    const scale = Math.min(1, MAX_W / vw, MAX_H / vh);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round(vw * scale));
+                    canvas.height = Math.max(1, Math.round(vh * scale));
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                    if (isBlank(canvas)) return next();
+                    finish(canvas.toDataURL('image/jpeg', 0.78));
+                } catch (err) {
+                    // Decode / tainted-canvas failure: no browser thumbnail.
+                    console.warn('[profileVideoThumbnailer] capture failed', err);
+                    finish(null);
+                }
+            });
+            video.addEventListener('error', () => finish(null), { once: true });
+            video.src = src;
+        });
+    }
+
+    async function captureOne(video) {
         if (!video) return;
         const src = video.currentSrc || video.src || '';
-        if (!src || capturedSrcs.has(src)) return;
+        if (!src || capturedSrcs.has(keyOf(src))) return;
         const idx = video.getAttribute('data-video-index');
         if (idx === null) return;
 
@@ -100,7 +170,7 @@
         const q = window.__pendingVideoThumbs;
         if (q && q.length) {
             const dataUrl = q.shift();
-            capturedSrcs.add(src);
+            capturedSrcs.add(keyOf(src));
             indexToThumb.set(String(idx), dataUrl);
             applyOverlay(video, dataUrl);
             // Set poster too for completeness (helps if the overlay is
@@ -112,49 +182,36 @@
             return;
         }
 
-        try {
-            const vw = video.videoWidth, vh = video.videoHeight;
-            if (!vw || !vh) return; // metadata not ready yet; loadedmetadata will retry
-            const scale = Math.min(1, MAX_W / vw, MAX_H / vh);
-            const tw = Math.max(1, Math.round(vw * scale));
-            const th = Math.max(1, Math.round(vh * scale));
-            const canvas = document.createElement('canvas');
-            canvas.width = tw;
-            canvas.height = th;
-            canvas.getContext('2d').drawImage(video, 0, 0, tw, th);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
-            // Mark captured BEFORE dispatching so Livewire's resulting morph
-            // can't race us into a second capture of the same clip.
-            capturedSrcs.add(src);
-            indexToThumb.set(String(idx), dataUrl);
-            applyOverlay(video, dataUrl);
-            if (window.Livewire && typeof window.Livewire.dispatch === 'function') {
-                window.Livewire.dispatch('setVideoThumbnail', { index: Number(idx), dataUrl });
-            }
-        } catch (err) {
-            // CORS / decode failure — mark captured anyway so we don't keep
-            // retrying every morph. Browser's <video> poster-less fallback
-            // kicks in on display.
-            console.warn('[profileVideoThumbnailer] capture failed', err);
-            capturedSrcs.add(src);
+        // Mark captured BEFORE the (async) grab so the morphs that happen
+        // meanwhile can't start a second capture of the same clip. On
+        // failure it stays marked: retrying every morph never helps, and the
+        // server renders a thumbnail with ffmpeg when none arrives.
+        const key = keyOf(src);
+        capturedSrcs.add(key);
+        const dataUrl = await grabFrame(src);
+        if (!dataUrl) return;
+
+        // Removing a clip meanwhile re-numbers the tiles: find this clip's
+        // index again (or drop the frame if it was removed).
+        const tile = Array.from(document.querySelectorAll('video.profile-video-preview'))
+            .find(v => keyOf(v.currentSrc || v.src || '') === key);
+        const index = tile?.getAttribute('data-video-index');
+        if (index === null || index === undefined) return;
+        indexToThumb.set(String(index), dataUrl);
+        applyOverlay(tile, dataUrl);
+        if (window.Livewire && typeof window.Livewire.dispatch === 'function') {
+            window.Livewire.dispatch('setVideoThumbnail', { index: Number(index), dataUrl });
         }
     }
 
     function captureAll() {
         // Re-attach overlays FIRST so any newly-morphed video tile shows the
-        // user's thumb immediately, before the canvas-capture path runs on
-        // whatever's still awaiting metadata.
+        // user's thumb immediately, before the capture of new clips runs.
         sweepOverlays();
 
         document.querySelectorAll('video.profile-video-preview').forEach(v => {
             const src = v.currentSrc || v.src || '';
-            if (src && capturedSrcs.has(src)) return;
-            if (v.readyState >= 1 /* HAVE_METADATA */ && v.videoWidth) {
-                captureOne(v);
-            } else {
-                v.addEventListener('loadedmetadata', () => captureOne(v), { once: true });
-                v.addEventListener('loadeddata',     () => captureOne(v), { once: true });
-            }
+            if (src && !capturedSrcs.has(keyOf(src))) captureOne(v);
         });
     }
 

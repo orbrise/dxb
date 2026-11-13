@@ -111,6 +111,12 @@
 .profile-details-page .listing-photos-sm-plus .verified-image:hover span {
     visibility: visible !important;
 }
+/* Message dialog: the free plan's people limit is a notice, not an error. */
+#messageFormError.is-premium {
+    background: rgba(193, 241, 29, 0.08) !important;
+    border-color: rgba(193, 241, 29, 0.35) !important;
+    color: #e6edf0 !important;
+}
 </style>
 {{-- evoory-profile.css + profile-details-inline.css are declared permanently
      in the app-evoory layout <head> with media="print"/"all" toggled on
@@ -3330,13 +3336,27 @@ document.querySelectorAll('.report-link').forEach(function(link) {
               $form.find('textarea[name="message"]').val('');
               $form.find('input[name="phone"]').val('');
             }).fail(function(xhr) {
+              // Free plan's people limit (App\Support\ChatAllowance): explain it
+              // and link to Premium, in lime rather than as an error.
+              if (xhr.responseJSON && xhr.responseJSON.error === 'premium_required') {
+                $err.addClass('is-premium')
+                  .empty()
+                  .append(
+                    $('<span>').text('You can message and call up to ' + @json(\App\Support\ChatAllowance::FREE_PEOPLE) + ' people on the free plan, and you\'ve reached that. '),
+                    $('<a>', { href: @json(url('/premium-account')), text: 'Upgrade to Premium' })
+                      .css({ color: '#C1F11D', fontWeight: 700, textDecoration: 'underline' }),
+                    $('<span>').text(' to message ' + @json($userName) + '.')
+                  )
+                  .show();
+                return;
+              }
               let msg = 'Could not send the message. Please try again.';
               if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                 msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
               } else if (xhr.responseJSON && xhr.responseJSON.error) {
                 msg = xhr.responseJSON.error;
               }
-              $err.text(msg).show();
+              $err.removeClass('is-premium').text(msg).show();
             }).always(function() {
               $btn.prop('disabled', false);
               $label.html(originalLabel);

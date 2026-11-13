@@ -87,6 +87,8 @@ class PurchaseCredits extends Component
             : collect();
 
         return view('livewire.purchase-credits', [
+            // For the "Contact Support" payment option's Call button.
+            'supportConversationId' => $user ? \App\Models\Conversation::getOrCreateSupport($user->id)->id : null,
             'recentTransactions' => $recentTransactions,
             'creditTypes' => $creditTypes,
             'debitTypes' => $debitTypes,

@@ -21,6 +21,7 @@ class SpotBidding extends Component
     public $selectedProfile;
     public $userProfiles = [];
     public $city;
+    public $cityName;
     public $gender;
     public $errorMessage;
     public $successMessage;
@@ -39,12 +40,17 @@ class SpotBidding extends Component
         $this->gender = $gender; 
         
         $genderObj = Gender::where('name', $gender)->first();
-        $cityObj = City::where('name', 'like', '%' . $cityname . '%')->first();
-        
+        // Exact slug / name first: a bare LIKE could pick another city that
+        // merely contains the name.
+        $cityObj = City::where('slug', $cityname)->first()
+            ?? City::where('name', str_replace('-', ' ', $cityname))->first()
+            ?? City::where('name', 'like', '%' . $cityname . '%')->first();
+
         if (!$cityObj) {
             $this->errorMessage = 'City not found';
             return;
         }
+        $this->cityName = $cityObj->name;
         
      
         $this->auction = Auction::where('spot_number', $this->spotNumber)
@@ -61,7 +67,11 @@ class SpotBidding extends Component
         $this->auctionId = $this->auction->id;
         $this->minBid = $this->auction->current_price + 10; 
         $this->bidAmount = $this->minBid;
-        $this->timeRemaining = Carbon::now()->diffForHumans($this->auction->end_date, ['parts' => 2]);
+        // "3 days 4 hours"; null once the end date has passed (the view then
+        // says when it ended — auctions:end closes it within the hour).
+        $this->timeRemaining = $this->auction->end_date->isFuture()
+            ? $this->auction->end_date->diffForHumans(['parts' => 2, 'syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE])
+            : null;
         
         // Check if user can bid
         if (auth()->check()) {
@@ -167,9 +177,15 @@ class SpotBidding extends Component
                 ->find($this->auction->id);
         }
         
+        // Only this round's bids count: when a round ends, auctions:end marks
+        // its bids won / lost, so those are history, not the current leader.
+        $roundBids = $this->auction ? $this->auction->bids->where('status', 'active') : collect();
+
         return view('livewire.auctions.spot-bidding', [
             'auction' => $this->auction,
-            'userProfiles' => $this->userProfiles
+            'userProfiles' => $this->userProfiles,
+            'highestBid' => $roundBids->sortByDesc('amount')->first(),
+            'roundBidCount' => $roundBids->count(),
         ]);
     }
 }

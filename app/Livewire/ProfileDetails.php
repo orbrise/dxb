@@ -261,6 +261,12 @@ public $reportDescription;
                 session()->flash('sendmsg_error', 'You cannot message yourself.');
                 return;
             }
+
+            // Free plan: a new person beyond its limit gets the upgrade popup.
+            if (!\App\Support\ChatAllowance::allows(auth()->user(), (int) $profileOwnerId)) {
+                $this->dispatch('premium-limit');
+                return;
+            }
             
             // Create or get existing conversation
             $conversation = Conversation::getOrCreate($senderId, $profileOwnerId);

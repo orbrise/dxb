@@ -370,12 +370,15 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
 #wallet-payment-button *,
 #wallet-payment-button .button-text,
 #wallet-payment-button .button-spinner,
-#wallet-payment-button .payment-amount {
+#wallet-payment-button .payment-amount,
+#support-payment-button,
+#support-payment-button * {
     color: #000 !important;
 }
 /* Width 70% of the section, horizontally centered. .btn-block would
    otherwise stretch this to the full container width. */
-#wallet-payment-button {
+#wallet-payment-button,
+#support-payment-button {
     width: 50% !important;
     max-width: 55% !important;
     margin-left: auto !important;
@@ -407,6 +410,9 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
 .payment-method-option input[type="radio"] { accent-color: #C1F11D; width: 18px; height: 18px; margin-right: 15px; margin-top: -1px; }
 .payment-method-option label { cursor: pointer; margin-bottom: 0; }
 .payment-method-option .account-balance-amount { margin-left: auto; color: #28a745; font-weight: bold; }
+/* Contact Support option: "Pay another way" + headset, where the card logos sit */
+.payment-method-option .ev-support-hint { display: inline-flex; align-items: center; gap: 6px; color: #9aa3b2; font-size: 14px; }
+.payment-method-option .ev-support-hint svg { color: #C1F11D; flex-shrink: 0; }
 
 /* Dark theme for sections — scoped. `.block` and `.border-top` are
    Bootstrap-style classes that exist on many other pages (homepage
@@ -727,6 +733,18 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
                                 <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 40px;">
                               </label>
                             </div>
+
+                            <!-- Contact Support Option: pay another way through the support team -->
+                            <div class="payment-method-option d-flex align-items-center disabled mt-2" data-payment-method="support">
+                              <input type="radio" name="payment_method" id="payment_method_support" value="support" disabled>
+                              <label for="payment_method_support" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
+                                <span style="font-size: 16px;margin-right: 10px;">Contact Support</span>
+                                <span class="ev-support-hint">
+                                  Pay another way
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 15a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2Z"/><path d="M3 15a2 2 0 0 0 2 2h1v-5H5a2 2 0 0 0-2 2Z"/><path d="M18 17v1a3 3 0 0 1-3 3h-3"/></svg>
+                                </span>
+                              </label>
+                            </div>
                           </div>
                         </div>
                         
@@ -769,7 +787,20 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
                             <p class="small text-center mt-3" style="color:#9aa3b2 !important;">Secure payment processing by PayPal. You can use your PayPal account or credit/debit card.</p>
                           </div>
                         </div>
-                        
+
+                        <!-- Contact Support Section -->
+                        <div id="support-payment-section" class="block p-0 mb-3 payment-section" style="display: none; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;">
+                          <div class="p-3">
+                            <p style="color:#fff !important;">Don't want to pay by card? Message our support team about upgrading <strong>{{ $profile->name ?? 'this profile' }}</strong> to the package you picked. They'll help you pay another way and upgrade it.</p>
+                            <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-primary btn-lg btn-xs-block" type="button" id="support-payment-button">
+                              <span class="button-text">Message support</span>
+                              <span class="button-spinner" style="display: none;">
+                                <i class="fa fa-spinner fa-spin"></i> Opening chat...
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
                   </div>
@@ -996,8 +1027,8 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
             selectedPackageId = selectedDuration = selectedPrice = null;
             $('#account-balance-section, #payment-methods-section, .payment-section').hide();
             $('.payment-method-option').removeClass('selected');
-            $('[data-payment-method="primary"], [data-payment-method="paypal"]').addClass('disabled');
-            $('#payment_method_wallet, #payment_method_primary, #payment_method_paypal').prop('disabled', true).prop('checked', false);
+            $('[data-payment-method="primary"], [data-payment-method="paypal"], [data-payment-method="support"]').addClass('disabled');
+            $('#payment_method_wallet, #payment_method_primary, #payment_method_paypal, #payment_method_support').prop('disabled', true).prop('checked', false);
         });
         
         // Duration change
@@ -1016,7 +1047,11 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
             // Enable PayPal option
             $('[data-payment-method="paypal"]').removeClass('disabled');
             $('#payment_method_paypal').prop('disabled', false);
-            
+
+            // Enable Contact Support option
+            $('[data-payment-method="support"]').removeClass('disabled');
+            $('#payment_method_support').prop('disabled', false);
+
             // Enable wallet option only if balance is sufficient
             var walletBalance = {{ auth()->user()->wallet ? auth()->user()->wallet->balance : 0 }};
             if (walletBalance >= selectedPrice) {
@@ -1076,10 +1111,28 @@ body.evoory-upgrade-controller-active #main-nav { display: none !important; }
             $btn.find('.button-spinner').show();
             
             // Pass parameters directly with dispatch
-            Livewire.dispatch('processWalletPayment', { 
-                packageId: selectedPackageId, 
-                duration: parseInt(selectedDuration), 
-                amount: parseFloat(selectedPrice) 
+            Livewire.dispatch('processWalletPayment', {
+                packageId: selectedPackageId,
+                duration: parseInt(selectedDuration),
+                amount: parseFloat(selectedPrice)
+            });
+        });
+
+        // Contact Support button: the server redirects to the Support chat
+        // with this profile + the chosen package pre-filled.
+        $(document).off('click.upgrade', '#support-payment-button').on('click.upgrade', '#support-payment-button', function() {
+            if (!selectedPackageId || !selectedDuration || !selectedPrice) {
+                alert('Please select a package and duration first');
+                return;
+            }
+            var $btn = $(this);
+            $btn.prop('disabled', true).find('.button-text').hide();
+            $btn.find('.button-spinner').show();
+
+            Livewire.dispatch('contactSupportForUpgrade', {
+                packageId: selectedPackageId,
+                duration: parseInt(selectedDuration),
+                amount: parseFloat(selectedPrice)
             });
         });
          

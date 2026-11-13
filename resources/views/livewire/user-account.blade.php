@@ -995,7 +995,7 @@
        ============================================================ */
     .acct-page-desktop {
         background: #000;
-        min-height: 100vh;
+        min-height: 78vh;
         padding-bottom: 60px;
         color: #fff;
     }
@@ -1799,7 +1799,7 @@
          .ev-account-mobile block above handles mobile).
          ===================================================== --}}
     @php $isAcctInfoPage = request()->is('my-account/info'); @endphp
-    <div class="acct-page-desktop {{ $isAcctInfoPage ? 'acct-page-info' : '' }}" x-data="{ newsletterOpen: false }">
+    <div class="acct-page-desktop {{ $isAcctInfoPage ? 'acct-page-info' : '' }}">
         <div class="acct-back-wrap">
             <div class="acct-back-inner">
                 <a href="{{ $isAcctInfoPage ? url('/my-account') : url('/') }}" wire:navigate class="acct-back-link">
@@ -1865,8 +1865,11 @@
                 $memberSince = $authUser->created_at ? $authUser->created_at->format('m/d/Y') : '—';
                 $usernameDisplay = $authUser->username ? '@' . $authUser->username : '—';
                 $phoneDisplay = $authUser->phone ?: '—';
-                $quotaMax = 5;
-                $quotaUsed = min($chatsCount ?? 0, $quotaMax);
+                // The free plan's people limit (App\Support\ChatAllowance). People
+                // talked to before the limit existed stay allowed, so the count can
+                // exceed it; the bar just shows it as full.
+                $quotaMax = \App\Support\ChatAllowance::FREE_PEOPLE;
+                $quotaUsed = min($chatPeopleUsed ?? 0, $quotaMax);
                 $quotaPct = ($quotaUsed / $quotaMax) * 100;
                 $quotaRemaining = max(0, $quotaMax - $quotaUsed);
             @endphp
@@ -1995,18 +1998,41 @@
                                         <linearGradient id="acctCrownBar" x1="9" y1="14.6665" x2="9" y2="15.6665" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="#C1F11D"/></linearGradient>
                                     </defs>
                                 </svg>
-                                Upgrade to Premium
+                                {{ $hasPremium ? 'Premium plan' : 'Upgrade to Premium' }}
                             </span>
-                            <span class="acct-free-badge">Free Plan</span>
+                            <span class="acct-free-badge">{{ $hasPremium ? 'Premium' : 'Free Plan' }}</span>
                         </div>
-                        <div class="acct-quota-row">
-                            <span>Conversation Quota</span>
-                            <b>{{ $quotaUsed }} / {{ $quotaMax }} People</b>
-                        </div>
-                        <div class="acct-progress">
-                            <div class="acct-progress-fill" style="width: {{ $quotaPct }}%;"></div>
-                        </div>
-                        <p class="acct-premium-desc">You can chat with {{ $quotaRemaining }} more unique people on your Free plan.</p>
+                        @if($chatLimited)
+                            <div class="acct-quota-row">
+                                <span>Conversation Quota</span>
+                                <b>{{ $quotaUsed }} / {{ $quotaMax }} People</b>
+                            </div>
+                            <div class="acct-progress">
+                                <div class="acct-progress-fill" style="width: {{ $quotaPct }}%;"></div>
+                            </div>
+                            <p class="acct-premium-desc">
+                                @if($quotaRemaining > 0)
+                                    You can message and call {{ $quotaRemaining }} more {{ \Illuminate\Support\Str::plural('person', $quotaRemaining) }} on your Free plan.
+                                @else
+                                    You've reached your Free plan's limit. Upgrade to Premium to message and call more people.
+                                @endif
+                            </p>
+                        @else
+                            <div class="acct-quota-row">
+                                <span>Conversation Quota</span>
+                                <b>Unlimited</b>
+                            </div>
+                            <div class="acct-progress">
+                                <div class="acct-progress-fill" style="width: 100%;"></div>
+                            </div>
+                            <p class="acct-premium-desc">
+                                @if($hasPremium)
+                                    Your Premium plan lets you message and call as many people as you like.
+                                @else
+                                    This is a staff account, so the Free plan's limit of {{ $quotaMax }} people doesn't apply to it.
+                                @endif
+                            </p>
+                        @endif
                     </div>
 
                     {{-- Stay Connected / Newsletter card --}}
@@ -2032,13 +2058,13 @@
                                 Newsletter
                             </div>
                             <p class="acct-connect-desc">Get the latest updates, exclusive offers and more, straight to your inbox.</p>
-                            <button type="button" class="acct-connect-edit" @click="newsletterOpen = true">
+                            <a href="{{ route('user.account.newsletter') }}" wire:navigate class="acct-connect-edit">
                                 <svg width="16" height="16" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path d="M4 5H3C2.46957 5 1.96086 5.21071 1.58579 5.58579C1.21071 5.96086 1 6.46957 1 7V16C1 16.5304 1.21071 17.0391 1.58579 17.4142C1.96086 17.7893 2.46957 18 3 18H12C12.5304 18 13.0391 17.7893 13.4142 17.4142C13.7893 17.0391 14 16.5304 14 16V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M13 3.00011L16 6.00011M17.385 4.58511C17.7788 4.19126 18.0001 3.65709 18.0001 3.10011C18.0001 2.54312 17.7788 2.00895 17.385 1.61511C16.9912 1.22126 16.457 1 15.9 1C15.343 1 14.8088 1.22126 14.415 1.61511L6 10.0001V13.0001H9L17.385 4.58511Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
-                                Edit Subscription
-                            </button>
+                                Edit Newsletter
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -2055,77 +2081,6 @@
                         Delete account
                     </button>
                 </form>
-            </div>
-        </div>
-
-        {{-- Newsletter modal (triggered by "Edit Subscription" on the Stay Connected card) --}}
-        <div x-show="newsletterOpen" x-cloak class="ev-modal-overlay" @click.self="newsletterOpen = false">
-            <div class="ev-modal">
-                <div class="ev-modal-header">
-                    <h2>
-                        <i class="fa fa-newspaper"></i>
-                        <span>Newsletter</span>
-                    </h2>
-                    <button type="button" class="ev-modal-close" @click="newsletterOpen = false">&times;</button>
-                </div>
-                <div class="ev-modal-body">
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 1rem;">
-                            <input type="checkbox" wire:model.live="receiveNewsletter" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
-                            <span style="margin-left: 0.75rem; font-weight: 500;">Send me newsletter for:</span>
-                        </label>
-                    </div>
-                    <div style="margin-bottom: 1rem; position: relative;">
-                        <div class="ev-search-input">
-                            <span><i class="fa fa-map-marker-alt"></i></span>
-                            <input type="text" placeholder="Find city..." wire:model.live="citySearch" autocomplete="off">
-                            @if($citySearch)
-                                <button type="button" wire:click="$set('citySearch', '')"><i class="fa fa-times"></i></button>
-                            @endif
-                        </div>
-                        @if(count($searchResults) > 0)
-                            <div class="ev-dropdown-results">
-                                @foreach($searchResults as $city)
-                                    <button type="button" wire:click="addCity({{ $city['id'] }})">
-                                        {{ $city['name'] }}@if($city['country']) <span style="color:#666;">({{ $city['country'] }})</span>@endif
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                    @if(count($selectedCities) > 0)
-                        <div style="margin-bottom: 1rem; max-height: 150px; overflow-y: auto;">
-                            @foreach($selectedCities as $index => $city)
-                                <div class="ev-city-tag">
-                                    <span><i class="fa fa-map-marker-alt" style="margin-right:0.5rem;"></i>{{ $city['name'] }}@if($city['country']) <span style="color:#666;">({{ $city['country'] }})</span>@endif</span>
-                                    <button type="button" style="background:none;border:none;cursor:pointer;font-size:1.2rem;padding:0;" wire:click="removeCity({{ $index }})"><i class="fa fa-times"></i></button>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
-                    <div>
-                        <label style="display: block; margin-bottom: 1rem; font-weight: 600; font-size: 1rem;">Include</label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem;">
-                            <label style="display: flex; align-items: center; cursor: pointer;">
-                                <input type="checkbox" value="female" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
-                                <span style="margin-left: 0.5rem;">Escorts</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer;">
-                                <input type="checkbox" value="male" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
-                                <span style="margin-left: 0.5rem;">Male Escorts</span>
-                            </label>
-                            <label style="display: flex; align-items: center; cursor: pointer;">
-                                <input type="checkbox" value="shemale" wire:model="selectedGenders" style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: #C1F11D;">
-                                <span style="margin-left: 0.5rem;">Shemale Escorts</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="ev-modal-footer">
-                    <button type="button" class="ev-buy-btn" wire:click="saveNewsletter" @click="newsletterOpen = false">
-                        <span>Save</span> <i class="fa fa-chevron-right"></i>
-                    </button>
-                </div>
             </div>
         </div>
     </div>

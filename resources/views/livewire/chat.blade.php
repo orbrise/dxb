@@ -8075,6 +8075,8 @@
                 });
                 if (!res.ok) {
                     const body = await res.text();
+                    // Free plan's people limit: the upgrade popup, not an error.
+                    if (window.evIsPremiumLimit?.(res.status)) { window.evShowPremiumLimit(); return; }
                     console.error('[attach] upload HTTP', res.status, body);
                     alert('Upload failed (' + res.status + ').');
                     return;
@@ -8273,7 +8275,10 @@
                 // is sequential.
                 (async () => {
                     for (const { file, caption, bubbleUrl, batchId } of snapshot) {
-                        try { await openImageUploadFlow(file, caption, bubbleUrl, batchId); }
+                        try {
+                            // Refused by the free plan's limit: the rest would be too.
+                            if ((await openImageUploadFlow(file, caption, bubbleUrl, batchId))?.premium) break;
+                        }
                         catch (err) { console.error('[imgSend] upload failed', err); }
                     }
                 })();
@@ -8349,6 +8354,12 @@
                         const root = anchor?.closest('[wire\\:id]');
                         if (root) Livewire.find(root.getAttribute('wire:id'))?.call('refreshChat');
                         resolve({ ok: true });
+                    } else if (window.evIsPremiumLimit?.(xhr.status)) {
+                        // Free plan's people limit: drop the bubble, show the upgrade popup.
+                        if (bubbleUrl) URL.revokeObjectURL(bubbleUrl);
+                        if (pending?.remove) pending.remove();
+                        window.evShowPremiumLimit();
+                        resolve({ ok: false, status: xhr.status, premium: true });
                     } else {
                         let msg = 'Upload failed (' + xhr.status + ')';
                         try {
@@ -8548,6 +8559,11 @@
                         const anchor = document.getElementById('chatReplyInput') || document.getElementById('attachBtn');
                         const root = anchor?.closest('[wire\\:id]');
                         if (root) Livewire.find(root.getAttribute('wire:id'))?.call('refreshChat');
+                    } else if (window.evIsPremiumLimit?.(xhr.status)) {
+                        // Free plan's people limit: drop the bubble, show the upgrade popup.
+                        if (pending?._thumbUrl) URL.revokeObjectURL(pending._thumbUrl);
+                        if (pending?.remove) pending.remove();
+                        window.evShowPremiumLimit();
                     } else {
                         let msg = 'Upload failed (' + xhr.status + ')';
                         try {
@@ -8824,6 +8840,12 @@
                 });
                 if (!res.ok) {
                     const body = await res.text();
+                    // Free plan's people limit: drop the bubble, show the upgrade popup.
+                    if (window.evIsPremiumLimit?.(res.status)) {
+                        pendingEl?.remove();
+                        window.evShowPremiumLimit();
+                        return;
+                    }
                     console.error('[voice] upload HTTP', res.status, body);
                     markPendingBubbleFailed(pendingEl, 'Upload failed (' + res.status + ')');
                     return;

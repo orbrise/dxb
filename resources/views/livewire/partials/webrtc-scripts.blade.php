@@ -195,6 +195,12 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             }
         } catch (err) {
             console.error('[rtc] rtcStartCall failed:', err);
+            // Free plan's people limit: the upgrade popup instead of an error.
+            if (window.evIsPremiumLimit?.(err?.message)) {
+                endCall(false);
+                window.evShowPremiumLimit?.();
+                return;
+            }
             let msg = 'Could not start call.';
             if (err?.name === 'NotAllowedError') msg = 'Camera / mic permission denied.';
             else if (err?.name === 'NotFoundError') msg = 'No microphone / camera detected.';
@@ -767,6 +773,14 @@ console.log('[rtc] script tag executed. existing __rtc:', typeof window.__rtc, w
             await postSignal('answer', { sdp: { type: answer.type, sdp: sanitizeOutgoingSdp(answer.sdp) } });
         } catch (err) {
             console.error('[rtc] accept failed', err);
+            // Free plan's people limit: answering counts too. Let the caller
+            // know it was declined, then show the upgrade popup.
+            if (window.evIsPremiumLimit?.(err?.message)) {
+                try { await postSignal('decline', { reason: 'premium_required' }); } catch (_) {}
+                endCall(false);
+                window.evShowPremiumLimit?.();
+                return;
+            }
             let msg = 'Could not accept call.';
             if (err?.name === 'NotAllowedError') msg = 'Mic permission denied.';
             else if (err?.name === 'NotFoundError') msg = 'No microphone / camera detected.';

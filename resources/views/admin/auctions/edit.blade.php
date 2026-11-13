@@ -123,12 +123,17 @@
                                     <img src="{{ $auction->background_image_url }}" alt="Current background" style="max-width:220px; max-height:140px; border-radius:6px; border:1px solid #ddd;">
                                     <div class="form-check mt-1">
                                         <input type="checkbox" name="remove_background_image" id="remove_background_image" value="1" class="form-check-input">
-                                        <label for="remove_background_image" class="form-check-label text-danger">Remove current image</label>
+                                        <label for="remove_background_image" class="form-check-label text-danger">Remove current image (use the default)</label>
                                     </div>
+                                </div>
+                            @else
+                                <div class="mb-2">
+                                    <img src="{{ $auction->background_image_url }}" alt="Default spot image" style="width:220px; height:140px; object-fit:cover; border-radius:6px; border:1px solid #ddd;">
+                                    <div class="form-text text-muted">No image uploaded, so the default image is used.</div>
                                 </div>
                             @endif
                             <input type="file" name="background_image" id="background_image" accept="image/jpeg,image/png,image/webp" class="form-control @error('background_image') is-invalid @enderror">
-                            <small class="form-text text-muted">Shown on the auction spot card when the spot has no bidder yet. JPG / PNG / WebP, max 4 MB. Upload a new file to replace the current one.</small>
+                            <small class="form-text text-muted">Shown on the spot's card on the Auctions page. JPG / PNG / WebP, max 4 MB. Upload a new file to replace the current one.</small>
                             @error('background_image')
                                 <span class="invalid-feedback d-block">{{ $message }}</span>
                             @enderror

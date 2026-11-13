@@ -29,6 +29,7 @@
         'user.account.edit' => 'Edit',
         'user.account.password' => 'Password',
         'user.account.newsletter' => 'Newsletter',
+        'user.account.newsletter.edit' => 'Newsletter',
         'user.chat' => 'Messages',
         'user.chat.with' => 'Messages',
         'user.questions' => 'Questions',
@@ -143,7 +144,7 @@
     .ev-cc-badge {
         position: absolute;
         top: -6px;
-        right: -8px;
+        right: -15px;
         min-width: 18px;
         height: 18px;
         padding: 0 5px;

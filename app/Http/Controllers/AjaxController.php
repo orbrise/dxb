@@ -280,6 +280,11 @@ class AjaxController extends Controller
                 return response()->json(['error' => 'You cannot message yourself.'], 422);
             }
 
+            // Free plan: a new person beyond its limit (ChatAllowance).
+            if (!\App\Support\ChatAllowance::allows(auth()->user(), (int) $ownerId)) {
+                return response()->json(\App\Support\ChatAllowance::errorBody(), 402);
+            }
+
             $validated = $request->validate([
                 'message' => 'required|string|min:1|max:500',
                 'code' => 'nullable|string|max:10',

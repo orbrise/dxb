@@ -26,6 +26,14 @@ class Auction extends Model
         'end_date' => 'datetime',
     ];
 
+    /** Shown for a slot when an admin hasn't uploaded an image (public/). */
+    public const DEFAULT_IMAGE = 'assets/images/auction-spot-default.svg';
+
+    public static function defaultImageUrl(): string
+    {
+        return asset(self::DEFAULT_IMAGE);
+    }
+
     public function bids()
     {
         return $this->hasMany(AuctionBid::class);
@@ -112,10 +120,11 @@ class Auction extends Model
      * Scope to get only auctions with valid spots (active OR ended but spot not yet expired)
      * end_date represents when the spot expires for the winner
      */
+    /** The slot's image: the one an admin uploaded, else the default. */
     public function getBackgroundImageUrlAttribute()
     {
         if (! $this->background_image) {
-            return null;
+            return self::defaultImageUrl();
         }
         if (filter_var($this->background_image, FILTER_VALIDATE_URL)) {
             return $this->background_image;

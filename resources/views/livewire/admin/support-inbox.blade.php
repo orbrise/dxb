@@ -24,6 +24,9 @@
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 .s-modern .si-side-head { padding: 16px 16px 10px; border-bottom: 1px solid var(--sm-slate-100); }
+/* Chats tab on desktop: no "Customers" title, the list starts at the search.
+   Phones keep the row: it carries the admin menu button. */
+@media (min-width: 768px) { .s-modern .si-side-titlebar.is-chat { display: none !important; } }
 .s-modern .si-view-tab-badge { min-width: 17px; padding: 1px 5px; border-radius: 99px; background: #ef4444; color: #fff; font-size: 10px; line-height: 16px; text-align: center; }
 .s-modern .si-call-row-unanswered .si-name,
 .s-modern .si-call-row-unanswered .si-preview { color: #b91c1c; }
@@ -1875,7 +1878,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                 $mediaLabels = ['media' => 'Media', 'audio' => 'Audio', 'docs' => 'Docs', 'links' => 'Links'];
             @endphp
             <div class="si-side-head">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:{{ in_array($inboxTab, ['status', 'settings'], true) ? '0' : '8px' }};">
+                <div class="si-side-titlebar {{ $inboxTab === 'chat' ? 'is-chat' : '' }}" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:{{ in_array($inboxTab, ['status', 'settings'], true) ? '0' : '8px' }};">
                     <div class="si-side-title" style="color: var(--sm-slate-800); font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px;">
                         {{-- Phones only: the inbox covers the admin chrome, so it carries the menu button. --}}
                         <button type="button" class="si-menu-btn" onclick="document.getElementById('mm-btn')?.click()" aria-label="Open admin menu" title="Menu">

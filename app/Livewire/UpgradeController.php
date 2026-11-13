@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Services\NotificationService;
 use App\Models\MailSettings;
 use App\Mail\ProfileUpgraded;
+use App\Support\SupportUpgradeChat;
 
 class UpgradeController extends Component
 {
@@ -101,6 +102,30 @@ class UpgradeController extends Component
         return view('livewire.upgrade-controller', compact('packages', 'profile'));
     }
 
+
+    /**
+     * "Contact Support" payment option: open the Support chat with a note
+     * naming this profile (title + id) and the package the user picked, so
+     * support can take payment another way and upgrade it.
+     */
+    #[On('contactSupportForUpgrade')]
+    public function contactSupportForUpgrade($packageId = null, $duration = null, $amount = null)
+    {
+        if (is_array($packageId)) {
+            $data = $packageId;
+            $packageId = $data['packageId'] ?? null;
+            $duration = $data['duration'] ?? null;
+            $amount = $data['amount'] ?? null;
+        }
+
+        $profile = UsersProfile::where('id', $this->id)->where('user_id', Auth()->user()->id)->first();
+        if (!$profile) {
+            return $this->redirect(route('user.chat', ['support' => 1]));
+        }
+
+        // Full load: /my-chat isn't wire:navigate-safe.
+        return $this->redirect(SupportUpgradeChat::url($profile, $packageId, $duration, $amount));
+    }
 
     #[On('processWalletPayment')]
     public function processWalletPayment($packageId = null, $duration = null, $amount = null)

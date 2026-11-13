@@ -123,6 +123,40 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
     gap: 6px;
 }
 
+/* Contact Support option + its section */
+.purchase-credits-page .payment-method-option .ev-support-hint {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #9aa6ac;
+    font-size: 13px;
+}
+.purchase-credits-page .payment-method-option .ev-support-hint svg { color: #C1F11D; flex-shrink: 0; }
+.purchase-credits-page .ev-support-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.purchase-credits-page .ev-support-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border: 1px solid #C1F11D;
+    border-radius: 999px;
+    background: transparent;
+    color: #C1F11D !important;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: background 150ms, color 150ms;
+}
+.purchase-credits-page .ev-support-btn:hover { background: rgba(193, 241, 29, 0.1); }
+.purchase-credits-page .ev-support-btn.primary { background: #C1F11D; color: #0a0a0a !important; }
+.purchase-credits-page .ev-support-btn.primary:hover { background: #d4f84d; }
+@media (max-width: 480px) {
+    .purchase-credits-page .ev-support-btn { flex: 1 1 100%; }
+}
+
 /* Payment Section Card */
 .purchase-credits-page .payment-section-card {
     background: #1a1a1a;
@@ -1543,11 +1577,32 @@ body:has(.pc-v2-active) .pc-v2-intro {
             }
         });
 
+        // Contact Support → Message Support opens the Support chat with a
+        // ready-to-send note about the amount typed (Chat reads &draft=). The
+        // href is kept current as the amount changes, not set on click: the
+        // layout's capture-phase /my-chat handler navigates before a bubbling
+        // click handler would run.
+        function updateSupportMessageLinks(amount) {
+            var draft = amount > 0
+                ? "Hi, I'd like to add $" + amount + " to my wallet. How can I pay?"
+                : "Hi, I'd like to buy credits for my wallet. How can I pay?";
+            document.querySelectorAll('[data-support-credits-message]').forEach(function (link) {
+                link.href = link.getAttribute('data-base-href') + '&draft=' + encodeURIComponent(draft);
+            });
+        }
+        updateSupportMessageLinks(selectedAmount);
+        document.addEventListener('click', function (e) {
+            if (e.target.closest && e.target.closest('.payment-method-option[data-payment-method="support"]')) {
+                updateSupportMessageLinks(parseFloat((document.getElementById('amount') || {}).value) || 0);
+            }
+        });
+
         // Amount input change — delegated for the same reason as above.
         document.addEventListener('input', function (e) {
             if (!e.target || e.target.id !== 'amount') return;
             selectedAmount = parseFloat(e.target.value) || 0;
             updateAmountDisplay(selectedAmount);
+            updateSupportMessageLinks(selectedAmount);
 
             if (selectedAmount >= 10) {
                 // Valid amount — drop the inline "min $10" warning instantly

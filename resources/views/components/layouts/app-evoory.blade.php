@@ -283,6 +283,14 @@
                 'link[href*="evoory-profile.css"], link[href*="profile-details-inline.css"]'
             );
             links.forEach(function(el){ el.media = on ? 'all' : 'print'; });
+            // The home/listing page's site-inline.min.css forces every .fa icon
+            // onto Font Awesome 5 (!important). A hard-loaded profile page never
+            // has it, but wire:navigate keeps the previous page's stylesheets,
+            // and there it blanked the profile's icons that use the legacy
+            // "FontAwesome" font (e.g. the photos' verified tick). Off on profiles.
+            document.querySelectorAll('link[href*="site-inline.min.css"]').forEach(function(el){
+                el.media = on ? 'print' : 'all';
+            });
         }
         function syncListingCss(){
             var path = window.location.pathname;
@@ -455,6 +463,8 @@
             window.__authUserName = @json(auth()->user()?->name ?: (auth()->user()?->email ?? ''));
         </script>
         @include('livewire.partials.webrtc-scripts')
+        {{-- "Upgrade to Premium" popup for the free plan's people limit. --}}
+        @include('livewire.partials._premium-limit-modal')
         {{-- Web Push registration — asks for notification permission on the
              first user click, then keeps a PushSubscription on file so
              the server can wake the browser with an incoming-call

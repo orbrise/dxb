@@ -6,6 +6,7 @@ use App\Events\NewChatMessage;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\VideoTrimmer;
+use App\Support\ChatAllowance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -89,6 +90,15 @@ class ChatMediaController extends Controller
         $isAdminOnSupport = ($user->is_admin ?? false) && $conversation->is_support;
         if (!$isParticipant && !$isAdminOnSupport) {
             return response()->json(['error' => 'forbidden'], 403);
+        }
+
+        // Free plan: a new person beyond its limit. 402 + premium_required
+        // makes the chat page show the upgrade popup, not an upload error.
+        if (!$conversation->is_support) {
+            $peerId = $conversation->getOtherUserId($userId);
+            if ($peerId && !ChatAllowance::allows($user, $peerId)) {
+                return response()->json(ChatAllowance::errorBody(), 402);
+            }
         }
 
         $upload = $request->file($field);

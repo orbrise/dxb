@@ -7,6 +7,7 @@ use App\Models\Call;
 use App\Models\CallSignal as CallSignalRow;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\ChatAllowance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -125,6 +126,17 @@ class CallController extends Controller
             && Setting::query()->whereKey(1)->value('support_calls_blocked')) {
             $rtc->info('signal.support_calls_blocked_rejected', ['auth_id' => $user->id]);
             return response()->json(['error' => 'support_calls_blocked'], 403);
+        }
+
+        // Free plan (ChatAllowance): calling, or answering a call from, a new
+        // person beyond the limit. The client shows the upgrade popup. A
+        // mid-call renegotiation offer passes: that peer is already a contact.
+        if (in_array($data['type'], ['offer', 'answer'], true) && !$isSupport && $targetId > 0) {
+            if (!ChatAllowance::allows($user, $targetId)) {
+                $rtc->info('signal.free_plan_limit_rejected', ['auth_id' => $user->id, 'target' => $targetId, 'type' => $data['type']]);
+                return response()->json(ChatAllowance::errorBody(), 402);
+            }
+            ChatAllowance::record($user->id, $targetId);
         }
 
         try {

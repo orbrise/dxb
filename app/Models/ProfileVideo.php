@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\ProfileVideoThumbnail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Mirrors ProfileImage. The accessor pair (video_url + thumbnail_url) hides
@@ -31,6 +34,22 @@ class ProfileVideo extends Model
         'duration_seconds' => 'integer',
         'video_order'      => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        // The browser's upload thumbnail can be missing or black; swap in an
+        // ffmpeg frame. After commit: every upload path saves in a transaction,
+        // and ffmpeg shouldn't run while it holds its locks.
+        static::created(function (ProfileVideo $video) {
+            DB::afterCommit(function () use ($video) {
+                try {
+                    ProfileVideoThumbnail::ensure($video);
+                } catch (\Throwable $e) {
+                    Log::warning('ProfileVideo: thumbnail check failed', ['id' => $video->id, 'error' => $e->getMessage()]);
+                }
+            });
+        });
+    }
 
     /**
      * Full CDN URL to the stored MP4/WebM.

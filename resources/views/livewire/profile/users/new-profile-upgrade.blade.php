@@ -238,6 +238,16 @@
     font-weight: bold;
 }
 
+/* Contact Support option: "Pay another way" + headset, where the card logos sit */
+.payment-method-option .ev-support-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #9aa3b2;
+    font-size: 14px;
+}
+.payment-method-option .ev-support-hint svg { color: #C1F11D; flex-shrink: 0; }
+
 /* Alert info */
 .alert-info {
     background: #1a1a1a;
@@ -554,6 +564,18 @@ a.text-warning:focus, a.text-warning {
                                 <img src="{{smart_asset('assets/images/visa.svg')}}" alt="Visa" style="width: 60px;">
                               </label>
                             </div>
+
+                            <!-- Contact Support Option: pay another way through the support team -->
+                            <div class="payment-method-option d-flex align-items-center disabled mt-2" data-payment-method="support">
+                              <input type="radio" name="payment_method" id="payment_method_support" value="support" disabled>
+                              <label for="payment_method_support" class="mb-0 d-flex align-items-center" style="flex-grow: 1; cursor: pointer;">
+                                <span style="font-size: 20px;margin-right: 10px;">Contact Support</span>
+                                <span class="ev-support-hint">
+                                  Pay another way
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 15a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2Z"/><path d="M3 15a2 2 0 0 0 2 2h1v-5H5a2 2 0 0 0-2 2Z"/><path d="M18 17v1a3 3 0 0 1-3 3h-3"/></svg>
+                                </span>
+                              </label>
+                            </div>
                           </div>
                         </div>
                         
@@ -596,7 +618,20 @@ a.text-warning:focus, a.text-warning {
                             <p class="small text-muted text-center mt-3">Secure payment processing by PayPal. You can use your PayPal account or credit/debit card.</p>
                           </div>
                         </div>
-                        
+
+                        <!-- Contact Support Section -->
+                        <div id="support-payment-section" class="block p-0 mb-3 payment-section" style="display: none;">
+                          <div class="p-3">
+                            <p>Don't want to pay by card? We'll save your profile as a free listing now and open a chat with our support team, with your profile and the package you picked. They'll help you pay another way and upgrade it.</p>
+                            <button class="d-flex align-items-center justify-content-center mt-4 btn btn-block btn-lg btn-xs-block" type="button" id="support-payment-button" style="background: #C1F11D; color: #000; border: none; border-radius: 22px; font-weight: 600;">
+                              <span class="button-text">Save profile &amp; message support</span>
+                              <span class="button-spinner" style="display: none;">
+                                <i class="fa fa-spinner fa-spin"></i> Saving...
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
                       </div>
                     </div>
                   </div>
@@ -755,8 +790,8 @@ a.text-warning:focus, a.text-warning {
             selectedPackageId = selectedDuration = selectedPrice = null;
             $('#account-balance-section, #payment-methods-section, .payment-section').hide();
             $('.payment-method-option').removeClass('selected');
-            $('[data-payment-method="primary"], [data-payment-method="paypal"]').addClass('disabled');
-            $('#payment_method_wallet, #payment_method_primary, #payment_method_paypal').prop('disabled', true).prop('checked', false);
+            $('[data-payment-method="primary"], [data-payment-method="paypal"], [data-payment-method="support"]').addClass('disabled');
+            $('#payment_method_wallet, #payment_method_primary, #payment_method_paypal, #payment_method_support').prop('disabled', true).prop('checked', false);
         });
         
         // Duration change
@@ -775,7 +810,11 @@ a.text-warning:focus, a.text-warning {
             // Enable PayPal option
             $('[data-payment-method="paypal"]').removeClass('disabled');
             $('#payment_method_paypal').prop('disabled', false);
-            
+
+            // Enable Contact Support option
+            $('[data-payment-method="support"]').removeClass('disabled');
+            $('#payment_method_support').prop('disabled', false);
+
             // Enable wallet option only if balance is sufficient
             var walletBalance = {{ auth()->user()->wallet ? auth()->user()->wallet->balance : 0 }};
             if (walletBalance >= selectedPrice) {
@@ -823,10 +862,28 @@ a.text-warning:focus, a.text-warning {
             $btn.find('.button-spinner').show();
             
             // Pass parameters directly with dispatch
-            Livewire.dispatch('processWalletPayment', { 
-                packageId: selectedPackageId, 
-                duration: parseInt(selectedDuration), 
-                amount: parseFloat(selectedPrice) 
+            Livewire.dispatch('processWalletPayment', {
+                packageId: selectedPackageId,
+                duration: parseInt(selectedDuration),
+                amount: parseFloat(selectedPrice)
+            });
+        });
+
+        // Contact Support button: saves the profile as free, then the server
+        // redirects to the Support chat with the profile + package pre-filled.
+        $(document).off('click.newupgrade', '#support-payment-button').on('click.newupgrade', '#support-payment-button', function() {
+            if (!selectedPackageId || !selectedDuration || !selectedPrice) {
+                alert('Please select a package and duration first');
+                return;
+            }
+            var $btn = $(this);
+            $btn.prop('disabled', true).find('.button-text').hide();
+            $btn.find('.button-spinner').show();
+
+            Livewire.dispatch('contactSupportForUpgrade', {
+                packageId: selectedPackageId,
+                duration: parseInt(selectedDuration),
+                amount: parseFloat(selectedPrice)
             });
         });
          

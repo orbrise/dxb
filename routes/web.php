@@ -352,7 +352,9 @@ Route::group(['middleware'=>'auth'], function(){
         ->name("user.account.membership");
     Route::get("my-account/edit", \App\Livewire\Profile\UserAccountEdit::class)->name("user.account.edit");
     Route::get("my-password/edit", \App\Livewire\Profile\UserAccountPassword::class)->name("user.account.password");
-    Route::get("my-account/newsletter/edit", \App\Livewire\NewsletterSettings::class)->name("user.account.newsletter");
+    Route::get("my-account/newsletter", \App\Livewire\NewsletterSettings::class)->name("user.account.newsletter");
+    // Older address, still linked from the newsletter emails ("click here").
+    Route::get("my-account/newsletter/edit", \App\Livewire\NewsletterSettings::class)->name("user.account.newsletter.edit");
     Route::get("my-account/credits/history", \App\Livewire\CreditsHistory::class)->name("user.credits.history");
     // New Wallet page — hero + available credits + transaction history. The
     // "+ Buy Credits" button opens a modal that embeds <livewire:purchase-credits>

@@ -1259,15 +1259,6 @@
                 <span class="ev-unavailable" style="background: rgba(0,0,0,0.1); color: #555; border: 1px solid rgba(0,0,0,0.15);">Not available - Profile not visible</span>
             </div>
 
-            <!-- Free Listing / Upgrade -->
-            <div class="ev-sidebar-card">
-                <h3>Free Listing</h3>
-                <p>Upgrade to VIP and get more enquiries!</p>
-                <a class="ev-btn ev-btn-accent" href="{{ route('user.upgrade') }}" wire:navigate>
-                    Upgrade now <i class="fa fa-arrow-right"></i>
-                </a>
-            </div>
-
             <!-- Delete Profile -->
             <!-- <div style="text-align: right; padding: 0 4px;">
                 <a class="ev-delete-link" href="javascript:void(0)"
