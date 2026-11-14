@@ -731,9 +731,17 @@ Route::group(['middleware'=>'auth'], function(){
     // Exit impersonation route (accessible from frontend)
     Route::get('exit-impersonation', [App\Http\Controllers\Admin\AdminUserController::class, 'exitImpersonation'])->name('exit.impersonation');
 
-    // Clean landing URL — no gender/city segment. AuctionPage falls back
-    // to the user's own profile city (or the site default) when neither
-    // is present in the route params.
+    // Live city typeahead for the auction chooser (plain fetch from the
+    // page's inline JS — no Livewire/Alpine dependency).
+    Route::get('auctions/cities', function (\Illuminate\Http\Request $request) {
+        $term = trim((string) $request->query('q', ''));
+        return response()->json([
+            'results' => mb_strlen($term) >= 2 ? \App\Models\City::searchByName($term)->toArray() : [],
+        ]);
+    })->name('auctions.cities');
+
+    // Clean landing URL — no gender/city segment. Gender can ride along as
+    // ?gender= (the empty-city segment /auctions/{gender}-escorts-in- 404s).
     Route::get('auctions', AuctionPage::class)->name('auctions.landing');
     Route::get('auctions/{gender?}-escorts-in-{city?}', AuctionPage::class)->name('auctions.index');
     Route::get('auctions/{gender?}-escorts-in-{cityname?}/spot/{spot}', SpotBidding::class);

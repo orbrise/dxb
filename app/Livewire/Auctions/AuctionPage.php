@@ -29,9 +29,13 @@ class AuctionPage extends Component
     public string $citySearch = '';
     public array $searchResults = [];
 
-    public function mount($city = null, $gender = 'female')
+    public function mount($city = null, $gender = null)
     {
         $this->city = $city;
+        // Gender comes from the route segment on city URLs, or from ?gender=
+        // on the clean landing URL (the empty-city segment 404s, so the
+        // chooser links use /auctions?gender=… instead).
+        $gender = $gender ?: (string) request()->query('gender', '');
         $this->gender = array_key_exists($gender, self::GENDERS) ? $gender : 'female';
 
         if ($city) {
@@ -51,38 +55,20 @@ class AuctionPage extends Component
         if (auth()->check()) {
             $this->canBid = auth()->user()->spent_credits >= 300;
         }
+
+        // Server-side search (?q=) so the city chooser still works when the
+        // Livewire/Alpine JS bundle fails to boot (e.g. production CDN/JS
+        // issues). The GET form submits q; we hydrate results here.
+        $this->citySearch = trim((string) request()->query('q', ''));
+        $this->updatedCitySearch();
     }
 
     public function updatedCitySearch(): void
     {
         $term = trim($this->citySearch);
         $this->searchResults = mb_strlen($term) >= 2
-            ? City::where('name', 'like', "%{$term}%")
-                ->orderByRaw('name LIKE ? DESC', ["{$term}%"])
-                ->orderBy('name')
-                ->limit(8)
-                ->get(['id', 'name', 'country'])
-                ->toArray()
+            ? City::searchByName($term)->toArray()
             : [];
-    }
-
-    public function selectCity(int $cityId)
-    {
-        $city = City::find($cityId);
-        if (!$city) return;
-
-        return $this->redirect(url("/auctions/{$this->gender}-escorts-in-{$city->slug}"), navigate: true);
-    }
-
-    public function setGender(string $gender)
-    {
-        if (!array_key_exists($gender, self::GENDERS)) return;
-        if (!$this->citySlug) {
-            $this->gender = $gender;
-            return;
-        }
-
-        return $this->redirect(url("/auctions/{$gender}-escorts-in-{$this->citySlug}"), navigate: true);
     }
 
     public function render()
@@ -116,8 +102,8 @@ class AuctionPage extends Component
         $featured = City::where('is_featured', 1)
             ->when($country, fn ($q) => $q->where('country', $country->nicename))
             ->orderBy('feature_priority')->orderBy('name')
-            ->limit(8)->get(['id', 'name', 'country']);
-        $suggestedCities = City::whereIn('id', $openCityIds)->orderBy('name')->get(['id', 'name', 'country'])
+            ->limit(8)->get(['id', 'name', 'country', 'slug']);
+        $suggestedCities = City::whereIn('id', $openCityIds)->orderBy('name')->get(['id', 'name', 'country', 'slug'])
             ->each(fn ($c) => $c->hasOpenSpots = true)
             ->concat($featured->reject(fn ($c) => $openCityIds->contains($c->id)))
             ->reject(fn ($c) => $c->id === $this->cityId)

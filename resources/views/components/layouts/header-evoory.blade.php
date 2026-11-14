@@ -210,7 +210,14 @@
         padding: 10px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         z-index: 1100;
+        /* Vanilla-JS driven (no Alpine): hidden until .ev-user-wrap.is-open.
+           Keeps the menu working even when the Alpine/Livewire bundle fails
+           to boot (production). */
+        display: none;
     }
+    .ev-user-wrap.is-open .ev-user-menu { display: block; }
+    .ev-user-chev { transition: transform 120ms ease; }
+    .ev-user-wrap.is-open .ev-user-chev { transform: rotate(180deg); }
     .ev-user-menu-head {
         display: flex;
         align-items: center;
@@ -402,9 +409,11 @@
                             <span class="ev-cc-label">Chat &amp; Calls</span>
                         </a>
 
-                        {{-- Profile dropdown trigger --}}
-                        <div class="ev-user-wrap" x-data="{ open: false }" @click.outside="open = false">
-                            <button type="button" class="ev-user-trigger" @click="open = !open">
+                        {{-- Profile dropdown trigger. Vanilla-JS driven (see the
+                             delegated handler at the bottom of this partial) so
+                             the menu opens even if Alpine/Livewire fails to boot. --}}
+                        <div class="ev-user-wrap">
+                            <button type="button" class="ev-user-trigger" aria-haspopup="true" aria-expanded="false">
                                 <span class="ev-user-avatar">
                                     @if($authAvatarUrl)
                                         <img src="{{ $authAvatarUrl }}" alt="" onerror="this.onerror=null;this.src='{{ $authGravatarUrl }}'">
@@ -416,7 +425,7 @@
                                 <svg class="ev-user-chev" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                             </button>
 
-                            <div class="ev-user-menu" x-show="open" x-cloak x-transition.opacity.duration.100ms>
+                            <div class="ev-user-menu" role="menu">
                                 <div class="ev-user-menu-head">
                                     <span class="ev-user-avatar ev-user-avatar--lg">
                                         @if($authAvatarUrl)
@@ -535,3 +544,45 @@
         </div>
     </div>
 </header>
+
+{{-- Vanilla-JS user-menu toggle. Deliberately NOT Alpine: on production the
+     Alpine/Livewire bundle can fail to boot on some pages, which previously
+     left this menu (x-show/x-cloak) permanently closed. A document-delegated
+     handler works regardless of whether Alpine initialises, and survives
+     wire:navigate DOM swaps. data-navigate-once prevents duplicate binding. --}}
+<script data-navigate-once>
+(function () {
+    if (window.__evUserMenuWired) return;
+    window.__evUserMenuWired = true;
+
+    function setOpen(wrap, open) {
+        wrap.classList.toggle('is-open', open);
+        var trigger = wrap.querySelector('.ev-user-trigger');
+        if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function closeAll(except) {
+        document.querySelectorAll('.ev-user-wrap.is-open').forEach(function (w) {
+            if (w !== except) setOpen(w, false);
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        var trigger = e.target.closest('.ev-user-trigger');
+        if (trigger) {
+            e.preventDefault();
+            var wrap = trigger.closest('.ev-user-wrap');
+            if (!wrap) return;
+            var open = !wrap.classList.contains('is-open');
+            closeAll(wrap);
+            setOpen(wrap, open);
+            return;
+        }
+        // Click anywhere outside an open menu closes it.
+        if (!e.target.closest('.ev-user-wrap')) closeAll(null);
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeAll(null);
+    });
+})();
+</script>

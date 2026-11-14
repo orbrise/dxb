@@ -269,8 +269,6 @@
         margin-top: 0px !important
 }
 
-[x-cloak] { display: none !important; }
-
 /* City chooser: auctions run per city, so the spots show once one is picked. */
 .auction-picker { margin-bottom: 28px; padding: 22px; border: 1px solid #23292B; border-radius: 14px; background: #15191B; }
 .auction-picker-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
@@ -280,12 +278,14 @@
 .auction-empty-title svg { flex: none; color: #8e99a0; }
 .auction-empty-title h2 { margin: 0; }
 .auction-picker-city { color: #C1F11D; }
-.auction-change-city { margin-left: 10px; padding: 0; border: 0; background: none; color: #9aa6ac; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
-.auction-change-city:hover { color: #fff; }
+/* Link colors need !important: evoory-homepage-base.css forces
+   a { color: lime !important; text-decoration: none !important } globally. */
+.auction-change-city { margin-left: 10px; color: #9aa6ac !important; font-size: 13px; text-decoration: underline !important; cursor: pointer; }
+.auction-change-city:hover { color: #fff !important; }
 .auction-genders { display: flex; flex-wrap: wrap; gap: 8px; }
-.auction-genders button { padding: 7px 14px; border: 1px solid #2a3133; border-radius: 999px; background: transparent; color: #c9d0d3; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.auction-genders button:hover { border-color: #3a4245; color: #fff; }
-.auction-genders button.active { border-color: #C1F11D; background: rgba(193, 241, 29, 0.08); color: #C1F11D; }
+.auction-genders a { padding: 7px 14px; border: 1px solid #2a3133; border-radius: 999px; background: transparent; color: #c9d0d3 !important; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none !important; display: inline-block; }
+.auction-genders a:hover { border-color: #3a4245; color: #fff !important; }
+.auction-genders a.active { border-color: #C1F11D; background: rgba(193, 241, 29, 0.08); color: #C1F11D !important; }
 .auction-search { position: relative; max-width: 520px; margin-top: 18px; }
 .auction-search-box { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px; border: 1px solid #2a3133; border-radius: 10px; background: #0D1011; }
 .auction-search-box:focus-within { border-color: #C1F11D; }
@@ -293,14 +293,16 @@
 .auction-search-box input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: #fff; font-size: 16px; }
 .auction-search-box input::placeholder { color: #6b767b; }
 .auction-results { position: absolute; top: calc(100% + 6px); right: 0; left: 0; z-index: 20; max-height: 300px; overflow-y: auto; padding: 6px; border: 1px solid #2a3133; border-radius: 10px; background: #15191B; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); }
-.auction-results button { display: block; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: #fff; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
-.auction-results button:hover { background: #1f2527; }
+.auction-results[hidden] { display: none; }
+.auction-results[data-loading="1"] { opacity: .65; }
+.auction-results a { display: block; width: 100%; padding: 10px 12px; border-radius: 8px; color: #fff !important; font-size: 14px; text-align: left; cursor: pointer; text-decoration: none !important; }
+.auction-results a:hover { background: #1f2527; }
 .auction-results small, .auction-suggest small { color: #8e99a0; }
 .auction-results .none { padding: 10px 12px; color: #8e99a0; font-size: 13px; }
 .auction-suggest-label { margin: 18px 0 10px; color: #9aa6ac; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .auction-suggest { display: flex; flex-wrap: wrap; gap: 8px; }
-.auction-suggest button { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 1px solid #2a3133; border-radius: 999px; background: #1b2022; color: #fff; font: inherit; font-size: 13.5px; cursor: pointer; }
-.auction-suggest button:hover { border-color: #C1F11D; }
+.auction-suggest a { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 1px solid #2a3133; border-radius: 999px; background: #1b2022; color: #fff !important; font-size: 13.5px; cursor: pointer; text-decoration: none !important; }
+.auction-suggest a:hover { border-color: #C1F11D; }
 .auction-suggest .open-dot { width: 7px; height: 7px; border-radius: 50%; background: #C1F11D; }
 .auction-notice { margin-top: 14px; color: #ffb44d; font-size: 13.5px; }
 .auction-none { grid-column: 1 / -1; padding: 50px 20px; border: 1px dashed #2a3133; border-radius: 14px; text-align: center; }
@@ -334,15 +336,19 @@
         </div>
         @endif
 
-        {{-- City chooser: spots are per city, so they show once one is picked. --}}
-        <div class="auction-picker" x-data="{ changing: {{ $cityId ? 'false' : 'true' }} }">
+        {{-- City chooser: spots are per city, so they show once one is picked.
+             Deliberately server-rendered (plain links + a GET search form) with
+             NO Alpine/Livewire JS dependency: on production the JS bundle can
+             fail to boot, which previously left the x-cloak'd chooser hidden
+             and the controls dead. Plain navigation works everywhere. --}}
+        <div class="auction-picker">
             <div class="auction-picker-head">
                 <div>
                     @if($cityId)
                         <h2>Top Spots in <span class="auction-picker-city">{{ $cityName }}</span></h2>
                         <p>
                             {{ $auctions->count() ? $auctions->count() . ' ' . \Illuminate\Support\Str::plural('spot', $auctions->count()) . ' open for offers' : 'No spots open right now' }}
-                            <button type="button" class="auction-change-city" x-show="!changing" @click="changing = true; $nextTick(() => $refs.citySearch.focus())">Change city</button>
+                            <a class="auction-change-city" href="{{ url('/auctions') . '?gender=' . $gender }}">Change city</a>
                         </p>
                     @elseif(!$hasOpenSpots)
                         <div class="auction-empty-title">
@@ -357,8 +363,9 @@
                 </div>
                 <div class="auction-genders" role="group" aria-label="Category">
                     @foreach(\App\Livewire\Auctions\AuctionPage::GENDERS as $value => $label)
-                        <button type="button" class="{{ $gender === $value ? 'active' : '' }}" wire:click="setGender('{{ $value }}')"
-                                aria-pressed="{{ $gender === $value ? 'true' : 'false' }}">{{ $label }}</button>
+                        <a class="{{ $gender === $value ? 'active' : '' }}"
+                                href="{{ $citySlug ? url('/auctions/' . $value . '-escorts-in-' . $citySlug) : url('/auctions') . '?gender=' . $value }}"
+                                aria-pressed="{{ $gender === $value ? 'true' : 'false' }}">{{ $label }}</a>
                     @endforeach
                 </div>
             </div>
@@ -367,41 +374,137 @@
                 <div class="auction-notice">We couldn't find that city. Search for it below.</div>
             @endif
 
-            @if($cityId || $hasOpenSpots)
-            <div x-show="changing" x-cloak>
-                <div class="auction-search">
+            @if(!$cityId && $hasOpenSpots)
+                {{-- Typeahead: typing fetches /auctions/cities and shows selectable
+                     cities (inline vanilla JS below). The GET form is the no-JS /
+                     Enter fallback: it reloads with ?q= and results render server-side. --}}
+                <form class="auction-search" method="get" action="{{ url('/auctions') }}">
+                    <input type="hidden" name="gender" value="{{ $gender }}">
                     <div class="auction-search-box">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                        <input type="text" x-ref="citySearch" placeholder="Search for a city…" autocomplete="off" aria-label="Search for a city"
-                               wire:model.live.debounce.250ms="citySearch">
+                        <input type="text" name="q" id="auctionCitySearch" value="{{ $citySearch }}" placeholder="Search for a city…" autocomplete="off" aria-label="Search for a city">
                     </div>
-                    @if(mb_strlen(trim($citySearch)) >= 2)
-                        <div class="auction-results">
+                    <div class="auction-results" id="auctionCityResults" data-gender="{{ $gender }}" @if(mb_strlen(trim($citySearch)) < 2) hidden @endif>
+                        @if(mb_strlen(trim($citySearch)) >= 2)
                             @forelse($searchResults as $result)
-                                <button type="button" wire:click="selectCity({{ $result['id'] }})" wire:key="auction-city-{{ $result['id'] }}">
+                                <a href="{{ url('/auctions/' . $gender . '-escorts-in-' . $result['slug']) }}">
                                     {{ $result['name'] }}@if($result['country']) <small>· {{ $result['country'] }}</small>@endif
-                                </button>
+                                </a>
                             @empty
                                 <div class="none">No cities match “{{ $citySearch }}”.</div>
                             @endforelse
-                        </div>
-                    @endif
-                </div>
+                        @endif
+                    </div>
+                </form>
                 @if($suggestedCities->isNotEmpty())
                     <div class="auction-suggest-label">Popular cities</div>
                     <div class="auction-suggest">
                         @foreach($suggestedCities as $suggested)
-                            <button type="button" wire:click="selectCity({{ $suggested->id }})" wire:key="auction-suggest-{{ $suggested->id }}"
+                            <a href="{{ url('/auctions/' . $gender . '-escorts-in-' . $suggested->slug) }}"
                                     @if(!empty($suggested->hasOpenSpots)) title="Spots open for offers" @endif>
                                 @if(!empty($suggested->hasOpenSpots))<span class="open-dot" aria-hidden="true"></span>@endif
                                 {{ $suggested->name }}
-                            </button>
+                            </a>
                         @endforeach
                     </div>
                 @endif
-            </div>
             @endif
         </div>
+
+        {{-- Live city typeahead. Plain vanilla JS on purpose: production has
+             shown the Livewire/Alpine bundle failing to boot, and this must
+             keep working regardless. Typing (2+ chars) fetches matching
+             cities; clicking one opens its auctions. No submit arrow. --}}
+        <script>
+        (function () {
+            var input = document.getElementById('auctionCitySearch');
+            var results = document.getElementById('auctionCityResults');
+            if (!input || !results) return;
+
+            var gender = results.getAttribute('data-gender') || 'female';
+            var endpoint = @json(url('/auctions/cities'));
+            var timer = null;
+            var controller = null;
+            var lastQuery = '';
+
+            function hide() { results.hidden = true; }
+
+            function render(rows, term) {
+                results.textContent = '';
+                if (!rows.length) {
+                    var none = document.createElement('div');
+                    none.className = 'none';
+                    none.textContent = 'No cities match \u201C' + term + '\u201D.';
+                    results.appendChild(none);
+                } else {
+                    rows.forEach(function (row) {
+                        var a = document.createElement('a');
+                        a.href = '/auctions/' + gender + '-escorts-in-' + encodeURIComponent(row.slug);
+                        a.textContent = row.name;
+                        if (row.country) {
+                            var small = document.createElement('small');
+                            small.textContent = ' \u00B7 ' + row.country;
+                            a.appendChild(small);
+                        }
+                        results.appendChild(a);
+                    });
+                }
+                results.hidden = false;
+            }
+
+            function fetchCities(term) {
+                if (controller) controller.abort();
+                controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+                results.setAttribute('data-loading', '1');
+                fetch(endpoint + '?q=' + encodeURIComponent(term), {
+                    headers: { 'Accept': 'application/json' },
+                    signal: controller ? controller.signal : undefined
+                }).then(function (res) { return res.json(); }).then(function (data) {
+                    results.removeAttribute('data-loading');
+                    if (input.value.trim() !== term) return; // a newer keystroke won
+                    lastQuery = term;
+                    render(data.results || [], term);
+                }).catch(function () {
+                    results.removeAttribute('data-loading');
+                });
+            }
+
+            input.addEventListener('input', function () {
+                var term = input.value.trim();
+                if (timer) clearTimeout(timer);
+                if (term.length < 2) { hide(); lastQuery = ''; return; }
+                if (term === lastQuery && !results.hidden) return;
+                timer = setTimeout(function () { fetchCities(term); }, 200);
+            });
+
+            input.addEventListener('focus', function () {
+                if (input.value.trim().length >= 2 && results.childNodes.length) results.hidden = false;
+            });
+
+            // Enter opens the first match; with the dropdown closed it falls
+            // through to the GET form (server-rendered ?q= results).
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { hide(); return; }
+                if (e.key === 'Enter') {
+                    var first = results.querySelector('a');
+                    if (!results.hidden && first) {
+                        e.preventDefault();
+                        window.location.href = first.getAttribute('href');
+                    }
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!results.hidden && e.target !== input && !results.contains(e.target)) hide();
+            });
+
+            input.addEventListener('blur', function () {
+                setTimeout(function () {
+                    if (document.activeElement !== input && !results.contains(document.activeElement)) hide();
+                }, 150);
+            });
+        })();
+        </script>
 
         @if($cityId)
         <div style="margin-bottom: 24px;">
@@ -424,7 +527,7 @@
                         <p class="price">${{ $auction->current_price }}</p>
                         <p class="duration">for {{ $auction->duration_days ?? 7 }} days</p>
 
-                        <a class="btn-offer" href="/auctions/{{ $gender }}-escorts-in-{{ strtolower($cityName) }}/spot/{{ $auction->spot_number }}">Make Offer</a>
+                        <a class="btn-offer" href="{{ url('/auctions/' . $gender . '-escorts-in-' . $citySlug . '/spot/' . $auction->spot_number) }}">Make Offer</a>
 
                         <div class="timer">
                             <svg class="timer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
