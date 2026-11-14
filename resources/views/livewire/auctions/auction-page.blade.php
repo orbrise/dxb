@@ -276,6 +276,9 @@
 .auction-picker-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
 .auction-picker h2 { margin: 0 0 4px; color: #fff; font-size: 20px; font-weight: 600; }
 .auction-picker p { margin: 0; color: #9aa6ac; font-size: 14px; }
+.auction-empty-title { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.auction-empty-title svg { flex: none; color: #8e99a0; }
+.auction-empty-title h2 { margin: 0; }
 .auction-picker-city { color: #C1F11D; }
 .auction-change-city { margin-left: 10px; padding: 0; border: 0; background: none; color: #9aa6ac; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
 .auction-change-city:hover { color: #fff; }
@@ -341,6 +344,12 @@
                             {{ $auctions->count() ? $auctions->count() . ' ' . \Illuminate\Support\Str::plural('spot', $auctions->count()) . ' open for offers' : 'No spots open right now' }}
                             <button type="button" class="auction-change-city" x-show="!changing" @click="changing = true; $nextTick(() => $refs.citySearch.focus())">Change city</button>
                         </p>
+                    @elseif(!$hasOpenSpots)
+                        <div class="auction-empty-title">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="10" y1="14" x2="14" y2="18"/><line x1="14" y1="14" x2="10" y2="18"/></svg>
+                            <h2>No auction slots available</h2>
+                        </div>
+                        <p>There are no Top Spots open for offers in the {{ \App\Livewire\Auctions\AuctionPage::GENDERS[$gender] }} category right now. Check back later, or try another category.</p>
                     @else
                         <h2>Choose a city</h2>
                         <p>Top Spot auctions run per city. Pick yours to see the spots open for offers.</p>
@@ -358,6 +367,7 @@
                 <div class="auction-notice">We couldn't find that city. Search for it below.</div>
             @endif
 
+            @if($cityId || $hasOpenSpots)
             <div x-show="changing" x-cloak>
                 <div class="auction-search">
                     <div class="auction-search-box">
@@ -390,6 +400,7 @@
                     </div>
                 @endif
             </div>
+            @endif
         </div>
 
         @if($cityId)

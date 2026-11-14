@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\WalletTransaction;
+use App\Support\SupportChat;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -87,14 +88,35 @@ class PurchaseCredits extends Component
             : collect();
 
         return view('livewire.purchase-credits', [
-            // For the "Contact Support" payment option's Call button.
-            'supportConversationId' => $user ? \App\Models\Conversation::getOrCreateSupport($user->id)->id : null,
             'recentTransactions' => $recentTransactions,
             'creditTypes' => $creditTypes,
             'debitTypes' => $debitTypes,
         ]);
     }
     
+    /**
+     * "Contact Support" payment option: sends the user's request for the
+     * amount typed in the input to their Support chat, then opens the chat.
+     * The amount comes from the input at click time (wire:model is debounced).
+     */
+    #[On('messageSupport')]
+    public function messageSupport($amount = null)
+    {
+        if (!is_numeric($amount) || $amount < 10) {
+            $this->dispatch('credits-support-failed', message: 'Minimum amount is $10.');
+            return;
+        }
+
+        $this->amount = $amount + 0;
+        $amount = (float) $amount;
+        $shown = $amount == floor($amount) ? (int) $amount : number_format($amount, 2, '.', '');
+
+        SupportChat::send(Auth::id(), "Hi, I'd like to add \${$shown} to my wallet. How can I pay?");
+
+        // Full load: /my-chat isn't wire:navigate-safe.
+        return $this->redirect(route('user.chat', ['support' => 1]));
+    }
+
     #[On('startPrimaryPaymentAttempt')]
     public function startPrimaryPaymentAttempt($amount, $referenceId)
     {

@@ -804,7 +804,7 @@ select.native-select option {
                             <span wire:loading wire:target="placeBid">Processing...</span>
                         </button>
                         <div class="bid-form-meta">
-                            <span class="current-price">Current Price: ${{ number_format($auction->current_price, 2) }}</span>
+                            <span class="current-price">Current Bid Price: ${{ number_format($auction->current_price, 2) }}</span>
                             <span class="auction-timer">
                                 <img src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/timer-5fc5fc1474905d451c5cb2d9ad472d17fea1e9059c0baf436d0aaf6df2b2aeed.svg"
                                      class="timer-icon" width="16" height="16">
@@ -905,7 +905,7 @@ select.native-select option {
                         <div><dt>Category</dt><dd>{{ \App\Livewire\Auctions\AuctionPage::GENDERS[$auction->gender] ?? ucfirst($auction->gender) }}</dd></div>
                         <div><dt>Spot</dt><dd>#{{ $auction->spot_number }}</dd></div>
                         <div><dt>Featured for</dt><dd>{{ $auction->duration_days ?? 7 }} days</dd></div>
-                        <div><dt>Current price</dt><dd class="accent">${{ number_format($auction->current_price, 2) }}</dd></div>
+                        <div><dt>Current bid price</dt><dd class="accent">${{ number_format($auction->current_price, 2) }}</dd></div>
                         <div><dt>Bids this round</dt><dd>{{ $roundBidCount }}</dd></div>
                         <div>
                             <dt>{{ $timeRemaining ? 'Auction ends' : 'Auction ended' }}</dt>

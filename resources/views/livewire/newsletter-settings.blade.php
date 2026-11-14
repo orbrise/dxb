@@ -1,13 +1,19 @@
 @push('css')
 <style>
+    /* Sub-header bar — same pattern as the My Profile dashboard back bar. */
+    .nl-back-bar { background: #131616; padding: 7px 0; }
+    .nl-back-bar-inner { position: relative; display: flex; align-items: center; justify-content: center; max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+    .nl-back-bar h1 { margin: 0; color: #fff; font-size: 18px; font-weight: 600; }
+    .nl-back-link { position: absolute; left: 16px; display: inline-flex; align-items: center; gap: 4px; color: #C1F11D; text-decoration: none; font-size: 15px; }
+    .nl-back-link:hover { color: #d4f84d; }
+
     /* Same look as My Account → Membership (membership-management). */
-    .nl-page { color: #fff; min-height: 100vh; padding: 24px 16px 60px; }
+    .nl-page { color: #fff; padding: 16px 16px 32px; }
     .nl-wrap { max-width: 760px; margin: 0 auto; }
-    .nl-head { text-align: center; margin: 10px 0 26px; }
-    .nl-head h1 { margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -0.3px; }
+    .nl-head { text-align: center; margin: 2px 0 18px; }
     .nl-head p { margin: 0; color: #8e99a0; font-size: 14px; }
 
-    .nl-card { margin-bottom: 20px; padding: 24px; border: 1px solid #23292B; border-radius: 14px; background: #15191B; }
+    .nl-card { margin-bottom: 16px; padding: 24px; border: 1px solid #23292B; border-radius: 14px; background: #15191B; }
     .nl-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 20px; }
     .nl-label { margin: 0 0 6px; color: #9aa6ac; font-size: 13px; }
     .nl-status { margin: 0; color: #fff; font-size: 24px; font-weight: 700; }
@@ -74,9 +80,13 @@
     .nl-save:disabled { opacity: .6; cursor: wait; }
     .nl-saved { display: inline-flex; align-items: center; gap: 6px; color: #C1F11D; font-size: 13.5px; font-weight: 600; }
 
+    @media (max-width: 768px) {
+        .nl-back-bar { position: sticky; top: 0; z-index: 100; }
+        .nl-back-bar h1 { font-size: 15px; }
+        .nl-back-link { font-size: 13px; }
+    }
     @media (max-width: 540px) {
-        .nl-page { padding: 16px 10px 40px; }
-        .nl-head h1 { font-size: 22px; }
+        .nl-page { padding: 12px 10px 24px; }
         .nl-card { padding: 18px; border-radius: 12px; }
         .nl-status { font-size: 20px; }
         .nl-info-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -88,10 +98,16 @@
 @endpush
 
 @php $subscribed = $savedCities->isNotEmpty(); @endphp
-<div class="nl-page">
+<div>
+    <div class="nl-back-bar">
+        <div class="nl-back-bar-inner">
+            <a href="javascript:history.back()" class="nl-back-link"><i class="fa fa-angle-left"></i> Back</a>
+            <h1>Newsletter</h1>
+        </div>
+    </div>
+    <div class="nl-page">
     <div class="nl-wrap">
         <div class="nl-head">
-            <h1>Newsletter</h1>
             <p>A weekly email with the newest profiles and reviews in the cities you choose.</p>
         </div>
 
@@ -219,5 +235,6 @@
                 @endif
             </div>
         </form>
+    </div>
     </div>
 </div>

@@ -153,6 +153,7 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
 .purchase-credits-page .ev-support-btn:hover { background: rgba(193, 241, 29, 0.1); }
 .purchase-credits-page .ev-support-btn.primary { background: #C1F11D; color: #0a0a0a !important; }
 .purchase-credits-page .ev-support-btn.primary:hover { background: #d4f84d; }
+.purchase-credits-page .ev-support-btn:disabled { opacity: 0.7; cursor: wait; }
 @media (max-width: 480px) {
     .purchase-credits-page .ev-support-btn { flex: 1 1 100%; }
 }
@@ -1577,32 +1578,61 @@ body:has(.pc-v2-active) .pc-v2-intro {
             }
         });
 
-        // Contact Support → Message Support opens the Support chat with a
-        // ready-to-send note about the amount typed (Chat reads &draft=). The
-        // href is kept current as the amount changes, not set on click: the
-        // layout's capture-phase /my-chat handler navigates before a bubbling
-        // click handler would run.
-        function updateSupportMessageLinks(amount) {
-            var draft = amount > 0
-                ? "Hi, I'd like to add $" + amount + " to my wallet. How can I pay?"
-                : "Hi, I'd like to buy credits for my wallet. How can I pay?";
-            document.querySelectorAll('[data-support-credits-message]').forEach(function (link) {
-                link.href = link.getAttribute('data-base-href') + '&draft=' + encodeURIComponent(draft);
+        // Contact Support → Message Support sends "I'd like to add $X" with the
+        // amount typed to the Support chat (PurchaseCredits::messageSupport),
+        // which then opens the chat. Bound once per document, not per init:
+        // init re-runs on soft nav, and a second listener would send twice.
+        if (!window.evCreditsSupportBound) {
+            window.evCreditsSupportBound = true;
+            var supportAmountError = function (form, msg) {
+                var input = form && form.querySelector('#amount');
+                var err = form && form.querySelector('#credits-amount-inline-error');
+                var errText = form && form.querySelector('#credits-amount-inline-error-text');
+                if (err && errText) {
+                    errText.textContent = msg;
+                    err.style.display = 'flex';
+                }
+                if (input) {
+                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    input.focus({ preventScroll: true });
+                }
+            };
+            var resetSupportButtons = function () {
+                document.querySelectorAll('[data-support-credits-message]').forEach(function (b) {
+                    b.disabled = false;
+                    var label = b.querySelector('.ev-support-btn-label');
+                    if (label) label.textContent = 'Message Support';
+                });
+            };
+            document.addEventListener('click', function (e) {
+                var btn = e.target.closest ? e.target.closest('[data-support-credits-message]') : null;
+                if (!btn || btn.disabled) return;
+                // The page can render the form twice (page + sheet): use this button's form.
+                var form = btn.closest('#credits_purchase_form');
+                var input = form && form.querySelector('#amount');
+                var amount = parseFloat(input && input.value) || 0;
+                if (amount < 10) {
+                    supportAmountError(form, amount > 0 ? 'Minimum amount is $10.' : 'Enter the amount you want to add first.');
+                    return;
+                }
+                btn.disabled = true;
+                var label = btn.querySelector('.ev-support-btn-label');
+                if (label) label.textContent = 'Sending...';
+                // On success the server opens the Support chat.
+                Livewire.dispatch('messageSupport', { amount: amount });
+            });
+            window.addEventListener('credits-support-failed', function (e) {
+                var btn = document.querySelector('[data-support-credits-message]:disabled');
+                supportAmountError(btn && btn.closest('#credits_purchase_form'), (e.detail && e.detail.message) || 'Could not send. Please try again.');
+                resetSupportButtons();
             });
         }
-        updateSupportMessageLinks(selectedAmount);
-        document.addEventListener('click', function (e) {
-            if (e.target.closest && e.target.closest('.payment-method-option[data-payment-method="support"]')) {
-                updateSupportMessageLinks(parseFloat((document.getElementById('amount') || {}).value) || 0);
-            }
-        });
 
         // Amount input change — delegated for the same reason as above.
         document.addEventListener('input', function (e) {
             if (!e.target || e.target.id !== 'amount') return;
             selectedAmount = parseFloat(e.target.value) || 0;
             updateAmountDisplay(selectedAmount);
-            updateSupportMessageLinks(selectedAmount);
 
             if (selectedAmount >= 10) {
                 // Valid amount — drop the inline "min $10" warning instantly

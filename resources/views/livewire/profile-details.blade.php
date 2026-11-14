@@ -3,34 +3,60 @@
     <link rel="preload" as="image" href="{{ webp_asset('userimages/'.$images->first()->user_id.'/'.$images->first()->profile_id.'/'.$images->first()->image) }}" fetchpriority="high">
 @endif
 <style>
-/* Video tile play-glyph. Same tile shell as the image tiles so the grid
-   stays visually consistent — we only paint a round black play button in
-   the centre so the user knows this one plays instead of opening a photo. */
+/* Video tile play-glyph. Matches the listing-card reference: a large
+   frosted grey disc with a white triangle centred on the poster, and a
+   softly rounded tile so the media and its black letterbox clip to the
+   same curve. The disc scales with the tile (28% of its width) so it
+   reads the same in the mobile strip and the desktop grid. */
 .pb-video-link { display: block; position: relative; }
+.pb-video-link .image-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+}
 .pb-video-link .pb-video-play {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    width: 54px; height: 54px;
+    width: clamp(48px, 28%, 92px);
+    aspect-ratio: 1 / 1;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(255, 255, 255, 0.35);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+    display: flex; align-items: center; justify-content: center;
     pointer-events: none;
     z-index: 2;
+    transition: background .18s ease, transform .18s ease;
 }
-.pb-video-link .pb-video-play::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 56%;
-    transform: translate(-50%, -50%);
-    border-left: 16px solid #fff;
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
+.pb-video-link .pb-video-play svg {
+    width: 32%; height: 38%;
+    margin-left: 5%; /* optical centre — a triangle's mass sits left of its box */
+    fill: #fff;
+    display: block;
+}
+.pb-video-link:hover .pb-video-play,
+.pb-video-link:focus-visible .pb-video-play {
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%) scale(1.06);
+}
+.pb-video-link:focus-visible {
+    outline: 2px solid #C1F11D;
+    outline-offset: 2px;
+    border-radius: 12px;
 }
 .pb-video-link .image-wrapper img,
 .pb-video-link .image-wrapper video { width: 100%; display: block; }
 @media (max-width: 767px) {
-    .pb-video-link .pb-video-play { width: 44px; height: 44px; }
-    .pb-video-link .pb-video-play::after { border-left-width: 13px; border-top-width: 8px; border-bottom-width: 8px; }
+    .pb-video-link .image-wrapper { border-radius: 10px; }
+}
+/* Pre-aspect-ratio browsers: percentage height would resolve against the
+   tile's height (portrait) and squash the disc, so pin a square size. */
+@supports not (aspect-ratio: 1 / 1) {
+    .pb-video-link .pb-video-play { width: 72px; height: 72px; }
+    @media (max-width: 767px) {
+        .pb-video-link .pb-video-play { width: 56px; height: 56px; }
+    }
 }
 
 /* Shared video lightbox used by both galleries. */
@@ -490,7 +516,7 @@
                           @else
                             <video src="{{ $pv->video_url }}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
                           @endif
-                          <span class="pb-video-play" aria-hidden="true"></span>
+                          <span class="pb-video-play" aria-hidden="true"><svg viewBox="0 0 11 14" focusable="false"><path d="M0 0v14l11-7z"/></svg></span>
                         </div>
                       </span>
                     </a>
@@ -1921,7 +1947,7 @@
                           @else
                             <video src="{{ $pv->video_url }}" muted playsinline preload="metadata" class="img-responsive uniform-image" style="object-fit:cover;display:block;background:#000;"></video>
                           @endif
-                          <span class="pb-video-play" aria-hidden="true"></span>
+                          <span class="pb-video-play" aria-hidden="true"><svg viewBox="0 0 11 14" focusable="false"><path d="M0 0v14l11-7z"/></svg></span>
                         </div>
                       </span>
                     </a>

@@ -127,6 +127,7 @@ class AuctionPage extends Component
             'auctions' => $this->auctions,
             'canBid' => $this->canBid,
             'suggestedCities' => $suggestedCities,
+            'hasOpenSpots' => $openCityIds->isNotEmpty(),
         ]);
     }
 }

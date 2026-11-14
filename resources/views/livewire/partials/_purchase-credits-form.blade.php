@@ -1,6 +1,6 @@
 {{-- Shared "Buy Credits" form: amount input + payment-method selector +
-     primary-gateway iframe + PayPal container + Contact Support (message or
-     call the support team to pay another way). Used by:
+     primary-gateway iframe + PayPal container + Contact Support (message the
+     support team to pay another way). Used by:
        - resources/views/livewire/purchase-credits.blade.php  (standalone page)
        - resources/views/livewire/wallet.blade.php            (modal body)
      The JS that wires it (payment method clicks, iframe URL build, postMessage
@@ -81,7 +81,7 @@
                     <input type="radio" name="payment_method" id="payment_method_support" value="support">
                     <span>Contact Support</span>
                     <span class="ev-support-hint">
-                        Message or call
+                        Message support
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 15a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2Z"/><path d="M3 15a2 2 0 0 0 2 2h1v-5H5a2 2 0 0 0-2 2Z"/><path d="M18 17v1a3 3 0 0 1-3 3h-3"/></svg>
                     </span>
                 </label>
@@ -129,34 +129,15 @@
     <!-- Contact Support Section -->
     <div id="support-payment-section" class="payment-section">
         <div class="payment-section-card">
-            <p>Don't want to pay by card? Message or call our support team. They'll help you pay another way and add the credits to your wallet.</p>
+            <p>Don't want to pay by card? Enter the amount above and message our support team. They'll help you pay another way and add the credits to your wallet.</p>
             <div class="ev-support-actions">
-                {{-- Opens the Support chat with a ready-to-send note about the amount
-                     (&draft=). Rendered here from $amount so Livewire re-renders keep
-                     it; updateSupportMessageLinks() in purchase-credits.blade.php
-                     builds the same text while the user types. Plain link: /my-chat
-                     always full-loads. --}}
-                @php
-                    $supportAmount = is_numeric($amount ?? null) && $amount > 0 ? (float) $amount : 0;
-                    $supportDraft = $supportAmount > 0
-                        ? "Hi, I'd like to add \${$supportAmount} to my wallet. How can I pay?"
-                        : "Hi, I'd like to buy credits for my wallet. How can I pay?";
-                @endphp
-                <a class="ev-support-btn primary" data-support-credits-message
-                   href="{{ route('user.chat', ['support' => 1, 'draft' => $supportDraft]) }}"
-                   data-base-href="{{ route('user.chat', ['support' => 1]) }}">
+                {{-- Sends "I'd like to add $X" (X = the amount input) to the user's
+                     Support chat, then opens it — PurchaseCredits::messageSupport().
+                     The click handler is in purchase-credits.blade.php. --}}
+                <button type="button" class="ev-support-btn primary" data-support-credits-message>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>
-                    Message Support
-                </a>
-                @if($supportConversationId ?? null)
-                    {{-- Rings every support agent (webrtc-scripts handles data-rtc-call). --}}
-                    <button type="button" class="ev-support-btn"
-                            data-rtc-call="audio" data-rtc-support="1" data-peer-id="0" data-peer-name="Support" data-peer-avatar=""
-                            data-conversation-id="{{ $supportConversationId }}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                        Call Support
-                    </button>
-                @endif
+                    <span class="ev-support-btn-label">Message Support</span>
+                </button>
             </div>
         </div>
     </div>

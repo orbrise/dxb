@@ -61,7 +61,12 @@
         .ev-back-bar a { color: var(--ev-lime); text-decoration: none; font-size: 15px; }
         .ev-back-bar h1 { color: #fff; font-size: 18px; font-weight: 600; margin: 0; }
         .ev-back-bar h1 a { color: #fff; text-decoration: none; }
-        .ev-container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+        /* Mirrors evoory-theme.css .ev-container (1300px, no desktop gutter)
+           so the header + sub-header keep the same edges as every other
+           page — a narrower value here makes the logo/nav jump sideways
+           when navigating to/from home. Mobile padding mirrors the theme too. */
+        .ev-container { width: 100%; max-width: 1300px; margin: 0 auto; padding: 0; }
+        @media (max-width: 767px) { .ev-container { padding: 0 12px; } }
 
         /* --------------------------------------------------------------
            Chat page shell — body bg is pure black; the chat panels sit
@@ -123,9 +128,9 @@
         .chat-subheader-spacer { width: 60px; }
 
         .ev-chat-shell {
-            max-width: 1240px;
+            max-width: 1300px;
             margin: 16px auto 24px;
-            padding: 0 12px;
+            padding: 0;
         }
         .ev-chat-shell > .mb-3 {
             background: #0D1011;
@@ -656,8 +661,8 @@
             color: var(--ev-bg);
         }
         .cf-tab .cf-badge {
-            background: var(--ev-danger);
-            color: #fff;
+            background: var(--ev-lime);
+            color: var(--ev-lime-ink);
             font-size: 10px;
             font-weight: 700;
             width: 18px;
@@ -1802,8 +1807,8 @@
             color: var(--ev-text-3);
         }
         .unread-badge {
-            background: var(--ev-danger);   /* same red as the Unread filter count */
-            color: #fff;
+            background: var(--ev-lime);   /* same lime as the Unread filter count + header badge */
+            color: var(--ev-lime-ink);
             font-size: 11px;
             font-weight: 700;
             width: 20px;
@@ -1859,8 +1864,8 @@
             font-weight: 700;
             display: inline-flex; align-items: center; justify-content: center;
             border-radius: var(--ev-r-pill);
-            background: var(--ev-danger);
-            color: #fff;
+            background: var(--ev-lime);
+            color: var(--ev-lime-ink);
         }
 
         /* --------------------------------------------------------------
@@ -2901,6 +2906,61 @@
             -webkit-user-select: none;
         }
 
+        /* Skeleton shimmer for chat media on slow connections ----------
+           The text thread paints instantly but image bytes arrive later,
+           so each media tile shows an animated placeholder until its
+           <img class="sk-img"> decodes. `.sk` is the positioned wrapper;
+           the shimmer lives on ::before (NOT ::after) so it never collides
+           with the album "+N" badge (.msg-album-tile.has-more::after).
+           JS flips the wrapper sk-loading → sk-loaded / sk-error when the
+           inner image fires load / error. */
+        @keyframes ev-shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .sk { position: relative; }
+        .sk::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: linear-gradient(100deg,
+                #1b2124 32%, #272f32 46%, #313a3d 50%, #272f32 54%, #1b2124 68%);
+            background-size: 200% 100%;
+            animation: ev-shimmer 1.4s ease-in-out infinite;
+            opacity: 0;
+            transition: opacity 220ms ease;
+        }
+        .sk.sk-loading::before { opacity: 1; }
+        .sk.sk-loaded::before  { opacity: 0; animation: none; }
+        .sk.sk-error::before   { opacity: 1; animation: none; background: #1b2124; }
+        /* The photo stays invisible until decoded, then fades in over the
+           shimmer's fade-out for a smooth cross-fade. On error it stays
+           visible so the browser's broken-image affordance shows. */
+        .sk-img { opacity: 0; transition: opacity 220ms ease; }
+        .sk-loaded .sk-img,
+        .sk-error  .sk-img { opacity: 1; }
+
+        /* Single-image bubble: reserve a square placeholder so the thread
+           doesn't collapse to zero height while the photo downloads, then
+           shrink-wrap the real image once loaded (no server-side dimensions
+           are stored, so a natural-ratio box can't be known up front). */
+        .msg-media {
+            display: inline-block;
+            vertical-align: top;
+            max-width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            line-height: 0;
+        }
+        .msg-media.sk-loading { width: 240px; height: 240px; }
+        .msg-media.sk-loading .msg-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         /* WhatsApp-style image album — fixed-aspect tile grid.
            Layout per count:
              2  → side by side (1x2)
@@ -2949,10 +3009,12 @@
             transition: transform 120ms;
         }
         .msg-album-tile:hover img { transform: scale(1.02); }
-        /* +N overlay on the last visible tile when there are 5+ images. */
+        /* +N overlay on the last visible tile when there are 5+ images.
+           z-index keeps it above the .sk shimmer (::before, z-index 1). */
         .msg-album-tile.has-more::after {
             content: attr(data-more);
             position: absolute; inset: 0;
+            z-index: 2;
             background: rgba(0,0,0,0.55);
             color: #fff;
             font-size: 28px;
@@ -6124,10 +6186,10 @@
                                                              role="button" tabindex="0"
                                                              aria-label="Image album, {{ $count }} images">
                                                             @for($i = 0; $i < $visible; $i++)
-                                                                <div class="msg-album-tile {{ ($i === $visible - 1 && $extra > 0) ? 'has-more' : '' }}"
+                                                                <div class="msg-album-tile sk sk-loading {{ ($i === $visible - 1 && $extra > 0) ? 'has-more' : '' }}"
                                                                      @if($i === $visible - 1 && $extra > 0) data-more="+{{ $extra }}" @endif
                                                                      data-idx="{{ $i }}">
-                                                                    <img src="{{ $items[$i]['url'] }}" alt="" loading="lazy">
+                                                                    <img src="{{ $items[$i]['url'] }}" alt="" loading="lazy" class="sk-img">
                                                                 </div>
                                                             @endfor
                                                         </div>
@@ -6143,12 +6205,14 @@
                                                              delegation path is more reliable on mobile Safari,
                                                              where inline <img onclick="…"> inside a scrollable +
                                                              position:fixed shell can silently drop taps. --}}
-                                                        <img src="{{ $message['attachment_url'] }}"
-                                                             alt="Image"
-                                                             class="msg-image"
-                                                             data-message-id="{{ $message['id'] }}"
-                                                             data-sender-name="{{ $message['is_mine'] ? 'You' : ($message['sender_name'] ?? 'User') }}"
-                                                             data-sent-at="{{ \Carbon\Carbon::parse($message['created_at'])->format('M j, g:i A') }}">
+                                                        <span class="msg-media sk sk-loading">
+                                                            <img src="{{ $message['attachment_url'] }}"
+                                                                 alt="Image"
+                                                                 class="msg-image sk-img"
+                                                                 data-message-id="{{ $message['id'] }}"
+                                                                 data-sender-name="{{ $message['is_mine'] ? 'You' : ($message['sender_name'] ?? 'User') }}"
+                                                                 data-sent-at="{{ \Carbon\Carbon::parse($message['created_at'])->format('M j, g:i A') }}">
+                                                        </span>
                                                     @elseif($message['attachment_type'] === 'audio')
                                                         <div class="msg-voice" data-vp-duration="{{ $message['attachment_duration'] ?? 0 }}">
                                                             {{-- WebM blobs from MediaRecorder ship without a duration header,
@@ -6566,8 +6630,8 @@
                                                 <div class="media-grid">
                                                     @foreach($convMedia as $m)
                                                         @if($m['attachment_type'] === 'image')
-                                                            <button type="button" class="media-tile" onclick="openLightbox('{{ $m['attachment_url'] }}')">
-                                                                <img src="{{ $m['attachment_url'] }}" alt="" loading="lazy">
+                                                            <button type="button" class="media-tile sk sk-loading" onclick="openLightbox('{{ $m['attachment_url'] }}')">
+                                                                <img src="{{ $m['attachment_url'] }}" alt="" loading="lazy" class="sk-img">
                                                             </button>
                                                         @elseif($m['attachment_type'] === 'video')
                                                             <button type="button" class="media-tile" onclick="window.open('{{ $m['attachment_url'] }}', '_blank')">
@@ -6821,6 +6885,76 @@
             currentChannel: null,
             emojiWired: false,
         };
+
+        /* Skeleton loading for chat media. Each media <img class="sk-img">
+           sits inside a `.sk` wrapper showing an animated shimmer until the
+           image decodes; we then flip the wrapper to sk-loaded (fade the
+           photo in) or sk-error (static dark tile).
+
+           - Capture phase: `load`/`error` don't bubble, so we listen on
+             document with capture=true to catch them from any descendant.
+           - Cached images may already be complete before this runs (or
+             before a Livewire morph re-inserts them), so sweep() reconciles
+             any wrapper still marked loading.
+           - A MutationObserver re-sweeps when Livewire injects new bubbles
+             via polling / morphs. */
+        (function () {
+            if (window.__chatState.mediaSkeletonWired) return;
+            window.__chatState.mediaSkeletonWired = true;
+
+            function settle(img, ok) {
+                var wrap = img.closest('.sk');
+                if (!wrap) return;
+                wrap.classList.remove('sk-loading');
+                wrap.classList.add(ok ? 'sk-loaded' : 'sk-error');
+            }
+
+            document.addEventListener('load', function (e) {
+                var img = e.target;
+                if (img instanceof HTMLImageElement && img.classList.contains('sk-img')) {
+                    settle(img, img.naturalWidth > 0);
+                }
+            }, true);
+
+            document.addEventListener('error', function (e) {
+                var img = e.target;
+                if (img instanceof HTMLImageElement && img.classList.contains('sk-img')) {
+                    settle(img, false);
+                }
+            }, true);
+
+            function sweep() {
+                document.querySelectorAll('img.sk-img').forEach(function (img) {
+                    var wrap = img.closest('.sk');
+                    if (!wrap || wrap.classList.contains('sk-loaded') || wrap.classList.contains('sk-error')) return;
+                    // complete + naturalWidth 0 means the request already
+                    // finished in error before we attached the listener.
+                    if (img.complete) settle(img, img.naturalWidth > 0);
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', sweep);
+            } else {
+                sweep();
+            }
+
+            var mo = new MutationObserver(function (muts) {
+                for (var i = 0; i < muts.length; i++) {
+                    var added = muts[i].addedNodes;
+                    for (var j = 0; j < added.length; j++) {
+                        var n = added[j];
+                        if (n.nodeType !== 1) continue;
+                        if ((n.matches && n.matches('img.sk-img')) ||
+                            (n.querySelector && n.querySelector('img.sk-img'))) {
+                            sweep();
+                            return;
+                        }
+                    }
+                }
+            });
+            mo.observe(document.body, { childList: true, subtree: true });
+        })();
 
         document.addEventListener('DOMContentLoaded', () => {
             initEchoListener();
