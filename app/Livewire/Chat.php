@@ -931,42 +931,12 @@ class Chat extends Component
     }
 
     /**
-     * Search users to start new conversation.
-     *
-     * Prefix-match (LIKE 'term%') instead of substring (LIKE '%term%')
-     * so MySQL can use the users(name) / users(email) B-tree index.
-     * On a users table with real volume this is the difference between
-     * a <50ms indexed lookup and a 5-8 second full table scan — which
-     * is what was making the "New chat" search feel broken.
+     * Search users to start new conversation. Exact matches only, same as
+     * the New-chat directory (findUsersByExactContact).
      */
     public function searchUsers()
     {
-        if (strlen($this->searchTerm) < 2) {
-            return collect();
-        }
-
-        $userId = auth()->id();
-        // Single query for both block directions (previously two).
-        $blockedIds = DB::table('user_blocks')
-            ->where(function ($q) use ($userId) {
-                $q->where('blocker_id', $userId)->orWhere('blocked_id', $userId);
-            })
-            ->selectRaw('CASE WHEN blocker_id = ? THEN blocked_id ELSE blocker_id END AS uid', [$userId])
-            ->pluck('uid')
-            ->unique()
-            ->all();
-
-        $term = $this->searchTerm;
-        return User::select(['id', 'name', 'email', 'username', 'avatar'])
-            ->where('id', '!=', $userId)
-            ->when(!empty($blockedIds), fn ($q) => $q->whereNotIn('id', $blockedIds))
-            ->where(function ($q) use ($term) {
-                $q->where('name', 'like', $term . '%')
-                  ->orWhere('email', 'like', $term . '%')
-                  ->orWhere('username', 'like', $term . '%');
-            })
-            ->limit(10)
-            ->get();
+        return $this->findUsersByExactContact((string) $this->searchTerm)->take(10);
     }
 
     public function selectConversation($conversationId)
@@ -1601,59 +1571,79 @@ class Chat extends Component
     }
 
     /**
-     * Full user directory for the New-chat overlay.
-     *
-     * Privacy rules:
-     *  - Public accounts appear in browsing + all searches.
-     *  - Private accounts NEVER appear in the unfiltered browse list, and
-     *    only appear on an EXACT @username match — so someone can still
-     *    reach a private user if they know the handle.
-     *
-     * Search matches on name, email, or username. A leading '@' is stripped
-     * (people often type it in). Returns up to 100 rows, alphabetical.
+     * People for the New-chat overlay. Nobody is listed until the search is
+     * an exact @username, email or phone number, so typing a few letters
+     * can't be used to browse who's on the site.
      */
     public function getDirectoryUsers()
     {
         if (!auth()->check()) return collect();
 
-        $rawTerm = trim((string) $this->newChatSearch);
-        $needle  = ltrim($rawTerm, '@');
-        $isExactHandleQuery = $rawTerm !== '' && str_starts_with($rawTerm, '@');
+        return $this->findUsersByExactContact((string) $this->newChatSearch);
+    }
 
-        // No search term → no results. Previously we eager-loaded the first
-        // 100 public users on panel open, which made the "+" feel sluggish
-        // on prod (ORDER BY name on the full users table + 100 avatar rows).
-        // The UX is now "type to search" — the panel renders a prompt until
-        // the user types at least one character.
-        if ($needle === '') {
-            return collect();
-        }
+    /**
+     * Users whose username, email or phone number is exactly $term.
+     *
+     *  - Username: with or without a leading '@'. Finds private accounts too
+     *    (the Private setting promises an exact @username still finds you).
+     *  - Email: whole address, any case. Public accounts only.
+     *  - Phone: 6+ digits, compared digits-only, so "+971 50 123 4567",
+     *    "00971501234567" and "0501234567" all match a number saved as
+     *    country code 971 + 501234567. Public accounts only.
+     *
+     * Excludes yourself and anyone on either side of a block.
+     */
+    protected function findUsersByExactContact(string $term)
+    {
+        $term = trim($term);
+        $handle = ltrim($term, '@');
+        if ($handle === '' || !auth()->check()) return collect();
 
-        $q = User::select(['id', 'name', 'email', 'username', 'avatar', 'is_private'])
-            ->where('id', '!=', auth()->id());
+        $userId = auth()->id();
+        $email = filter_var($handle, FILTER_VALIDATE_EMAIL) ? $handle : null;
+        // Phone only when the term is nothing but a number (digits, spaces,
+        // +, -, dots, brackets). Leading zeros are a trunk/international
+        // prefix, not part of the number.
+        $phone = !str_starts_with($term, '@') && preg_match('/^[\d\s+().-]+$/', $term)
+            ? ltrim(preg_replace('/\D/', '', $term), '0')
+            : '';
+        if (strlen($phone) < 6) $phone = '';
 
-        $q->where(function ($sub) use ($needle, $isExactHandleQuery) {
-            if ($isExactHandleQuery) {
-                // @-prefixed search — exact username match wins so that
-                // private accounts are reachable by handle.
-                $sub->where('username', $needle);
-            } else {
-                // Prefix match so MySQL can use the users(name) /
-                // users(email) index — substring LIKE did a full table
-                // scan on every keystroke.
-                $sub->where('name', 'like', "{$needle}%")
-                    ->orWhere('email', 'like', "{$needle}%")
-                    ->orWhere('username', 'like', "{$needle}%");
-            }
-        });
+        $blockedIds = DB::table('user_blocks')
+            ->where(function ($q) use ($userId) {
+                $q->where('blocker_id', $userId)->orWhere('blocked_id', $userId);
+            })
+            ->selectRaw('CASE WHEN blocker_id = ? THEN blocked_id ELSE blocker_id END AS uid', [$userId])
+            ->pluck('uid')
+            ->unique()
+            ->all();
 
-        if (!$isExactHandleQuery) {
-            $q->where(function ($sub) {
-                $sub->where('is_private', 0)->orWhereNull('is_private');
-            });
-        }
+        // Digits-only SQL for the stored number: national part without its
+        // trunk 0, and with the country code in front.
+        $digits = fn (string $column) => "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), ' ', ''), '+', ''), '-', ''), '(', ''), ')', ''), '.', '')";
+        $national = "TRIM(LEADING '0' FROM " . $digits('phone') . ")";
+        $withCountry = "CONCAT(" . $digits('country_code') . ", {$national})";
+        $public = fn ($q) => $q->where(fn ($p) => $p->where('is_private', 0)->orWhereNull('is_private'));
 
-        return $q->orderBy('name')->limit(100)->get();
+        return User::select(['id', 'name', 'email', 'username', 'avatar', 'is_private'])
+            ->where('id', '!=', $userId)
+            ->when(!empty($blockedIds), fn ($q) => $q->whereNotIn('id', $blockedIds))
+            ->where(function ($q) use ($handle, $email, $phone, $national, $withCountry, $public) {
+                $q->where('username', $handle);
+                if ($email) {
+                    $q->orWhere(fn ($e) => $public($e->where('email', $email)));
+                }
+                if ($phone !== '') {
+                    $q->orWhere(fn ($p) => $public($p->where('phone', '!=', '')->where(function ($m) use ($phone, $national, $withCountry) {
+                        $m->whereRaw("{$national} = ?", [$phone])
+                          ->orWhereRaw("{$withCountry} = ?", [$phone]);
+                    })));
+                }
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
     }
 
     /**

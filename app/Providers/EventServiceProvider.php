@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Services\SupportWelcome;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
@@ -35,7 +37,13 @@ class EventServiceProvider extends ServiceProvider
         // CF Cache Rule keys on this cookie. Value is meaningless; presence is
         // the signal. Lifetime tracks session.lifetime so the cookie disappears
         // when the session would have expired anyway.
-        Event::listen(Login::class, function () {
+        Event::listen(Login::class, function (Login $event) {
+            // New users get the Support welcome message on their first login.
+            // Not when an admin impersonates them: that isn't the user.
+            if ($event->user instanceof User && !session('admin_impersonating')) {
+                SupportWelcome::sendOnFirstLogin($event->user);
+            }
+
             Cookie::queue(
                 'evoory_auth',
                 '1',

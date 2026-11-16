@@ -24,6 +24,7 @@ use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Services\GrokSupportBot;
 use App\Services\SupportAutoReply;
+use App\Services\SupportWelcome;
 use App\Services\VideoTrimmer;
 use App\Support\SupportInboxRevision;
 use Illuminate\Support\Facades\DB;
@@ -146,6 +147,9 @@ class SupportInbox extends Component
     public bool $autoReplySaved = false;
     public string $topupMessage = '';
     public bool $topupMessageSaved = false;
+    public bool $welcomeEnabled = true;
+    public string $welcomeMessage = '';
+    public bool $welcomeMessageSaved = false;
     public bool $showQuickReplyForm = false;
     public ?int $editingQuickReplyId = null;
     public string $quickReplyShortcut = '';
@@ -168,6 +172,7 @@ class SupportInbox extends Component
         abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
         $this->supportCallsBlocked = (bool) Setting::query()->whereKey(1)->value('support_calls_blocked');
         $this->loadAutoReplySettings();
+        $this->loadWelcomeSettings();
     }
 
     protected function loadAutoReplySettings(): void
@@ -248,6 +253,53 @@ class SupportInbox extends Component
         $this->topupMessage = self::DEFAULT_TOPUP_MESSAGE;
         $this->topupMessageSaved = false;
         $this->resetValidation('topupMessage');
+    }
+
+    protected function loadWelcomeSettings(): void
+    {
+        $setting = Setting::query()->find(1);
+        $this->welcomeEnabled = (bool) ($setting?->support_welcome_enabled ?? true);
+        $this->welcomeMessage = trim((string) $setting?->support_welcome_message) ?: SupportWelcome::DEFAULT_MESSAGE;
+    }
+
+    public function toggleWelcome(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $setting = Setting::query()->find(1);
+        if (!$setting) return;
+
+        $setting->support_welcome_enabled = !$setting->support_welcome_enabled;
+        $setting->save();
+
+        $this->welcomeEnabled = (bool) $setting->support_welcome_enabled;
+        $this->welcomeMessageSaved = false;
+    }
+
+    public function saveWelcomeMessage(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->is_admin ?? false), 403);
+
+        $this->welcomeMessage = trim($this->welcomeMessage);
+        $this->validate(['welcomeMessage' => 'required|string|max:2000'], [], ['welcomeMessage' => 'message']);
+
+        $setting = Setting::query()->find(1);
+        if (!$setting) return;
+
+        // Welcomes go out from whoever saved the message.
+        $setting->support_welcome_message = $this->welcomeMessage;
+        $setting->support_welcome_sender_id = auth()->id();
+        $setting->save();
+
+        $this->welcomeMessageSaved = true;
+    }
+
+    /** Puts the default back in the editor; nothing changes until Save. */
+    public function resetWelcomeMessage(): void
+    {
+        $this->welcomeMessage = SupportWelcome::DEFAULT_MESSAGE;
+        $this->welcomeMessageSaved = false;
+        $this->resetValidation('welcomeMessage');
     }
 
     public function openBroadcast(): void
@@ -481,7 +533,7 @@ class SupportInbox extends Component
 
     public function setSettingsSection(string $section): void
     {
-        if (!in_array($section, ['', 'account', 'tools', 'quick-replies', 'auto-reply', 'topup-message', 'calls', 'blocked'], true)) return;
+        if (!in_array($section, ['', 'account', 'tools', 'quick-replies', 'auto-reply', 'topup-message', 'welcome-message', 'calls', 'blocked'], true)) return;
 
         $this->inboxTab = 'settings';
         $this->settingsSection = $section;
@@ -489,6 +541,7 @@ class SupportInbox extends Component
         $this->accountSaved = false;
         $this->autoReplySaved = false;
         $this->topupMessageSaved = false;
+        $this->welcomeMessageSaved = false;
 
         if ($section === 'auto-reply') {
             $this->loadAutoReplySettings();
@@ -498,6 +551,11 @@ class SupportInbox extends Component
         if ($section === 'topup-message') {
             $this->topupMessage = $this->savedTopupMessage();
             $this->resetValidation('topupMessage');
+        }
+
+        if ($section === 'welcome-message') {
+            $this->loadWelcomeSettings();
+            $this->resetValidation('welcomeMessage');
         }
 
         if ($section === 'account') {

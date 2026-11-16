@@ -319,7 +319,7 @@
 {{-- Sub-header --}}
 <div class="auction-subheader">
     <div class="ev-container">
-        <a class="back-link" href="{{ $citySlug ? '/' . $gender . '-escorts-in-' . $citySlug : '/' }}">
+        <a class="back-link" href="{{ $citySlug ? '/' . $prefix . '-in-' . $citySlug : '/' }}">
             <span class="ev-desktop-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> Back</span>
             <span class="ev-mobile-back" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> Home</span>
         </a>
@@ -348,24 +348,24 @@
                         <h2>Top Spots in <span class="auction-picker-city">{{ $cityName }}</span></h2>
                         <p>
                             {{ $auctions->count() ? $auctions->count() . ' ' . \Illuminate\Support\Str::plural('spot', $auctions->count()) . ' open for offers' : 'No spots open right now' }}
-                            <a class="auction-change-city" href="{{ url('/auctions') . '?gender=' . $gender }}">Change city</a>
+                            <a class="auction-change-city" href="{{ url('/auctions') . '?category=' . $category }}">Change city</a>
                         </p>
                     @elseif(!$hasOpenSpots)
                         <div class="auction-empty-title">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="10" y1="14" x2="14" y2="18"/><line x1="14" y1="14" x2="10" y2="18"/></svg>
                             <h2>No auction slots available</h2>
                         </div>
-                        <p>There are no Top Spots open for offers in the {{ \App\Livewire\Auctions\AuctionPage::GENDERS[$gender] }} category right now. Check back later, or try another category.</p>
+                        <p>There are no Top Spots open for offers in the {{ $categories[$category]['label'] }} category right now. Check back later, or try another category.</p>
                     @else
                         <h2>Choose a city</h2>
                         <p>Top Spot auctions run per city. Pick yours to see the spots open for offers.</p>
                     @endif
                 </div>
                 <div class="auction-genders" role="group" aria-label="Category">
-                    @foreach(\App\Livewire\Auctions\AuctionPage::GENDERS as $value => $label)
-                        <a class="{{ $gender === $value ? 'active' : '' }}"
-                                href="{{ $citySlug ? url('/auctions/' . $value . '-escorts-in-' . $citySlug) : url('/auctions') . '?gender=' . $value }}"
-                                aria-pressed="{{ $gender === $value ? 'true' : 'false' }}">{{ $label }}</a>
+                    @foreach($categories as $value => $tab)
+                        <a class="{{ $category === $value ? 'active' : '' }}"
+                                href="{{ $citySlug ? url('/auctions/' . $tab['prefix'] . '-in-' . $citySlug) : url('/auctions') . '?category=' . $value }}"
+                                aria-pressed="{{ $category === $value ? 'true' : 'false' }}">{{ $tab['label'] }}</a>
                     @endforeach
                 </div>
             </div>
@@ -379,15 +379,15 @@
                      cities (inline vanilla JS below). The GET form is the no-JS /
                      Enter fallback: it reloads with ?q= and results render server-side. --}}
                 <form class="auction-search" method="get" action="{{ url('/auctions') }}">
-                    <input type="hidden" name="gender" value="{{ $gender }}">
+                    <input type="hidden" name="category" value="{{ $category }}">
                     <div class="auction-search-box">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                         <input type="text" name="q" id="auctionCitySearch" value="{{ $citySearch }}" placeholder="Search for a city…" autocomplete="off" aria-label="Search for a city">
                     </div>
-                    <div class="auction-results" id="auctionCityResults" data-gender="{{ $gender }}" @if(mb_strlen(trim($citySearch)) < 2) hidden @endif>
+                    <div class="auction-results" id="auctionCityResults" data-prefix="{{ $prefix }}" @if(mb_strlen(trim($citySearch)) < 2) hidden @endif>
                         @if(mb_strlen(trim($citySearch)) >= 2)
                             @forelse($searchResults as $result)
-                                <a href="{{ url('/auctions/' . $gender . '-escorts-in-' . $result['slug']) }}">
+                                <a href="{{ url('/auctions/' . $prefix . '-in-' . $result['slug']) }}">
                                     {{ $result['name'] }}@if($result['country']) <small>· {{ $result['country'] }}</small>@endif
                                 </a>
                             @empty
@@ -400,7 +400,7 @@
                     <div class="auction-suggest-label">Popular cities</div>
                     <div class="auction-suggest">
                         @foreach($suggestedCities as $suggested)
-                            <a href="{{ url('/auctions/' . $gender . '-escorts-in-' . $suggested->slug) }}"
+                            <a href="{{ url('/auctions/' . $prefix . '-in-' . $suggested->slug) }}"
                                     @if(!empty($suggested->hasOpenSpots)) title="Spots open for offers" @endif>
                                 @if(!empty($suggested->hasOpenSpots))<span class="open-dot" aria-hidden="true"></span>@endif
                                 {{ $suggested->name }}
@@ -421,7 +421,7 @@
             var results = document.getElementById('auctionCityResults');
             if (!input || !results) return;
 
-            var gender = results.getAttribute('data-gender') || 'female';
+            var prefix = results.getAttribute('data-prefix') || 'female-escorts';
             var endpoint = @json(url('/auctions/cities'));
             var timer = null;
             var controller = null;
@@ -439,7 +439,7 @@
                 } else {
                     rows.forEach(function (row) {
                         var a = document.createElement('a');
-                        a.href = '/auctions/' + gender + '-escorts-in-' + encodeURIComponent(row.slug);
+                        a.href = '/auctions/' + prefix + '-in-' + encodeURIComponent(row.slug);
                         a.textContent = row.name;
                         if (row.country) {
                             var small = document.createElement('small');
@@ -527,7 +527,7 @@
                         <p class="price">${{ $auction->current_price }}</p>
                         <p class="duration">for {{ $auction->duration_days ?? 7 }} days</p>
 
-                        <a class="btn-offer" href="{{ url('/auctions/' . $gender . '-escorts-in-' . $citySlug . '/spot/' . $auction->spot_number) }}">Make Offer</a>
+                        <a class="btn-offer" href="{{ url('/auctions/' . $prefix . '-in-' . $citySlug . '/spot/' . $auction->spot_number) }}">Make Offer</a>
 
                         <div class="timer">
                             <svg class="timer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -544,7 +544,7 @@
             @empty
             <div class="auction-none">
                 <h3>No slots available in {{ $cityName }}</h3>
-                <p>No spots are open for offers in {{ $cityName }} in the {{ \App\Livewire\Auctions\AuctionPage::GENDERS[$gender] }} category right now. Check back later, or try another city or category.</p>
+                <p>No spots are open for offers in {{ $cityName }} in the {{ $categories[$category]['label'] }} category right now. Check back later, or try another city or category.</p>
             </div>
             @endforelse
         </div>

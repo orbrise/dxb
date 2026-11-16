@@ -79,8 +79,11 @@ class EndAuctions extends Command
                 // Create a new auction for the next period
                 $newAuction = $auction->replicate();
                 $newAuction->status = 'active';
+                $newAuction->winner_id = null;
                 $newAuction->winner_profile_id = null;
-                $newAuction->current_price = $auction->starting_bid;
+                // There is no starting_bid column: this was NULL and the
+                // insert failed, aborting the run before later auctions.
+                $newAuction->current_price = $auction->round_start_price;
                 $newAuction->end_date = Carbon::now()->addDays($auction->duration_days ?? 7);
                 $newAuction->save();
 
@@ -120,7 +123,7 @@ class EndAuctions extends Command
 
         $profileName = $winningBid->profile->name ?? 'your profile';
         $profileUrl = $winningBid->profile
-            ? url('/' . $auction->gender . '-escorts-in-' . $citySlug . '/' . $winningBid->profile->id . '/' . ($winningBid->profile->slug ?? ''))
+            ? url('/' . ($auction->gender ?: 'female') . '-escorts-in-' . $citySlug . '/' . $winningBid->profile->id . '/' . ($winningBid->profile->slug ?? ''))
             : url('/');
 
         try {
@@ -130,6 +133,7 @@ class EndAuctions extends Command
                 'spotNumber'     => $auction->spot_number,
                 'cityName'       => $cityName,
                 'gender'         => $auction->gender,
+                'categoryName' => $auction->listing_id ? $auction->category_label : null,
                 'winningBid'     => $winningBid->amount,
                 'durationDays'   => $durationDays,
                 'spotExpiryDate' => $spotExpiryDate,
@@ -144,7 +148,7 @@ class EndAuctions extends Command
     {
         $auction->loadMissing('city');
         $cityName = $auction->city->name ?? 'your city';
-        $auctionsUrl = url('/auctions/' . $auction->gender . '-escorts-in-' . strtolower($cityName));
+        $auctionsUrl = url('/auctions/' . $auction->url_prefix . '-in-' . ($auction->city->slug ?? strtolower($cityName)));
 
         $losingBids = AuctionBid::with('user:id,name,email')
             ->where('auction_id', $auction->id)
@@ -161,6 +165,7 @@ class EndAuctions extends Command
                     'spotNumber'   => $auction->spot_number,
                     'cityName'     => $cityName,
                     'gender'       => $auction->gender,
+                    'categoryName' => $auction->listing_id ? $auction->category_label : null,
                     'yourBid'      => $bid->amount,
                     'winningBid'   => $winningBid->amount,
                     'refundAmount' => $bid->amount,

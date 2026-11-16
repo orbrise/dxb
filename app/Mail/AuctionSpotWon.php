@@ -15,6 +15,8 @@ class AuctionSpotWon extends Mailable
     public $spotNumber;
     public $cityName;
     public $gender;
+    // "Female escorts", or the listing category ("Massage").
+    public $categoryName;
     public $winningBid;
     public $durationDays;
     public $spotExpiryDate;
@@ -27,6 +29,7 @@ class AuctionSpotWon extends Mailable
         $this->spotNumber     = $data['spotNumber'];
         $this->cityName       = $data['cityName'];
         $this->gender         = $data['gender'];
+        $this->categoryName   = $data['categoryName'] ?? (ucfirst($data['gender']) . ' escorts');
         $this->winningBid     = $data['winningBid'];
         $this->durationDays   = $data['durationDays'];
         $this->spotExpiryDate = $data['spotExpiryDate'];

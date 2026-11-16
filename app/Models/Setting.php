@@ -37,6 +37,9 @@ class Setting extends Model
         'support_auto_reply_delay',
         'support_auto_reply_message',
         'support_auto_reply_sender_id',
+        'support_welcome_enabled',
+        'support_welcome_message',
+        'support_welcome_sender_id',
     ];
 
     protected $casts = [
@@ -49,5 +52,6 @@ class Setting extends Model
         'support_calls_blocked' => 'boolean',
         'support_auto_reply_enabled' => 'boolean',
         'support_auto_reply_delay' => 'integer',
+        'support_welcome_enabled' => 'boolean',
     ];
 }

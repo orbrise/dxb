@@ -285,7 +285,8 @@ public function submitMobileSearch()
     protected function loadAuctions()
     {
         $isLoggedIn = auth()->check();
-        $scope = CacheVersion::auctionScope($this->city, $this->gender);
+        // Category pages (/massage-in-dubai) show that category's spots.
+        $scope = CacheVersion::auctionScope($this->city, Auction::scopeKey($this->gender, $this->categoryListingId));
         $subkey = $isLoggedIn ? 'auth' : 'guest';
 
         // Version-based cache — invalidated by AuctionObserver / AuctionBidObserver.
@@ -297,7 +298,9 @@ public function submitMobileSearch()
 
             $auctions = Auction::select('id', 'city_id', 'gender', 'status', 'spot_number', 'winner_profile_id', 'end_date', 'current_price')
                 ->where('city_id', $this->city)
-                ->where('gender', $this->gender)
+                ->when($this->categoryListingId,
+                    fn ($q) => $q->where('listing_id', $this->categoryListingId),
+                    fn ($q) => $q->whereNull('listing_id')->where('gender', $this->gender))
                 ->where('status', 'active')
                 ->orderBy('spot_number')
                 ->with([
@@ -1209,6 +1212,8 @@ public function checkIfFavorited($profileId)
             'categoryOptions' => $categoryOptions,
             'category' => $this->category,
             'categoryName' => $this->categoryName,
+            // Top Spot "Make offer" links: /auctions/{prefix}-in-{city}.
+            'auctionPrefix' => $this->categoryListingId ? $this->category : $this->gender . '-escorts',
             'services' => CacheService::getServices(),
             'currencies' => CacheService::getCurrencies(),
             'ethnicities' => CacheService::getEthnicities(), 

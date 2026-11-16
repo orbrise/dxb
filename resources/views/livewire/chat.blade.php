@@ -5413,10 +5413,10 @@
                                     <i class="fa fa-search"></i>
                                     <input type="text"
                                            wire:model.live.debounce.500ms="newChatSearch"
-                                           placeholder="Name, email or @username">
+                                           placeholder="@username, email or phone number">
                                 </div>
                                 <div class="new-chat-help">
-                                    Name or email finds public profiles. <b>@username</b> finds that username (public or private).
+                                    Enter someone's exact <b>@username</b>, email or phone number. Private accounts can only be found by @username.
                                 </div>
                                 <div class="new-chat-list" wire:loading.class="is-loading" wire:target="newChatSearch">
                                     {{-- Idle state: panel just opened, search box empty.
@@ -5427,7 +5427,7 @@
                                     @if(empty(trim((string) $newChatSearch)))
                                         <div class="new-chat-empty" wire:loading.remove wire:target="newChatSearch">
                                             <i class="fa fa-search"></i>
-                                            <div>Type a name, email or @username to find people</div>
+                                            <div>Type an exact @username, email or phone number to find someone</div>
                                         </div>
                                         <div class="new-chat-loading" wire:loading wire:target="newChatSearch" style="display:none;">
                                             <span class="new-chat-spinner"></span>
@@ -5453,7 +5453,7 @@
                                         @empty
                                             <div class="new-chat-empty">
                                                 <i class="fa fa-users"></i>
-                                                <div>No users found</div>
+                                                <div>No one matches that exactly. Check the full @username, email or phone number.</div>
                                             </div>
                                         @endforelse
                                     @endif
@@ -5721,7 +5721,7 @@
                                                     <input type="radio" wire:model.live="accountIsPrivate" value="0">
                                                     <div>
                                                         <div class="acct-radio-title">Public</div>
-                                                        <div class="acct-radio-sub">Anyone can message you. Other people find you by your name, or by @username. You are not listed in your own New chat.</div>
+                                                        <div class="acct-radio-sub">Anyone can message you. People find you by your exact @username, email or phone number.</div>
                                                     </div>
                                                 </label>
                                                 <label class="acct-radio {{ $accountIsPrivate ? 'active' : '' }}">

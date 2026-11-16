@@ -17,7 +17,7 @@
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    width: clamp(48px, 28%, 92px);
+    width: clamp(48px, 22%, 92px);
     aspect-ratio: 1 / 1;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.35);

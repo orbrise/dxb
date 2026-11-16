@@ -23,6 +23,9 @@ class SpotBidding extends Component
     public $city;
     public $cityName;
     public $gender;
+    // Auction::categories() key, and its URL segment before "-in-{city}".
+    public $category;
+    public $prefix;
     public $errorMessage;
     public $successMessage;
     public $timeRemaining;
@@ -30,16 +33,22 @@ class SpotBidding extends Component
     
     protected $rules = [
         'bidAmount' => 'required|numeric|min:0',
-        'selectedProfile' => 'required|exists:users_profiles,id'
+        'selectedProfile' => 'required|integer'
     ];
     
-    public function mount($spot, $cityname, $gender = 'female')
+    public function mount($spot, $cityname, $gender = null, $category = null)
     {
         $this->spotNumber = $spot;
         $this->city = $cityname; 
-        $this->gender = $gender; 
-        
-        $genderObj = Gender::where('name', $gender)->first();
+
+        $this->category = Auction::resolveCategory($gender, $category);
+        if (!$this->category) abort(404);
+        $categoryInfo = Auction::categories()[$this->category];
+        $this->prefix = $categoryInfo['prefix'];
+        // Profile links use the escort URL family; category profiles too.
+        $this->gender = $categoryInfo['gender'] ?? 'female';
+
+        $genderObj = Gender::where('name', $this->gender)->first();
         // Exact slug / name first: a bare LIKE could pick another city that
         // merely contains the name.
         $cityObj = City::where('slug', $cityname)->first()
@@ -55,7 +64,7 @@ class SpotBidding extends Component
      
         $this->auction = Auction::where('spot_number', $this->spotNumber)
             ->where('city_id', $cityObj->id) 
-            ->where('gender', $gender) 
+            ->inCategory($this->category)
             ->where('status', 'active')
             ->first();
                 
@@ -65,127 +74,132 @@ class SpotBidding extends Component
         }
         
         $this->auctionId = $this->auction->id;
-        $this->minBid = $this->auction->current_price + 10; 
+        $this->refreshRound();
         $this->bidAmount = $this->minBid;
-        // "3 days 4 hours"; null once the end date has passed (the view then
-        // says when it ended — auctions:end closes it within the hour).
+
+        if (!auth()->check()) {
+            $this->errorMessage = 'Please sign in to place a bid.';
+            return;
+        }
+        if (!$this->auction->is_open) {
+            // auctions:end picks the winner within the hour.
+            $this->errorMessage = 'Bidding on this spot has closed. The winner is being confirmed.';
+            return;
+        }
+        if (!Auction::userQualifies(auth()->user())) {
+            $this->errorMessage = 'You need to have spent at least ' . Auction::MIN_SPENT_CREDITS . ' credits to bid in auctions.';
+            return;
+        }
+
+        // The user's profiles that fit the spot: that category's listings,
+        // or that gender's for an escort spot.
+        $this->userProfiles = UsersProfile::where('user_id', auth()->id())
+            ->when($categoryInfo['listing_id'],
+                fn ($q) => $q->where('listing', $categoryInfo['listing_id']),
+                fn ($q) => $q->where('gender', $genderObj?->id))
+            ->get();
+
+        if ($this->userProfiles->isEmpty()) {
+            $this->errorMessage = 'You need a profile in ' . $categoryInfo['label'] . ' before bidding.';
+            return;
+        }
+
+        $this->selectedProfile = $this->userProfiles->first()->id;
+        $this->canBid = true;
+    }
+
+    /**
+     * Minimum bid and time left for the current round. A round with no bids
+     * yet opens at the current price; after that each bid must beat the
+     * highest by at least $10.
+     */
+    protected function refreshRound(): void
+    {
+        $hasBids = $this->auction->bids()->where('status', 'active')->exists();
+        $this->minBid = (float) $this->auction->current_price + ($hasBids ? 10 : 0);
+        // "3 days 4 hours"; null once the end date has passed.
         $this->timeRemaining = $this->auction->end_date->isFuture()
             ? $this->auction->end_date->diffForHumans(['parts' => 2, 'syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE])
             : null;
-        
-        // Check if user can bid
-        if (auth()->check()) {
-            $user = auth()->user();
-            $wallet = $user->wallet;
-            
-            if ($wallet) {
-                // Calculate total spent credits from wallet transactions
-                $spentCredits = $wallet->transactions()
-                    ->where('status', 'completed')
-                    ->sum('amount');
-                
-                // Check if user has spent at least 300 credits
-                $hasSpentEnough = $spentCredits >= 300;
-                
-                // Check if user has enough balance for the minimum bid
-                $hasEnoughBalance = $wallet->balance >= $this->minBid;
-                
-                if (!$hasSpentEnough) {
-                    $this->errorMessage = 'You need to spend at least 300 credits to participate in auctions';
-                    $this->canBid = false;
-                } elseif (!$hasEnoughBalance) {
-                    $this->errorMessage = 'You don\'t have enough credits in your wallet to place this bid. Please add more credits.';
-                    $this->canBid = false;
-                } else {
-                    $this->canBid = true;
-                    
-                    // Get user's profiles for the specific gender
-                    $this->userProfiles = UsersProfile::where('user_id', auth()->id())
-                        ->where('gender', $genderObj->id) // Using gender directly
-                        ->get();
-                        
-                    if ($this->userProfiles->count() > 0) {
-                        $this->selectedProfile = $this->userProfiles->first()->id;
-                    } else {
-                        $this->errorMessage = 'You need to create a profile before bidding';
-                        $this->canBid = false;
-                    }
-                }
-            } else {
-                $this->errorMessage = 'You don\'t have a wallet. Please contact support.';
-                $this->canBid = false;
-            }
-        } else {
-            $this->canBid = false;
-            $this->errorMessage = 'Please login to place a bid';
-        }
     }
-    
+
     public function placeBid()
-{
-    if (!auth()->check()) {
-        return redirect()->route('login');
+    {
+        if (!auth()->check()) {
+            return redirect()->route('sign-in');
+        }
+        if (!$this->canBid) return;
+
+        $this->validate();
+
+        $auction = Auction::find($this->auctionId);
+        if (!$auction || !$auction->is_open) {
+            $this->canBid = false;
+            $this->errorMessage = 'Bidding on this spot has closed. The winner is being confirmed.';
+            return;
+        }
+        $this->auction = $auction;
+        $this->refreshRound();
+
+        if (!collect($this->userProfiles)->pluck('id')->contains((int) $this->selectedProfile)) {
+            $this->addError('selectedProfile', 'Choose one of your profiles.');
+            return;
+        }
+        if ((float) $this->bidAmount < $this->minBid) {
+            $this->addError('bidAmount', 'Your bid must be at least $' . number_format($this->minBid, 2) . '.');
+            return;
+        }
+        $balance = (float) (auth()->user()->wallet->balance ?? 0);
+        if ((float) $this->bidAmount > $balance) {
+            $this->addError('bidAmount', 'You have $' . number_format($balance, 2) . ' in your wallet. Add credits to bid this much.');
+            return;
+        }
+
+        $bid = AuctionBid::create([
+            'auction_id' => $this->auctionId,
+            'user_id' => auth()->id(),
+            'profile_id' => $this->selectedProfile,
+            'amount' => $this->bidAmount,
+            'status' => 'active'
+        ]);
+
+        // The price only; the winner is picked when the round ends.
+        $this->auction->update(['current_price' => $this->bidAmount]);
+
+        AuctionTransaction::create([
+            'user_id' => auth()->id(),
+            'auction_id' => $this->auctionId,
+            'bid_id' => $bid->id,
+            'amount' => $this->bidAmount,
+            'status' => 'pending'
+        ]);
+
+        $this->successMessage = 'Your bid has been placed successfully!';
+        $this->refreshRound();
+        $this->bidAmount = $this->minBid;
     }
-    
-    if (!$this->canBid) {
-        $this->errorMessage = 'You need to spend at least 300 credits to participate in auctions';
-        return;
-    }
-    
-    $this->validate();
-    
-    // Check if bid amount is higher than current price
-    if ($this->bidAmount <= $this->auction->current_price) {
-        $this->addError('bidAmount', 'Bid amount must be higher than the current price');
-        return;
-    }
-    
-    // Create the bid
-    $bid = AuctionBid::create([
-        'auction_id' => $this->auctionId,
-        'user_id' => auth()->id(),
-        'profile_id' => $this->selectedProfile,
-        'amount' => $this->bidAmount,
-        'status' => 'active'
-    ]);
-    
-    // Update auction current price ONLY, not the winner
-    $this->auction->update([
-        'current_price' => $this->bidAmount
-        // Removed winner_profile_id assignment
-    ]);
-    
-    // Create transaction record
-    AuctionTransaction::create([
-        'user_id' => auth()->id(),
-        'auction_id' => $this->auctionId,
-        'bid_id' => $bid->id,
-        'amount' => $this->bidAmount,
-        'status' => 'pending'
-    ]);
-    
-    $this->successMessage = 'Your bid has been placed successfully!';
-    $this->minBid = $this->bidAmount + 10;
-    $this->bidAmount = $this->minBid;
-}
-    
+
     public function render()
     {
-        // Refresh auction data
         if ($this->auction) {
-            $this->auction = Auction::with(['bids.profile', 'winnerProfile', 'city'])
+            $this->auction = Auction::with(['bids.profile.singleimg', 'bids.profile.coverimg', 'city'])
                 ->find($this->auction->id);
         }
-        
-        // Only this round's bids count: when a round ends, auctions:end marks
-        // its bids won / lost, so those are history, not the current leader.
-        $roundBids = $this->auction ? $this->auction->bids->where('status', 'active') : collect();
+
+        // A spot runs in rounds on the same row: when one ends its bids are
+        // marked won / lost, so only 'active' bids belong to this round.
+        $bids = $this->auction ? $this->auction->bids : collect();
+        $roundBids = $bids->where('status', 'active')->sortByDesc('amount')->values();
 
         return view('livewire.auctions.spot-bidding', [
             'auction' => $this->auction,
             'userProfiles' => $this->userProfiles,
-            'highestBid' => $roundBids->sortByDesc('amount')->first(),
+            'roundBids' => $roundBids,
+            'highestBid' => $roundBids->first(),
             'roundBidCount' => $roundBids->count(),
+            'myEarlierBids' => auth()->check()
+                ? $bids->where('user_id', auth()->id())->whereIn('status', ['won', 'lost'])->sortByDesc('created_at')->values()
+                : collect(),
         ]);
     }
 }

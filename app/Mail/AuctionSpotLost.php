@@ -14,6 +14,8 @@ class AuctionSpotLost extends Mailable
     public $spotNumber;
     public $cityName;
     public $gender;
+    // "Female escorts", or the listing category ("Massage").
+    public $categoryName;
     public $yourBid;
     public $winningBid;
     public $refundAmount;
@@ -25,6 +27,7 @@ class AuctionSpotLost extends Mailable
         $this->spotNumber   = $data['spotNumber'];
         $this->cityName     = $data['cityName'];
         $this->gender       = $data['gender'];
+        $this->categoryName = $data['categoryName'] ?? (ucfirst($data['gender']) . ' escorts');
         $this->yourBid      = $data['yourBid'];
         $this->winningBid   = $data['winningBid'];
         $this->refundAmount = $data['refundAmount'];

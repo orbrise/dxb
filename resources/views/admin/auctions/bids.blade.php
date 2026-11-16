@@ -65,7 +65,7 @@
                     <div class="auction-info mb-4">
                         <h5>Auction Details</h5>
                         <p><strong>City:</strong> {{ $auction->city->name }}</p>
-                        <p><strong>Gender:</strong> {{ ucfirst($auction->gender) }}</p>
+                        <p><strong>Category:</strong> {{ $auction->category_label }}</p>
                         <p><strong>Current Price:</strong> ${{ number_format($auction->current_price, 2) }}</p>
                         <p><strong>End Date:</strong> {{ $auction->end_date->format('Y-m-d H:i') }}</p>
                         <p><strong>Status:</strong> {{ ucfirst($auction->status) }}</p>

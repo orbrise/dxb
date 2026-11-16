@@ -1,7 +1,7 @@
 @section('headerform')
 <div class="nav-bar navbar-top-nav">
     <div class="container-fluid" style="background:transparent !important;">
-        <a class="back-link" href="{{ url('/auctions/'.$gender.'-escorts-in-'.$city) }}">
+        <a class="back-link" href="{{ url('/auctions/'.$prefix.'-in-'.$city) }}">
             <span class="ev-desktop-back"><i class="fa fa-angle-left fa-fw"></i> Back to Auctions</span>
             <span class="ev-mobile-back" style="display:none;color:#C1F11D;"><i class="fa fa-angle-left"></i> Back</span>
         </a>
@@ -168,6 +168,22 @@ body { background: #000 !important; }
     border: 1px solid #dc3545;
     color: #dc3545;
 }
+.bid-status-muted {
+    background: transparent;
+    border: 1px solid #555;
+    color: #999;
+}
+.bid-you-tag {
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: rgba(193, 241, 29, 0.12);
+    color: #C1F11D;
+    font-size: 11px;
+    font-weight: 600;
+}
+.bid-history-earlier h3 { font-size: 18px; color: #bbb; }
+.bid-history-note { color: #999; font-size: 14px; margin: -6px 0 12px; }
 
 /* Cards (How Auctions Work, Highest Bidder, Rules) */
 .card {
@@ -731,7 +747,7 @@ select.native-select option {
             <div class="bid-form">
                 <div class="bid-form-header">
                     <h4>Place Your Bid Spot #{{ $auction->spot_number }}</h4>
-                    <span class="bid-form-gender">{{ $cityName }} · {{ \App\Livewire\Auctions\AuctionPage::GENDERS[$auction->gender] ?? ucfirst($auction->gender) }}</span>
+                    <span class="bid-form-gender">{{ $cityName }} · {{ $auction->category_label }}</span>
                 </div>
 
                 <form wire:submit.prevent="placeBid">
@@ -804,7 +820,7 @@ select.native-select option {
                             <span wire:loading wire:target="placeBid">Processing...</span>
                         </button>
                         <div class="bid-form-meta">
-                            <span class="current-price">Current Bid Price: ${{ number_format($auction->current_price, 2) }}</span>
+                            <span class="current-price">{{ $roundBidCount ? 'Highest bid' : 'Starting price' }}: ${{ number_format($auction->current_price, 2) }}</span>
                             <span class="auction-timer">
                                 <img src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/timer-5fc5fc1474905d451c5cb2d9ad472d17fea1e9059c0baf436d0aaf6df2b2aeed.svg"
                                      class="timer-icon" width="16" height="16">
@@ -820,45 +836,56 @@ select.native-select option {
             </div>
             @endif
 
-            {{-- Bid History — only the logged-in user's own bids on this spot. --}}
+            {{-- Every bid in the current round, highest first: the same bids
+                 the "Bids this round" count and the leading-bid card use. --}}
             <div class="bid-history">
-                <h3>Your Bid History</h3>
-                @auth
-                    @php
-                        $myBids = $auction->bids->where('user_id', auth()->id())->sortByDesc('created_at');
-                    @endphp
-                    @if($myBids->count() > 0)
-                        @foreach($myBids as $bid)
-                        <div class="bid-history-item {{ $auction->winner_profile_id == $bid->profile_id ? 'winning-bid' : '' }}">
-                            <div class="row align-items-center">
-                                <div class="col-md-3">
-                                    <strong>{{ $bid->profile->name ?? 'Unknown Profile' }}</strong>
-                                </div>
-                                <div class="col-md-3">
-                                    ${{ number_format($bid->amount, 2) }}
-                                </div>
-                                <div class="col-md-3">
-                                    {{ $bid->created_at->format('M d,Y H:i') }}
-                                </div>
-                                <div class="col-md-3 text-right">
-                                    @if($bid->status === 'won')
-                                    <span class="bid-status-badge bid-status-approved">Approved</span>
-                                    @elseif($bid->status === 'lost')
-                                    <span class="bid-status-badge bid-status-rejected">Rejected</span>
-                                    @else
-                                    <span class="bid-status-badge bid-status-review">In Review</span>
-                                    @endif
-                                </div>
+                <h3>Bids this round</h3>
+                @forelse($roundBids as $bid)
+                    <div class="bid-history-item {{ $loop->first ? 'winning-bid' : '' }}" wire:key="round-bid-{{ $bid->id }}">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <strong>{{ $bid->profile->name ?? 'Deleted profile' }}</strong>
+                                @if(auth()->id() === (int) $bid->user_id)<span class="bid-you-tag">You</span>@endif
+                            </div>
+                            <div class="col-md-3">${{ number_format($bid->amount, 2) }}</div>
+                            <div class="col-md-3">{{ $bid->created_at->format('M d, Y H:i') }}</div>
+                            <div class="col-md-3 text-right">
+                                @if($loop->first)
+                                    <span class="bid-status-badge bid-status-approved">{{ $timeRemaining ? 'Leading' : 'Winning' }}</span>
+                                @else
+                                    <span class="bid-status-badge bid-status-muted">Outbid</span>
+                                @endif
                             </div>
                         </div>
-                        @endforeach
-                    @else
-                    <p>You haven't placed any bids on this spot yet.</p>
-                    @endif
-                @else
-                    <p>Please <a href="{{ route('sign-in') }}">sign in</a> to see your bid history.</p>
-                @endauth
+                    </div>
+                @empty
+                    <p>No bids yet this round. @if($timeRemaining)The first bid can be ${{ number_format($minBid, 2) }} or more.@endif</p>
+                @endforelse
             </div>
+
+            {{-- The user's bids from rounds that have finished. --}}
+            @if($myEarlierBids->isNotEmpty())
+            <div class="bid-history bid-history-earlier">
+                <h3>Your bids in earlier rounds</h3>
+                <p class="bid-history-note">These rounds have finished and don't count toward the current one.</p>
+                @foreach($myEarlierBids as $bid)
+                    <div class="bid-history-item" wire:key="earlier-bid-{{ $bid->id }}">
+                        <div class="row align-items-center">
+                            <div class="col-md-3"><strong>{{ $bid->profile->name ?? 'Deleted profile' }}</strong></div>
+                            <div class="col-md-3">${{ number_format($bid->amount, 2) }}</div>
+                            <div class="col-md-3">{{ $bid->created_at->format('M d, Y H:i') }}</div>
+                            <div class="col-md-3 text-right">
+                                @if($bid->status === 'won')
+                                    <span class="bid-status-badge bid-status-approved">Won</span>
+                                @else
+                                    <span class="bid-status-badge bid-status-rejected">Not won</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            @endif
 
             {{-- Bottom info sections --}}
             <div class="row bottom-info-sections">
@@ -885,50 +912,42 @@ select.native-select option {
 
         {{-- RIGHT COLUMN --}}
         <div class="col-md-4" style="margin-top: 2rem;">
-            {{-- Note Alert --}}
-            <div class="card">
-                <div class="card-body">
-                    <div class="alert alert-info mb-0">
-                        <strong>Note:</strong> You need to have spent at least 300 credit to participate in auctions.
-                    </div>
-                </div>
-            </div>
-
             {{-- Which spot this is: city, category, length, timing. --}}
-            <div class="card mt-4">
+            <div class="card">
                 <div class="card-header">
                     <h4>Spot details</h4>
                 </div>
                 <div class="card-body">
                     <dl class="spot-details">
                         <div><dt>City</dt><dd>{{ $cityName }}</dd></div>
-                        <div><dt>Category</dt><dd>{{ \App\Livewire\Auctions\AuctionPage::GENDERS[$auction->gender] ?? ucfirst($auction->gender) }}</dd></div>
+                        <div><dt>Category</dt><dd>{{ $auction->category_label }}</dd></div>
                         <div><dt>Spot</dt><dd>#{{ $auction->spot_number }}</dd></div>
                         <div><dt>Featured for</dt><dd>{{ $auction->duration_days ?? 7 }} days</dd></div>
-                        <div><dt>Current bid price</dt><dd class="accent">${{ number_format($auction->current_price, 2) }}</dd></div>
+                        <div><dt>{{ $roundBidCount ? 'Highest bid' : 'Starting price' }}</dt><dd class="accent">${{ number_format($auction->current_price, 2) }}</dd></div>
                         <div><dt>Bids this round</dt><dd>{{ $roundBidCount }}</dd></div>
                         <div>
-                            <dt>{{ $timeRemaining ? 'Auction ends' : 'Auction ended' }}</dt>
+                            <dt>{{ $timeRemaining ? 'Bidding ends' : 'Bidding closed' }}</dt>
                             <dd>{{ $auction->end_date->format('M j, Y · H:i') }}</dd>
                         </div>
                     </dl>
                 </div>
             </div>
 
-            {{-- Current Highest Bidder: this round's bids only. --}}
+            {{-- Leading bid: this round's bids only. --}}
             @if(!$highestBid)
             <div class="card mt-4">
                 <div class="card-header">
-                    <h4>Current Highest Bidder</h4>
+                    <h4>Leading bid</h4>
                 </div>
                 <div class="card-body">
-                    <p class="mb-0">No bids yet on this spot. @if($timeRemaining)Be the first: bids start at ${{ number_format($minBid, 2) }}.@endif</p>
+                    <p class="mb-0">No bids yet this round. @if($timeRemaining)Be the first: bids start at ${{ number_format($minBid, 2) }}.@endif</p>
                 </div>
             </div>
             @else
             <div class="card mt-4">
                 <div class="card-header">
-                    <h4>Current Highest Bidder</h4>
+                    <h4>{{ $timeRemaining ? 'Leading bid' : 'Winning bid' }}</h4>
+                    @unless($timeRemaining)<small class="text-muted">Bidding has closed; the result is being confirmed.</small>@endunless
                 </div>
                 <div class="card-body">
                     <div class="highest-bidder-row">
@@ -953,7 +972,7 @@ select.native-select option {
                         @endif
                         <div class="highest-bidder-info">
                             <h5>{{ $highestBidderProfile->name ?? 'Deleted profile' }}</h5>
-                            <p>Current bid: ${{ number_format($highestBid->amount, 2) }}</p>
+                            <p>Bid: ${{ number_format($highestBid->amount, 2) }}@if(auth()->id() === (int) $highestBid->user_id) <span class="bid-you-tag">You</span>@endif</p>
                             {{-- Second (small) View Profile button removed — the
                                  full-width button below is the one we show. --}}
                         </div>
@@ -975,11 +994,12 @@ select.native-select option {
                 </div>
                 <div class="card-body">
                     <ul>
+                        <li>You need to have spent at least {{ \App\Models\Auction::MIN_SPENT_CREDITS }} credits to bid</li>
                         <li>Minimum bid increment: $10</li>
                         <li>All bids are final and cannot be retracted</li>
                         <li>The highest bidder when the auction ends wins the spot</li>
                         <li>Payment will be processed automatically if you win</li>
-                        <li>Auction end at: {{ $auction->end_date->format('M d, Y H:i') }}</li>
+                        <li>Bidding ends: {{ $auction->end_date->format('M d, Y H:i') }}</li>
                     </ul>
                 </div>
             </div>
@@ -989,7 +1009,7 @@ select.native-select option {
     <div class="alert alert-warning">
         <h4>Auction Not Found</h4>
         <p>The auction you're looking for doesn't exist or has ended.</p>
-        <a href="{{ url('/auctions/'.$gender.'-escorts-in-'.$city) }}" class="btn btn-primary mt-3">
+        <a href="{{ url('/auctions/'.$prefix.'-in-'.$city) }}" class="btn btn-primary mt-3">
             View All Auctions
         </a>
     </div>

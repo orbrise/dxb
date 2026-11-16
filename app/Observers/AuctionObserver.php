@@ -18,12 +18,12 @@ class AuctionObserver
     {
         $this->invalidate($auction);
 
-        // If city or gender moved, also invalidate the old scope.
-        if ($auction->wasChanged(['city_id', 'gender'])) {
+        // If city or category moved, also invalidate the old scope.
+        if ($auction->wasChanged(['city_id', 'gender', 'listing_id'])) {
             $original = $auction->getOriginal();
             CacheVersion::bump(CacheVersion::auctionScope(
                 $original['city_id'] ?? null,
-                $original['gender'] ?? null
+                Auction::scopeKey($original['gender'] ?? null, $original['listing_id'] ?? null)
             ));
         }
 
@@ -47,7 +47,7 @@ class AuctionObserver
 
     protected function invalidate(Auction $auction): void
     {
-        CacheVersion::bump(CacheVersion::auctionScope($auction->city_id, $auction->gender));
+        CacheVersion::bump(CacheVersion::auctionScope($auction->city_id, Auction::scopeKey($auction->gender, $auction->listing_id)));
 
         // Edge-purge: the listing page shows auction banners, so sweep that tree.
         $city = CacheService::getCityById($auction->city_id);

@@ -21,7 +21,7 @@
 
             <p style="font-size: 14px; line-height: 1.5; color: #ffffff; margin-bottom: 15px;">
                 You've won the auction for <strong>Spot #{{ $spotNumber }}</strong> —
-                {{ ucfirst($gender) }} escorts in {{ $cityName }}. Your profile
+                {{ $categoryName }} in {{ $cityName }}. Your profile
                 <strong>{{ $profileName }}</strong> is now featured at the top of the listing.
             </p>
 
@@ -29,7 +29,7 @@
             <div style="background-color: #131616; border: 2px solid #C1F11D; border-radius: 5px; padding: 20px; margin: 25px 0;">
                 <p style="font-size: 14px; color: #bebebe; margin: 0 0 10px 0;">Spot Details</p>
                 <p style="font-size: 18px; font-weight: bold; color: #C1F11D; margin: 0 0 10px 0;">
-                    Spot #{{ $spotNumber }} — {{ ucfirst($gender) }} escorts in {{ $cityName }}
+                    Spot #{{ $spotNumber }} — {{ $categoryName }} in {{ $cityName }}
                 </p>
                 <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Featured profile: <strong>{{ $profileName }}</strong></p>
                 <p style="font-size: 14px; color: #ffffff; margin: 0 0 5px 0;">Winning bid: <strong style="color: #C1F11D;">${{ number_format($winningBid, 2) }}</strong></p>

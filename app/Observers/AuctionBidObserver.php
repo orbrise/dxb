@@ -30,7 +30,7 @@ class AuctionBidObserver
     {
         $auction = $bid->relationLoaded('auction') ? $bid->auction : $bid->auction()->first();
         if ($auction) {
-            CacheVersion::bump(CacheVersion::auctionScope($auction->city_id, $auction->gender));
+            CacheVersion::bump(CacheVersion::auctionScope($auction->city_id, \App\Models\Auction::scopeKey($auction->gender, $auction->listing_id)));
         }
     }
 }

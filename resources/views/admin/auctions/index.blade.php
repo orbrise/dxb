@@ -532,12 +532,12 @@
                     </div>
 
                     <div class="a-field">
-                        <label><i class="fas fa-venus-mars"></i> Gender</label>
-                        <select name="gender" class="form-control">
-                            <option value="">All Genders</option>
-                            <option value="female"  {{ request('gender') == 'female'  ? 'selected' : '' }}>Female</option>
-                            <option value="male"    {{ request('gender') == 'male'    ? 'selected' : '' }}>Male</option>
-                            <option value="shemale" {{ request('gender') == 'shemale' ? 'selected' : '' }}>Shemale</option>
+                        <label><i class="fas fa-th-large"></i> Category</label>
+                        <select name="category" class="form-control">
+                            <option value="">All Categories</option>
+                            @foreach(\App\Models\Auction::categories() as $key => $category)
+                                <option value="{{ $key }}" {{ request('category', request('gender')) == $key ? 'selected' : '' }}>{{ $category['label'] }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -593,13 +593,13 @@
                 <tbody>
                     @foreach($auctions as $auction)
                     @php
-                        $gender = strtolower($auction->gender ?? '');
+                        $gender = $auction->listing_id ? '' : strtolower($auction->gender ?? '');
                         $genderClass = 'a-gender-' . ($gender ?: 'muted');
                         $genderIcon = match($gender) {
                             'female'  => 'fas fa-venus',
                             'male'    => 'fas fa-mars',
                             'shemale' => 'fas fa-transgender',
-                            default   => 'fas fa-genderless',
+                            default   => $auction->listing_id ? 'fas fa-th-large' : 'fas fa-genderless',
                         };
                         $timeLeftClass = $auction->status !== 'active' ? 'ended' : '';
                     @endphp
@@ -614,7 +614,7 @@
                         </td>
                         <td>
                             <span class="a-gender-badge {{ $genderClass }}">
-                                <i class="{{ $genderIcon }}"></i> {{ ucfirst($auction->gender) }}
+                                <i class="{{ $genderIcon }}"></i> {{ $auction->category_label }}
                             </span>
                         </td>
                         <td><span class="a-price">${{ number_format($auction->current_price, 2) }}</span></td>

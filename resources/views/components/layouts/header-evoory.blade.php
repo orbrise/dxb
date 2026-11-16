@@ -122,6 +122,13 @@
         color: #fff;
         text-decoration: none;
     }
+    /* evoory-homepage.css / profile-details-inline.css (kept in <head> after
+       wire:navigate) carry Bootstrap 3's `a:focus { color: #000; outline:
+       5px auto … }`: the clicked button's currentColor icon went black on
+       the dark header behind a focus ring while the page loaded. */
+    .ev-cc-btn:focus,
+    .ev-cc-btn:active { color: #fff; text-decoration: none; outline: none; }
+    .ev-cc-btn:focus-visible { outline: 2px solid #C1F11D; outline-offset: 2px; border-radius: 8px; }
     .ev-cc-btn:hover { color: #C1F11D; }
     .ev-cc-btn:hover .ev-cc-label { color: #C1F11D; }
     .ev-cc-icon {
@@ -301,6 +308,10 @@
         font-size: 14px;
         transition: filter 120ms;
     }
+    /* Same legacy a:focus rule as .ev-cc-btn above. */
+    .ev-add-profile-btn:focus,
+    .ev-add-profile-btn:active { color: #C1F11D; text-decoration: none; outline: none; }
+    .ev-add-profile-btn:focus-visible { outline: 2px solid #C1F11D; outline-offset: 2px; }
     .ev-add-profile-btn:hover {
         filter: brightness(1.1);
         color: #C1F11D;

@@ -745,6 +745,13 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get('auctions', AuctionPage::class)->name('auctions.landing');
     Route::get('auctions/{gender?}-escorts-in-{city?}', AuctionPage::class)->name('auctions.index');
     Route::get('auctions/{gender?}-escorts-in-{cityname?}/spot/{spot}', SpotBidding::class);
+    // Other listing categories (Massage, Phone & Cam, …); the components 404
+    // a category that isn't in Auction::categories(). Lazy match so the
+    // first "-in-" splits category from city.
+    Route::get('auctions/{category}-in-{city}', AuctionPage::class)
+        ->where('category', '[a-z0-9-]+?')->name('auctions.category');
+    Route::get('auctions/{category}-in-{cityname}/spot/{spot}', SpotBidding::class)
+        ->where('category', '[a-z0-9-]+?');
     Route::get('purchase-credits', PurchaseCredits::class)->name('purchase.credits');
 
 });

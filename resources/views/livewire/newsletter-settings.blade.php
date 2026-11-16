@@ -75,7 +75,7 @@
     .nl-error { margin-top: 8px; color: #ff7a7a; font-size: 13px; }
 
     .nl-actions { display: flex; align-items: center; gap: 14px; margin-top: 24px; }
-    .nl-save { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 30px; border: 0; border-radius: 999px; background: #C1F11D; color: #0D1011; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s; }
+    .nl-save { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 5px 30px; border: 0; border-radius: 999px; background: #C1F11D; color: #0D1011; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s; }
     .nl-save:hover { background: #d4f84d; }
     .nl-save:disabled { opacity: .6; cursor: wait; }
     .nl-saved { display: inline-flex; align-items: center; gap: 6px; color: #C1F11D; font-size: 13.5px; font-weight: 600; }

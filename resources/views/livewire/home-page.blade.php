@@ -1805,7 +1805,7 @@
             <span>Current price for {{ $auction->duration_days ?? 7 }} days:</span>
             <strong class="ml-2">${{ number_format($auction->current_price, 0) }}</strong>
           </h3>
-          <a class="btn btn-primary px-5 mb-3 font-weight-bold" href="/auctions/{{ $gender }}-escorts-in-{{ strtolower($selectedcity) }}" style="font-size:1rem">Make offer</a>
+          <a class="btn btn-primary px-5 mb-3 font-weight-bold" href="/auctions/{{ $auctionPrefix }}-in-{{ strtolower($selectedcity) }}" style="font-size:1rem">Make offer</a>
         </div>
         <div class="d-flex align-items-center justify-content-center">
           <img alt="Timer icon" class="mr-2" height="28" src="https://d257pz9kz95xf4.cloudfront.net/assets/icons/timer-5fc5fc1474905d451c5cb2d9ad472d17fea1e9059c0baf436d0aaf6df2b2aeed.svg" width="28">
@@ -1839,7 +1839,7 @@
                   </a>
                 @elseif($auction->status == 'active')
                   {{-- For active auctions, show the current profile or "Available Spot" --}}
-                  <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
+                  <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$auctionPrefix.'-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                     {{ $auction->winnerProfile->name ?? 'Available Spot' }}
                     @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews_count > 0)
                       <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews_count }} approved reviews">
@@ -1895,7 +1895,7 @@
                     </a>
                   @else
                     {{-- For active auctions, show current profile or placeholder --}}
-                    <a class="img pb-photo-link" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
+                    <a class="img pb-photo-link" href="{{ Auth::check() ? '/auctions/'.$auctionPrefix.'-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                       <span class="img-wrapper premium">
                         @if(isset($auction->winnerProfile) && $auction->winnerProfile->photoverify && $auction->winnerProfile->photoverify->status == 'approved')
                           <span class="verified-image text-left small" title="Photos Verified">
@@ -1962,7 +1962,7 @@
                     {{-- For active auctions with a profile, show the profile's images --}}
                     @foreach($auction->winnerProfile->multipleimgs->take(3) as $key => $img)
                       <div class="thumb thumb-{{ $key }}">
-                        <a class="img img-responsive pb-photo-link" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
+                        <a class="img img-responsive pb-photo-link" href="{{ Auth::check() ? '/auctions/'.$auctionPrefix.'-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                           <span class="img-wrapper mini">
                             @if($auction->winnerProfile->photoverify && $auction->winnerProfile->photoverify->status == 'approved')
                               <span class="verified-image text-left small" title="Photos Verified">
@@ -2006,7 +2006,7 @@
                       </a>
                     @else
                       {{-- For active auctions, show current profile or "Available Spot" --}}
-                      <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
+                      <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$auctionPrefix.'-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                         {{ $auction->winnerProfile->name ?? 'Available Spot' }}
                         @if(isset($auction->winnerProfile) && $auction->winnerProfile->reviews_count > 0)
                           <span class="badge" data-placement="top" data-toggle="tooltip" title="{{ $auction->winnerProfile->reviews_count }} approved reviews">
@@ -2044,11 +2044,11 @@
                 @else
                   {{-- Truly available spot (no winner yet) — show the auction
                        placeholder + Make a bid CTA. --}}
-                  <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
+                  <a class="nostyle-link" href="{{ Auth::check() ? '/auctions/'.$auctionPrefix.'-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                     <p>This spot is available for auction. Place your bid to feature your profile here and get maximum visibility!</p>
                   </a>
                   <p class="no-margin see-more">
-                    <a class="btn btn-dark" href="{{ Auth::check() ? '/auctions/'.$gender.'-escorts-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
+                    <a class="btn btn-dark" href="{{ Auth::check() ? '/auctions/'.$auctionPrefix.'-in-'.strtolower($selectedcity).'/spot/'.$auction->spot_number : '/sign-in' }}">
                       {{ Auth::check() ? 'Make a bid' : 'Sign in to bid' }}
                     </a>
                   </p>

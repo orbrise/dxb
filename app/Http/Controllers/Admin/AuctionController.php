@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AuctionController extends Controller
 {
@@ -31,8 +32,10 @@ class AuctionController extends Controller
         $query->where('status', $request->status);
     }
 
-    if ($request->filled('gender')) {
-        $query->where('gender', $request->gender);
+    // ?gender= is what older links used.
+    $category = Auction::resolveCategory($request->query('gender'), $request->query('category'));
+    if ($category) {
+        $query->inCategory($category);
     }
 
     if ($request->filled('spot')) {
@@ -68,7 +71,7 @@ class AuctionController extends Controller
         $request->validate([
             'spot_number' => 'required|integer|min:1|max:6',
             'city_id' => 'required|exists:cities,id',
-            'gender' => 'required|in:female,male,shemale',
+            'category' => ['required', Rule::in(array_keys(Auction::categories()))],
             'starting_price' => 'required|numeric|min:0',
             'duration_days' => 'required|integer|min:1|max:30',
             'background_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
@@ -77,7 +80,7 @@ class AuctionController extends Controller
         // Check if an auction already exists for this spot in this city
         $existingAuction = Auction::where('spot_number', $request->spot_number)
             ->where('city_id', $request->city_id)
-            ->where('gender', $request->gender)
+            ->inCategory($request->category)
             ->where('status', 'active')
             ->first();
 
@@ -88,7 +91,8 @@ class AuctionController extends Controller
         Auction::create([
             'spot_number' => $request->spot_number,
             'city_id' => $request->city_id,
-            'gender' => $request->gender,
+            ...$this->categoryColumns($request->category),
+            'starting_price' => $request->starting_price,
             'current_price' => $request->starting_price,
             'end_date' => Carbon::now()->addDays($request->duration_days),
             'status' => 'active',
@@ -97,6 +101,21 @@ class AuctionController extends Controller
 
         return redirect()->route('admin.auctions.index')
             ->with('success', 'Auction spot created successfully.');
+    }
+
+    /**
+     * Columns for an Auction::categories() key. Escort spots are keyed by
+     * gender; other categories by listing_id, with gender left empty so the
+     * gender-only listing queries never pick them up.
+     */
+    private function categoryColumns(string $key): array
+    {
+        $category = Auction::categories()[$key];
+
+        return [
+            'gender' => $category['gender'] ?? '',
+            'listing_id' => $category['listing_id'],
+        ];
     }
 
     private function storeBackgroundImage(Request $request, ?string $existing = null): ?string
@@ -136,7 +155,7 @@ class AuctionController extends Controller
         $request->validate([
             'spot_number' => 'required|integer|min:1|max:6',
             'city_id' => 'required|exists:cities,id',
-            'gender' => 'required|in:female,male,shemale',
+            'category' => ['required', Rule::in(array_keys(Auction::categories()))],
             'current_price' => 'required|numeric|min:0',
             'end_date' => 'required|date|after:now',
             'status' => 'required|in:active,ended',
@@ -145,11 +164,11 @@ class AuctionController extends Controller
 
         if ($auction->spot_number != $request->spot_number ||
             $auction->city_id != $request->city_id ||
-            $auction->gender != $request->gender) {
+            $auction->category_key !== $request->category) {
 
             $existingAuction = Auction::where('spot_number', $request->spot_number)
                 ->where('city_id', $request->city_id)
-                ->where('gender', $request->gender)
+                ->inCategory($request->category)
                 ->where('status', 'active')
                 ->where('id', '!=', $auction->id)
                 ->first();
@@ -162,11 +181,17 @@ class AuctionController extends Controller
         $updateData = [
             'spot_number' => $request->spot_number,
             'city_id' => $request->city_id,
-            'gender' => $request->gender,
+            ...$this->categoryColumns($request->category),
             'current_price' => $request->current_price,
             'end_date' => $request->end_date,
             'status' => $request->status,
         ];
+
+        // With no bids this round, the price set here is the opening price,
+        // so later rounds open at it too.
+        if (!$auction->bids()->where('status', 'active')->exists()) {
+            $updateData['starting_price'] = $request->current_price;
+        }
 
         if ($request->boolean('remove_background_image')) {
             if ($auction->background_image) {
@@ -255,7 +280,7 @@ class AuctionController extends Controller
 
         $profileName = $winningBid->profile->name ?? 'your profile';
         $profileUrl = $winningBid->profile
-            ? url('/' . $auction->gender . '-escorts-in-' . $citySlug . '/' . $winningBid->profile->id . '/' . ($winningBid->profile->slug ?? ''))
+            ? url('/' . ($auction->gender ?: 'female') . '-escorts-in-' . $citySlug . '/' . $winningBid->profile->id . '/' . ($winningBid->profile->slug ?? ''))
             : url('/');
 
         try {
@@ -265,6 +290,7 @@ class AuctionController extends Controller
                 'spotNumber'     => $auction->spot_number,
                 'cityName'       => $cityName,
                 'gender'         => $auction->gender,
+                'categoryName' => $auction->listing_id ? $auction->category_label : null,
                 'winningBid'     => $winningBid->amount,
                 'durationDays'   => $durationDays,
                 'spotExpiryDate' => $spotExpiryDate,
@@ -285,7 +311,7 @@ class AuctionController extends Controller
     {
         $auction->loadMissing('city');
         $cityName = $auction->city->name ?? 'your city';
-        $auctionsUrl = url('/auctions/' . $auction->gender . '-escorts-in-' . strtolower($cityName));
+        $auctionsUrl = url('/auctions/' . $auction->url_prefix . '-in-' . ($auction->city->slug ?? strtolower($cityName)));
 
         $losingBids = $auction->bids()
             ->with('user:id,name,email')
@@ -302,6 +328,7 @@ class AuctionController extends Controller
                     'spotNumber'   => $auction->spot_number,
                     'cityName'     => $cityName,
                     'gender'       => $auction->gender,
+                    'categoryName' => $auction->listing_id ? $auction->category_label : null,
                     'yourBid'      => $bid->amount,
                     'winningBid'   => $winningBid->amount,
                     'refundAmount' => $bid->amount,
@@ -315,12 +342,15 @@ class AuctionController extends Controller
     
     public function resetAuction(Auction $auction)
     {
-        // Reset the existing auction to active status
+        // A new round on the same row: bids still open from the old one
+        // weren't awarded, so close them, and the price starts over.
+        $auction->bids()->where('status', 'active')->update(['status' => 'lost']);
         $auction->update([
             'status' => 'active',
             'end_date' => Carbon::now()->addDays(7), // Reset end date to 7 days from now
             'winner_id' => null,
             'winner_profile_id' => null,
+            'current_price' => $auction->round_start_price,
         ]);
         
         return redirect()->route('admin.auctions.index')

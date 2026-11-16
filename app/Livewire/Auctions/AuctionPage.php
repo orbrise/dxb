@@ -10,16 +10,18 @@ use Carbon\Carbon;
 
 /**
  * Top Spot auctions. /auctions asks for a city first; picking one opens
- * /auctions/{gender}-escorts-in-{city}, which lists that city's open spots,
- * or says none are open.
+ * /auctions/{gender}-escorts-in-{city} (escorts) or /auctions/{category}-in-{city}
+ * (other listing categories), which lists that city's open spots, or says
+ * none are open. Tabs come from Auction::categories().
  */
 #[Layout('components.layouts.app-evoory')]
 class AuctionPage extends Component
 {
-    public const GENDERS = ['female' => 'Escorts', 'male' => 'Male Escorts', 'shemale' => 'Shemale Escorts'];
+    public const GENDERS = Auction::GENDERS;
 
     public $city;
-    public $gender = 'female';
+    // Auction::categories() key: female | male | shemale | a listing slug.
+    public $category = 'female';
     public $auctions = [];
     public $cityName;
     public $cityId;
@@ -29,14 +31,18 @@ class AuctionPage extends Component
     public string $citySearch = '';
     public array $searchResults = [];
 
-    public function mount($city = null, $gender = null)
+    public function mount($city = null, $gender = null, $category = null)
     {
         $this->city = $city;
-        // Gender comes from the route segment on city URLs, or from ?gender=
-        // on the clean landing URL (the empty-city segment 404s, so the
-        // chooser links use /auctions?gender=… instead).
-        $gender = $gender ?: (string) request()->query('gender', '');
-        $this->gender = array_key_exists($gender, self::GENDERS) ? $gender : 'female';
+        // The category comes from the route segment on city URLs, or from
+        // ?category= (older links: ?gender=) on the clean landing URL (the
+        // empty-city segment 404s, so the chooser links use the query instead).
+        $key = Auction::resolveCategory(
+            $gender ?: (string) request()->query('gender', ''),
+            $category ?: (string) request()->query('category', '')
+        );
+        if (!$key && $city) abort(404);
+        $this->category = $key ?: 'female';
 
         if ($city) {
             // City slug, as listing URLs use; older links used the lower-cased name.
@@ -51,10 +57,9 @@ class AuctionPage extends Component
             }
         }
 
-        // Check if user can bid (has spent at least 300 credits)
-        if (auth()->check()) {
-            $this->canBid = auth()->user()->spent_credits >= 300;
-        }
+        // Same rule the bid page applies. (This read users.spent_credits,
+        // which doesn't exist, so everyone saw the 300-credit warning.)
+        $this->canBid = Auction::userQualifies(auth()->user());
 
         // Server-side search (?q=) so the city chooser still works when the
         // Livewire/Alpine JS bundle fails to boot (e.g. production CDN/JS
@@ -77,7 +82,7 @@ class AuctionPage extends Component
         // Once a winner_profile_id is set, the spot is claimed (whether the
         // auction was awarded manually or ended naturally) and should not
         // appear in the "Make Offer" auction listing.
-        $openSpots = fn () => Auction::where('gender', $this->gender)
+        $openSpots = fn () => Auction::inCategory($this->category)
             ->where('status', 'active')
             ->whereNull('winner_profile_id');
 
@@ -114,6 +119,8 @@ class AuctionPage extends Component
             'canBid' => $this->canBid,
             'suggestedCities' => $suggestedCities,
             'hasOpenSpots' => $openCityIds->isNotEmpty(),
+            'categories' => Auction::categories(),
+            'prefix' => Auction::categories()[$this->category]['prefix'],
         ]);
     }
 }

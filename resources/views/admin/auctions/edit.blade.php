@@ -78,13 +78,13 @@
                         </div>
                         
                         <div class="form-group mt-2">
-                            <label for="gender">Gender</label>
-                            <select name="gender" id="gender" class="form-control @error('gender') is-invalid @enderror" required>
-                                <option value="female" {{ old('gender', $auction->gender) == 'female' ? 'selected' : '' }}>Female</option>
-                                <option value="male" {{ old('gender', $auction->gender) == 'male' ? 'selected' : '' }}>Male</option>
-                                <option value="shemale" {{ old('gender', $auction->gender) == 'shemale' ? 'selected' : '' }}>Shemale</option>
+                            <label for="category">Category</label>
+                            <select name="category" id="category" class="form-control @error('category') is-invalid @enderror" required>
+                                @foreach(\App\Models\Auction::categories() as $key => $category)
+                                    <option value="{{ $key }}" {{ old('category', $auction->category_key) == $key ? 'selected' : '' }}>{{ $category['label'] }}</option>
+                                @endforeach
                             </select>
-                            @error('gender')
+                            @error('category')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>

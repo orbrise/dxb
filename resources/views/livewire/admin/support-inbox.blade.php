@@ -2189,7 +2189,7 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                     @endphp
                     @foreach($settingsItems as $item)
                         {{-- Quick / auto replies live under Business tools, so keep that row lit. --}}
-                        <button type="button" class="si-set-row {{ ($settingsSection === $item['id'] || ($item['id'] === 'tools' && in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message'], true))) && !$starredViewOpen ? 'active' : '' }}"
+                        <button type="button" class="si-set-row {{ ($settingsSection === $item['id'] || ($item['id'] === 'tools' && in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message', 'welcome-message'], true))) && !$starredViewOpen ? 'active' : '' }}"
                                 wire:click="setSettingsSection('{{ $item['id'] }}')" data-si-open wire:key="si-set-{{ $item['id'] }}">
                             <span class="si-set-row-icon"><i class="fa {{ $item['icon'] }}"></i></span>
                             <span class="si-set-row-body">
@@ -2570,13 +2570,14 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                 'quick-replies' => ['Quick replies', 'Saved messages any agent can insert by typing /'],
                                 'auto-reply' => ['Auto reply', 'Let customers know you got their message when no one replies in time'],
                                 'topup-message' => ['Top-up message', 'Sent to the customer when you add funds to their wallet'],
+                                'welcome-message' => ['Welcome message', 'Sent to new users in their Support chat when they first log in'],
                                 'calls' => ['Calls', 'Control whether customers can call support'],
                                 default => ['Blocked', 'Customers barred from placing calls'],
                             };
                         @endphp
                         <div class="si-pane-head">
-                            <button type="button" class="si-pane-back" wire:click="setSettingsSection('{{ in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message'], true) ? 'tools' : '' }}')"
-                                    @unless(in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message'], true)) data-si-back @endunless title="Back" aria-label="Back">
+                            <button type="button" class="si-pane-back" wire:click="setSettingsSection('{{ in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message', 'welcome-message'], true) ? 'tools' : '' }}')"
+                                    @unless(in_array($settingsSection, ['quick-replies', 'auto-reply', 'topup-message', 'welcome-message'], true)) data-si-back @endunless title="Back" aria-label="Back">
                                 <i class="fa fa-arrow-left"></i>
                             </button>
                             <div>
@@ -2684,6 +2685,20 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                             <div class="si-set-card-actions">
                                                 <button type="button" class="si-set-btn" wire:click="setSettingsSection('topup-message')">
                                                     <i class="fa fa-pen"></i> Edit top-up message
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="si-set-card">
+                                        <span class="si-set-card-icon"><i class="fa fa-hand-paper"></i></span>
+                                        <div class="si-set-card-body">
+                                            <div class="si-set-card-title">
+                                                Welcome message <span class="si-pill {{ $welcomeEnabled ? 'on' : '' }}">{{ $welcomeEnabled ? 'On' : 'Off' }}</span>
+                                            </div>
+                                            <div class="si-set-card-text">The message a new user gets in their Support chat the first time they log in.</div>
+                                            <div class="si-set-card-actions">
+                                                <button type="button" class="si-set-btn" wire:click="setSettingsSection('welcome-message')">
+                                                    <i class="fa fa-pen"></i> Edit welcome message
                                                 </button>
                                             </div>
                                         </div>
@@ -2813,6 +2828,46 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                     </form>
                                     <p class="si-set-hint">
                                         Sent in the customer's Support chat from the admin who does the top-up, the moment the funds are added.
+                                    </p>
+                                @elseif($settingsSection === 'welcome-message')
+                                    <div class="si-set-card">
+                                        <span class="si-set-card-icon"><i class="fa fa-hand-paper"></i></span>
+                                        <div class="si-set-card-body">
+                                            <div class="si-set-card-title">Send welcome message</div>
+                                            <div class="si-set-card-text">
+                                                {{ $welcomeEnabled
+                                                    ? 'On — every new user gets the message below when they first log in.'
+                                                    : 'Off — new users start with an empty Support chat.' }}
+                                            </div>
+                                        </div>
+                                        {{-- Keyed on state so the checkbox is rebuilt with the server value after each toggle. --}}
+                                        <label class="si-switch" wire:key="si-welcome-switch-{{ $welcomeEnabled ? 'on' : 'off' }}">
+                                            <input type="checkbox" @checked($welcomeEnabled) wire:click="toggleWelcome" aria-label="Send welcome message">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <form class="si-set-card" style="display:block;" wire:submit.prevent="saveWelcomeMessage">
+                                        <div class="si-field">
+                                            <label for="siWelcomeMessage">Message</label>
+                                            <textarea id="siWelcomeMessage" class="si-field-input si-field-textarea" rows="10" maxlength="2000"
+                                                      wire:model="welcomeMessage" required></textarea>
+                                            <div class="si-field-hint">
+                                                <code>{name}</code> is replaced with the user's first name. Line breaks and emoji are kept exactly as typed.
+                                            </div>
+                                            @error('welcomeMessage') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                        </div>
+                                        <button type="submit" class="si-set-btn primary" wire:loading.attr="disabled" wire:target="saveWelcomeMessage">
+                                            <i class="fa fa-check"></i> Save
+                                        </button>
+                                        <button type="button" class="si-set-btn" wire:click="resetWelcomeMessage">
+                                            <i class="fa fa-undo"></i> Use default
+                                        </button>
+                                        @if($welcomeMessageSaved)
+                                            <span class="si-acct-saved" wire:key="si-welcome-message-saved"><i class="fa fa-check-circle"></i> Saved</span>
+                                        @endif
+                                    </form>
+                                    <p class="si-set-hint">
+                                        Sent once per account, from the admin who last saved this message. Users who registered before this was set up don't get it.
                                     </p>
                                 @elseif($settingsSection === 'calls')
                                     <div class="si-set-card">
