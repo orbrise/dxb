@@ -1688,6 +1688,27 @@ class Chat extends Component
         $previous = $this->activeTab;
         $next = in_array($tab, ['chats', 'calls', 'status', 'gallery', 'settings'], true) ? $tab : 'chats';
 
+        // Match CallLog::mount() — surfacing the calls view acknowledges
+        // any missed calls, so the red badge on the phone icon clears.
+        // Before the fast path: `tab` is @entangle'd, so the click has
+        // usually synced activeTab = 'calls' already and $previous === $next.
+        // Deferred to after-response so the DB UPDATE doesn't block the
+        // Livewire response that mobile is waiting on.
+        if ($next === 'calls' && auth()->check()) {
+            $userId = auth()->id();
+            app()->terminating(function () use ($userId) {
+                try {
+                    $updated = Call::where('callee_id', $userId)
+                        ->where('status', 'missed')
+                        ->whereNull('seen_at')
+                        ->update(['seen_at' => now()]);
+                    if ($updated) ChatBadges::clear($userId);
+                } catch (\Throwable $e) {
+                    Log::warning('Deferred missed-call ack failed: ' . $e->getMessage());
+                }
+            });
+        }
+
         // Fast path — if the tab hasn't actually changed, do no work and
         // skip render. On mobile the round-trip latency for this call was
         // showing as a visible lag between tapping the icon and the new
@@ -1704,25 +1725,6 @@ class Chat extends Component
         // to the list under the current tab (chats or calls), so carrying
         // it across would hide items on the new tab for no good reason.
         $this->searchTerm = '';
-
-        // Match CallLog::mount() — surfacing the calls view acknowledges
-        // any missed calls, so the red badge on the phone icon clears.
-        // Deferred to after-response so the DB UPDATE doesn't block the
-        // Livewire response that mobile is waiting on.
-        if ($this->activeTab === 'calls' && auth()->check()) {
-            $userId = auth()->id();
-            app()->terminating(function () use ($userId) {
-                try {
-                    $updated = Call::where('callee_id', $userId)
-                        ->where('status', 'missed')
-                        ->whereNull('seen_at')
-                        ->update(['seen_at' => now()]);
-                    if ($updated) ChatBadges::clear($userId);
-                } catch (\Throwable $e) {
-                    Log::warning('Deferred missed-call ack failed: ' . $e->getMessage());
-                }
-            });
-        }
 
         // Reset transient Status UI state when switching away.
         if ($this->activeTab !== 'status') {

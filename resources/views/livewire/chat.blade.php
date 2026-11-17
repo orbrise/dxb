@@ -5361,7 +5361,10 @@
                                         <span class="tab-badge">{{ $chatUnreadCount }}</span>
                                     @endif
                                 </button>
-                                <button type="button" @click="tab = 'calls'" wire:click="setActiveTab('calls')" :class="{ 'active': tab === 'calls' }" class="chat-sidebar-tab" title="Calls">
+                                {{-- Opening Calls marks missed calls seen, but setActiveTab()
+                                     skips render, so drop the badge here; the next render
+                                     already reads 0. --}}
+                                <button type="button" @click="tab = 'calls'; $el.querySelector('.tab-badge')?.remove()" wire:click="setActiveTab('calls')" :class="{ 'active': tab === 'calls' }" class="chat-sidebar-tab" title="Calls">
                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path d="M18.1891 14.8547C17.502 14.1624 15.8378 13.1521 15.0304 12.745C13.979 12.2154 13.8924 12.1721 13.0659 12.7861C12.5147 13.1958 12.1482 13.5619 11.503 13.4243C10.8579 13.2867 9.45591 12.5109 8.22833 11.2873C7.00075 10.0637 6.17991 8.62116 6.04188 7.9782C5.90385 7.33525 6.27597 6.9731 6.68185 6.42058C7.25388 5.64177 7.21061 5.51196 6.72166 4.46057C6.34045 3.64281 5.30066 1.99433 4.60574 1.3107C3.86236 0.576455 3.86236 0.706257 3.38336 0.905287C2.99338 1.06932 2.61925 1.26875 2.26568 1.50108C1.57336 1.96101 1.18912 2.34306 0.920411 2.91722C0.651703 3.49138 0.530979 4.83743 1.91866 7.35818C3.30633 9.87894 4.27992 11.1679 6.29501 13.1772C8.31011 15.1865 9.85962 16.2669 12.1248 17.5373C14.927 19.1066 16.0018 18.8007 16.5778 18.5324C17.1537 18.2642 17.5375 17.8834 17.9983 17.1911C18.2313 16.8382 18.4312 16.4645 18.5955 16.0748C18.7949 15.5976 18.9247 15.5976 18.1891 14.8547Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10"/>
                                     </svg>
