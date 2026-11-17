@@ -753,6 +753,7 @@ Route::group(['middleware'=>'auth'], function(){
     Route::get('auctions/{category}-in-{cityname}/spot/{spot}', SpotBidding::class)
         ->where('category', '[a-z0-9-]+?');
     Route::get('purchase-credits', PurchaseCredits::class)->name('purchase.credits');
+    Route::post('purchase-credits/message-support', \App\Http\Controllers\CreditsSupportController::class)->name('purchase.credits.support');
 
 });
 

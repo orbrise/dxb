@@ -19,7 +19,7 @@
                  debounce.500ms stops the min-10 error from flashing on
                  every keystroke while the user is still typing a 2-digit
                  amount like "15" (would fire "min 10" at "1" otherwise). --}}
-            <input type="number" wire:model.live.debounce.500ms="amount" min="10" step="1" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" placeholder="0" id="amount"
+            <input type="number" form="credits-support-form" name="amount" wire:model.live.debounce.500ms="amount" min="10" step="1" pattern="[0-9]*" inputmode="numeric" data-validations="numericality presence" size="5" placeholder="0" id="amount"
                    @error('amount') style="border:1px solid #ff4d4d;" @enderror />
         </div>
         <span class="choose-amount-label">Choose amount</span>
@@ -42,9 +42,10 @@
          container at the bottom of the card, which the user never saw was
          tied to the amount they'd just typed. Hidden by default; JS flips
          display + sets the message. --}}
-    <div id="credits-amount-inline-error" class="mt-2" style="display:none; color:#ff4d4d; font-size:13px; align-items:center; gap:6px;">
+    {{-- Also shows CreditsSupportController's error when its own check fails. --}}
+    <div id="credits-amount-inline-error" class="mt-2" style="display:{{ session('credits_support_error') ? 'flex' : 'none' }}; color:#ff4d4d; font-size:13px; align-items:center; gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="credits-amount-inline-error-text"></span>
+        <span id="credits-amount-inline-error-text">{{ session('credits_support_error') }}</span>
     </div>
 
     <!-- Payment Method -->
@@ -130,15 +131,25 @@
     <div id="support-payment-section" class="payment-section">
         <div class="payment-section-card">
             <p>Don't want to pay by card? Enter the amount above and message our support team. They'll help you pay another way and add the credits to your wallet.</p>
-            <div class="ev-support-actions">
-                {{-- Sends "I'd like to add $X" (X = the amount input) to the user's
-                     Support chat, then opens it — PurchaseCredits::messageSupport().
-                     The click handler is in purchase-credits.blade.php. --}}
-                <button type="button" class="ev-support-btn primary" data-support-credits-message>
+            {{-- Sends "I'd like to add $X" (X = the amount input) to the user's
+                 Support chat, then opens it — CreditsSupportController. A real
+                 form with an inline onsubmit (an attribute, so Rocket Loader
+                 leaves it alone): it must not depend on the page script, which
+                 didn't run on production and left this button dead. The
+                 onsubmit only copies the amount in and checks the $10 minimum;
+                 the server checks it again. --}}
+            {{-- The amount input above joins this form via form="credits-support-form",
+                 so the typed amount is posted even with no JS at all. The button
+                 re-enables after 5 s so a Back from the chat doesn't restore it
+                 stuck on "Sending...". --}}
+            <form method="POST" action="{{ route('purchase.credits.support') }}" id="credits-support-form" class="ev-support-actions" novalidate
+                  onsubmit="var f=this.closest('#credits_purchase_form'), i=f&&f.querySelector('#amount'), a=parseFloat(i&&i.value)||0, e=f&&f.querySelector('#credits-amount-inline-error'), t=f&&f.querySelector('#credits-amount-inline-error-text'), b=this.querySelector('button'), l=b.querySelector('.ev-support-btn-label'); if(a<10){ if(e&&t){t.textContent=a>0?'Minimum amount is $10.':'Enter the amount you want to add first.'; e.style.display='flex';} if(i){i.scrollIntoView({behavior:'smooth',block:'center'}); i.focus({preventScroll:true});} return false; } setTimeout(function(){b.disabled=true;l.textContent='Sending...';}); setTimeout(function(){b.disabled=false;l.textContent='Message Support';},5000);">
+                @csrf
+                <button type="submit" class="ev-support-btn primary">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>
                     <span class="ev-support-btn-label">Message Support</span>
                 </button>
-            </div>
+            </form>
         </div>
     </div>
 </div>

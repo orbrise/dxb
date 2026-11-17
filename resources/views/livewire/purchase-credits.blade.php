@@ -257,6 +257,12 @@ header.ev-header-account { background: #000 !important; border-bottom: none !imp
 .payment-section {
     display: none;
 }
+/* Contact Support needs no gateway set-up, so its section follows the radio
+   in CSS too: shown even if the page script hasn't run (or a refresh
+   restored the radio as checked). */
+#credits_purchase_form:has(#payment_method_support:checked) #support-payment-section {
+    display: block !important;
+}
 
 /* Modal */
 #paymentResultModal {
@@ -1543,10 +1549,7 @@ body:has(.pc-v2-active) .pc-v2-intro {
         // handler survives Alpine re-mounts of the Wallet "+ Buy Credits"
         // modal (the .payment-method-option nodes are fresh each time the
         // modal opens; element-bound listeners would be lost).
-        document.addEventListener('click', function (e) {
-            var option = e.target.closest ? e.target.closest('.payment-method-option') : null;
-            if (!option) return;
-
+        var selectPaymentOption = function (option, fromClick) {
             var method = option.getAttribute('data-payment-method');
 
             document.querySelectorAll('.payment-method-option').forEach(function(opt) {
@@ -1564,7 +1567,7 @@ body:has(.pc-v2-active) .pc-v2-intro {
             var section = document.getElementById(method + '-payment-section');
             if (section) {
                 section.style.display = 'block';
-                if (window.innerWidth <= 768) {
+                if (fromClick && window.innerWidth <= 768) {
                     setTimeout(function() {
                         section.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
@@ -1576,57 +1579,24 @@ body:has(.pc-v2-active) .pc-v2-intro {
             } else if (method === 'paypal') {
                 initPayPalButtons();
             }
+        };
+
+        document.addEventListener('click', function (e) {
+            var option = e.target.closest ? e.target.closest('.payment-method-option') : null;
+            if (option) selectPaymentOption(option, true);
         });
 
-        // Contact Support → Message Support sends "I'd like to add $X" with the
-        // amount typed to the Support chat (PurchaseCredits::messageSupport),
-        // which then opens the chat. Bound once per document, not per init:
-        // init re-runs on soft nav, and a second listener would send twice.
-        if (!window.evCreditsSupportBound) {
-            window.evCreditsSupportBound = true;
-            var supportAmountError = function (form, msg) {
-                var input = form && form.querySelector('#amount');
-                var err = form && form.querySelector('#credits-amount-inline-error');
-                var errText = form && form.querySelector('#credits-amount-inline-error-text');
-                if (err && errText) {
-                    errText.textContent = msg;
-                    err.style.display = 'flex';
-                }
-                if (input) {
-                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    input.focus({ preventScroll: true });
-                }
-            };
-            var resetSupportButtons = function () {
-                document.querySelectorAll('[data-support-credits-message]').forEach(function (b) {
-                    b.disabled = false;
-                    var label = b.querySelector('.ev-support-btn-label');
-                    if (label) label.textContent = 'Message Support';
-                });
-            };
-            document.addEventListener('click', function (e) {
-                var btn = e.target.closest ? e.target.closest('[data-support-credits-message]') : null;
-                if (!btn || btn.disabled) return;
-                // The page can render the form twice (page + sheet): use this button's form.
-                var form = btn.closest('#credits_purchase_form');
-                var input = form && form.querySelector('#amount');
-                var amount = parseFloat(input && input.value) || 0;
-                if (amount < 10) {
-                    supportAmountError(form, amount > 0 ? 'Minimum amount is $10.' : 'Enter the amount you want to add first.');
-                    return;
-                }
-                btn.disabled = true;
-                var label = btn.querySelector('.ev-support-btn-label');
-                if (label) label.textContent = 'Sending...';
-                // On success the server opens the Support chat.
-                Livewire.dispatch('messageSupport', { amount: amount });
-            });
-            window.addEventListener('credits-support-failed', function (e) {
-                var btn = document.querySelector('[data-support-credits-message]:disabled');
-                supportAmountError(btn && btn.closest('#credits_purchase_form'), (e.detail && e.detail.message) || 'Could not send. Please try again.');
-                resetSupportButtons();
-            });
+        // A refresh can come back with a method already checked: the browser
+        // restores form state (radio + amount) but its section stays hidden,
+        // so e.g. Contact Support looked chosen with no Message Support button.
+        var restored = document.querySelector('#credits_purchase_form input[name="payment_method"]:checked');
+        if (restored && restored.closest('.payment-method-option')) {
+            selectPaymentOption(restored.closest('.payment-method-option'), false);
         }
+
+        // Contact Support → Message Support is a plain form POST with its own
+        // inline onsubmit (_purchase-credits-form.blade.php), so it works even
+        // when this script doesn't run.
 
         // Amount input change — delegated for the same reason as above.
         document.addEventListener('input', function (e) {

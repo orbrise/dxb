@@ -617,6 +617,8 @@ class Chat extends Component
             md5((string) $this->searchTerm),
             $this->prefShowUnanswered ? 1 : 0
         ));
+        // Archived chats don't count toward the Chat & Calls badge.
+        \App\Support\ChatBadges::clear($userId);
     }
 
     /**

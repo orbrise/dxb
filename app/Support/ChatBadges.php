@@ -45,6 +45,17 @@ class ChatBadges
                 ->unique()
                 ->values();
 
+            // Count only what the chat list shows as unread: archived chats
+            // (Archived tab only) and expired disappearing messages are
+            // hidden there, so counting them gave a badge with no unread chat
+            // to open.
+            $convIds = $convIds->diff(
+                DB::table('conversation_user_states')
+                    ->where('user_id', $userId)
+                    ->whereNotNull('archived_at')
+                    ->pluck('conversation_id')
+            );
+
             if ($convIds->isEmpty()) {
                 $unread = 0;
             } else {
@@ -54,6 +65,9 @@ class ChatBadges
                     ->where(function ($q) {
                         $q->whereNull('status')
                           ->orWhereIn('status', ['sent', 'delivered', 'unread']);
+                    })
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
                     })
                     ->count();
             }
