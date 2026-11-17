@@ -703,7 +703,7 @@ select.native-select option {
 
 <div class="container-fluid">
     @if($errorMessage)
-    <div class="alert alert-danger">
+    <div class="alert alert-danger mt-2">
         {{ $errorMessage }}
     </div>
     @endif
