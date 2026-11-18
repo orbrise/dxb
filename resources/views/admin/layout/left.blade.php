@@ -102,7 +102,13 @@
                            <i class="list-icon material-icons">account_circle</i>
                             <span class="hide-menu"> Users</span>
                         </a>
-                    </li> 
+                    </li>
+                      <li class="{{ Route::currentRouteName() == 'admin.user-locations' ? 'current-page' : '' }}">
+                        <a class="ripple" href="{{route('admin.user-locations')}}">
+                           <i class="list-icon material-icons">location_on</i>
+                            <span class="hide-menu"> User Locations</span>
+                        </a>
+                    </li>
                     
                    
 

@@ -496,6 +496,20 @@ class UserProfile extends Component
         }
 
         DB::commit();
+
+        // Where the owner edited it from. Not while an admin is impersonating:
+        // that would record the admin's location.
+        if (!session('admin_impersonating')) {
+            $profileId = $profile->id;
+            \App\Support\IpLocation::captureAfterResponse((int) $profile->user_id, 'profile_update', $profileId, function ($ip, $country) use ($profileId) {
+                UsersProfile::whereKey($profileId)->update([
+                    'updated_ip'       => $ip,
+                    'updated_country'  => $country,
+                    'owner_updated_at' => now(),
+                ]);
+            });
+        }
+
         session()->flash('success', 'Profile updated successfully');
         return redirect()->route('user.dashboard');
 

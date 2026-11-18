@@ -538,6 +538,20 @@
                         <p class="mb-2"><strong>IP Country:</strong> {{ $profile->ip_country ?? 'N/A' }}</p>
                     </div>
                 </div>
+                {{-- Set when the owner saves the profile (UserProfile::updateProfile). --}}
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>Last Edited From:</strong> {{ collect([$profile->updated_country, $profile->updated_ip])->filter()->implode(' · ') ?: 'N/A' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>Last Edited At:</strong> {{ $profile->owner_updated_at ? \Carbon\Carbon::parse($profile->owner_updated_at)->format('d M Y, h:i A') : 'N/A' }}</p>
+                    </div>
+                </div>
+                @if($profile->user_id)
+                    <a href="{{ route('admin.user-locations', ['user_id' => $profile->user_id]) }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        <i class="fas fa-map-marker-alt"></i> View all of this user's locations
+                    </a>
+                @endif
             </div>
         </div>
          

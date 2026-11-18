@@ -1359,6 +1359,24 @@ span.input { display: none; }
                                 </div>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-sign-in-alt"></i> Last Login From</label>
+                                    <input type="text" class="form-control" id="editUserLastLogin" readonly disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-clock"></i> Last Login At</label>
+                                    <input type="text" class="form-control" id="editUserLastLoginAt" readonly disabled>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.user-locations') }}" id="editUserLocationsLink" class="btn btn-sm btn-outline-primary mb-3" target="_blank">
+                            <i class="fas fa-map-marker-alt"></i> View all locations
+                        </a>
                     </div>
 
                     {{-- Password Management --}}
@@ -1642,6 +1660,9 @@ $(document).on('click', '.edit-user', function() {
                     $('#editUserGoogleId').val(user.google_id ? 'Connected' : 'Not Connected');
                     $('#editUserRegistrationIp').val(user.registration_ip || 'N/A');
                     $('#editUserRegistrationCountry').val(user.registration_country || 'N/A');
+                    $('#editUserLastLogin').val([user.last_login_country, user.last_login_ip].filter(Boolean).join(' · ') || 'N/A');
+                    $('#editUserLastLoginAt').val(user.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'N/A');
+                    $('#editUserLocationsLink').attr('href', @json(route('admin.user-locations')) + '?user_id=' + user.id);
                     
                     // Show password hash (first 20 chars) for reference
                     if (user.password_hash) {

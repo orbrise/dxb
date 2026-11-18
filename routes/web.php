@@ -840,7 +840,10 @@ Route::post('updateuser/{id}', [AdminUserController::class, 'updateUser'])->name
 Route::post('deleteuser', [AdminUserController::class, 'deleteUser'])->name('admin.deleteuser');
 Route::post('toggleuserstatus', [AdminUserController::class, 'toggleUserStatus'])->name('admin.toggleuserstatus');
 Route::post('sendverification', [AdminUserController::class, 'sendVerificationEmail'])->name('admin.sendverification');
-Route::post('impersonate', [AdminUserController::class, 'impersonate'])->name('admin.impersonate');// UsersProfile CRUD
+Route::post('impersonate', [AdminUserController::class, 'impersonate'])->name('admin.impersonate');
+// Every register / login / profile create / profile edit location.
+Route::get('user-locations', [\App\Http\Controllers\Admin\UserLocationController::class, 'index'])->name('admin.user-locations');
+// UsersProfile CRUD
 Route::post('getprofiles', [AdminUserController::class, 'getProfiles'])->name('admin.getprofiles');
 Route::post('addprofile', [AdminUserController::class, 'storeProfile'])->name('admin.addprofile');
 Route::post('updateprofile/{id}', [AdminUserController::class, 'updateProfile'])->name('admin.updateprofile');

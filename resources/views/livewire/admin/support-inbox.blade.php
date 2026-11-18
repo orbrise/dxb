@@ -3450,6 +3450,9 @@ body.si-mpm-open #adminSupportCallStatus { display: none !important; }
                                     @if($selectedCustomer->registration_country || $selectedCustomer->registration_ip)
                                         <div><dt>Signed up from</dt><dd>{{ collect([$selectedCustomer->registration_country, $selectedCustomer->registration_ip])->filter()->implode(' · ') }}</dd></div>
                                     @endif
+                                    @if($selectedCustomer->last_login_country || $selectedCustomer->last_login_ip)
+                                        <div><dt>Last login from</dt><dd>{{ collect([$selectedCustomer->last_login_country, $selectedCustomer->last_login_ip])->filter()->implode(' · ') }}</dd></div>
+                                    @endif
                                 </dl>
                             </section>
 

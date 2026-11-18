@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Models\UsersProfile;
 use App\Services\SupportWelcome;
+use App\Support\IpLocation;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
@@ -42,6 +44,17 @@ class EventServiceProvider extends ServiceProvider
             // Not when an admin impersonates them: that isn't the user.
             if ($event->user instanceof User && !session('admin_impersonating')) {
                 SupportWelcome::sendOnFirstLogin($event->user);
+
+                // Where they logged in from (every login path fires this:
+                // email, Google, activation link, profile claim).
+                $userId = $event->user->id;
+                IpLocation::captureAfterResponse($userId, 'login', null, function ($ip, $country) use ($userId) {
+                    User::whereKey($userId)->update([
+                        'last_login_ip'      => $ip,
+                        'last_login_country' => $country,
+                        'last_login_at'      => now(),
+                    ]);
+                });
             }
 
             Cookie::queue(
@@ -55,6 +68,21 @@ class EventServiceProvider extends ServiceProvider
                 false,
                 'lax'
             );
+        });
+
+        // Registration and profile creation already store the IP + country on
+        // the row (every sign-up path and both profile-create paths); copy
+        // them to the location history. Rows without an IP (scraper imports,
+        // admin-created users) aren't someone's location.
+        User::created(function (User $user) {
+            if ($user->registration_ip) {
+                IpLocation::log($user->id, 'register', null, $user->registration_ip, $user->registration_country, request()->userAgent());
+            }
+        });
+        UsersProfile::created(function (UsersProfile $profile) {
+            if ($profile->ip_address && $profile->user_id) {
+                IpLocation::log((int) $profile->user_id, 'profile_create', $profile->id, $profile->ip_address, $profile->ip_country, request()->userAgent());
+            }
         });
 
         Event::listen(Logout::class, function () {
